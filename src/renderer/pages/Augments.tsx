@@ -11,6 +11,7 @@ import AugmentIcon from "../components/AugmentIcon";
 import ChampionIcon from "../components/ChampionIcon";
 import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
+import QueueSelect from "../components/QueueSelect";
 
 type SortKey = "picks" | "winRate" | "name";
 type SortDir = "asc" | "desc";
@@ -47,9 +48,10 @@ export default function Augments() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
   const [patch, setPatch] = useState<string | undefined>(undefined);
+  const [queue, setQueue] = useState<number | undefined>(undefined);
   const { data, refetch } = useIpc<AugmentStatsDetailed[]>(
-    () => window.api.getAugmentStatsDetailed(patch),
-    [patch],
+    () => window.api.getAugmentStatsDetailed(patch, queue),
+    [patch, queue],
   );
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("picks");
@@ -157,7 +159,8 @@ export default function Augments() {
           </button>
         ))}
         <span className="text-xs text-lol-text self-center ml-2">{sorted.length} augments</span>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <QueueSelect value={queue} onChange={setQueue} />
           <PatchSelect value={patch} onChange={setPatch} />
         </div>
         <div className="relative">

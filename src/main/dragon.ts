@@ -101,6 +101,71 @@ export function loadAugmentData() {
   return augmentReady;
 }
 
+export type ItemInfo = { name: string; iconPath: string; branch: string };
+
+const itemCache = new Map<string, Record<number, ItemInfo>>();
+const itemPromises = new Map<string, Promise<Record<number, ItemInfo>>>();
+let latestLivePatch: string | null = null;
+
+const itemsJsonUrl = (branch: string) =>
+  `https://raw.communitydragon.org/${branch}/plugins/rcp-be-lol-game-data/global/default/v1/items.json`;
+
+// Map a game's major.minor patch to the CommunityDragon branch that has its
+// data: live patches have their own branch, the current patch is "latest",
+// and a patch newer than live only exists on "pbe".
+async function resolveItemBranch(patch?: string): Promise<string> {
+  if (!patch) return "latest";
+  try {
+    if (!latestLivePatch) {
+      const versions = await fetchJson("https://ddragon.leagueoflegends.com/api/versions.json");
+      const m = String(versions[0]).match(/^(\d+)\.(\d+)/);
+      if (m) latestLivePatch = `${m[1]}.${m[2]}`;
+    }
+    if (latestLivePatch) {
+      const [liveMajor, liveMinor] = latestLivePatch.split(".").map(Number);
+      const [major, minor] = patch.split(".").map(Number);
+      if (major > liveMajor || (major === liveMajor && minor > liveMinor)) return "pbe";
+      if (major === liveMajor && minor === liveMinor) return "latest";
+    }
+  } catch {
+    /* fall through to the patch's own branch */
+  }
+  return patch;
+}
+
+export function loadItemData(patch?: string): Promise<Record<number, ItemInfo>> {
+  const key = patch ?? "latest";
+  const cached = itemCache.get(key);
+  if (cached) return Promise.resolve(cached);
+
+  let promise = itemPromises.get(key);
+  if (!promise) {
+    promise = (async () => {
+      const branch = await resolveItemBranch(patch);
+      let data: any;
+      try {
+        data = await fetchJson(itemsJsonUrl(branch));
+      } catch (err) {
+        if (branch === "latest") throw err;
+        data = await fetchJson(itemsJsonUrl("latest"));
+      }
+      const items: Record<number, ItemInfo> = {};
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          items[item.id] = { name: item.name || "", iconPath: item.iconPath || "", branch };
+        }
+      }
+      itemCache.set(key, items);
+      console.log(`Loaded ${Object.keys(items).length} items from CommunityDragon (${branch})`);
+      return items;
+    })();
+    // Drop failed loads so a later request can retry
+    promise.catch(() => itemPromises.delete(key));
+    itemPromises.set(key, promise);
+  }
+  return promise;
+}
+
 export async function waitForChampionData() {
   if (championReady) await championReady;
 }

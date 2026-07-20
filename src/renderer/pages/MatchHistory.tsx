@@ -18,6 +18,7 @@ import ItemIcon from "../components/ItemIcon";
 import MultikillBadge from "../components/MultikillBadge";
 import StatCard from "../components/StatCard";
 import { formatDuration, formatTimeAgo, formatKDA, kdaRatio } from "../lib/format";
+import { queueLabel } from "../components/QueueSelect";
 import { computeMatchScores, scoreColor, type PlayerScore } from "../../shared/opScore";
 
 const SORT_OPTIONS: { value: MatchSort; label: string }[] = [
@@ -34,11 +35,13 @@ const SELECT_CLASS = "select";
 export default function MatchHistory() {
   const [championFilter, setChampionFilter] = useState<number | undefined>(undefined);
   const [patchFilter, setPatchFilter] = useState<string | undefined>(undefined);
+  const [queueFilter, setQueueFilter] = useState<number | undefined>(undefined);
   const [multikillFilter, setMultikillFilter] = useState<MultikillType[]>([]);
   const [sort, setSort] = useState<MatchSort>("newest");
   const { matches, loading, hasMore, loadMore } = useMatches({
     championId: championFilter,
     patch: patchFilter,
+    queue: queueFilter,
     sort,
     multikills: multikillFilter,
   });
@@ -50,12 +53,18 @@ export default function MatchHistory() {
   }, []);
   const champData = useChampionData();
   const { data: dashboard, refetch: refetchDashboard } = useIpc<DashboardData>(
-    () => window.api.getDashboard({ championId: championFilter, patch: patchFilter }),
-    [championFilter, patchFilter],
+    () =>
+      window.api.getDashboard({
+        championId: championFilter,
+        patch: patchFilter,
+        queue: queueFilter,
+      }),
+    [championFilter, patchFilter, queueFilter],
   );
   const [filterOptions, setFilterOptions] = useState<MatchFilterOptions>({
     patches: [],
     champions: [],
+    queues: [],
   });
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<MatchDetail | null>(null);
@@ -83,7 +92,11 @@ export default function MatchHistory() {
   useEffect(() => {
     const fetchOptions = () =>
       window.api
-        .getMatchFilterOptions({ championId: championFilter, patch: patchFilter })
+        .getMatchFilterOptions({
+          championId: championFilter,
+          patch: patchFilter,
+          queue: queueFilter,
+        })
         .then(setFilterOptions);
     fetchOptions();
 
@@ -92,7 +105,7 @@ export default function MatchHistory() {
       fetchOptions();
     });
     return unsub;
-  }, [championFilter, patchFilter, refetchDashboard]);
+  }, [championFilter, patchFilter, queueFilter, refetchDashboard]);
 
   // Clear a selection if new data leaves it without any matching games
   useEffect(() => {
@@ -102,6 +115,9 @@ export default function MatchHistory() {
     }
     if (patchFilter !== undefined && !filterOptions.patches.includes(patchFilter)) {
       setPatchFilter(undefined);
+    }
+    if (queueFilter !== undefined && !filterOptions.queues.includes(queueFilter)) {
+      setQueueFilter(undefined);
     }
   }, [filterOptions]);
 
@@ -260,6 +276,22 @@ export default function MatchHistory() {
               </option>
             ))}
           </select>
+          {(filterOptions.queues.length > 1 || queueFilter !== undefined) && (
+            <select
+              value={queueFilter ?? ""}
+              onChange={(e) =>
+                setQueueFilter(e.target.value === "" ? undefined : Number(e.target.value))
+              }
+              className={SELECT_CLASS}
+            >
+              <option value="">All Queues</option>
+              {filterOptions.queues.map((q) => (
+                <option key={q} value={q}>
+                  {queueLabel(q)}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as MatchSort)}
@@ -276,7 +308,10 @@ export default function MatchHistory() {
 
       {matches.length === 0 && !loading && (
         <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-lol-text">
-          {championFilter !== undefined || patchFilter !== undefined || multikillFilter.length > 0
+          {championFilter !== undefined ||
+          patchFilter !== undefined ||
+          queueFilter !== undefined ||
+          multikillFilter.length > 0
             ? "No games match the current filters."
             : "No ARAM Mayhem games found. Connect to the League client and click Refresh."}
         </div>
@@ -462,7 +497,7 @@ function GameRow({
         <div className="shrink-0 grid grid-cols-3 gap-0.5">
           {[match.item0, match.item1, match.item2, match.item3, match.item4, match.item5].map(
             (itemId, i) => (
-              <ItemIcon key={i} itemId={itemId ?? 0} size={22} />
+              <ItemIcon key={i} itemId={itemId ?? 0} size={22} patch={match.game_version} />
             ),
           )}
         </div>
@@ -544,6 +579,7 @@ function MatchScoreboard({
           maxStats={gameMaxStats}
           champData={champData}
           scores={scores}
+          patch={detail.game.game_version}
         />
       ))}
     </div>
@@ -556,12 +592,14 @@ function TeamScoreboard({
   maxStats,
   champData,
   scores,
+  patch,
 }: {
   teamId: number;
   players: ParsedParticipant[];
   maxStats: { dmg: number; taken: number; gold: number; heal: number };
   champData: any;
   scores: Map<number, PlayerScore>;
+  patch?: string | null;
 }) {
   const isWin = players[0]?.win ?? false;
 
@@ -600,6 +638,7 @@ function TeamScoreboard({
           maxStats={maxStats}
           champData={champData}
           score={scores.get(p.participantId)}
+          patch={patch}
         />
       ))}
     </div>
@@ -623,11 +662,13 @@ function PlayerRow({
   maxStats,
   champData,
   score,
+  patch,
 }: {
   player: ParsedParticipant;
   maxStats: { dmg: number; taken: number; gold: number; heal: number };
   champData: any;
   score?: PlayerScore;
+  patch?: string | null;
 }) {
   const kda = kdaRatio(p.kills, p.deaths, p.assists);
 
@@ -707,10 +748,10 @@ function PlayerRow({
       {/* Items */}
       <div className="flex gap-0.5">
         {p.items.slice(0, 6).map((itemId, i) => (
-          <ItemIcon key={i} itemId={itemId} size={22} />
+          <ItemIcon key={i} itemId={itemId} size={22} patch={patch} />
         ))}
         <div className="ml-0.5">
-          <ItemIcon itemId={p.items[6] ?? 0} size={22} />
+          <ItemIcon itemId={p.items[6] ?? 0} size={22} patch={patch} />
         </div>
       </div>
 

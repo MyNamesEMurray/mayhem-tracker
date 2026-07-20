@@ -1,6 +1,7 @@
 import { authenticate, createHttp1Request, Credentials, HttpRequestOptions } from "league-connect";
 import { BrowserWindow } from "electron";
 import * as db from "./db";
+import { MAYHEM_QUEUE_IDS } from "../shared/queues";
 
 let credentials: Credentials | null = null;
 let status: "disconnected" | "connecting" | "connected" = "disconnected";
@@ -79,7 +80,7 @@ export async function fetchNewGames(
 
   for (const game of games) {
     if (db.gameExists(game.gameId)) continue;
-    if (game.queueId !== 2400) continue;
+    if (!MAYHEM_QUEUE_IDS.includes(game.queueId)) continue;
 
     let fullGame: any;
     try {

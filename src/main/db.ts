@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { app } from "electron";
 import { SCORE_FORMULA_VERSION, computeMatchScores, scoreInputsFromRaw } from "../shared/opScore";
+import { AUGMENT_SLOTS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
 
 let db: Database.Database;
 
@@ -210,6 +211,61 @@ function createTables() {
     backfillScores();
     setSetting("score_formula_version", String(SCORE_FORMULA_VERSION));
   }
+
+  // Backfill bonus augment slots (5+) from raw_json for games stored
+  // when only 4 slots were captured.
+  if (getSetting("augment_slots") !== String(AUGMENT_SLOTS)) {
+    backfillAugmentSlots();
+    setSetting("augment_slots", String(AUGMENT_SLOTS));
+  }
+}
+
+function backfillAugmentSlots() {
+  const games = db
+    .prepare("SELECT game_id, puuid, raw_json FROM games WHERE raw_json IS NOT NULL")
+    .all() as { game_id: number; puuid: string; raw_json: string }[];
+  const insertStmt = db.prepare(
+    "INSERT OR IGNORE INTO game_augments (game_id, slot, augment_id) VALUES (?, ?, ?)",
+  );
+  const tx = db.transaction(() => {
+    for (const game of games) {
+      try {
+        const raw = JSON.parse(game.raw_json);
+        const participants = raw.participants || [];
+        const identities = raw.participantIdentities || [];
+        let participant = participants.find((p: any) => p.puuid === game.puuid);
+        if (!participant) {
+          const identity = identities.find((pi: any) => pi.player?.puuid === game.puuid);
+          if (identity) {
+            participant = participants.find((p: any) => p.participantId === identity.participantId);
+          }
+        }
+        if (!participant) continue;
+        const s = participant.stats || participant;
+        for (let i = 1; i <= AUGMENT_SLOTS; i++) {
+          const augId = s[`playerAugment${i}`];
+          if (augId && augId > 0) {
+            insertStmt.run(game.game_id, i, augId);
+          }
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    }
+  });
+  tx();
+}
+
+// Appends queue conditions to a query's WHERE list. An explicit queue filter
+// wins; otherwise the hide-classic setting excludes Mayhem Classic everywhere.
+function applyQueueFilter(where: string[], params: any[], queue?: number, alias = "g") {
+  if (queue != null) {
+    where.push(`${alias}.queue_id = ?`);
+    params.push(queue);
+  } else if (getSetting("hide_classic_games") === "true") {
+    where.push(`${alias}.queue_id != ?`);
+    params.push(QUEUE_ID_MAYHEM_CLASSIC);
+  }
 }
 
 function computeOwnerScore(
@@ -351,7 +407,13 @@ const MULTIKILL_COLUMNS: Record<string, string> = {
 export function getMatchHistory(
   limit: number,
   offset: number,
-  filters?: { championId?: number; patch?: string; sort?: string; multikills?: string[] },
+  filters?: {
+    championId?: number;
+    patch?: string;
+    queue?: number;
+    sort?: string;
+    multikills?: string[];
+  },
 ): { matches: any[]; total: number } {
   const where: string[] = [];
   const params: any[] = [];
@@ -363,6 +425,7 @@ export function getMatchHistory(
     where.push("g.game_version = ?");
     params.push(filters.patch);
   }
+  applyQueueFilter(where, params, filters?.queue);
   if (filters?.multikills && filters.multikills.length > 0) {
     const cols = filters.multikills
       .map((k) => MULTIKILL_COLUMNS[k])
@@ -384,7 +447,7 @@ export function getMatchHistory(
     .get(...params) as any;
   const rows = db
     .prepare(`
-    SELECT g.game_id, g.game_creation, g.game_duration, g.is_remake, g.puuid, g.game_version, g.raw_json,
+    SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.puuid, g.game_version, g.raw_json,
            ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
            ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
            ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
@@ -406,17 +469,23 @@ export function getMatchHistory(
   return { matches, total: total.count };
 }
 
-export function getMatchFilterOptions(filters?: { championId?: number; patch?: string }): {
+export function getMatchFilterOptions(filters?: {
+  championId?: number;
+  patch?: string;
+  queue?: number;
+}): {
   patches: string[];
   champions: number[];
+  queues: number[];
 } {
-  // Each list is narrowed by the OTHER filter so a dropdown never hides its own selection
+  // Each list is narrowed by the OTHER filters so a dropdown never hides its own selection
   const patchWhere = ["g.game_version IS NOT NULL AND g.game_version != ''"];
   const patchParams: any[] = [];
   if (filters?.championId != null) {
     patchWhere.push("ps.champion_id = ?");
     patchParams.push(filters.championId);
   }
+  applyQueueFilter(patchWhere, patchParams, filters?.queue);
   const patchRows = db
     .prepare(`
     SELECT DISTINCT g.game_version
@@ -439,6 +508,7 @@ export function getMatchFilterOptions(filters?: { championId?: number; patch?: s
     champWhere.push("g.game_version = ?");
     champParams.push(filters.patch);
   }
+  applyQueueFilter(champWhere, champParams, filters?.queue);
   const champRows = db
     .prepare(`
     SELECT DISTINCT ps.champion_id
@@ -448,7 +518,33 @@ export function getMatchFilterOptions(filters?: { championId?: number; patch?: s
     ORDER BY ps.champion_id
   `)
     .all(...champParams) as { champion_id: number }[];
-  return { patches, champions: champRows.map((r) => r.champion_id) };
+
+  const queueWhere = ["1 = 1"];
+  const queueParams: any[] = [];
+  if (filters?.championId != null) {
+    queueWhere.push("ps.champion_id = ?");
+    queueParams.push(filters.championId);
+  }
+  if (filters?.patch) {
+    queueWhere.push("g.game_version = ?");
+    queueParams.push(filters.patch);
+  }
+  applyQueueFilter(queueWhere, queueParams, undefined);
+  const queueRows = db
+    .prepare(`
+    SELECT DISTINCT g.queue_id
+    FROM games g
+    JOIN player_stats ps ON g.game_id = ps.game_id
+    WHERE ${queueWhere.join(" AND ")}
+    ORDER BY g.queue_id
+  `)
+    .all(...queueParams) as { queue_id: number }[];
+
+  return {
+    patches,
+    champions: champRows.map((r) => r.champion_id),
+    queues: queueRows.map((r) => r.queue_id),
+  };
 }
 
 export function getMatchDetail(gameId: number): any {
@@ -466,13 +562,14 @@ export function getMatchDetail(gameId: number): any {
   };
 }
 
-export function getChampionStatsAll(patch?: string): any[] {
+export function getChampionStatsAll(patch?: string, queue?: number): any[] {
   const where = ["g.is_remake = 0"];
   const params: any[] = [];
   if (patch) {
     where.push("g.game_version = ?");
     params.push(patch);
   }
+  applyQueueFilter(where, params, queue);
   return db
     .prepare(`
     SELECT
@@ -500,7 +597,7 @@ export function getChampionStatsAll(patch?: string): any[] {
     .all(...params);
 }
 
-export function getAugmentStatsAll(championId?: number, patch?: string): any[] {
+export function getAugmentStatsAll(championId?: number, patch?: string, queue?: number): any[] {
   const where = ["g.is_remake = 0"];
   const params: any[] = [];
   if (championId !== undefined) {
@@ -511,6 +608,7 @@ export function getAugmentStatsAll(championId?: number, patch?: string): any[] {
     where.push("g.game_version = ?");
     params.push(patch);
   }
+  applyQueueFilter(where, params, queue);
   return db
     .prepare(`
     SELECT ga.augment_id, COUNT(*) as picks, SUM(ps.win) as wins
@@ -524,7 +622,11 @@ export function getAugmentStatsAll(championId?: number, patch?: string): any[] {
     .all(...params);
 }
 
-export function getDashboardData(filters?: { championId?: number; patch?: string }): any {
+export function getDashboardData(filters?: {
+  championId?: number;
+  patch?: string;
+  queue?: number;
+}): any {
   const where: string[] = ["g.is_remake = 0"];
   const params: any[] = [];
   if (filters?.championId != null) {
@@ -535,6 +637,7 @@ export function getDashboardData(filters?: { championId?: number; patch?: string
     where.push("g.game_version = ?");
     params.push(filters.patch);
   }
+  applyQueueFilter(where, params, filters?.queue);
   const whereSql = `WHERE ${where.join(" AND ")}`;
 
   const totals = db
@@ -614,7 +717,10 @@ export function getDashboardData(filters?: { championId?: number; patch?: string
   };
 }
 
-export function getAugmentStatsWithChampions(patch?: string): {
+export function getAugmentStatsWithChampions(
+  patch?: string,
+  queue?: number,
+): {
   augment_id: number;
   picks: number;
   wins: number;
@@ -626,6 +732,7 @@ export function getAugmentStatsWithChampions(patch?: string): {
     where.push("g.game_version = ?");
     params.push(patch);
   }
+  applyQueueFilter(where, params, queue);
   const augments = db
     .prepare(`
     SELECT ga.augment_id, COUNT(*) as picks, SUM(ps.win) as wins
@@ -669,6 +776,7 @@ export function getChampionMatchHistory(
   limit: number,
   offset: number,
   patch?: string,
+  queue?: number,
 ): { matches: any[]; total: number } {
   const where = ["ps.champion_id = ?"];
   const params: any[] = [championId];
@@ -676,6 +784,7 @@ export function getChampionMatchHistory(
     where.push("g.game_version = ?");
     params.push(patch);
   }
+  applyQueueFilter(where, params, queue);
   const whereSql = `WHERE ${where.join(" AND ")}`;
   const total = db
     .prepare(`
@@ -807,7 +916,7 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
     );
 
     // Augments
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= AUGMENT_SLOTS; i++) {
       const augId = s[`playerAugment${i}`];
       if (augId && augId > 0) {
         insertAugmentStmt.run(gameData.gameId, i, augId);
@@ -847,11 +956,14 @@ export function getTeammateStats(): any[] {
   const puuids = new Set(getAllPuuids());
   if (puuids.size === 0) return [];
 
+  const teammateWhere = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
+  const teammateParams: any[] = [];
+  applyQueueFilter(teammateWhere, teammateParams, undefined);
   const games = db
     .prepare(
-      "SELECT game_id, raw_json, game_creation FROM games WHERE raw_json IS NOT NULL AND is_remake = 0",
+      `SELECT g.game_id, g.raw_json, g.game_creation FROM games g WHERE ${teammateWhere.join(" AND ")}`,
     )
-    .all() as any[];
+    .all(...teammateParams) as any[];
 
   const playerMap = new Map<
     string,
@@ -981,12 +1093,20 @@ export function getTeammateStats(): any[] {
 export function getChampionItemStats(
   championId: number,
   patch?: string,
+  queue?: number,
 ): { item_id: number; picks: number; wins: number }[] {
-  const patchSql = patch ? " AND g.game_version = ?" : "";
+  const extraWhere: string[] = [];
+  const extraParams: any[] = [];
+  if (patch) {
+    extraWhere.push("g.game_version = ?");
+    extraParams.push(patch);
+  }
+  applyQueueFilter(extraWhere, extraParams, queue);
+  const extraSql = extraWhere.length > 0 ? ` AND ${extraWhere.join(" AND ")}` : "";
   const itemCols = ["item0", "item1", "item2", "item3", "item4", "item5", "item6"];
   const subquery = (col: string) =>
-    `SELECT ps.${col} as item_id, ps.win FROM player_stats ps JOIN games g ON ps.game_id = g.game_id WHERE ps.champion_id = ? AND ps.${col} IS NOT NULL AND ps.${col} > 0 AND g.is_remake = 0${patchSql}`;
-  const params = itemCols.flatMap(() => (patch ? [championId, patch] : [championId]));
+    `SELECT ps.${col} as item_id, ps.win FROM player_stats ps JOIN games g ON ps.game_id = g.game_id WHERE ps.champion_id = ? AND ps.${col} IS NOT NULL AND ps.${col} > 0 AND g.is_remake = 0${extraSql}`;
+  const params = itemCols.flatMap(() => [championId, ...extraParams]);
   return db
     .prepare(`
     SELECT item_id, COUNT(*) as picks, SUM(win) as wins
@@ -999,19 +1119,23 @@ export function getChampionItemStats(
     .all(...params) as any[];
 }
 
-export function getGlobalStats(patch?: string): {
+export function getGlobalStats(
+  patch?: string,
+  queue?: number,
+): {
   champions: { champion_id: number; games: number; wins: number }[];
   augments: { augment_id: number; picks: number; wins: number }[];
   totalParticipantSlots: number;
 } {
-  const where = ["raw_json IS NOT NULL", "is_remake = 0"];
+  const where = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
   const params: any[] = [];
   if (patch) {
-    where.push("game_version = ?");
+    where.push("g.game_version = ?");
     params.push(patch);
   }
+  applyQueueFilter(where, params, queue);
   const games = db
-    .prepare(`SELECT raw_json FROM games WHERE ${where.join(" AND ")}`)
+    .prepare(`SELECT g.raw_json FROM games g WHERE ${where.join(" AND ")}`)
     .all(...params) as any[];
 
   const championMap = new Map<number, { games: number; wins: number }>();
@@ -1043,7 +1167,7 @@ export function getGlobalStats(patch?: string): {
       champ.games++;
       if (win) champ.wins++;
 
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= AUGMENT_SLOTS; i++) {
         const augId = s[`playerAugment${i}`];
         if (augId && augId > 0) {
           if (!augmentMap.has(augId)) {

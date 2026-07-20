@@ -1,4 +1,7 @@
 import type { ParsedParticipant } from "./types";
+import { AUGMENT_SLOTS } from "../../shared/queues";
+
+const AUGMENT_SLOT_NUMBERS = Array.from({ length: AUGMENT_SLOTS }, (_, i) => i + 1);
 
 export function parseParticipants(raw: any, selfPuuids: string[] | null): ParsedParticipant[] {
   if (!raw?.participants) return [];
@@ -43,7 +46,9 @@ export function parseParticipants(raw: any, selfPuuids: string[] | null): Parsed
         s.item5 ?? 0,
         s.item6 ?? 0,
       ],
-      augments: [1, 2, 3, 4].map((n) => s[`playerAugment${n}`] ?? 0).filter((id: number) => id > 0),
+      augments: AUGMENT_SLOT_NUMBERS.map((n) => s[`playerAugment${n}`] ?? 0).filter(
+        (id: number) => id > 0,
+      ),
       win: !!s.win,
       isSelf: selfPuuids != null && puuid != null && selfPuuids.includes(puuid),
     };

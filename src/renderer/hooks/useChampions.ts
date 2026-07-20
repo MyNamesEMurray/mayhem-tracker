@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import type { ChampionData, AugmentData } from "../lib/types";
+import type { ChampionData, AugmentData, ItemData } from "../lib/types";
 
 let champCache: ChampionData | null = null;
 let augCache: AugmentData | null = null;
+const itemCaches = new Map<string, ItemData>();
+const itemPromises = new Map<string, Promise<ItemData>>();
 
 function hasData<T extends object>(obj: T | null): obj is T {
   return obj !== null && Object.keys(obj).length > 0;
@@ -32,6 +34,36 @@ export function useAugmentData() {
       setData(d);
     });
   }, []);
+
+  return data;
+}
+
+// Item data is keyed by patch so icons come from the same patch as the game
+export function useItemData(patch?: string | null) {
+  const key = patch || "latest";
+  const [data, setData] = useState<ItemData>(itemCaches.get(key) || {});
+
+  useEffect(() => {
+    const cached = itemCaches.get(key);
+    if (cached && Object.keys(cached).length > 0) {
+      setData(cached);
+      return;
+    }
+    let promise = itemPromises.get(key);
+    if (!promise) {
+      promise = window.api.getItemData(patch || undefined);
+      itemPromises.set(key, promise);
+    }
+    let active = true;
+    promise.then((d) => {
+      if (Object.keys(d).length > 0) itemCaches.set(key, d);
+      else itemPromises.delete(key);
+      if (active) setData(d);
+    });
+    return () => {
+      active = false;
+    };
+  }, [key]);
 
   return data;
 }

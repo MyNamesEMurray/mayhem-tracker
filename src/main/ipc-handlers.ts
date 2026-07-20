@@ -11,7 +11,13 @@ export function registerIpcHandlers(win: BrowserWindow) {
       _event,
       limit: number,
       offset: number,
-      filters?: { championId?: number; patch?: string; sort?: string; multikills?: string[] },
+      filters?: {
+        championId?: number;
+        patch?: string;
+        queue?: number;
+        sort?: string;
+        multikills?: string[];
+      },
     ) => {
       return db.getMatchHistory(limit, offset, filters);
     },
@@ -19,7 +25,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
 
   ipcMain.handle(
     "db:match-filters",
-    (_event, filters?: { championId?: number; patch?: string }) => {
+    (_event, filters?: { championId?: number; patch?: string; queue?: number }) => {
       return db.getMatchFilterOptions(filters);
     },
   );
@@ -28,26 +34,32 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return db.getMatchDetail(gameId);
   });
 
-  ipcMain.handle("db:champion-stats", (_event, patch?: string) => {
-    return db.getChampionStatsAll(patch);
-  });
-
-  ipcMain.handle("db:augment-stats", (_event, championId?: number, patch?: string) => {
-    return db.getAugmentStatsAll(championId, patch);
-  });
-
-  ipcMain.handle("db:augment-stats-detailed", (_event, patch?: string) => {
-    return db.getAugmentStatsWithChampions(patch);
-  });
-
-  ipcMain.handle("db:dashboard", (_event, filters?: { championId?: number; patch?: string }) => {
-    return db.getDashboardData(filters);
+  ipcMain.handle("db:champion-stats", (_event, patch?: string, queue?: number) => {
+    return db.getChampionStatsAll(patch, queue);
   });
 
   ipcMain.handle(
+    "db:augment-stats",
+    (_event, championId?: number, patch?: string, queue?: number) => {
+      return db.getAugmentStatsAll(championId, patch, queue);
+    },
+  );
+
+  ipcMain.handle("db:augment-stats-detailed", (_event, patch?: string, queue?: number) => {
+    return db.getAugmentStatsWithChampions(patch, queue);
+  });
+
+  ipcMain.handle(
+    "db:dashboard",
+    (_event, filters?: { championId?: number; patch?: string; queue?: number }) => {
+      return db.getDashboardData(filters);
+    },
+  );
+
+  ipcMain.handle(
     "db:champion-match-history",
-    (_event, championId: number, limit: number, offset: number, patch?: string) => {
-      return db.getChampionMatchHistory(championId, limit, offset, patch);
+    (_event, championId: number, limit: number, offset: number, patch?: string, queue?: number) => {
+      return db.getChampionMatchHistory(championId, limit, offset, patch, queue);
     },
   );
 
@@ -69,16 +81,27 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return dragon.getAugmentDataCache();
   });
 
-  ipcMain.handle("db:champion-item-stats", (_event, championId: number, patch?: string) => {
-    return db.getChampionItemStats(championId, patch);
+  ipcMain.handle("dragon:items", async (_event, patch?: string) => {
+    try {
+      return await dragon.loadItemData(patch);
+    } catch {
+      return {};
+    }
   });
+
+  ipcMain.handle(
+    "db:champion-item-stats",
+    (_event, championId: number, patch?: string, queue?: number) => {
+      return db.getChampionItemStats(championId, patch, queue);
+    },
+  );
 
   ipcMain.handle("db:teammate-stats", () => {
     return db.getTeammateStats();
   });
 
-  ipcMain.handle("db:global-stats", (_event, patch?: string) => {
-    return db.getGlobalStats(patch);
+  ipcMain.handle("db:global-stats", (_event, patch?: string, queue?: number) => {
+    return db.getGlobalStats(patch, queue);
   });
 
   ipcMain.handle("db:all-summoner-puuids", () => {

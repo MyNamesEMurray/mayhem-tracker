@@ -11,6 +11,7 @@ import ChampionIcon from "../components/ChampionIcon";
 import AugmentIcon from "../components/AugmentIcon";
 import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
+import QueueSelect from "../components/QueueSelect";
 
 type Tab = "champions" | "augments";
 type ChampSortKey = "games" | "winRate" | "pickRate" | "name";
@@ -90,7 +91,11 @@ export default function GlobalStats() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
   const [patch, setPatch] = useState<string | undefined>(undefined);
-  const { data, refetch } = useIpc<GlobalStats>(() => window.api.getGlobalStats(patch), [patch]);
+  const [queue, setQueue] = useState<number | undefined>(undefined);
+  const { data, refetch } = useIpc<GlobalStats>(
+    () => window.api.getGlobalStats(patch, queue),
+    [patch, queue],
+  );
   const [tab, setTab] = useState<Tab>("champions");
 
   // Champion tab state
@@ -239,6 +244,7 @@ export default function GlobalStats() {
             {totalGames} games &middot; {data.champions.length} champions &middot;{" "}
             {data.augments.length} augments
           </span>
+          <QueueSelect value={queue} onChange={setQueue} />
           <PatchSelect value={patch} onChange={setPatch} />
         </div>
       </div>

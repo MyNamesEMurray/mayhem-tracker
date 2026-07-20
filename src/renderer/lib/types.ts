@@ -5,6 +5,7 @@ export interface GameRecord {
   game_creation: number;
   game_duration: number;
   puuid?: string;
+  game_version?: string | null;
   raw_json?: string;
 }
 
@@ -41,6 +42,7 @@ export interface GameAugment {
 
 export interface MatchListItem {
   game_id: number;
+  queue_id: number;
   game_creation: number;
   game_duration: number;
   is_remake: number;
@@ -79,6 +81,7 @@ export type MultikillType = "doubles" | "triples" | "quadras" | "pentas";
 export interface MatchFilters {
   championId?: number;
   patch?: string;
+  queue?: number;
   sort?: MatchSort;
   multikills?: MultikillType[];
 }
@@ -86,6 +89,7 @@ export interface MatchFilters {
 export interface MatchFilterOptions {
   patches: string[];
   champions: number[];
+  queues: number[];
 }
 
 export interface MatchDetail {
@@ -165,6 +169,14 @@ export interface AugmentData {
   };
 }
 
+export interface ItemData {
+  [id: number]: {
+    name: string;
+    iconPath: string;
+    branch: string;
+  };
+}
+
 export interface TeammateStats {
   name: string;
   puuid: string | null;
@@ -216,28 +228,36 @@ export interface ElectronAPI {
     filters?: MatchFilters,
   ) => Promise<{ matches: MatchListItem[]; total: number }>;
   getMatchFilterOptions: (
-    filters?: Pick<MatchFilters, "championId" | "patch">,
+    filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
   ) => Promise<MatchFilterOptions>;
   getMatchDetail: (gameId: number) => Promise<MatchDetail>;
-  getChampionStats: (patch?: string) => Promise<ChampionStats[]>;
-  getAugmentStats: (championId?: number, patch?: string) => Promise<AugmentStats[]>;
-  getAugmentStatsDetailed: (patch?: string) => Promise<AugmentStatsDetailed[]>;
-  getDashboard: (filters?: Pick<MatchFilters, "championId" | "patch">) => Promise<DashboardData>;
+  getChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
+  getAugmentStats: (championId?: number, patch?: string, queue?: number) => Promise<AugmentStats[]>;
+  getAugmentStatsDetailed: (patch?: string, queue?: number) => Promise<AugmentStatsDetailed[]>;
+  getDashboard: (
+    filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
+  ) => Promise<DashboardData>;
   getChampionMatchHistory: (
     championId: number,
     limit: number,
     offset: number,
     patch?: string,
+    queue?: number,
   ) => Promise<{ matches: MatchListItem[]; total: number }>;
-  getChampionItemStats: (championId: number, patch?: string) => Promise<ItemStats[]>;
+  getChampionItemStats: (
+    championId: number,
+    patch?: string,
+    queue?: number,
+  ) => Promise<ItemStats[]>;
   getTeammateStats: () => Promise<TeammateStats[]>;
-  getGlobalStats: (patch?: string) => Promise<GlobalStats>;
+  getGlobalStats: (patch?: string, queue?: number) => Promise<GlobalStats>;
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
   refreshGames: () => Promise<{ newGames: number; totalGames: number }>;
   getLcuStatus: () => Promise<LcuStatus>;
   getChampionData: () => Promise<ChampionData>;
   getAugmentData: () => Promise<AugmentData>;
+  getItemData: (patch?: string) => Promise<ItemData>;
   onStatusChanged: (callback: (status: LcuStatus) => void) => () => void;
   onGamesUpdated: (callback: () => void) => () => void;
   getSetting: (key: string) => Promise<string | null>;

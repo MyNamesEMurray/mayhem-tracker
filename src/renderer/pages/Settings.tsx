@@ -2,14 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 
 export default function Settings() {
   const [minimizeToTray, setMinimizeToTray] = useState(true);
+  const [hideClassic, setHideClassic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [repairStatus, setRepairStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    window.api.getSetting("minimize_to_tray").then((val: string | null) => {
-      setMinimizeToTray(val !== "false");
+    Promise.all([
+      window.api.getSetting("minimize_to_tray"),
+      window.api.getSetting("hide_classic_games"),
+    ]).then(([tray, classic]) => {
+      setMinimizeToTray(tray !== "false");
+      setHideClassic(classic === "true");
       setLoading(false);
     });
   }, []);
@@ -19,6 +24,12 @@ export default function Settings() {
     setMinimizeToTray(next);
     await window.api.setSetting("minimize_to_tray", String(next));
   }, [minimizeToTray]);
+
+  const handleHideClassicToggle = useCallback(async () => {
+    const next = !hideClassic;
+    setHideClassic(next);
+    await window.api.setSetting("hide_classic_games", String(next));
+  }, [hideClassic]);
 
   const handleExport = useCallback(async () => {
     setExportStatus(null);
@@ -89,6 +100,35 @@ export default function Settings() {
             <span
               className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
                 minimizeToTray ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
+        <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Stats</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-lol-text-bright">Hide ARAM Mayhem Classic games</p>
+            <p className="text-xs text-lol-text mt-0.5">
+              Exclude games from the limited-time Mayhem Classic queue from all stats and match
+              history. Games are still recorded either way.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={hideClassic}
+            onClick={handleHideClassicToggle}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+              hideClassic ? "bg-lol-gold" : "bg-lol-border"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                hideClassic ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>

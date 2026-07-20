@@ -8,6 +8,7 @@ import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../components/WinRateBar";
 import MultikillBadge from "../components/MultikillBadge";
 import PatchSelect from "../components/PatchSelect";
+import QueueSelect from "../components/QueueSelect";
 import { formatKDA, formatDuration, formatTimeAgo } from "../lib/format";
 import { scoreColor } from "../../shared/opScore";
 
@@ -22,17 +23,27 @@ type SortKey =
   | "multikills";
 type SortDir = "asc" | "desc";
 
-function ChampionExpanded({ championId, patch }: { championId: number; patch?: string }) {
+function ChampionExpanded({
+  championId,
+  patch,
+  queue,
+}: {
+  championId: number;
+  patch?: string;
+  queue?: number;
+}) {
   const augData = useAugmentData();
   const [augStats, setAugStats] = useState<AugmentStats[] | null>(null);
   const [itemStats, setItemStats] = useState<ItemStats[] | null>(null);
   const [matches, setMatches] = useState<MatchListItem[] | null>(null);
 
   useEffect(() => {
-    window.api.getAugmentStats(championId, patch).then(setAugStats);
-    window.api.getChampionItemStats(championId, patch).then(setItemStats);
-    window.api.getChampionMatchHistory(championId, 5, 0, patch).then((r) => setMatches(r.matches));
-  }, [championId, patch]);
+    window.api.getAugmentStats(championId, patch, queue).then(setAugStats);
+    window.api.getChampionItemStats(championId, patch, queue).then(setItemStats);
+    window.api
+      .getChampionMatchHistory(championId, 5, 0, patch, queue)
+      .then((r) => setMatches(r.matches));
+  }, [championId, patch, queue]);
 
   if (!augStats || !itemStats || !matches) {
     return (
@@ -81,7 +92,7 @@ function ChampionExpanded({ championId, patch }: { championId: number; patch?: s
               topItems.map((item) => (
                 <div key={item.item_id} className="flex items-center gap-2 h-7">
                   <div className="shrink-0">
-                    <ItemIcon itemId={item.item_id} size={24} />
+                    <ItemIcon itemId={item.item_id} size={24} patch={patch} />
                   </div>
                   <span className="text-[11px] text-lol-text shrink-0 ml-auto">{item.picks}x</span>
                   <div className="shrink-0">
@@ -143,9 +154,10 @@ function ChampionExpanded({ championId, patch }: { championId: number; patch?: s
 export default function Champions() {
   const champData = useChampionData();
   const [patch, setPatch] = useState<string | undefined>(undefined);
+  const [queue, setQueue] = useState<number | undefined>(undefined);
   const { data, refetch } = useIpc<ChampionStats[]>(
-    () => window.api.getChampionStats(patch),
-    [patch],
+    () => window.api.getChampionStats(patch, queue),
+    [patch, queue],
   );
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("games");
@@ -213,6 +225,7 @@ export default function Champions() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-lol-text-bright">Champions</h1>
         <div className="flex items-center gap-2">
+          <QueueSelect value={queue} onChange={setQueue} />
           <PatchSelect value={patch} onChange={setPatch} />
           <div className="relative">
             <input
@@ -315,7 +328,7 @@ export default function Champions() {
                 </tr>
                 {expandedId === c.champion_id && (
                   <tr className="border-t border-lol-border/30 bg-lol-dark/30">
-                    <ChampionExpanded championId={c.champion_id} patch={patch} />
+                    <ChampionExpanded championId={c.champion_id} patch={patch} queue={queue} />
                   </tr>
                 )}
               </Fragment>
