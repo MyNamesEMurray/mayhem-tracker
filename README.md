@@ -2,6 +2,8 @@
 
 Desktop app for tracking ARAM Mayhem match history in League of Legends. Connects to the League Client (LCU) to automatically record matches and display stats.
 
+<img width="1306" height="820" alt="image" src="https://github.com/user-attachments/assets/5fc0ad6d-5f68-4cf3-a775-fb3e8f379ac9" />
+
 ## Features
 
 - Automatic match detection via League Client API
