@@ -36,6 +36,20 @@ export function SwordsIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function HourglassIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      {/* front diagonal: unbroken from top-left to bottom-right */}
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L16.414 16.414a2 2 0 0 1 .586 1.414V22" />
+      {/* back diagonal: gap where it passes behind the front one */}
+      <path d="M17 2v4.172a2 2 0 0 1-.586 1.414L15 9" />
+      <path d="M9 15 7.586 16.414A2 2 0 0 0 7 18.828V22" />
+    </Icon>
+  );
+}
+
 export function TrophyIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
