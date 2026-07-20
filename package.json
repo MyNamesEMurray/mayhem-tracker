@@ -2,6 +2,7 @@
   "name": "mayhem-tracker",
   "version": "1.2.0",
   "description": "ARAM Mayhem match history tracker",
+  "license": "MIT",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
