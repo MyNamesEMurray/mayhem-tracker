@@ -1,13 +1,24 @@
 import { NavLink } from "react-router-dom";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, type ComponentType, type SVGProps } from "react";
 import { useLcuStatus } from "../hooks/useLcuStatus";
+import {
+  SwordsIcon,
+  TrophyIcon,
+  CrosshairIcon,
+  UsersIcon,
+  GlobeIcon,
+  SettingsIcon,
+  RefreshIcon,
+} from "./icons";
 
-const links = [
-  { to: "/", label: "Match History", icon: "⚔️" },
-  { to: "/champions", label: "Champions", icon: "🏆" },
-  { to: "/augments", label: "Augments", icon: "🎯" },
-  { to: "/friends", label: "Friends", icon: "👥" },
-  { to: "/global", label: "Total Stats", icon: "🌐" },
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+const links: { to: string; label: string; icon: IconComponent }[] = [
+  { to: "/", label: "Match History", icon: SwordsIcon },
+  { to: "/champions", label: "Champions", icon: TrophyIcon },
+  { to: "/augments", label: "Augments", icon: CrosshairIcon },
+  { to: "/friends", label: "Friends", icon: UsersIcon },
+  { to: "/global", label: "Total Stats", icon: GlobeIcon },
 ];
 
 const statusColors = {
@@ -21,6 +32,25 @@ const statusLabels = {
   connecting: "Connecting...",
   disconnected: "Disconnected",
 };
+
+function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: IconComponent }) {
+  return (
+    <NavLink
+      to={to}
+      end={to === "/"}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+          isActive
+            ? "bg-lol-gold/10 text-lol-gold"
+            : "text-lol-text hover:bg-white/5 hover:text-lol-text-bright"
+        }`
+      }
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      <span>{label}</span>
+    </NavLink>
+  );
+}
 
 export default function Sidebar() {
   const status = useLcuStatus();
@@ -58,45 +88,21 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <nav className="w-56 bg-lol-card border-r border-lol-border flex flex-col shrink-0">
+    <nav className="w-56 bg-lol-card/60 border-r border-lol-border/60 flex flex-col shrink-0">
       <div className="titlebar-drag h-9 flex items-center px-4">
-        <span className="text-lol-gold font-bold text-sm titlebar-no-drag">MAYHEM TRACKER</span>
+        <span className="text-lol-gold font-bold text-[11px] tracking-[0.2em] titlebar-no-drag">
+          MAYHEM TRACKER
+        </span>
       </div>
-      <div className="flex flex-col gap-1 p-3 mt-2 flex-1">
-        {links.map(({ to, label, icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/"}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? "bg-lol-gold/15 text-lol-gold"
-                  : "text-lol-text hover:bg-lol-card-hover hover:text-lol-text-bright"
-              }`
-            }
-          >
-            <span>{icon}</span>
-            <span>{label}</span>
-          </NavLink>
+      <div className="flex flex-col gap-0.5 p-3 mt-2 flex-1">
+        {links.map((link) => (
+          <NavItem key={link.to} {...link} />
         ))}
       </div>
       <div className="px-3 pb-1">
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-              isActive
-                ? "bg-lol-gold/15 text-lol-gold"
-                : "text-lol-text hover:bg-lol-card-hover hover:text-lol-text-bright"
-            }`
-          }
-        >
-          <span>{"\u2699\uFE0F"}</span>
-          <span>Settings</span>
-        </NavLink>
+        <NavItem to="/settings" label="Settings" icon={SettingsIcon} />
       </div>
-      <div className="p-3 border-t border-lol-border flex flex-col gap-2">
+      <div className="p-3 border-t border-lol-border/60 flex flex-col gap-2">
         {lastResult && <span className="text-xs text-lol-text truncate">{lastResult}</span>}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -106,9 +112,10 @@ export default function Sidebar() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="text-xs px-3 py-1 rounded bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-lol-gold/25 bg-lol-gold/10 text-lol-gold hover:bg-lol-gold/20 disabled:opacity-50 transition-colors"
           >
-            {refreshing ? "Refreshing..." : "Refresh"}
+            <RefreshIcon className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Syncing..." : "Sync"}
           </button>
         </div>
         <div className="flex items-center justify-between mt-1">

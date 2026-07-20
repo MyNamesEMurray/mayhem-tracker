@@ -72,6 +72,20 @@ const api = {
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
 
   openUrl: (url: string) => ipcRenderer.invoke("app:open-url", url),
+
+  minimizeWindow: () => ipcRenderer.invoke("window:minimize"),
+
+  toggleMaximizeWindow: () => ipcRenderer.invoke("window:toggle-maximize"),
+
+  closeWindow: () => ipcRenderer.invoke("window:close"),
+
+  isWindowMaximized: () => ipcRenderer.invoke("window:is-maximized"),
+
+  onMaximizedChanged: (callback: (maximized: boolean) => void) => {
+    const handler = (_event: any, maximized: boolean) => callback(maximized);
+    ipcRenderer.on("window:maximized-changed", handler);
+    return () => ipcRenderer.removeListener("window:maximized-changed", handler);
+  },
 };
 
 contextBridge.exposeInMainWorld("api", api);

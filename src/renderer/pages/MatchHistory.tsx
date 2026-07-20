@@ -29,8 +29,7 @@ const SORT_OPTIONS: { value: MatchSort; label: string }[] = [
   { value: "duration", label: "Longest Game" },
 ];
 
-const SELECT_CLASS =
-  "bg-lol-card border border-lol-border rounded-lg text-sm text-lol-text-bright px-2 py-1.5 focus:outline-none focus:border-lol-gold/50";
+const SELECT_CLASS = "select";
 
 export default function MatchHistory() {
   const [championFilter, setChampionFilter] = useState<number | undefined>(undefined);
@@ -167,8 +166,10 @@ export default function MatchHistory() {
             value={`${avgKills} / ${avgDeaths} / ${avgAssists}`}
             subtext={`${dashboard.totalKills} / ${dashboard.totalDeaths} / ${dashboard.totalAssists} total`}
           />
-          <div className="bg-lol-card rounded-xl border border-lol-border p-4">
-            <div className="text-xs text-lol-text uppercase tracking-wider mb-1">Multikills</div>
+          <div className="bg-lol-card rounded-xl border border-lol-border/60 p-4">
+            <div className="text-[11px] text-lol-text uppercase tracking-wider mb-1">
+              Multikills
+            </div>
             <div className="grid grid-cols-4 gap-1">
               {(
                 [
@@ -274,7 +275,7 @@ export default function MatchHistory() {
       </div>
 
       {matches.length === 0 && !loading && (
-        <div className="bg-lol-card rounded-xl border border-lol-border p-8 text-center text-lol-text">
+        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-lol-text">
           {championFilter !== undefined || patchFilter !== undefined || multikillFilter.length > 0
             ? "No games match the current filters."
             : "No ARAM Mayhem games found. Connect to the League client and click Refresh."}
@@ -369,18 +370,21 @@ function GameRow({
   const kda = kdaRatio(match.kills, match.deaths, match.assists);
   const augmentIds = parseAugmentIds(match.augment_ids);
 
+  const accent = isRemake ? "bg-white/25" : isWin ? "bg-lol-win" : "bg-lol-loss";
+  const tint = isRemake ? "from-white/[0.02]" : isWin ? "from-lol-win/10" : "from-lol-loss/10";
+
   return (
     <div>
       <button
         onClick={onToggle}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors text-left ${
-          isRemake
-            ? "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"
-            : isWin
-              ? "bg-lol-win/5 border-lol-win/20 hover:bg-lol-win/10"
-              : "bg-lol-loss/5 border-lol-loss/20 hover:bg-lol-loss/10"
+        className={`relative overflow-hidden w-full flex items-center gap-3 pl-4 pr-3 py-2.5 border border-lol-border/60 bg-lol-card hover:bg-lol-card-hover transition-colors text-left ${
+          expanded ? "rounded-t-lg" : "rounded-lg"
         }`}
       >
+        <span className={`absolute left-0 inset-y-0 w-[3px] ${accent}`} />
+        <span
+          className={`absolute inset-0 pointer-events-none bg-gradient-to-r ${tint} via-transparent to-transparent`}
+        />
         <div
           className={`text-xs font-bold shrink-0 ${isRemake ? "text-gray-500 w-8" : isWin ? "text-lol-win w-8" : "text-lol-loss w-8"}`}
         >
@@ -432,19 +436,19 @@ function GameRow({
           <StatBar
             value={match.total_damage_dealt}
             max={match.game_max_dmg}
-            color="bg-red-500/80"
+            color="bg-red-400/50"
             label="DMG"
           />
           <StatBar
             value={match.total_damage_taken}
             max={match.game_max_taken}
-            color="bg-sky-500/80"
+            color="bg-sky-400/50"
             label="TKN"
           />
           <StatBar
             value={match.total_heal}
             max={match.game_max_heal}
-            color="bg-emerald-500/80"
+            color="bg-emerald-400/50"
             label="HEL"
           />
         </div>
@@ -478,7 +482,7 @@ function GameRow({
       </button>
 
       {expanded && (
-        <div className="mb-1 bg-lol-card rounded-b-lg border border-t-0 border-lol-border p-3">
+        <div className="mb-1 bg-lol-card rounded-b-lg border border-t-0 border-lol-border/60 p-3">
           {detailLoading ? (
             <div className="text-sm text-lol-text text-center py-4">Loading...</div>
           ) : detail ? (
@@ -684,11 +688,11 @@ function PlayerRow({
       <ScoreboardBar
         value={p.totalDamageDealtToChampions}
         max={maxStats.dmg}
-        color="bg-red-500/80"
+        color="bg-red-400/50"
       />
 
       {/* Damage taken */}
-      <ScoreboardBar value={p.totalDamageTaken} max={maxStats.taken} color="bg-sky-500/80" />
+      <ScoreboardBar value={p.totalDamageTaken} max={maxStats.taken} color="bg-sky-400/50" />
 
       {/* Gold */}
       <div className="text-right text-[11px] text-lol-gold">

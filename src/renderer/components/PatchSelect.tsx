@@ -28,7 +28,7 @@ export default function PatchSelect({
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
-      className="bg-lol-card border border-lol-border rounded-lg text-sm text-lol-text-bright px-2 py-1.5 focus:outline-none focus:border-lol-gold/50"
+      className="select"
     >
       <option value="">All Patches</option>
       {patches.map((p) => (

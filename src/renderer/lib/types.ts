@@ -254,6 +254,11 @@ export interface ElectronAPI {
     error?: string;
   }>;
   openUrl: (url: string) => Promise<void>;
+  minimizeWindow: () => Promise<void>;
+  toggleMaximizeWindow: () => Promise<void>;
+  closeWindow: () => Promise<void>;
+  isWindowMaximized: () => Promise<boolean>;
+  onMaximizedChanged: (callback: (maximized: boolean) => void) => () => void;
 }
 
 declare global {

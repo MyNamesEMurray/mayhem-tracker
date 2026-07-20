@@ -166,7 +166,7 @@ export default function Augments() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search augment..."
-            className="bg-lol-card border border-lol-border rounded-lg px-3 py-1 text-xs text-lol-text-bright placeholder:text-lol-text/50 focus:outline-none focus:border-lol-gold/50 w-48 pr-7"
+            className="input w-48 pr-7"
           />
           {search && (
             <button
@@ -190,7 +190,7 @@ export default function Augments() {
         </div>
       </div>
 
-      <div className="bg-lol-card rounded-xl border border-lol-border overflow-hidden">
+      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>

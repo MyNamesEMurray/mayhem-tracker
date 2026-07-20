@@ -105,10 +105,10 @@ function ChampionExpanded({ championId, patch }: { championId: number; patch?: s
                   key={m.game_id}
                   className={`flex items-center gap-2 px-2 h-7 rounded text-xs ${
                     m.is_remake
-                      ? "bg-white/[0.03] border border-white/10"
+                      ? "bg-white/[0.03]"
                       : m.win
-                        ? "bg-lol-win/5 border border-lol-win/20"
-                        : "bg-lol-loss/5 border border-lol-loss/20"
+                        ? "bg-lol-win/[0.07]"
+                        : "bg-lol-loss/[0.07]"
                   }`}
                 >
                   <span
@@ -220,7 +220,7 @@ export default function Champions() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search champion..."
-              className="bg-lol-card border border-lol-border rounded-lg px-3 py-1.5 text-sm text-lol-text-bright placeholder:text-lol-text/50 focus:outline-none focus:border-lol-gold/50 w-48 pr-7"
+              className="input w-48 pr-7"
             />
             {search && (
               <button
@@ -245,7 +245,7 @@ export default function Champions() {
         </div>
       </div>
 
-      <div className="bg-lol-card rounded-xl border border-lol-border overflow-hidden">
+      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
