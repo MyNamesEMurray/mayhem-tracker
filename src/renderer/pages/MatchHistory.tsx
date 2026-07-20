@@ -406,7 +406,11 @@ function GameRow({
   const augmentIds = parseAugmentIds(match.augment_ids);
 
   const accent = isRemake ? "bg-white/25" : isWin ? "bg-lol-win" : "bg-lol-loss";
-  const tint = isRemake ? "from-white/[0.02]" : isWin ? "from-lol-win/10" : "from-lol-loss/10";
+  const tint = isRemake
+    ? "from-white/[0.03] to-white/[0.01]"
+    : isWin
+      ? "from-lol-win/12 to-lol-win/[0.04]"
+      : "from-lol-loss/12 to-lol-loss/[0.04]";
 
   return (
     <div>
@@ -417,9 +421,7 @@ function GameRow({
         }`}
       >
         <span className={`absolute left-0 inset-y-0 w-[3px] ${accent}`} />
-        <span
-          className={`absolute inset-0 pointer-events-none bg-gradient-to-r ${tint} via-transparent to-transparent`}
-        />
+        <span className={`absolute inset-0 pointer-events-none bg-gradient-to-r ${tint}`} />
         <div
           className={`text-xs font-bold shrink-0 ${isRemake ? "text-gray-500 w-8" : isWin ? "text-lol-win w-8" : "text-lol-loss w-8"}`}
         >
