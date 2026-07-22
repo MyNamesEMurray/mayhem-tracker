@@ -180,7 +180,7 @@ export default function MatchHistory() {
           <StatCard
             label="Avg KDA"
             value={`${avgKills} / ${avgDeaths} / ${avgAssists}`}
-            subtext={`${dashboard.totalKills} / ${dashboard.totalDeaths} / ${dashboard.totalAssists} total`}
+            subtext={`${kdaRatio(dashboard.totalKills, dashboard.totalDeaths, dashboard.totalAssists)} KDA · ${dashboard.totalKills} / ${dashboard.totalDeaths} / ${dashboard.totalAssists} total`}
           />
           <div className="bg-lol-card rounded-xl border border-lol-border/60 p-4">
             <div className="text-[11px] text-lol-text uppercase tracking-wider mb-1">
