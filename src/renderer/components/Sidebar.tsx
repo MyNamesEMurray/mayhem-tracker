@@ -1,6 +1,8 @@
 import { NavLink } from "react-router-dom";
 import { useState, useCallback, useEffect, type ComponentType, type SVGProps } from "react";
 import { useLcuStatus } from "../hooks/useLcuStatus";
+import type { UpdateInfo } from "../lib/types";
+import UpdateDialog from "./UpdateDialog";
 import {
   HourglassIcon,
   SwordsIcon,
@@ -58,11 +60,8 @@ export default function Sidebar() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
   const [version, setVersion] = useState("");
-  const [update, setUpdate] = useState<{
-    hasUpdate: boolean;
-    latest?: string;
-    url?: string;
-  } | null>(null);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
 
   useEffect(() => {
     window.api.getVersion().then(setVersion);
@@ -140,7 +139,7 @@ export default function Sidebar() {
           </button>
           {update?.hasUpdate && (
             <button
-              onClick={() => window.api.openUrl(update.url!)}
+              onClick={() => setShowUpdateDialog(true)}
               className="text-[10px] text-lol-gold hover:text-lol-gold-light transition-colors cursor-pointer"
             >
               v{update.latest} available
@@ -148,6 +147,9 @@ export default function Sidebar() {
           )}
         </div>
       </div>
+      {showUpdateDialog && update && (
+        <UpdateDialog update={update} onClose={() => setShowUpdateDialog(false)} />
+      )}
     </nav>
   );
 }

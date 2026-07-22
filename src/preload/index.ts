@@ -86,6 +86,14 @@ const api = {
 
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
 
+  downloadUpdate: (assetUrl: string) => ipcRenderer.invoke("app:download-update", assetUrl),
+
+  onUpdateProgress: (callback: (percent: number) => void) => {
+    const handler = (_event: any, percent: number) => callback(percent);
+    ipcRenderer.on("update:progress", handler);
+    return () => ipcRenderer.removeListener("update:progress", handler);
+  },
+
   openUrl: (url: string) => ipcRenderer.invoke("app:open-url", url),
 
   minimizeWindow: () => ipcRenderer.invoke("window:minimize"),

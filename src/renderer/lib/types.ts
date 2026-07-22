@@ -221,6 +221,16 @@ export interface ParsedParticipant {
 
 export type LcuStatus = "disconnected" | "connecting" | "connected";
 
+export interface UpdateInfo {
+  hasUpdate: boolean;
+  latest?: string;
+  current?: string;
+  url?: string;
+  assetUrl?: string;
+  assetSize?: number;
+  error?: string;
+}
+
 export interface ElectronAPI {
   getMatchHistory: (
     limit: number,
@@ -266,13 +276,9 @@ export interface ElectronAPI {
   importData: () => Promise<{ success: boolean; imported?: number }>;
   repairPuuids: () => Promise<{ repairedGames: number; discoveredAccounts: number }>;
   getVersion: () => Promise<string>;
-  checkForUpdate: () => Promise<{
-    hasUpdate: boolean;
-    latest?: string;
-    current?: string;
-    url?: string;
-    error?: string;
-  }>;
+  checkForUpdate: () => Promise<UpdateInfo>;
+  downloadUpdate: (assetUrl: string) => Promise<{ success: boolean; error?: string }>;
+  onUpdateProgress: (callback: (percent: number) => void) => () => void;
   openUrl: (url: string) => Promise<void>;
   minimizeWindow: () => Promise<void>;
   toggleMaximizeWindow: () => Promise<void>;

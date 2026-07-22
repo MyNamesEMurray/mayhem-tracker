@@ -52,6 +52,7 @@
     "win": {
       "target": "portable",
       "icon": "assets/icon.png",
+      "artifactName": "MayhemTracker.exe",
       "signAndEditExecutable": false
     },
     "asarUnpack": [
