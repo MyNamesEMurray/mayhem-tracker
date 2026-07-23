@@ -46,6 +46,7 @@ export interface MatchListItem {
   game_creation: number;
   game_duration: number;
   is_remake: number;
+  favorite: number;
   champion_id: number;
   win: number;
   kills: number;
@@ -241,6 +242,7 @@ export interface ElectronAPI {
     filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
   ) => Promise<MatchFilterOptions>;
   getMatchDetail: (gameId: number) => Promise<MatchDetail>;
+  toggleFavorite: (gameId: number) => Promise<boolean>;
   getChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
   getAugmentStats: (championId?: number, patch?: string, queue?: number) => Promise<AugmentStats[]>;
   getAugmentStatsDetailed: (patch?: string, queue?: number) => Promise<AugmentStatsDetailed[]>;

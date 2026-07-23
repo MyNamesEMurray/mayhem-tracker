@@ -35,6 +35,10 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return db.getMatchDetail(gameId);
   });
 
+  ipcMain.handle("db:toggle-favorite", (_event, gameId: number) => {
+    return db.toggleFavorite(gameId);
+  });
+
   ipcMain.handle("db:champion-stats", (_event, patch?: string, queue?: number) => {
     return db.getChampionStatsAll(patch, queue);
   });

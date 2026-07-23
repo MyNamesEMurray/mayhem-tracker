@@ -18,6 +18,8 @@ const api = {
 
   getMatchDetail: (gameId: number) => ipcRenderer.invoke("db:match-detail", gameId),
 
+  toggleFavorite: (gameId: number) => ipcRenderer.invoke("db:toggle-favorite", gameId),
+
   getChampionStats: (patch?: string, queue?: number) =>
     ipcRenderer.invoke("db:champion-stats", patch, queue),
 

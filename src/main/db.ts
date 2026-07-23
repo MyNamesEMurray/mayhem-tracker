@@ -197,6 +197,13 @@ function createTables() {
     // Column already exists
   }
 
+  // Migration: add favorite column for pinning games to the top of match history
+  try {
+    db.exec("ALTER TABLE games ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0");
+  } catch {
+    // Column already exists
+  }
+
   // Migration: add performance score columns to player_stats
   try {
     db.exec("ALTER TABLE player_stats ADD COLUMN score REAL");
@@ -447,7 +454,7 @@ export function getMatchHistory(
     .get(...params) as any;
   const rows = db
     .prepare(`
-    SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.puuid, g.game_version, g.raw_json,
+    SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.favorite, g.puuid, g.game_version, g.raw_json,
            ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
            ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
            ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
@@ -457,7 +464,7 @@ export function getMatchHistory(
     FROM games g
     JOIN player_stats ps ON g.game_id = ps.game_id
     ${whereSql}
-    ORDER BY ${orderBy}
+    ORDER BY g.favorite DESC, ${orderBy}
     LIMIT ? OFFSET ?
   `)
     .all(...params, limit, offset);
@@ -796,7 +803,7 @@ export function getChampionMatchHistory(
     .get(...params) as any;
   const rows = db
     .prepare(`
-    SELECT g.game_id, g.game_creation, g.game_duration, g.is_remake, g.puuid, g.raw_json,
+    SELECT g.game_id, g.game_creation, g.game_duration, g.is_remake, g.favorite, g.puuid, g.raw_json,
            ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
            ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
            ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
@@ -816,6 +823,14 @@ export function getChampionMatchHistory(
     return { ...match, ...maxStats };
   });
   return { matches, total: total.count };
+}
+
+export function toggleFavorite(gameId: number): boolean {
+  db.prepare("UPDATE games SET favorite = 1 - favorite WHERE game_id = ?").run(gameId);
+  const row = db.prepare("SELECT favorite FROM games WHERE game_id = ?").get(gameId) as
+    | { favorite: number }
+    | undefined;
+  return !!row?.favorite;
 }
 
 export function gameExists(gameId: number): boolean {

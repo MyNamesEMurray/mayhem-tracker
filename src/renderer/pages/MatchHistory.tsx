@@ -38,7 +38,7 @@ export default function MatchHistory() {
   const [queueFilter, setQueueFilter] = useState<number | undefined>(undefined);
   const [multikillFilter, setMultikillFilter] = useState<MultikillType[]>([]);
   const [sort, setSort] = useState<MatchSort>("newest");
-  const { matches, loading, hasMore, loadMore } = useMatches({
+  const { matches, loading, hasMore, loadMore, reload } = useMatches({
     championId: championFilter,
     patch: patchFilter,
     queue: queueFilter,
@@ -67,6 +67,11 @@ export default function MatchHistory() {
     queues: [],
   });
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    match: MatchListItem;
+  } | null>(null);
   const [detail, setDetail] = useState<MatchDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [puuids, setPuuids] = useState<string[] | null>(null);
@@ -146,6 +151,15 @@ export default function MatchHistory() {
       }
     },
     [expandedId],
+  );
+
+  const handleToggleFavorite = useCallback(
+    async (match: MatchListItem) => {
+      setContextMenu(null);
+      await window.api.toggleFavorite(match.game_id);
+      reload();
+    },
+    [reload],
   );
 
   const avgKills =
@@ -328,6 +342,10 @@ export default function MatchHistory() {
             detailLoading={expandedId === m.game_id && detailLoading}
             puuids={puuids}
             onToggle={() => toggleExpand(m.game_id)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu({ x: e.clientX, y: e.clientY, match: m });
+            }}
           />
         ))}
       </div>
@@ -336,6 +354,69 @@ export default function MatchHistory() {
       {loading && matches.length > 0 && (
         <div className="text-center py-3 text-sm text-lol-text">Loading...</div>
       )}
+
+      {contextMenu && (
+        <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)}>
+          <button
+            onClick={() => handleToggleFavorite(contextMenu.match)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-lol-text-bright hover:bg-white/5 text-left"
+          >
+            <span className={contextMenu.match.favorite ? "text-amber-400" : "text-lol-text"}>
+              {contextMenu.match.favorite ? "★" : "☆"}
+            </span>
+            {contextMenu.match.favorite ? "Remove from Favorites" : "Add to Favorites"}
+          </button>
+        </ContextMenu>
+      )}
+    </div>
+  );
+}
+
+function ContextMenu({
+  x,
+  y,
+  onClose,
+  children,
+}: {
+  x: number;
+  y: number;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("click", onClose);
+    window.addEventListener("contextmenu", onClose, true);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("blur", onClose);
+    return () => {
+      window.removeEventListener("click", onClose);
+      window.removeEventListener("contextmenu", onClose, true);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onClose);
+    };
+  }, [onClose]);
+
+  // Keep the menu inside the viewport
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.right > window.innerWidth) el.style.left = `${x - rect.width}px`;
+    if (rect.bottom > window.innerHeight) el.style.top = `${y - rect.height}px`;
+  }, [x, y]);
+
+  return (
+    <div
+      ref={ref}
+      style={{ left: x, top: y }}
+      className="fixed z-50 min-w-44 py-1 bg-lol-card border border-lol-border rounded-md shadow-lg shadow-black/40"
+    >
+      {children}
     </div>
   );
 }
@@ -348,6 +429,7 @@ interface GameRowProps {
   detailLoading: boolean;
   puuids: string[] | null;
   onToggle: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }
 
 function parseAugmentIds(raw: string | null): number[] {
@@ -399,13 +481,21 @@ function GameRow({
   detailLoading,
   puuids,
   onToggle,
+  onContextMenu,
 }: GameRowProps) {
   const isRemake = !!match.is_remake;
   const isWin = !!match.win;
+  const isFavorite = !!match.favorite;
   const kda = kdaRatio(match.kills, match.deaths, match.assists);
   const augmentIds = parseAugmentIds(match.augment_ids);
 
-  const accent = isRemake ? "bg-white/25" : isWin ? "bg-lol-win" : "bg-lol-loss";
+  const accent = isFavorite
+    ? "bg-amber-400"
+    : isRemake
+      ? "bg-white/25"
+      : isWin
+        ? "bg-lol-win"
+        : "bg-lol-loss";
   const tint = isRemake
     ? "from-white/[0.03] to-white/[0.01]"
     : isWin
@@ -416,6 +506,7 @@ function GameRow({
     <div>
       <button
         onClick={onToggle}
+        onContextMenu={onContextMenu}
         className={`relative overflow-hidden w-full flex items-center gap-3 pl-4 pr-3 py-2.5 border border-lol-border/60 bg-lol-card hover:bg-lol-card-hover transition-colors text-left ${
           expanded ? "rounded-t-lg" : "rounded-lg"
         }`}
