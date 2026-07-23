@@ -263,7 +263,7 @@ export interface ElectronAPI {
   getGlobalStats: (patch?: string, queue?: number) => Promise<GlobalStats>;
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
-  refreshGames: () => Promise<{ newGames: number; totalGames: number }>;
+  refreshGames: () => Promise<{ newGames: number; totalGames: number } | { error: string }>;
   getLcuStatus: () => Promise<LcuStatus>;
   getChampionData: () => Promise<ChampionData>;
   getAugmentData: () => Promise<AugmentData>;

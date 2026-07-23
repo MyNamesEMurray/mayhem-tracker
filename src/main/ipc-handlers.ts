@@ -65,7 +65,13 @@ export function registerIpcHandlers(win: BrowserWindow) {
   );
 
   ipcMain.handle("lcu:refresh", async () => {
-    return lcu.fetchNewGames(win);
+    // Return errors as data instead of throwing, so the renderer gets a clean
+    // message rather than Electron's "Error invoking remote method" wrapper
+    try {
+      return await lcu.fetchNewGames(win);
+    } catch (err) {
+      return { error: lcu.friendlyErrorMessage(err) };
+    }
   });
 
   ipcMain.handle("lcu:status", () => {

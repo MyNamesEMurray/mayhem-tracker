@@ -79,9 +79,20 @@ export default function Sidebar() {
     setLastResult(null);
     try {
       const result = await window.api.refreshGames();
-      setLastResult(result.newGames > 0 ? `Found ${result.newGames} new game(s)` : "No new games");
+      if ("error" in result) {
+        setLastResult(`Error: ${result.error}`);
+      } else {
+        setLastResult(
+          result.newGames > 0 ? `Found ${result.newGames} new game(s)` : "No new games",
+        );
+      }
     } catch (err: any) {
-      setLastResult(`Error: ${err.message}`);
+      // Strip Electron's IPC wrapper so only the underlying message shows
+      const message = String(err?.message ?? err).replace(
+        /^Error invoking remote method '[^']+': (Error: )?/,
+        "",
+      );
+      setLastResult(`Error: ${message}`);
     } finally {
       setRefreshing(false);
     }
@@ -111,7 +122,11 @@ export default function Sidebar() {
         <NavItem to="/settings" label="Settings" icon={SettingsIcon} />
       </div>
       <div className="p-3 border-t border-lol-border/60 flex flex-col gap-2">
-        {lastResult && <span className="text-xs text-lol-text truncate">{lastResult}</span>}
+        {lastResult && (
+          <span className="text-xs text-lol-text truncate" title={lastResult}>
+            {lastResult}
+          </span>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${statusColors[status]}`} />

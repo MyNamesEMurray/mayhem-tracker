@@ -1,4 +1,11 @@
-import { authenticate, createHttp1Request, Credentials, HttpRequestOptions } from "league-connect";
+import {
+  authenticate,
+  ClientElevatedPermsError,
+  ClientNotFoundError,
+  createHttp1Request,
+  Credentials,
+  HttpRequestOptions,
+} from "league-connect";
 import { BrowserWindow } from "electron";
 import * as db from "./db";
 import { MAYHEM_QUEUE_IDS } from "../shared/queues";
@@ -17,6 +24,20 @@ function setStatus(newStatus: typeof status, win?: BrowserWindow | null) {
 
 export function getStatus() {
   return status;
+}
+
+export function friendlyErrorMessage(err: unknown): string {
+  if (err instanceof ClientNotFoundError) {
+    return "League client is not running";
+  }
+  if (err instanceof ClientElevatedPermsError) {
+    return "League client is running as administrator — run Mayhem Tracker as administrator to connect";
+  }
+  const message = err instanceof Error ? err.message : String(err);
+  if (/ECONNREFUSED|ECONNRESET|socket hang up|EPIPE/i.test(message)) {
+    return "Lost connection to the League client";
+  }
+  return message;
 }
 
 async function connect(): Promise<Credentials> {
