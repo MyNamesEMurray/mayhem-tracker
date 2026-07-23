@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatPatch } from "../lib/format";
 
 export default function PatchSelect({
   value,
@@ -33,7 +34,7 @@ export default function PatchSelect({
       <option value="">All Patches</option>
       {patches.map((p) => (
         <option key={p} value={p}>
-          Patch {p}
+          Patch {formatPatch(p)}
         </option>
       ))}
     </select>

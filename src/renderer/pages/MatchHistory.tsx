@@ -17,7 +17,7 @@ import AugmentIcon from "../components/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import MultikillBadge from "../components/MultikillBadge";
 import StatCard from "../components/StatCard";
-import { formatDuration, formatTimeAgo, formatKDA, kdaRatio } from "../lib/format";
+import { formatDuration, formatTimeAgo, formatKDA, kdaRatio, formatPatch } from "../lib/format";
 import { queueLabel } from "../components/QueueSelect";
 import { computeMatchScores, scoreColor, type PlayerScore } from "../../shared/opScore";
 
@@ -272,7 +272,7 @@ export default function MatchHistory() {
             <option value="">All Patches</option>
             {filterOptions.patches.map((p) => (
               <option key={p} value={p}>
-                Patch {p}
+                Patch {formatPatch(p)}
               </option>
             ))}
           </select>

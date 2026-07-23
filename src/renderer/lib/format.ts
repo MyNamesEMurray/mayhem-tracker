@@ -32,6 +32,16 @@ export function formatTimeAgo(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
+// Riot switched displayed patch numbers to year-based in 2025 (internal 15.x
+// shown as "25.x"), but match data and CDN branches still use the internal
+// season number. Shift the major version for display only.
+export function formatPatch(patch: string): string {
+  const m = patch.match(/^(\d+)\.(.+)$/);
+  if (!m) return patch;
+  const major = Number(m[1]);
+  return major >= 15 ? `${major + 10}.${m[2]}` : patch;
+}
+
 export function winRatePercent(wins: number, total: number): string {
   if (total === 0) return "0%";
   return `${((wins / total) * 100).toFixed(1)}%`;
