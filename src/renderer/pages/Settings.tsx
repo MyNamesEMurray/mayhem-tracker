@@ -64,7 +64,7 @@ export default function Settings() {
     try {
       const result = await window.api.repairPuuids();
       setRepairStatus(
-        `Repaired ${result.repairedGames} game(s), found ${result.discoveredAccounts} account(s)`,
+        `Repaired ${result.repairedGames} game(s), found ${result.discoveredAccounts} account(s), rebuilt stats and scores for ${result.rebuiltGames} game(s)`,
       );
     } catch (err: any) {
       setRepairStatus(`Error: ${err.message}`);
@@ -179,8 +179,9 @@ export default function Settings() {
             <div>
               <p className="text-sm text-lol-text-bright">Repair account data</p>
               <p className="text-xs text-lol-text mt-0.5">
-                Re-detect which accounts are yours by analyzing game history. Use this if games are
-                attributed to the wrong account.
+                Re-detect which accounts are yours by analyzing game history, then rebuild stored
+                stats, augments, and performance scores from the raw game data. Use this if games
+                are attributed to the wrong account or scores look stale.
               </p>
             </div>
             <button

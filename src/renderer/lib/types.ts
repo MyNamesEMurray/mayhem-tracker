@@ -277,7 +277,11 @@ export interface ElectronAPI {
   setSetting: (key: string, value: string) => Promise<void>;
   exportData: () => Promise<{ success: boolean; path?: string }>;
   importData: () => Promise<{ success: boolean; imported?: number }>;
-  repairPuuids: () => Promise<{ repairedGames: number; discoveredAccounts: number }>;
+  repairPuuids: () => Promise<{
+    repairedGames: number;
+    discoveredAccounts: number;
+    rebuiltGames: number;
+  }>;
   getVersion: () => Promise<string>;
   checkForUpdate: () => Promise<UpdateInfo>;
   downloadUpdate: (assetUrl: string) => Promise<{ success: boolean; error?: string }>;

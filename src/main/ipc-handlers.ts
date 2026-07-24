@@ -197,7 +197,10 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return { success: true, imported };
   });
 
-  ipcMain.handle("data:repair-puuids", () => {
+  ipcMain.handle("data:repair-puuids", async () => {
+    // Repair rescoring needs champion classes; wait so a repair triggered
+    // right after launch doesn't score with default weights.
+    await dragon.waitForChampionData();
     return db.repairPuuids();
   });
 }

@@ -259,15 +259,21 @@ function applyQueueFilter(where: string[], params: any[], queue?: number, alias 
   }
 }
 
+// Score backfills are keyed on formula version + champion data version, so
+// stored scores recompute when either changes (new formula, new patch,
+// re-tagged champion).
+function scoreFormulaKey() {
+  return `${SCORE_FORMULA_VERSION}@${getChampionDataVersion()}`;
+}
+
 // Recompute stored scores from raw_json. Runs whenever the formula version or
 // the champion class data changes (new patch, re-tagged champion) so stored
 // scores never go stale. Call after champion data has loaded; returns whether
 // a backfill ran so the caller can refresh the renderer.
 export function checkScoreBackfill(): boolean {
-  const key = `${SCORE_FORMULA_VERSION}@${getChampionDataVersion()}`;
-  if (getSetting("score_formula_version") === key) return false;
+  if (getSetting("score_formula_version") === scoreFormulaKey()) return false;
   backfillScores();
-  setSetting("score_formula_version", key);
+  setSetting("score_formula_version", scoreFormulaKey());
   return true;
 }
 
@@ -834,21 +840,22 @@ export function gameExists(gameId: number): boolean {
   return !!row;
 }
 
-export function insertGameFull(gameData: any, puuid: string): boolean {
-  // Find participant
-  let participant: any = null;
-  if (gameData.participants) {
-    participant = gameData.participants.find((p: any) => p.puuid === puuid);
-    if (!participant && gameData.participantIdentities) {
-      const identity = gameData.participantIdentities.find((pi: any) => pi.player?.puuid === puuid);
-      if (identity) {
-        participant = gameData.participants.find(
-          (p: any) => p.participantId === identity.participantId,
-        );
-      }
+// Find the raw participant object for a puuid (LCU shape, both flat and
+// participantIdentities variants).
+function findParticipant(raw: any, puuid: string): any | null {
+  if (!raw?.participants || !puuid) return null;
+  let participant = raw.participants.find((p: any) => p.puuid === puuid);
+  if (!participant && raw.participantIdentities) {
+    const identity = raw.participantIdentities.find((pi: any) => pi.player?.puuid === puuid);
+    if (identity) {
+      participant = raw.participants.find((p: any) => p.participantId === identity.participantId);
     }
   }
+  return participant || null;
+}
 
+export function insertGameFull(gameData: any, puuid: string): boolean {
+  const participant = findParticipant(gameData, puuid);
   if (!participant) return false;
 
   const s = participant.stats || participant;
@@ -1267,7 +1274,134 @@ export function importData(data: any): number {
 
 // ---- Repair ----
 
-export function repairPuuids(): { repairedGames: number; discoveredAccounts: number } {
+// Rebuild everything derived from raw_json for each game's current owner:
+// player_stats (champion, KDA, items), augments, the remake flag, and the
+// score under the current formula. Heals games whose owner puuid changed
+// during repair (their stored stats still described the old participant) and
+// doubles as a manual "rescore now" for formula changes.
+function rebuildDerivedStats(): number {
+  const rows = db
+    .prepare(`
+      SELECT g.game_id, g.puuid, g.game_duration, g.raw_json,
+             ps.champion_id, ps.kills, ps.deaths, ps.assists
+      FROM games g
+      LEFT JOIN player_stats ps ON g.game_id = ps.game_id
+      WHERE g.raw_json IS NOT NULL
+    `)
+    .all() as {
+    game_id: number;
+    puuid: string;
+    game_duration: number;
+    raw_json: string;
+    champion_id: number | null;
+    kills: number | null;
+    deaths: number | null;
+    assists: number | null;
+  }[];
+
+  const upsertStats = db.prepare(`
+    INSERT OR REPLACE INTO player_stats (
+      game_id, champion_id, win, kills, deaths, assists,
+      double_kills, triple_kills, quadra_kills, penta_kills,
+      total_damage_dealt, total_damage_taken, gold_earned, total_heal,
+      largest_killing_spree, item0, item1, item2, item3, item4, item5, item6,
+      score, score_badge
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const updateRemake = db.prepare("UPDATE games SET is_remake = ? WHERE game_id = ?");
+  const deleteAugments = db.prepare("DELETE FROM game_augments WHERE game_id = ?");
+  const insertAugment = db.prepare(
+    "INSERT OR IGNORE INTO game_augments (game_id, slot, augment_id) VALUES (?, ?, ?)",
+  );
+
+  let rebuilt = 0;
+  const tx = db.transaction(() => {
+    for (const row of rows) {
+      try {
+        const raw = JSON.parse(row.raw_json);
+        let participant = findParticipant(raw, row.puuid);
+        // Owner puuid unknown (old imports): fall back to matching the stored
+        // stats row, same as the puuid backfill migration.
+        if (!participant && row.champion_id != null && raw.participants) {
+          participant = raw.participants.find((p: any) => {
+            const st = p.stats || p;
+            return (
+              (p.championId ?? st.championId) === row.champion_id &&
+              (st.kills ?? 0) === row.kills &&
+              (st.deaths ?? 0) === row.deaths &&
+              (st.assists ?? 0) === row.assists
+            );
+          });
+        }
+        if (!participant) continue;
+        const s = participant.stats || participant;
+
+        const isRemake = detectRemake(row.game_duration, row.raw_json) ? 1 : 0;
+        updateRemake.run(isRemake, row.game_id);
+
+        let ownerScore: { score: number; badge: string | null } | null = null;
+        if (!isRemake) {
+          ownerScore = computeOwnerScore(raw, row.puuid || null, {
+            champion_id: participant.championId ?? s.championId ?? 0,
+            kills: s.kills ?? 0,
+            deaths: s.deaths ?? 0,
+            assists: s.assists ?? 0,
+          });
+        }
+
+        upsertStats.run(
+          row.game_id,
+          participant.championId ?? s.championId ?? 0,
+          s.win ? 1 : 0,
+          s.kills ?? 0,
+          s.deaths ?? 0,
+          s.assists ?? 0,
+          s.doubleKills ?? 0,
+          s.tripleKills ?? 0,
+          s.quadraKills ?? 0,
+          s.pentaKills ?? 0,
+          s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0,
+          s.totalDamageTaken ?? 0,
+          s.goldEarned ?? 0,
+          s.totalHeal ?? 0,
+          s.largestKillingSpree ?? 0,
+          s.item0 ?? null,
+          s.item1 ?? null,
+          s.item2 ?? null,
+          s.item3 ?? null,
+          s.item4 ?? null,
+          s.item5 ?? null,
+          s.item6 ?? null,
+          ownerScore?.score ?? null,
+          ownerScore?.badge ?? null,
+        );
+
+        deleteAugments.run(row.game_id);
+        for (let i = 1; i <= AUGMENT_SLOTS; i++) {
+          const augId = s[`playerAugment${i}`];
+          if (augId && augId > 0) {
+            insertAugment.run(row.game_id, i, augId);
+          }
+        }
+        rebuilt++;
+      } catch {
+        /* ignore parse errors */
+      }
+    }
+  });
+  tx();
+
+  // Stamp the startup-backfill keys — the rebuild just did their work
+  setSetting("score_formula_version", scoreFormulaKey());
+  setSetting("augment_slots", String(AUGMENT_SLOTS));
+  return rebuilt;
+}
+
+export function repairPuuids(): {
+  repairedGames: number;
+  discoveredAccounts: number;
+  rebuiltGames: number;
+} {
   // Step 1: Parse all games and collect participant puuids per game
   const games = db
     .prepare("SELECT game_id, raw_json FROM games WHERE raw_json IS NOT NULL")
@@ -1402,5 +1536,9 @@ export function repairPuuids(): { repairedGames: number; discoveredAccounts: num
     upsertStmt.run(puuid, latestName, latestTagLine, Date.now());
   }
 
-  return { repairedGames, discoveredAccounts: userPuuids.size };
+  // Step 6: Rebuild stats, augments, remake flags, and scores from raw_json
+  // now that game ownership is settled.
+  const rebuiltGames = rebuildDerivedStats();
+
+  return { repairedGames, discoveredAccounts: userPuuids.size, rebuiltGames };
 }
