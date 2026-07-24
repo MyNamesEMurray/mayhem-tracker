@@ -1,9 +1,9 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from "electron";
 import path from "path";
-import { initDatabase, getSetting } from "./db";
+import { initDatabase, getSetting, checkScoreBackfill } from "./db";
 import { registerIpcHandlers } from "./ipc-handlers";
 import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
-import { loadChampionData, loadAugmentData } from "./dragon";
+import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -110,6 +110,14 @@ app.whenReady().then(async () => {
   // Load assets in background
   loadChampionData();
   loadAugmentData();
+
+  // Recompute stored scores once champion class data is available, so the
+  // backfill uses the same class weights as insert-time scoring.
+  waitForChampionData().then(() => {
+    if (checkScoreBackfill()) {
+      mainWindow?.webContents.send("lcu:games-updated");
+    }
+  });
 
   createWindow();
   createTray();

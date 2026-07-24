@@ -640,7 +640,11 @@ function MatchScoreboard({
     [detail, puuids],
   );
   const teams = useMemo(() => groupByTeam(participants), [participants]);
-  const scores = useMemo(() => computeMatchScores(participants), [participants]);
+  const scores = useMemo(() => {
+    const classes: Record<number, string | undefined> = {};
+    for (const p of participants) classes[p.championId] = champData?.[p.championId]?.class;
+    return computeMatchScores(participants, classes);
+  }, [participants, champData]);
 
   const gameMaxStats = useMemo(() => {
     let dmg = 0,

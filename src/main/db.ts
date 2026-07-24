@@ -1,23 +1,14 @@
 import Database from "better-sqlite3";
 import path from "path";
-import fs from "fs";
-import { app } from "electron";
 import { SCORE_FORMULA_VERSION, computeMatchScores, scoreInputsFromRaw } from "../shared/opScore";
 import { AUGMENT_SLOTS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
+import { getDataDir } from "./paths";
+import { getChampionClasses, getChampionDataVersion } from "./dragon";
 
 let db: Database.Database;
 
 function getDbPath() {
-  // In development, use the project's data directory
-  // In production, use app.getPath('userData')
-  const isDev = !app.isPackaged;
-  const dataDir = isDev
-    ? path.join(__dirname, "..", "..", "data")
-    : path.join(app.getPath("userData"), "data");
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  return path.join(dataDir, "matches.db");
+  return path.join(getDataDir(), "matches.db");
 }
 
 export function initDatabase() {
@@ -212,13 +203,6 @@ function createTables() {
     // Columns already exist
   }
 
-  // Backfill scores from raw_json — runs once, and again whenever the
-  // formula version changes so stored scores never go stale.
-  if (getSetting("score_formula_version") !== String(SCORE_FORMULA_VERSION)) {
-    backfillScores();
-    setSetting("score_formula_version", String(SCORE_FORMULA_VERSION));
-  }
-
   // Backfill bonus augment slots (5+) from raw_json for games stored
   // when only 4 slots were captured.
   if (getSetting("augment_slots") !== String(AUGMENT_SLOTS)) {
@@ -275,6 +259,18 @@ function applyQueueFilter(where: string[], params: any[], queue?: number, alias 
   }
 }
 
+// Recompute stored scores from raw_json. Runs whenever the formula version or
+// the champion class data changes (new patch, re-tagged champion) so stored
+// scores never go stale. Call after champion data has loaded; returns whether
+// a backfill ran so the caller can refresh the renderer.
+export function checkScoreBackfill(): boolean {
+  const key = `${SCORE_FORMULA_VERSION}@${getChampionDataVersion()}`;
+  if (getSetting("score_formula_version") === key) return false;
+  backfillScores();
+  setSetting("score_formula_version", key);
+  return true;
+}
+
 function computeOwnerScore(
   raw: any,
   ownerPuuid: string | null,
@@ -293,7 +289,7 @@ function computeOwnerScore(
     );
   }
   if (!owner) return null;
-  const s = computeMatchScores(inputs).get(owner.participantId);
+  const s = computeMatchScores(inputs, getChampionClasses()).get(owner.participantId);
   return s ? { score: s.score, badge: s.badge } : null;
 }
 

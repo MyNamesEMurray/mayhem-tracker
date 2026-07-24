@@ -158,6 +158,7 @@ export interface ChampionData {
   [id: number]: {
     name: string;
     key: string;
+    class?: string;
   };
 }
 

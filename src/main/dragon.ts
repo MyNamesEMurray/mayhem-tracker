@@ -1,6 +1,13 @@
 import https from "https";
+import fs from "fs";
+import path from "path";
+import { getDataDir } from "./paths";
 
-let championCache: Record<number, { name: string; key: string }> = {};
+let championCache: Record<number, { name: string; key: string; class?: string }> = {};
+// Data Dragon version the champion cache came from ("none" until any data
+// loads). Folded into the score-backfill key so stored scores recompute when
+// champion class data changes.
+let championDataVersion = "none";
 let augmentCache: Record<number, { name: string; desc: string; iconPath: string; rarity: string }> =
   {};
 
@@ -37,8 +44,25 @@ function fetchJson(url: string): Promise<any> {
   });
 }
 
+const championCacheFile = () => path.join(getDataDir(), "champion-cache.json");
+
+// Last successfully fetched champion data, so offline startups still have
+// names and classes (and scoring stays consistent with the previous run).
+function hydrateChampionCacheFromDisk() {
+  try {
+    const cached = JSON.parse(fs.readFileSync(championCacheFile(), "utf8"));
+    if (cached?.champions && cached?.version) {
+      championCache = cached.champions;
+      championDataVersion = cached.version;
+    }
+  } catch {
+    // No cache yet, or unreadable — network load will populate it
+  }
+}
+
 export function loadChampionData() {
   championReady = (async () => {
+    hydrateChampionCacheFromDisk();
     try {
       const versions = await fetchJson("https://ddragon.leagueoflegends.com/api/versions.json");
       const version = versions[0];
@@ -46,9 +70,16 @@ export function loadChampionData() {
       const data = await fetchJson(
         `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`,
       );
-      championCache = {};
+      const cache: typeof championCache = {};
       for (const [key, champ] of Object.entries(data.data) as any[]) {
-        championCache[parseInt(champ.key)] = { name: champ.name, key };
+        cache[parseInt(champ.key)] = { name: champ.name, key, class: champ.tags?.[0] };
+      }
+      championCache = cache;
+      championDataVersion = version;
+      try {
+        fs.writeFileSync(championCacheFile(), JSON.stringify({ version, champions: cache }));
+      } catch (err) {
+        console.error("Failed to persist champion cache:", err);
       }
       console.log(
         `Loaded ${Object.keys(championCache).length} champions from Data Dragon v${version}`,
@@ -176,6 +207,18 @@ export async function waitForAugmentData() {
 
 export function getChampionData() {
   return championCache;
+}
+
+export function getChampionClasses(): Record<number, string> {
+  const map: Record<number, string> = {};
+  for (const [id, champ] of Object.entries(championCache)) {
+    if (champ.class) map[Number(id)] = champ.class;
+  }
+  return map;
+}
+
+export function getChampionDataVersion() {
+  return championDataVersion;
 }
 
 export function getAugmentDataCache() {
