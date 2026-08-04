@@ -464,8 +464,11 @@ function StatBar({
 
 function AugmentGrid({ augmentIds }: { augmentIds: number[] }) {
   if (augmentIds.length === 0) return null;
+  // Classic can grant bonus augments; spill past 4 into a third column so the
+  // grid stays two rows tall and rows keep a uniform height.
+  const cols = augmentIds.length > 4 ? "grid-cols-3" : "grid-cols-2";
   return (
-    <div className="grid grid-cols-2 gap-0.5">
+    <div className={`grid ${cols} gap-0.5 w-fit`}>
       {augmentIds.map((id, i) => (
         <AugmentIcon key={i} augmentId={id} size={22} />
       ))}
@@ -581,8 +584,8 @@ function GameRow({
           />
         </div>
 
-        {/* Augments */}
-        <div className="w-12 shrink-0">
+        {/* Augments – reserve 3 columns so mixed-queue lists stay aligned */}
+        <div className="w-[70px] shrink-0">
           <AugmentGrid augmentIds={augmentIds} />
         </div>
 
