@@ -42,6 +42,17 @@ const api = {
 
   refreshGames: () => ipcRenderer.invoke("lcu:refresh"),
 
+  backfillHistory: () => ipcRenderer.invoke("lcu:backfill"),
+
+  onBackfillProgress: (
+    callback: (progress: { current: number; total: number; added: number }) => void,
+  ) => {
+    const handler = (_event: any, progress: { current: number; total: number; added: number }) =>
+      callback(progress);
+    ipcRenderer.on("lcu:backfill-progress", handler);
+    return () => ipcRenderer.removeListener("lcu:backfill-progress", handler);
+  },
+
   getLcuStatus: () => ipcRenderer.invoke("lcu:status"),
 
   getChampionData: () => ipcRenderer.invoke("dragon:champions"),

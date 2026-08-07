@@ -78,6 +78,14 @@ export function registerIpcHandlers(win: BrowserWindow) {
     }
   });
 
+  ipcMain.handle("lcu:backfill", async () => {
+    try {
+      return await lcu.backfillHistory(win);
+    } catch (err) {
+      return { error: lcu.friendlyErrorMessage(err) };
+    }
+  });
+
   ipcMain.handle("lcu:status", () => {
     return lcu.getStatus();
   });

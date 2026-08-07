@@ -75,6 +75,12 @@ function createTables() {
       value TEXT NOT NULL
     );
 
+    -- Games seen during a backfill that aren't Mayhem. Remembering them keeps
+    -- repeat backfills from re-fetching every ARAM/Arena game each time.
+    CREATE TABLE IF NOT EXISTS ignored_games (
+      game_id INTEGER PRIMARY KEY
+    );
+
     CREATE INDEX IF NOT EXISTS idx_games_creation ON games(game_creation DESC);
     CREATE INDEX IF NOT EXISTS idx_player_stats_champion ON player_stats(champion_id);
     CREATE INDEX IF NOT EXISTS idx_game_augments_augment ON game_augments(augment_id);
@@ -838,6 +844,19 @@ export function toggleFavorite(gameId: number): boolean {
 export function gameExists(gameId: number): boolean {
   const row = db.prepare("SELECT 1 FROM games WHERE game_id = ?").get(gameId);
   return !!row;
+}
+
+// Every game id we've already made a decision about — stored or deliberately
+// skipped. One query beats a lookup per id when a backfill checks hundreds.
+export function getKnownGameIds(): Set<number> {
+  const rows = db
+    .prepare("SELECT game_id FROM games UNION SELECT game_id FROM ignored_games")
+    .all() as { game_id: number }[];
+  return new Set(rows.map((r) => r.game_id));
+}
+
+export function markIgnoredGame(gameId: number): void {
+  db.prepare("INSERT OR IGNORE INTO ignored_games (game_id) VALUES (?)").run(gameId);
 }
 
 // Find the raw participant object for a puuid (LCU shape, both flat and

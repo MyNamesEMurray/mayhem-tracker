@@ -7,6 +7,8 @@ export default function Settings() {
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [repairStatus, setRepairStatus] = useState<string | null>(null);
+  const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
+  const [backfilling, setBackfilling] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -56,6 +58,43 @@ export default function Settings() {
       }
     } catch (err: any) {
       setImportStatus(`Error: ${err.message}`);
+    }
+  }, []);
+
+  useEffect(
+    () =>
+      window.api.onBackfillProgress(({ current, total, added }) => {
+        setBackfillStatus(
+          total === 0
+            ? "Nothing new to check"
+            : `Checking game ${current} of ${total}, ${added} added so far`,
+        );
+      }),
+    [],
+  );
+
+  const handleBackfill = useCallback(async () => {
+    setBackfilling(true);
+    setBackfillStatus("Fetching your match list from Riot...");
+    try {
+      const result = await window.api.backfillHistory();
+      if ("error" in result) {
+        setBackfillStatus(`Error: ${result.error}`);
+      } else {
+        const summary =
+          result.added > 0
+            ? `Added ${result.added} game(s) from ${result.scanned} found in your Riot history`
+            : `No new Mayhem games found (${result.scanned} games checked)`;
+        setBackfillStatus(
+          result.truncated
+            ? `${summary}. Stopped at the ${result.scanned}-game paging limit, so anything older was not checked.`
+            : summary,
+        );
+      }
+    } catch (err: any) {
+      setBackfillStatus(`Error: ${err.message}`);
+    } finally {
+      setBackfilling(false);
     }
   }, []);
 
@@ -139,6 +178,27 @@ export default function Settings() {
       <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
         <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Data Management</h2>
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-lol-text-bright">Backfill match history</p>
+              <p className="text-xs text-lol-text mt-0.5">
+                Pull your older Mayhem games from Riot and add any that aren't stored yet. The
+                League client only shows the last 20 games, so this reaches much further back. May
+                take a couple of minutes the first time.
+              </p>
+            </div>
+            <button
+              onClick={handleBackfill}
+              disabled={backfilling}
+              className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {backfilling ? "Working..." : "Backfill"}
+            </button>
+          </div>
+          {backfillStatus && <p className="text-xs text-lol-text">{backfillStatus}</p>}
+
+          <div className="border-t border-lol-border" />
+
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-lol-text-bright">Export data</p>

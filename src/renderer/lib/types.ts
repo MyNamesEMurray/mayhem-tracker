@@ -267,6 +267,13 @@ export interface ElectronAPI {
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
   refreshGames: () => Promise<{ newGames: number; totalGames: number } | { error: string }>;
+  backfillHistory: () => Promise<
+    | { added: number; scanned: number; checked: number; totalGames: number; truncated: boolean }
+    | { error: string }
+  >;
+  onBackfillProgress: (
+    callback: (progress: { current: number; total: number; added: number }) => void,
+  ) => () => void;
   getLcuStatus: () => Promise<LcuStatus>;
   getChampionData: () => Promise<ChampionData>;
   getAugmentData: () => Promise<AugmentData>;
