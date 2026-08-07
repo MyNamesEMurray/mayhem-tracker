@@ -223,6 +223,21 @@ export interface ParsedParticipant {
 
 export type LcuStatus = "disconnected" | "connecting" | "connected";
 
+export interface BackfillProgress {
+  current: number;
+  total: number;
+  added: number;
+}
+
+export interface BackfillResult {
+  added: number;
+  scanned: number;
+  checked: number;
+  totalGames: number;
+  truncated: boolean;
+  cancelled: boolean;
+}
+
 export interface UpdateInfo {
   hasUpdate: boolean;
   latest?: string;
@@ -267,13 +282,11 @@ export interface ElectronAPI {
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
   refreshGames: () => Promise<{ newGames: number; totalGames: number } | { error: string }>;
-  backfillHistory: () => Promise<
-    | { added: number; scanned: number; checked: number; totalGames: number; truncated: boolean }
-    | { error: string }
-  >;
-  onBackfillProgress: (
-    callback: (progress: { current: number; total: number; added: number }) => void,
-  ) => () => void;
+  backfillHistory: () => Promise<BackfillResult | { error: string }>;
+  cancelBackfill: () => Promise<void>;
+  isBackfillRunning: () => Promise<boolean>;
+  onBackfillProgress: (callback: (progress: BackfillProgress) => void) => () => void;
+  onBackfillDone: (result: (result: BackfillResult | { error: string }) => void) => () => void;
   getLcuStatus: () => Promise<LcuStatus>;
   getChampionData: () => Promise<ChampionData>;
   getAugmentData: () => Promise<AugmentData>;

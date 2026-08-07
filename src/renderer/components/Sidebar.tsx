@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useState, useCallback, useEffect, type ComponentType, type SVGProps } from "react";
 import { useLcuStatus } from "../hooks/useLcuStatus";
+import { useBackfill } from "../hooks/useBackfill";
 import type { UpdateInfo } from "../lib/types";
 import UpdateDialog from "./UpdateDialog";
 import {
@@ -57,6 +58,7 @@ function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: I
 
 export default function Sidebar() {
   const status = useLcuStatus();
+  const { running: backfilling, progress, percent } = useBackfill();
   const [refreshing, setRefreshing] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
   const [version, setVersion] = useState("");
@@ -73,6 +75,20 @@ export default function Sidebar() {
     const timer = setTimeout(() => setLastResult(null), 10_000);
     return () => clearTimeout(timer);
   }, [lastResult]);
+
+  useEffect(
+    () =>
+      window.api.onBackfillDone((result) => {
+        if ("error" in result) {
+          setLastResult(`Import failed: ${result.error}`);
+        } else if (result.cancelled) {
+          setLastResult(`Import stopped after ${result.added} game(s)`);
+        } else if (result.added > 0) {
+          setLastResult(`Imported ${result.added} past game(s)`);
+        }
+      }),
+    [],
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -122,24 +138,48 @@ export default function Sidebar() {
         <NavItem to="/settings" label="Settings" icon={SettingsIcon} />
       </div>
       <div className="p-3 border-t border-lol-border/60 flex flex-col gap-2">
-        {lastResult && (
+        {lastResult && !backfilling && (
           <span className="text-xs text-lol-text truncate" title={lastResult}>
             {lastResult}
           </span>
+        )}
+        {backfilling && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-lol-text truncate">
+              {progress && progress.total > 0
+                ? `Importing history ${progress.current}/${progress.total}`
+                : "Importing history..."}
+            </span>
+            <div className="h-1 rounded-full bg-lol-border overflow-hidden">
+              <div
+                className="h-full bg-lol-gold transition-all duration-300"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
         )}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
             <span className="text-xs text-lol-text">{statusLabels[status]}</span>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-lol-gold/25 bg-lol-gold/10 text-lol-gold hover:bg-lol-gold/20 disabled:opacity-50 transition-colors"
-          >
-            <RefreshIcon className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-            {refreshing ? "Syncing..." : "Sync"}
-          </button>
+          {backfilling ? (
+            <button
+              onClick={() => window.api.cancelBackfill()}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-lol-border bg-white/5 text-lol-text hover:text-lol-text-bright hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-lol-gold/25 bg-lol-gold/10 text-lol-gold hover:bg-lol-gold/20 disabled:opacity-50 transition-colors"
+            >
+              <RefreshIcon className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
+              {refreshing ? "Syncing..." : "Sync"}
+            </button>
+          )}
         </div>
         <div className="flex items-center justify-between mt-1">
           <button

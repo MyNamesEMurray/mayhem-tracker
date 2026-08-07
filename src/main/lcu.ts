@@ -122,8 +122,26 @@ const SGP_PAGE_SIZE = 100;
 // silently trimming someone's history.
 const SGP_MAX_PAGES = 200;
 
+// How many new games to accumulate before nudging the UI to re-query, so a long
+// import fills the app in as it runs instead of landing all at once.
+const GAMES_UPDATED_BATCH = 25;
+
+// Wait this long before automatically retrying a backfill that errored, so a
+// transient failure doesn't relaunch a full history walk every poll tick.
+const AUTO_BACKFILL_RETRY_DELAY = 15 * 60 * 1000;
+
 let sgpHost: string | null = null;
 let backfillRunning = false;
+let backfillCancelled = false;
+// Suppresses only the *automatic* backfill. Cleared on restart, and a manual
+// run from Settings always ignores it.
+let autoBackfillPausedUntil = 0;
+
+function notifyGamesUpdated(win?: BrowserWindow | null) {
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("lcu:games-updated");
+  }
+}
 
 function sgpMatchIdsUrl(host: string, puuid: string, startIndex: number, count: number) {
   return (
@@ -213,17 +231,29 @@ async function fetchAllMatchIds(
   return { ids, truncated: true };
 }
 
-export async function backfillHistory(win?: BrowserWindow | null): Promise<{
+export function cancelBackfill(): void {
+  if (backfillRunning) backfillCancelled = true;
+}
+
+export function isBackfillRunning(): boolean {
+  return backfillRunning;
+}
+
+export type BackfillResult = {
   added: number;
   scanned: number;
   checked: number;
   totalGames: number;
   truncated: boolean;
-}> {
+  cancelled: boolean;
+};
+
+export async function backfillHistory(win?: BrowserWindow | null): Promise<BackfillResult> {
   if (backfillRunning) {
     throw new Error("A backfill is already running");
   }
   backfillRunning = true;
+  backfillCancelled = false;
 
   try {
     await connect();
@@ -254,8 +284,6 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<{
       console.warn(
         `Backfill stopped at the ${SGP_MAX_PAGES}-page limit (${ids.length} games); older games were not checked`,
       );
-    } else {
-      db.setSetting(completedKey, "1");
     }
 
     const pending = ids.filter((id) => !known.has(id));
@@ -268,7 +296,9 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<{
     progress(0, 0);
 
     let added = 0;
+    let announced = 0;
     for (let i = 0; i < pending.length; i++) {
+      if (backfillCancelled) break;
       const gameId = pending[i];
 
       let game: any;
@@ -287,32 +317,62 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<{
         console.log(`Backfilled ARAM Mayhem game ${gameId}`);
       }
 
+      // Let the app fill in as it goes rather than staying empty for minutes
+      if (added - announced >= GAMES_UPDATED_BATCH) {
+        announced = added;
+        notifyGamesUpdated(win);
+      }
       progress(i + 1, added);
     }
 
-    if (added > 0 && win && !win.isDestroyed()) {
-      win.webContents.send("lcu:games-updated");
+    const cancelled = backfillCancelled;
+
+    // Only claim the account is fully walked once every id has actually been
+    // resolved. Marking it earlier would let a later run early-exit on the first
+    // fully-known page and never reach the older games we skipped.
+    if (!truncated && !cancelled) {
+      db.setSetting(completedKey, "1");
+    } else {
+      // Neither outcome sets the completion flag, so without this the poll would
+      // relaunch the whole walk a minute later — including right after the user
+      // deliberately cancelled it. Resumes on next launch, or from Settings.
+      autoBackfillPausedUntil = Infinity;
     }
 
+    if (added > announced) notifyGamesUpdated(win);
+
     const dashboard = db.getDashboardData();
-    return {
+    const result: BackfillResult = {
       added,
       scanned: ids.length,
       checked: pending.length,
       totalGames: dashboard.totalGames,
       truncated,
+      cancelled,
     };
+
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("lcu:backfill-done", result);
+    }
+    return result;
+  } catch (err) {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("lcu:backfill-done", { error: friendlyErrorMessage(err) });
+    }
+    throw err;
   } finally {
     backfillRunning = false;
+    backfillCancelled = false;
   }
 }
 
 export async function fetchNewGames(
   win?: BrowserWindow | null,
+  knownSummoner?: any,
 ): Promise<{ newGames: number; totalGames: number }> {
   await connect();
 
-  const summoner = await fetchCurrentSummoner();
+  const summoner = knownSummoner ?? (await fetchCurrentSummoner());
   db.upsertSummoner(summoner);
 
   let newGamesCount = 0;
@@ -356,6 +416,48 @@ export async function fetchNewGames(
   return { newGames: newGamesCount, totalGames: dashboard.totalGames };
 }
 
+async function isInGame(): Promise<boolean> {
+  try {
+    // The endpoint returns a bare JSON string, e.g. "InProgress"
+    const phase = (await lcuRequest("/lol-gameflow/v1/gameflow-phase")) as unknown as string;
+    return phase === "InProgress" || phase === "Reconnect";
+  } catch {
+    return false;
+  }
+}
+
+// An account that has never been walked gets the full history on its first
+// connect — that import is the whole point of the app, and it's a superset of
+// the recent-games sync. Every later tick takes the cheap LCU path instead: the
+// pvp.net service is only touched while an account still needs its first walk.
+// Deferred while a game is in progress so we aren't hammering the client
+// mid-match; a later poll picks it up.
+async function syncGames(win: BrowserWindow) {
+  let summoner: any = null;
+  try {
+    summoner = await fetchCurrentSummoner();
+  } catch {
+    // Fall through to the recent-games sync, which reports its own errors
+  }
+
+  const wantsBackfill =
+    summoner &&
+    Date.now() >= autoBackfillPausedUntil &&
+    db.getSetting(`backfill_complete_${summoner.puuid}`) !== "1";
+
+  if (wantsBackfill && !(await isInGame())) {
+    try {
+      await backfillHistory(win);
+      return;
+    } catch (err) {
+      console.log("Automatic backfill failed, falling back to recent games:", err);
+      autoBackfillPausedUntil = Date.now() + AUTO_BACKFILL_RETRY_DELAY;
+    }
+  }
+
+  await fetchNewGames(win, summoner ?? undefined);
+}
+
 export function startPolling(win: BrowserWindow, firstAttempt = true) {
   // Show "connecting" only on the very first attempt after app launch
   setStatus(firstAttempt ? "connecting" : "disconnected", win);
@@ -370,12 +472,14 @@ export function startPolling(win: BrowserWindow, firstAttempt = true) {
       }
 
       // Do initial fetch
-      await fetchNewGames(win);
+      await syncGames(win);
 
       // Start polling for new games every 60s
       pollTimer = setInterval(async () => {
+        // A manual backfill is already covering everything this would fetch
+        if (backfillRunning) return;
         try {
-          await fetchNewGames(win);
+          await syncGames(win);
         } catch (err) {
           console.log("Poll fetch error:", err);
           // Lost connection, restart connect loop

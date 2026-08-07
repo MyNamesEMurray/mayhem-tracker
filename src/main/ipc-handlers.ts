@@ -86,6 +86,14 @@ export function registerIpcHandlers(win: BrowserWindow) {
     }
   });
 
+  ipcMain.handle("lcu:cancel-backfill", () => {
+    lcu.cancelBackfill();
+  });
+
+  ipcMain.handle("lcu:backfill-running", () => {
+    return lcu.isBackfillRunning();
+  });
+
   ipcMain.handle("lcu:status", () => {
     return lcu.getStatus();
   });

@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useMatches } from "../hooks/useMatches";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useIpc } from "../hooks/useIpc";
+import { useLcuStatus } from "../hooks/useLcuStatus";
+import { useBackfill } from "../hooks/useBackfill";
 import type {
   MatchListItem,
   MatchDetail,
@@ -10,6 +12,8 @@ import type {
   MatchSort,
   MultikillType,
   ParsedParticipant,
+  LcuStatus,
+  BackfillProgress,
 } from "../lib/types";
 import { parseParticipants, groupByTeam } from "../lib/participants";
 import ChampionIcon from "../components/ChampionIcon";
@@ -20,6 +24,24 @@ import StatCard from "../components/StatCard";
 import { formatDuration, formatTimeAgo, formatKDA, kdaRatio, formatPatch } from "../lib/format";
 import { queueLabel } from "../components/QueueSelect";
 import { computeMatchScores, scoreColor, type PlayerScore } from "../../shared/opScore";
+
+// An empty list means something different depending on whether we're still
+// waiting on the client, mid-import, or genuinely out of games.
+function emptyStateMessage(
+  status: LcuStatus,
+  backfill: { running: boolean; progress: BackfillProgress | null },
+) {
+  if (backfill.running) {
+    const p = backfill.progress;
+    return p && p.total > 0
+      ? `Importing your match history — ${p.current} of ${p.total} games checked...`
+      : "Importing your match history...";
+  }
+  if (status !== "connected") {
+    return "Waiting for the League client. Once it's open, your Mayhem games import automatically.";
+  }
+  return "No ARAM Mayhem games found yet. New games are recorded as you play.";
+}
 
 const SORT_OPTIONS: { value: MatchSort; label: string }[] = [
   { value: "newest", label: "Newest" },
@@ -76,6 +98,8 @@ export default function MatchHistory() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [puuids, setPuuids] = useState<string[] | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const lcuStatus = useLcuStatus();
+  const backfill = useBackfill();
 
   useEffect(() => {
     window.api.getAllSummonerPuuids().then(setPuuids);
@@ -327,7 +351,7 @@ export default function MatchHistory() {
           queueFilter !== undefined ||
           multikillFilter.length > 0
             ? "No games match the current filters."
-            : "No ARAM Mayhem games found. Connect to the League client and click Refresh."}
+            : emptyStateMessage(lcuStatus, backfill)}
         </div>
       )}
 

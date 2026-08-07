@@ -44,6 +44,16 @@ const api = {
 
   backfillHistory: () => ipcRenderer.invoke("lcu:backfill"),
 
+  cancelBackfill: () => ipcRenderer.invoke("lcu:cancel-backfill"),
+
+  isBackfillRunning: () => ipcRenderer.invoke("lcu:backfill-running"),
+
+  onBackfillDone: (callback: (result: any) => void) => {
+    const handler = (_event: any, result: any) => callback(result);
+    ipcRenderer.on("lcu:backfill-done", handler);
+    return () => ipcRenderer.removeListener("lcu:backfill-done", handler);
+  },
+
   onBackfillProgress: (
     callback: (progress: { current: number; total: number; added: number }) => void,
   ) => {

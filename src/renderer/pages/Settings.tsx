@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
+import { useBackfill } from "../hooks/useBackfill";
 
 export default function Settings() {
+  // Shared so a backfill started automatically on first connect shows here too
+  const { running: backfilling, progress } = useBackfill();
   const [minimizeToTray, setMinimizeToTray] = useState(true);
   const [hideClassic, setHideClassic] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -8,7 +11,6 @@ export default function Settings() {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [repairStatus, setRepairStatus] = useState<string | null>(null);
   const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
-  const [backfilling, setBackfilling] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -61,20 +63,16 @@ export default function Settings() {
     }
   }, []);
 
-  useEffect(
-    () =>
-      window.api.onBackfillProgress(({ current, total, added }) => {
-        setBackfillStatus(
-          total === 0
-            ? "Nothing new to check"
-            : `Checking game ${current} of ${total}, ${added} added so far`,
-        );
-      }),
-    [],
-  );
+  useEffect(() => {
+    if (!progress) return;
+    setBackfillStatus(
+      progress.total === 0
+        ? "Nothing new to check"
+        : `Checking game ${progress.current} of ${progress.total}, ${progress.added} added so far`,
+    );
+  }, [progress]);
 
   const handleBackfill = useCallback(async () => {
-    setBackfilling(true);
     setBackfillStatus("Fetching your match list from Riot...");
     try {
       const result = await window.api.backfillHistory();
@@ -86,15 +84,15 @@ export default function Settings() {
             ? `Added ${result.added} game(s) from ${result.scanned} found in your Riot history`
             : `No new Mayhem games found (${result.scanned} games checked)`;
         setBackfillStatus(
-          result.truncated
-            ? `${summary}. Stopped at the ${result.scanned}-game paging limit, so anything older was not checked.`
-            : summary,
+          result.cancelled
+            ? `Stopped after adding ${result.added} game(s). Run it again to finish.`
+            : result.truncated
+              ? `${summary}. Stopped at the ${result.scanned}-game paging limit, so anything older was not checked.`
+              : summary,
         );
       }
     } catch (err: any) {
       setBackfillStatus(`Error: ${err.message}`);
-    } finally {
-      setBackfilling(false);
     }
   }, []);
 
@@ -182,9 +180,9 @@ export default function Settings() {
             <div>
               <p className="text-sm text-lol-text-bright">Backfill match history</p>
               <p className="text-xs text-lol-text mt-0.5">
-                Pull your older Mayhem games from Riot and add any that aren't stored yet. The
-                League client only shows the last 20 games, so this reaches much further back. May
-                take a couple of minutes the first time.
+                Pull your older Mayhem games from Riot and add any that aren't stored yet. This runs
+                automatically the first time an account connects; use this to run it again, or to
+                finish an import you cancelled.
               </p>
             </div>
             <button
