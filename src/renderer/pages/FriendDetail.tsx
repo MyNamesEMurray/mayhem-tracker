@@ -6,6 +6,7 @@ import type { TeammateDetail, TeammateMatch, MatchDetail } from "../lib/types";
 import ChampionIcon from "../components/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
+import StatBars from "../components/StatBars";
 import StatCard from "../components/StatCard";
 import { formatDuration, formatTimeAgo, formatKDA, kdaRatio } from "../lib/format";
 import { scoreColor } from "../../shared/opScore";
@@ -55,7 +56,7 @@ export default function FriendDetail() {
 
   if (!data) {
     return (
-      <div className="max-w-5xl space-y-4">
+      <div className="max-w-6xl space-y-4">
         <BackLink />
         <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-lol-text">
           No games found with this player.
@@ -71,7 +72,7 @@ export default function FriendDetail() {
   const yourWins = matches.filter((m) => m.win).length;
 
   return (
-    <div className="max-w-5xl space-y-4">
+    <div className="max-w-6xl space-y-4">
       <BackLink />
 
       <div className="flex items-center gap-3">
@@ -160,6 +161,10 @@ function PlayerBlock({
   assists,
   score,
   badge,
+  damage,
+  taken,
+  heal,
+  max,
 }: {
   label: string;
   championId: number;
@@ -169,6 +174,10 @@ function PlayerBlock({
   assists: number;
   score: number | null;
   badge: "MVP" | "ACE" | null;
+  damage: number;
+  taken: number;
+  heal: number;
+  max: { dmg: number; taken: number; heal: number };
 }) {
   const kda = kdaRatio(kills, deaths, assists);
 
@@ -211,6 +220,7 @@ function PlayerBlock({
           </>
         )}
       </div>
+      <StatBars damage={damage} taken={taken} heal={heal} max={max} className="w-32" />
     </div>
   );
 }
@@ -237,6 +247,12 @@ function SharedGameRow({
   const isWin = !!match.win;
   const accent = isWin ? "bg-lol-win" : "bg-lol-loss";
   const tint = isWin ? "from-lol-win/12 to-lol-win/[0.04]" : "from-lol-loss/12 to-lol-loss/[0.04]";
+  // Both bars scale off the same game bests, so the two sides are comparable
+  const max = {
+    dmg: match.game_max_dmg,
+    taken: match.game_max_taken,
+    heal: match.game_max_heal,
+  };
 
   return (
     <div>
@@ -263,7 +279,13 @@ function SharedGameRow({
           assists={match.assists}
           score={match.score}
           badge={match.score_badge}
+          damage={match.total_damage_dealt}
+          taken={match.total_damage_taken}
+          heal={match.total_heal}
+          max={max}
         />
+
+        <span className="w-px self-stretch bg-lol-border/60 shrink-0" />
 
         <PlayerBlock
           label={friendName}
@@ -274,6 +296,10 @@ function SharedGameRow({
           assists={match.friend.assists}
           score={match.friend.score}
           badge={match.friend.score_badge}
+          damage={match.friend.total_damage_dealt}
+          taken={match.friend.total_damage_taken}
+          heal={match.friend.total_heal}
+          max={max}
         />
 
         <div className="flex-1" />

@@ -20,6 +20,7 @@ import AugmentIcon from "../components/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import MultikillBadge from "../components/MultikillBadge";
+import StatBars from "../components/StatBars";
 import StatCard from "../components/StatCard";
 import { ArrowDownIcon } from "../components/icons";
 import { formatDuration, formatTimeAgo, formatKDA, kdaRatio, formatPatch } from "../lib/format";
@@ -489,31 +490,6 @@ function parseAugmentIds(raw: string | null): number[] {
   return raw.split(",").map(Number).filter(Boolean);
 }
 
-function StatBar({
-  value,
-  max,
-  color,
-  label,
-}: {
-  value: number;
-  max: number;
-  color: string;
-  label: string;
-}) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[10px] text-lol-text w-6 text-right shrink-0">{label}</span>
-      <div className="flex-1 h-3.5 bg-white/5 rounded-sm overflow-hidden relative">
-        <div className={`h-full rounded-sm ${color}`} style={{ width: `${pct}%` }} />
-        <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] font-medium text-white/90 leading-none">
-          {value > 0 ? (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value) : ""}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function AugmentGrid({ augmentIds }: { augmentIds: number[] }) {
   if (augmentIds.length === 0) return null;
   // Classic can grant bonus augments; spill past 4 into a third column so the
@@ -615,26 +591,17 @@ function GameRow({
         </div>
 
         {/* Stat bars */}
-        <div className="w-40 shrink-0 space-y-0.5">
-          <StatBar
-            value={match.total_damage_dealt}
-            max={match.game_max_dmg}
-            color="bg-red-400/50"
-            label="DMG"
-          />
-          <StatBar
-            value={match.total_damage_taken}
-            max={match.game_max_taken}
-            color="bg-sky-400/50"
-            label="TKN"
-          />
-          <StatBar
-            value={match.total_heal}
-            max={match.game_max_heal}
-            color="bg-emerald-400/50"
-            label="HEL"
-          />
-        </div>
+        <StatBars
+          damage={match.total_damage_dealt}
+          taken={match.total_damage_taken}
+          heal={match.total_heal}
+          max={{
+            dmg: match.game_max_dmg,
+            taken: match.game_max_taken,
+            heal: match.game_max_heal,
+          }}
+          className="w-40"
+        />
 
         {/* Augments – reserve 3 columns so mixed-queue lists stay aligned */}
         <div className="w-[70px] shrink-0">
