@@ -5,6 +5,9 @@ import { AUGMENT_SLOTS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
 import { getDataDir } from "./paths";
 import { getChampionClasses, getChampionDataVersion } from "./dragon";
 
+// Poro-Snax (base and upgraded) is handed out for free, so it skews item stats
+const EXCLUDED_ITEM_IDS = [2052, 220013];
+
 let db: Database.Database;
 
 function getDbPath() {
@@ -1318,8 +1321,9 @@ export function getChampionItemStats(
   applyQueueFilter(extraWhere, extraParams, queue);
   const extraSql = extraWhere.length > 0 ? ` AND ${extraWhere.join(" AND ")}` : "";
   const itemCols = ["item0", "item1", "item2", "item3", "item4", "item5", "item6"];
+  const excludedList = EXCLUDED_ITEM_IDS.join(", ");
   const subquery = (col: string) =>
-    `SELECT ps.${col} as item_id, ps.win FROM player_stats ps JOIN games g ON ps.game_id = g.game_id WHERE ps.champion_id = ? AND ps.${col} IS NOT NULL AND ps.${col} > 0 AND g.is_remake = 0${extraSql}`;
+    `SELECT ps.${col} as item_id, ps.win FROM player_stats ps JOIN games g ON ps.game_id = g.game_id WHERE ps.champion_id = ? AND ps.${col} IS NOT NULL AND ps.${col} > 0 AND ps.${col} NOT IN (${excludedList}) AND g.is_remake = 0${extraSql}`;
   const params = itemCols.flatMap(() => [championId, ...extraParams]);
   return db
     .prepare(`
@@ -1532,7 +1536,7 @@ export function getGlobalChampionDetail(
 
       for (let i = 0; i <= 6; i++) {
         const itemId = s[`item${i}`];
-        if (itemId && itemId > 0) {
+        if (itemId && itemId > 0 && !EXCLUDED_ITEM_IDS.includes(itemId)) {
           if (!itemMap.has(itemId)) itemMap.set(itemId, { picks: 0, wins: 0 });
           const item = itemMap.get(itemId)!;
           item.picks++;
