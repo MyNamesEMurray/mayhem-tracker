@@ -9,6 +9,7 @@ const api = {
       patch?: string;
       queue?: number;
       sort?: string;
+      sortDir?: string;
       multikills?: string[];
     },
   ) => ipcRenderer.invoke("db:match-history", limit, offset, filters),

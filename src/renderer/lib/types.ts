@@ -75,7 +75,9 @@ export interface MatchListItem {
   game_max_heal: number;
 }
 
-export type MatchSort = "newest" | "oldest" | "kda" | "kills" | "duration" | "score";
+export type MatchSort = "date" | "kda" | "kills" | "duration" | "score";
+
+export type MatchSortDir = "asc" | "desc";
 
 export type MultikillType = "doubles" | "triples" | "quadras" | "pentas";
 
@@ -84,6 +86,7 @@ export interface MatchFilters {
   patch?: string;
   queue?: number;
   sort?: MatchSort;
+  sortDir?: MatchSortDir;
   multikills?: MultikillType[];
 }
 

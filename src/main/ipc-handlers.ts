@@ -17,6 +17,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
         patch?: string;
         queue?: number;
         sort?: string;
+        sortDir?: string;
         multikills?: string[];
       },
     ) => {

@@ -10,6 +10,7 @@ import type {
   DashboardData,
   MatchFilterOptions,
   MatchSort,
+  MatchSortDir,
   MultikillType,
   LcuStatus,
   BackfillProgress,
@@ -20,6 +21,7 @@ import ItemIcon from "../components/ItemIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import MultikillBadge from "../components/MultikillBadge";
 import StatCard from "../components/StatCard";
+import { ArrowDownIcon } from "../components/icons";
 import { formatDuration, formatTimeAgo, formatKDA, kdaRatio, formatPatch } from "../lib/format";
 import { queueLabel } from "../components/QueueSelect";
 import { scoreColor } from "../../shared/opScore";
@@ -42,13 +44,12 @@ function emptyStateMessage(
   return "No ARAM Mayhem games found yet. New games are recorded as you play.";
 }
 
+// The unselected state is the default sort (date), so it isn't listed here
 const SORT_OPTIONS: { value: MatchSort; label: string }[] = [
-  { value: "newest", label: "Newest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "score", label: "Best Score" },
-  { value: "kda", label: "Best KDA" },
-  { value: "kills", label: "Most Kills" },
-  { value: "duration", label: "Longest Game" },
+  { value: "score", label: "Score" },
+  { value: "kda", label: "KDA" },
+  { value: "kills", label: "Kills" },
+  { value: "duration", label: "Duration" },
 ];
 
 const SELECT_CLASS = "select";
@@ -58,12 +59,14 @@ export default function MatchHistory() {
   const [patchFilter, setPatchFilter] = useState<string | undefined>(undefined);
   const [queueFilter, setQueueFilter] = useState<number | undefined>(undefined);
   const [multikillFilter, setMultikillFilter] = useState<MultikillType[]>([]);
-  const [sort, setSort] = useState<MatchSort>("newest");
+  const [sort, setSort] = useState<MatchSort | undefined>(undefined);
+  const [sortDir, setSortDir] = useState<MatchSortDir>("desc");
   const { matches, loading, hasMore, loadMore, reload } = useMatches({
     championId: championFilter,
     patch: patchFilter,
     queue: queueFilter,
     sort,
+    sortDir,
     multikills: multikillFilter,
   });
 
@@ -329,17 +332,43 @@ export default function MatchHistory() {
               ))}
             </select>
           )}
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as MatchSort)}
-            className={SELECT_CLASS}
-          >
-            {SORT_OPTIONS.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1">
+            <select
+              value={sort ?? ""}
+              onChange={(e) => {
+                setSort(e.target.value === "" ? undefined : (e.target.value as MatchSort));
+                setSortDir("desc");
+              }}
+              className={SELECT_CLASS}
+            >
+              <option value="">Sort</option>
+              {SORT_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
+              title={
+                !sort || sort === "date"
+                  ? sortDir === "desc"
+                    ? "Newest first"
+                    : "Oldest first"
+                  : sortDir === "desc"
+                    ? "Highest first"
+                    : "Lowest first"
+              }
+              className="flex items-center rounded-lg border border-lol-border bg-lol-card px-2 py-1.5 text-lol-text transition-colors hover:border-lol-gold/60 hover:text-lol-text-bright"
+            >
+              {/* h-5 matches the selects' line-height so the boxes end up the same height */}
+              <span className="flex h-5 items-center">
+                <ArrowDownIcon
+                  className={`h-3.5 w-3.5 transition-transform ${sortDir === "asc" ? "rotate-180" : ""}`}
+                />
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 

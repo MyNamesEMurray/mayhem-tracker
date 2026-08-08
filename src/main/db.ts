@@ -403,14 +403,24 @@ function extractGameMaxStats(rawJson: string | null): {
 
 // ---- Query functions ----
 
-const MATCH_SORTS: Record<string, string> = {
-  newest: "g.game_creation DESC",
-  oldest: "g.game_creation ASC",
-  kda: "(ps.kills + ps.assists) * 1.0 / MAX(ps.deaths, 1) DESC, g.game_creation DESC",
-  kills: "ps.kills DESC, g.game_creation DESC",
-  duration: "g.game_duration DESC, g.game_creation DESC",
-  score: "ps.score IS NULL, ps.score DESC, g.game_creation DESC",
+const MATCH_SORT_COLUMNS: Record<string, string> = {
+  date: "g.game_creation",
+  kda: "(ps.kills + ps.assists) * 1.0 / MAX(ps.deaths, 1)",
+  kills: "ps.kills",
+  duration: "g.game_duration",
+  score: "ps.score",
 };
+
+function matchOrderBy(sort?: string, sortDir?: string): string {
+  const key = sort && MATCH_SORT_COLUMNS[sort] ? sort : "date";
+  const dir = sortDir === "asc" ? "ASC" : "DESC";
+  const parts: string[] = [];
+  // Games without a score belong at the bottom whichever way we're sorting
+  if (key === "score") parts.push("ps.score IS NULL");
+  parts.push(`${MATCH_SORT_COLUMNS[key]} ${dir}`);
+  if (key !== "date") parts.push("g.game_creation DESC");
+  return parts.join(", ");
+}
 
 const MULTIKILL_COLUMNS: Record<string, string> = {
   doubles: "ps.double_kills",
@@ -427,6 +437,7 @@ export function getMatchHistory(
     patch?: string;
     queue?: number;
     sort?: string;
+    sortDir?: string;
     multikills?: string[];
   },
 ): { matches: any[]; total: number } {
@@ -450,7 +461,7 @@ export function getMatchHistory(
     }
   }
   const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
-  const orderBy = MATCH_SORTS[filters?.sort ?? "newest"] ?? MATCH_SORTS.newest;
+  const orderBy = matchOrderBy(filters?.sort, filters?.sortDir);
 
   const total = db
     .prepare(`
