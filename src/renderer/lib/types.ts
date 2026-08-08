@@ -222,6 +222,30 @@ export interface GlobalStats {
   totalParticipantSlots: number;
 }
 
+// One champion across every stored game, counting all ten players per game.
+export interface GlobalChampionDetail {
+  champion_id: number;
+  games: number;
+  wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  avgDamage: number;
+  avgDamageTaken: number;
+  avgGold: number;
+  avgHeal: number;
+  // Averaged per-game ratios, 0-1
+  damageShare: number;
+  killParticipation: number;
+  doubleKills: number;
+  tripleKills: number;
+  quadraKills: number;
+  pentaKills: number;
+  totalParticipantSlots: number;
+  items: ItemStats[];
+  augments: AugmentStats[];
+}
+
 export interface ParsedParticipant {
   participantId: number;
   championId: number;
@@ -305,6 +329,11 @@ export interface ElectronAPI {
   getTeammateStats: () => Promise<TeammateStats[]>;
   getTeammateDetail: (key: string) => Promise<TeammateDetail | null>;
   getGlobalStats: (patch?: string, queue?: number) => Promise<GlobalStats>;
+  getGlobalChampionDetail: (
+    championId: number,
+    patch?: string,
+    queue?: number,
+  ) => Promise<GlobalChampionDetail>;
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
   refreshGames: () => Promise<{ newGames: number; totalGames: number } | { error: string }>;

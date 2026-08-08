@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import {
   useChampionData,
@@ -12,39 +13,12 @@ import AugmentIcon from "../components/AugmentIcon";
 import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
+import RarityFilter, { type Rarity } from "../components/RarityFilter";
 
 type Tab = "champions" | "augments";
 type ChampSortKey = "games" | "winRate" | "pickRate" | "name";
 type AugSortKey = "picks" | "winRate" | "pickRate" | "name";
 type SortDir = "asc" | "desc";
-type RarityFilter = "all" | "kSilver" | "kGold" | "kPrismatic";
-
-const rarityFilters: { key: RarityFilter; label: string; color: string; activeColor: string }[] = [
-  {
-    key: "all",
-    label: "All",
-    color: "text-lol-text",
-    activeColor: "bg-lol-gold/20 text-lol-gold border-lol-gold/50",
-  },
-  {
-    key: "kSilver",
-    label: "Silver",
-    color: "text-gray-300",
-    activeColor: "bg-gray-400/20 text-gray-200 border-gray-400/50",
-  },
-  {
-    key: "kGold",
-    label: "Gold",
-    color: "text-yellow-400",
-    activeColor: "bg-yellow-500/20 text-yellow-300 border-yellow-500/50",
-  },
-  {
-    key: "kPrismatic",
-    label: "Prismatic",
-    color: "text-fuchsia-400",
-    activeColor: "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/50",
-  },
-];
 
 function SearchInput({
   value,
@@ -90,13 +64,44 @@ function SearchInput({
 export default function GlobalStats() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
-  const [patch, setPatch] = useState<string | undefined>(undefined);
-  const [queue, setQueue] = useState<number | undefined>(undefined);
+  const navigate = useNavigate();
+  // Filters and tab live in the URL so returning from a champion page lands
+  // back on the same view
+  const [searchParams, setSearchParams] = useSearchParams();
+  const patch = searchParams.get("patch") ?? undefined;
+  const queueParam = searchParams.get("queue");
+  const queue = queueParam ? Number(queueParam) : undefined;
+  const tab: Tab = searchParams.get("tab") === "augments" ? "augments" : "champions";
+
+  const setParam = (key: string, value: string | number | undefined) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value == null || value === "") next.delete(key);
+        else next.set(key, String(value));
+        return next;
+      },
+      { replace: true },
+    );
+  };
+  const setPatch = (p: string | undefined) => setParam("patch", p);
+  const setQueue = (q: number | undefined) => setParam("queue", q);
+  const setTab = (t: Tab) => setParam("tab", t === "champions" ? undefined : t);
+
+  // Carried into the champion page so it opens with the same filters, and
+  // comes back on its back link
+  const filterQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (patch) params.set("patch", patch);
+    if (queue != null) params.set("queue", String(queue));
+    const query = params.toString();
+    return query ? `?${query}` : "";
+  }, [patch, queue]);
+
   const { data, refetch } = useIpc<GlobalStats>(
     () => window.api.getGlobalStats(patch, queue),
     [patch, queue],
   );
-  const [tab, setTab] = useState<Tab>("champions");
 
   // Champion tab state
   const [champSearch, setChampSearch] = useState("");
@@ -107,7 +112,7 @@ export default function GlobalStats() {
   const [augSearch, setAugSearch] = useState("");
   const [augSortKey, setAugSortKey] = useState<AugSortKey>("picks");
   const [augSortDir, setAugSortDir] = useState<SortDir>("desc");
-  const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
+  const [rarityFilter, setRarityFilter] = useState<Rarity>("all");
 
   useEffect(() => {
     const unsub = window.api.onGamesUpdated(() => refetch());
@@ -306,13 +311,14 @@ export default function GlobalStats() {
                   return (
                     <tr
                       key={c.champion_id}
-                      className="border-t border-lol-border/50 hover:bg-lol-card-hover transition-colors"
+                      onClick={() => navigate(`/global/champion/${c.champion_id}${filterQuery}`)}
+                      className="group border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
                     >
                       <td className="px-3 py-2 text-xs text-lol-text">{i + 1}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           <ChampionIcon championId={c.champion_id} size={28} />
-                          <span className="text-sm text-lol-text-bright">
+                          <span className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors">
                             {getChampionName(champData, c.champion_id)}
                           </span>
                         </div>
@@ -337,19 +343,7 @@ export default function GlobalStats() {
       {tab === "augments" && (
         <>
           <div className="flex items-center gap-2">
-            {rarityFilters.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setRarityFilter(f.key)}
-                className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                  rarityFilter === f.key
-                    ? f.activeColor
-                    : `${f.color} border-lol-border hover:border-lol-border/80 bg-lol-card`
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+            <RarityFilter value={rarityFilter} onChange={setRarityFilter} />
             <span className="text-xs text-lol-text self-center ml-2">
               {sortedAugments.length} augments
             </span>

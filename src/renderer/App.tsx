@@ -6,6 +6,7 @@ import Augments from "./pages/Augments";
 import Friends from "./pages/Friends";
 import FriendDetail from "./pages/FriendDetail";
 import GlobalStats from "./pages/GlobalStats";
+import GlobalChampionDetail from "./pages/GlobalChampionDetail";
 import Settings from "./pages/Settings";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/:key" element={<FriendDetail />} />
           <Route path="/global" element={<GlobalStats />} />
+          <Route path="/global/champion/:championId" element={<GlobalChampionDetail />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>

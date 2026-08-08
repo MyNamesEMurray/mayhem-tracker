@@ -44,20 +44,20 @@ export default function AugmentIcon({ augmentId, size = 28, showName = false }: 
   const nameColor = rarityTextColor[aug.rarity] || "text-lol-text-bright";
 
   return (
-    <div className="flex items-center gap-1.5" title={aug.name}>
+    <div className="flex items-center gap-1.5 min-w-0" title={aug.name}>
       {iconUrl && (
         <img
           src={iconUrl}
           alt={aug.name}
           width={size}
           height={size}
-          className={`rounded ${borderClass}`}
+          className={`rounded shrink-0 ${borderClass}`}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
       )}
-      {showName && <span className={`text-xs ${nameColor}`}>{aug.name}</span>}
+      {showName && <span className={`text-xs truncate ${nameColor}`}>{aug.name}</span>}
     </div>
   );
 }

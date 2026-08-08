@@ -1379,6 +1379,181 @@ export function getGlobalStats(
   };
 }
 
+// Everything we know about one champion across every stored game, counting all
+// ten players in each game (not just our own). Items and augments come from
+// raw_json for the same reason — the player_stats/game_augments tables only
+// hold our own picks.
+export function getGlobalChampionDetail(
+  championId: number,
+  patch?: string,
+  queue?: number,
+): {
+  champion_id: number;
+  games: number;
+  wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  avgDamage: number;
+  avgDamageTaken: number;
+  avgGold: number;
+  avgHeal: number;
+  damageShare: number;
+  killParticipation: number;
+  doubleKills: number;
+  tripleKills: number;
+  quadraKills: number;
+  pentaKills: number;
+  totalParticipantSlots: number;
+  items: { item_id: number; picks: number; wins: number }[];
+  augments: { augment_id: number; picks: number; wins: number }[];
+} {
+  const where = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
+  const params: any[] = [];
+  if (patch) {
+    where.push("g.game_version = ?");
+    params.push(patch);
+  }
+  applyQueueFilter(where, params, queue);
+  const rows = db
+    .prepare(`SELECT g.raw_json FROM games g WHERE ${where.join(" AND ")}`)
+    .all(...params) as { raw_json: string }[];
+
+  const itemMap = new Map<number, { picks: number; wins: number }>();
+  const augmentMap = new Map<number, { picks: number; wins: number }>();
+  const totals = {
+    games: 0,
+    wins: 0,
+    kills: 0,
+    deaths: 0,
+    assists: 0,
+    damage: 0,
+    damageTaken: 0,
+    gold: 0,
+    heal: 0,
+    doubleKills: 0,
+    tripleKills: 0,
+    quadraKills: 0,
+    pentaKills: 0,
+  };
+  let totalParticipantSlots = 0;
+  // Shares are per-game ratios averaged over the games they're defined in, so
+  // a game with no team damage/kills recorded can't drag the average to zero.
+  let damageShareSum = 0;
+  let damageShareGames = 0;
+  let kpSum = 0;
+  let kpGames = 0;
+
+  for (const row of rows) {
+    let raw: any;
+    try {
+      raw = JSON.parse(row.raw_json);
+    } catch {
+      continue;
+    }
+
+    const parsed = (raw.participants || [])
+      .map((p: any) => {
+        const s = p.stats || p;
+        return {
+          championId: p.championId ?? s.championId ?? 0,
+          teamId: p.teamId ?? s.teamId ?? 100,
+          s,
+        };
+      })
+      .filter((p: any) => p.championId > 0);
+
+    const teamDamage = new Map<number, number>();
+    const teamKills = new Map<number, number>();
+    for (const p of parsed) {
+      totalParticipantSlots++;
+      const dmg = p.s.totalDamageDealtToChampions ?? p.s.totalDamageDealt ?? 0;
+      teamDamage.set(p.teamId, (teamDamage.get(p.teamId) ?? 0) + dmg);
+      teamKills.set(p.teamId, (teamKills.get(p.teamId) ?? 0) + (p.s.kills ?? 0));
+    }
+
+    for (const p of parsed) {
+      if (p.championId !== championId) continue;
+      const s = p.s;
+      const win = !!s.win;
+      const dmg = s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0;
+
+      totals.games++;
+      if (win) totals.wins++;
+      totals.kills += s.kills ?? 0;
+      totals.deaths += s.deaths ?? 0;
+      totals.assists += s.assists ?? 0;
+      totals.damage += dmg;
+      totals.damageTaken += s.totalDamageTaken ?? 0;
+      totals.gold += s.goldEarned ?? 0;
+      totals.heal += s.totalHeal ?? 0;
+      totals.doubleKills += s.doubleKills ?? 0;
+      totals.tripleKills += s.tripleKills ?? 0;
+      totals.quadraKills += s.quadraKills ?? 0;
+      totals.pentaKills += s.pentaKills ?? 0;
+
+      const teamDmg = teamDamage.get(p.teamId) ?? 0;
+      if (teamDmg > 0) {
+        damageShareSum += dmg / teamDmg;
+        damageShareGames++;
+      }
+      const tk = teamKills.get(p.teamId) ?? 0;
+      if (tk > 0) {
+        kpSum += ((s.kills ?? 0) + (s.assists ?? 0)) / tk;
+        kpGames++;
+      }
+
+      for (let i = 0; i <= 6; i++) {
+        const itemId = s[`item${i}`];
+        if (itemId && itemId > 0) {
+          if (!itemMap.has(itemId)) itemMap.set(itemId, { picks: 0, wins: 0 });
+          const item = itemMap.get(itemId)!;
+          item.picks++;
+          if (win) item.wins++;
+        }
+      }
+
+      for (let i = 1; i <= AUGMENT_SLOTS; i++) {
+        const augId = s[`playerAugment${i}`];
+        if (augId && augId > 0) {
+          if (!augmentMap.has(augId)) augmentMap.set(augId, { picks: 0, wins: 0 });
+          const aug = augmentMap.get(augId)!;
+          aug.picks++;
+          if (win) aug.wins++;
+        }
+      }
+    }
+  }
+
+  const avg = (total: number) => (totals.games > 0 ? Math.round(total / totals.games) : 0);
+
+  return {
+    champion_id: championId,
+    games: totals.games,
+    wins: totals.wins,
+    kills: totals.kills,
+    deaths: totals.deaths,
+    assists: totals.assists,
+    avgDamage: avg(totals.damage),
+    avgDamageTaken: avg(totals.damageTaken),
+    avgGold: avg(totals.gold),
+    avgHeal: avg(totals.heal),
+    damageShare: damageShareGames > 0 ? damageShareSum / damageShareGames : 0,
+    killParticipation: kpGames > 0 ? kpSum / kpGames : 0,
+    doubleKills: totals.doubleKills,
+    tripleKills: totals.tripleKills,
+    quadraKills: totals.quadraKills,
+    pentaKills: totals.pentaKills,
+    totalParticipantSlots,
+    items: Array.from(itemMap.entries())
+      .map(([item_id, stats]) => ({ item_id, ...stats }))
+      .sort((a, b) => b.picks - a.picks),
+    augments: Array.from(augmentMap.entries())
+      .map(([augment_id, stats]) => ({ augment_id, ...stats }))
+      .sort((a, b) => b.picks - a.picks),
+  };
+}
+
 export function getDatabase(): Database.Database {
   return db;
 }

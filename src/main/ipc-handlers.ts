@@ -137,6 +137,13 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return db.getGlobalStats(patch, queue);
   });
 
+  ipcMain.handle(
+    "db:global-champion-detail",
+    (_event, championId: number, patch?: string, queue?: number) => {
+      return db.getGlobalChampionDetail(championId, patch, queue);
+    },
+  );
+
   ipcMain.handle("db:all-summoner-puuids", () => {
     return db.getAllPuuids();
   });

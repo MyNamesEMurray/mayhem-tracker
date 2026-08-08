@@ -81,6 +81,9 @@ const api = {
   getGlobalStats: (patch?: string, queue?: number) =>
     ipcRenderer.invoke("db:global-stats", patch, queue),
 
+  getGlobalChampionDetail: (championId: number, patch?: string, queue?: number) =>
+    ipcRenderer.invoke("db:global-champion-detail", championId, patch, queue),
+
   getSummonerPuuid: () => ipcRenderer.invoke("db:summoner-puuid"),
 
   getAllSummonerPuuids: () => ipcRenderer.invoke("db:all-summoner-puuids"),
