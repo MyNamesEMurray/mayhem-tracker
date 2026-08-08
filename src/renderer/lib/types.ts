@@ -214,8 +214,23 @@ export interface TeammateMatch extends MatchListItem {
   };
 }
 
+export interface TeammateChampionStats {
+  champion_id: number;
+  games: number;
+  wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+}
+
+// The list view only needs a teammate's most-played champions; their profile
+// breaks every champion down.
+export interface TeammateProfile extends Omit<TeammateStats, "champions"> {
+  champions: TeammateChampionStats[];
+}
+
 export interface TeammateDetail {
-  player: TeammateStats;
+  player: TeammateProfile;
   matches: TeammateMatch[];
 }
 

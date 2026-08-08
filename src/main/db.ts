@@ -1199,8 +1199,16 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
   `)
     .all(...params) as any[];
 
+  interface ChampionTotals {
+    games: number;
+    wins: number;
+    kills: number;
+    deaths: number;
+    assists: number;
+  }
+
   const matches: any[] = [];
-  const champions = new Map<number, number>();
+  const champions = new Map<number, ChampionTotals>();
   const player = {
     key,
     name: key,
@@ -1211,7 +1219,7 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
     kills: 0,
     deaths: 0,
     assists: 0,
-    champions: [] as { champion_id: number; games: number }[],
+    champions: [] as ({ champion_id: number } & ChampionTotals)[],
     lastPlayed: 0,
   };
 
@@ -1257,7 +1265,15 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
     player.assists += s.assists ?? 0;
 
     const champId = p.championId ?? s.championId ?? 0;
-    champions.set(champId, (champions.get(champId) || 0) + 1);
+    if (!champions.has(champId)) {
+      champions.set(champId, { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 });
+    }
+    const champ = champions.get(champId)!;
+    champ.games++;
+    if (s.win) champ.wins++;
+    champ.kills += s.kills ?? 0;
+    champ.deaths += s.deaths ?? 0;
+    champ.assists += s.assists ?? 0;
 
     const maxStats = extractGameMaxStats(row.raw_json);
     const { raw_json, ...rest } = row;
@@ -1282,8 +1298,8 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
   if (player.games === 0) return null;
 
   player.champions = Array.from(champions.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([champion_id, games]) => ({ champion_id, games }));
+    .map(([champion_id, totals]) => ({ champion_id, ...totals }))
+    .sort((a, b) => b.games - a.games);
 
   return { player, matches };
 }
