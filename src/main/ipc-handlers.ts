@@ -127,6 +127,12 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return db.getTeammateStats();
   });
 
+  ipcMain.handle("db:teammate-detail", async (_event, key: string) => {
+    // Teammate scores are computed on the fly and need champion classes
+    await dragon.waitForChampionData();
+    return db.getTeammateDetail(key);
+  });
+
   ipcMain.handle("db:global-stats", (_event, patch?: string, queue?: number) => {
     return db.getGlobalStats(patch, queue);
   });

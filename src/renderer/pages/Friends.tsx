@@ -1,15 +1,18 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import type { TeammateStats } from "../lib/types";
 import ChampionIcon from "../components/ChampionIcon";
+import SummonerIcon from "../components/SummonerIcon";
 import WinRateBar from "../components/WinRateBar";
-import { formatTimeAgo, kdaRatio, kdaColor, winRatePercent, winRateColor } from "../lib/format";
+import { formatTimeAgo, kdaRatio, kdaColor } from "../lib/format";
 
 type SortKey = "games" | "winRate" | "kda" | "lastPlayed";
 type SortDir = "asc" | "desc";
 
 export default function Friends() {
+  const navigate = useNavigate();
   const champData = useChampionData();
   const { data, loading, refetch } = useIpc<TeammateStats[]>(() => window.api.getTeammateStats());
   const [search, setSearch] = useState("");
@@ -85,7 +88,7 @@ export default function Friends() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-lol-text-bright">Friends</h1>
-          <span className="text-sm text-lol-text">{sorted.length} players</span>
+          <span className="text-sm text-lol-text">{sorted.length} players · 2+ games together</span>
         </div>
         <div className="relative">
           <input
@@ -147,12 +150,16 @@ export default function Friends() {
 
               return (
                 <tr
-                  key={t.puuid || t.name}
-                  className="border-t border-lol-border/50 hover:bg-lol-card-hover transition-colors"
+                  key={t.key}
+                  onClick={() => navigate(`/friends/${encodeURIComponent(t.key)}`)}
+                  className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
                 >
                   <td className="px-3 py-2 text-xs text-lol-text">{i + 1}</td>
                   <td className="px-3 py-2">
-                    <span className="text-sm text-lol-text-bright">{t.name}</span>
+                    <div className="flex items-center gap-2">
+                      <SummonerIcon iconId={t.profileIcon} size={28} />
+                      <span className="text-sm text-lol-text-bright">{t.name}</span>
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-sm text-lol-text-bright">{t.games}</td>
                   <td className="px-3 py-2 w-32">

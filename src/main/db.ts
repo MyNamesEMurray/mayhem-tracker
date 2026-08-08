@@ -989,6 +989,70 @@ export function getAllPuuids(): string[] {
   return rows.map((r) => r.puuid);
 }
 
+// Someone we queued with once is a stranger, not a friend — the list only
+// counts players we've shared at least this many games with.
+const MIN_SHARED_GAMES = 2;
+
+interface TeammateEntry {
+  participant: any;
+  puuid: string | null;
+  name: string;
+  profileIcon: number | null;
+}
+
+// Everyone on the same team as one of our accounts in a single game (excluding
+// our own accounts). Returns null when no tracked account played this game.
+function collectTeammates(raw: any, puuids: Set<string>): TeammateEntry[] | null {
+  const participants = raw.participants || [];
+  const identities = raw.participantIdentities || [];
+
+  let myTeamId: number | null = null;
+  let myParticipantId: number | null = null;
+  for (let i = 0; i < participants.length; i++) {
+    const p = participants[i];
+    const pPuuid = p.puuid || identities[i]?.player?.puuid;
+    if (pPuuid && puuids.has(pPuuid)) {
+      myTeamId = p.teamId || 100;
+      myParticipantId = p.participantId;
+      break;
+    }
+  }
+  if (myTeamId === null) return null;
+
+  const teammates: TeammateEntry[] = [];
+  for (let i = 0; i < participants.length; i++) {
+    const p = participants[i];
+    const identity = identities[i];
+    if ((p.teamId || 100) !== myTeamId) continue;
+    if (p.participantId === myParticipantId) continue;
+
+    const rawPuuid = p.puuid || identity?.player?.puuid || null;
+    if (rawPuuid && puuids.has(rawPuuid)) continue;
+
+    // Filter out placeholder/bot puuids
+    const playerPuuid = rawPuuid && !/^0+(-0+)*$/.test(rawPuuid) ? rawPuuid : null;
+    const gameName =
+      identity?.player?.gameName || identity?.player?.summonerName || p.summonerName || null;
+    const tagLine = identity?.player?.tagLine || null;
+    const name = gameName ? (tagLine ? `${gameName}#${tagLine}` : gameName) : `Player ${i + 1}`;
+    const icon = identity?.player?.profileIcon;
+
+    teammates.push({
+      participant: p,
+      puuid: playerPuuid,
+      name,
+      profileIcon: typeof icon === "number" && icon > 0 ? icon : null,
+    });
+  }
+  return teammates;
+}
+
+// The id the Friends list keys a teammate on — puuid when we know it, so name
+// changes don't split a player in two.
+function teammateKey(entry: { puuid: string | null; name: string }): string {
+  return entry.puuid || entry.name;
+}
+
 export function getTeammateStats(): any[] {
   const puuids = new Set(getAllPuuids());
   if (puuids.size === 0) return [];
@@ -1007,6 +1071,7 @@ export function getTeammateStats(): any[] {
     {
       name: string;
       puuid: string | null;
+      profileIcon: number | null;
       games: number;
       wins: number;
       kills: number;
@@ -1025,63 +1090,29 @@ export function getTeammateStats(): any[] {
       continue;
     }
 
-    const participants = raw.participants || [];
-    const identities = raw.participantIdentities || [];
+    const teammates = collectTeammates(raw, puuids);
+    if (!teammates) continue;
 
-    // Find our participant to get teamId
-    let myTeamId: number | null = null;
-    let myParticipantId: number | null = null;
-
-    for (let i = 0; i < participants.length; i++) {
-      const p = participants[i];
-      const identity = identities[i];
-      const pPuuid = p.puuid || identity?.player?.puuid;
-      if (pPuuid && puuids.has(pPuuid)) {
-        myTeamId = p.teamId || 100;
-        myParticipantId = p.participantId;
-        break;
-      }
-    }
-
-    if (myTeamId === null) continue;
-
-    // Collect teammates (same team, not self)
-    for (let i = 0; i < participants.length; i++) {
-      const p = participants[i];
-      const identity = identities[i];
-      const teamId = p.teamId || 100;
-
-      if (teamId !== myTeamId) continue;
-      const pPuuid2 = p.puuid || identity?.player?.puuid;
-      if (pPuuid2 && puuids.has(pPuuid2)) continue;
-      if (p.participantId === myParticipantId) continue;
-
-      const rawPuuid = p.puuid || identity?.player?.puuid || null;
-      // Filter out placeholder/bot puuids
-      const playerPuuid = rawPuuid && !/^0+(-0+)*$/.test(rawPuuid) ? rawPuuid : null;
-      const gameName =
-        identity?.player?.gameName || identity?.player?.summonerName || p.summonerName || null;
-      const tagLine = identity?.player?.tagLine || null;
-      const name = gameName ? (tagLine ? `${gameName}#${tagLine}` : gameName) : `Player ${i + 1}`;
-
-      // Always prefer puuid as key
-      const key = playerPuuid || name;
+    for (const t of teammates) {
+      const key = teammateKey(t);
+      const p = t.participant;
       const s = p.stats || p;
 
       // If we now have a puuid but previously tracked this player by name, merge
-      if (playerPuuid && !playerMap.has(playerPuuid) && playerMap.has(name)) {
-        const old = playerMap.get(name)!;
+      if (t.puuid && !playerMap.has(t.puuid) && playerMap.has(t.name)) {
+        const old = playerMap.get(t.name)!;
         if (!old.puuid) {
-          playerMap.set(playerPuuid, old);
-          old.puuid = playerPuuid;
-          playerMap.delete(name);
+          playerMap.set(t.puuid, old);
+          old.puuid = t.puuid;
+          playerMap.delete(t.name);
         }
       }
 
       if (!playerMap.has(key)) {
         playerMap.set(key, {
-          name,
-          puuid: playerPuuid,
+          name: t.name,
+          puuid: t.puuid,
+          profileIcon: null,
           games: 0,
           wins: 0,
           kills: 0,
@@ -1093,9 +1124,10 @@ export function getTeammateStats(): any[] {
       }
 
       const entry = playerMap.get(key)!;
-      // Update name to most recent version
+      // Update name and icon to the most recent version
       if (game.game_creation > entry.lastPlayed) {
-        entry.name = name;
+        entry.name = t.name;
+        if (t.profileIcon != null) entry.profileIcon = t.profileIcon;
       }
       entry.games++;
       if (s.win) entry.wins++;
@@ -1109,10 +1141,13 @@ export function getTeammateStats(): any[] {
     }
   }
 
-  return Array.from(playerMap.values())
-    .map((p) => ({
+  return Array.from(playerMap.entries())
+    .filter(([, p]) => p.games >= MIN_SHARED_GAMES)
+    .map(([key, p]) => ({
+      key,
       name: p.name,
       puuid: p.puuid,
+      profileIcon: p.profileIcon,
       games: p.games,
       wins: p.wins,
       kills: p.kills,
@@ -1125,6 +1160,121 @@ export function getTeammateStats(): any[] {
       lastPlayed: p.lastPlayed,
     }))
     .sort((a, b) => b.games - a.games);
+}
+
+// Every game we played alongside one teammate, from both sides: our stored
+// stats for the row plus the teammate's own line in that game.
+export function getTeammateDetail(key: string): { player: any; matches: any[] } | null {
+  const puuids = new Set(getAllPuuids());
+  if (puuids.size === 0) return null;
+
+  const where = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
+  const params: any[] = [];
+  applyQueueFilter(where, params, undefined);
+  const rows = db
+    .prepare(`
+    SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.favorite,
+           g.puuid, g.game_version, g.raw_json,
+           ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
+           ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
+           ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
+           ps.score, ps.score_badge,
+           ps.item0, ps.item1, ps.item2, ps.item3, ps.item4, ps.item5,
+           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids
+    FROM games g
+    JOIN player_stats ps ON g.game_id = ps.game_id
+    WHERE ${where.join(" AND ")}
+    ORDER BY g.game_creation DESC
+  `)
+    .all(...params) as any[];
+
+  const matches: any[] = [];
+  const champions = new Map<number, number>();
+  const player = {
+    key,
+    name: key,
+    puuid: null as string | null,
+    profileIcon: null as number | null,
+    games: 0,
+    wins: 0,
+    kills: 0,
+    deaths: 0,
+    assists: 0,
+    champions: [] as { champion_id: number; games: number }[],
+    lastPlayed: 0,
+  };
+
+  for (const row of rows) {
+    let raw: any;
+    try {
+      raw = JSON.parse(row.raw_json);
+    } catch {
+      continue;
+    }
+
+    const teammates = collectTeammates(raw, puuids);
+    if (!teammates) continue;
+    // Older games can be missing puuids; once we know who we're looking at,
+    // match those on name too — the same merge the Friends list does.
+    const match = teammates.find(
+      (t) =>
+        teammateKey(t) === key || (player.games > 0 && t.puuid == null && t.name === player.name),
+    );
+    if (!match) continue;
+
+    const p = match.participant;
+    const s = p.stats || p;
+    const participantId = p.participantId ?? 0;
+    const friendScore = computeMatchScores(scoreInputsFromRaw(raw), getChampionClasses()).get(
+      participantId,
+    );
+
+    // Rows are newest-first, so the first hit carries the current name and icon
+    if (player.games === 0) {
+      player.name = match.name;
+      player.puuid = match.puuid;
+      player.profileIcon = match.profileIcon;
+      player.lastPlayed = row.game_creation;
+    } else if (player.profileIcon == null) {
+      player.profileIcon = match.profileIcon;
+    }
+
+    player.games++;
+    if (s.win) player.wins++;
+    player.kills += s.kills ?? 0;
+    player.deaths += s.deaths ?? 0;
+    player.assists += s.assists ?? 0;
+
+    const champId = p.championId ?? s.championId ?? 0;
+    champions.set(champId, (champions.get(champId) || 0) + 1);
+
+    const maxStats = extractGameMaxStats(row.raw_json);
+    const { raw_json, ...rest } = row;
+    matches.push({
+      ...rest,
+      ...maxStats,
+      friend: {
+        champion_id: champId,
+        win: s.win ? 1 : 0,
+        kills: s.kills ?? 0,
+        deaths: s.deaths ?? 0,
+        assists: s.assists ?? 0,
+        total_damage_dealt: s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0,
+        total_damage_taken: s.totalDamageTaken ?? 0,
+        total_heal: s.totalHeal ?? 0,
+        score: friendScore?.score ?? null,
+        score_badge: friendScore?.badge ?? null,
+      },
+    });
+  }
+
+  if (player.games === 0) return null;
+
+  player.champions = Array.from(champions.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([champion_id, games]) => ({ champion_id, games }));
+
+  return { player, matches };
 }
 
 export function getChampionItemStats(

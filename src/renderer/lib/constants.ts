@@ -1,6 +1,9 @@
 export const CHAMPION_ICON_URL = (id: number): string =>
   `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${id}.png`;
 
+export const PROFILE_ICON_URL = (id: number): string =>
+  `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${id}.jpg`;
+
 export const AUGMENT_ICON_BASE = "https://raw.communitydragon.org/latest/game/";
 
 // Converts a CommunityDragon game-data icon path (e.g. from items.json) to a

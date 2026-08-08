@@ -76,6 +76,8 @@ const api = {
 
   getTeammateStats: () => ipcRenderer.invoke("db:teammate-stats"),
 
+  getTeammateDetail: (key: string) => ipcRenderer.invoke("db:teammate-detail", key),
+
   getGlobalStats: (patch?: string, queue?: number) =>
     ipcRenderer.invoke("db:global-stats", patch, queue),
 

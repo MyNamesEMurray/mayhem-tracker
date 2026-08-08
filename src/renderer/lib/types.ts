@@ -180,8 +180,11 @@ export interface ItemData {
 }
 
 export interface TeammateStats {
+  // Stable id for routing — the teammate's puuid, or their name when unknown
+  key: string;
   name: string;
   puuid: string | null;
+  profileIcon: number | null;
   games: number;
   wins: number;
   kills: number;
@@ -189,6 +192,28 @@ export interface TeammateStats {
   assists: number;
   champions: { champion_id: number; games: number }[];
   lastPlayed: number;
+}
+
+// A shared game, seen from both sides: our stats on the row itself, theirs
+// under `friend`.
+export interface TeammateMatch extends MatchListItem {
+  friend: {
+    champion_id: number;
+    win: number;
+    kills: number;
+    deaths: number;
+    assists: number;
+    total_damage_dealt: number;
+    total_damage_taken: number;
+    total_heal: number;
+    score: number | null;
+    score_badge: "MVP" | "ACE" | null;
+  };
+}
+
+export interface TeammateDetail {
+  player: TeammateStats;
+  matches: TeammateMatch[];
 }
 
 export interface GlobalStats {
@@ -278,6 +303,7 @@ export interface ElectronAPI {
     queue?: number,
   ) => Promise<ItemStats[]>;
   getTeammateStats: () => Promise<TeammateStats[]>;
+  getTeammateDetail: (key: string) => Promise<TeammateDetail | null>;
   getGlobalStats: (patch?: string, queue?: number) => Promise<GlobalStats>;
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
