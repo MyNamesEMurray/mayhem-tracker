@@ -143,21 +143,23 @@ export default function AugmentsTable({
       </div>
 
       <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-x-auto">
-        <table className="w-full min-w-[760px]">
+        {/* Fixed layout: explicit widths everywhere but the name column, so
+            filtering (e.g. the 20+ toggle) never reflows the columns */}
+        <table className="table-fixed w-full min-w-[960px]">
           <thead className="bg-lol-dark/50">
             <tr>
               <SortHeader label="Augment" field="name" />
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+              <th className="w-16 px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
                 Tier
               </th>
-              <SortHeader label="Score" field="score" />
+              <SortHeader label="Score" field="score" className="w-24" />
               <SortHeader label="Win Rate" field="winRate" className="w-36" />
-              <SortHeader label="Picks" field="picks" />
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider whitespace-nowrap">
+              <SortHeader label="Picks" field="picks" className="w-24" />
+              <th className="w-24 px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider whitespace-nowrap">
                 Pick Rate
               </th>
-              <SortHeader label="KDA" field="kda" />
-              <SortHeader label="DMG" field="damage" />
+              <SortHeader label="KDA" field="kda" className="w-20" />
+              <SortHeader label="DMG" field="damage" className="w-20" />
             </tr>
           </thead>
           <tbody>

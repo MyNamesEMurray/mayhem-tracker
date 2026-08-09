@@ -16,7 +16,7 @@ export default function WinRateBar({ wins, total }: { wins: number; total: numbe
         <div className="h-full bg-lol-win rounded-full" style={{ width: `${rate}%` }} />
       </div>
       <span
-        className={`text-xs font-medium min-w-10 text-right whitespace-nowrap ${
+        className={`text-xs font-medium w-14 shrink-0 text-right whitespace-nowrap ${
           lowSample
             ? "text-lol-text"
             : rate >= 60

@@ -241,13 +241,13 @@ export default function ChampionDetail({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
           <h2 className="text-sm font-semibold text-lol-text-bright px-4 pt-4 pb-2">All items</h2>
-          <table className="w-full">
+          <table className="table-fixed w-full">
             <thead className="bg-lol-dark/50">
               <tr>
                 <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
                   Item
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+                <th className="w-20 px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
                   Games
                 </th>
                 <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-32">
@@ -280,13 +280,13 @@ export default function ChampionDetail({
 
         <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
           <h2 className="text-sm font-semibold text-lol-text-bright px-4 pt-4 pb-2">All augments</h2>
-          <table className="w-full">
+          <table className="table-fixed w-full">
             <thead className="bg-lol-dark/50">
               <tr>
                 <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
                   Augment
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+                <th className="w-20 px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
                   Picks
                 </th>
                 <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-32">
