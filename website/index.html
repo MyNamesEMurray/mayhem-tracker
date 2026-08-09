@@ -20,6 +20,59 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Static content: visible to everyone, present without JavaScript -->
+    <section id="site-intro">
+      <h2>What is MayhemStats?</h2>
+      <p>
+        MayhemStats shows community-powered tier lists, win rates, and ideal builds for ARAM
+        Mayhem, the League of Legends game mode where every player drafts augments at level
+        breakpoints. Every game in the database was contributed voluntarily and anonymously by
+        players running the free, open-source
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">Mayhem
+        Tracker</a> desktop app — no scraping, no estimates, and no player identity, ever.
+      </p>
+      <p>
+        Scores adjust win rates for sample size so a lucky 3–0 never outranks a proven pick,
+        tiers rank augments against their own rarity, and every champion has a build page showing
+        its best items and augments from real community games. Read
+        <a href="/about/">how the stats work</a>, check the <a href="/privacy/">privacy
+        policy</a>, or <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">
+        install the tracker</a> to add your own games.
+      </p>
+    </section>
+    <style>
+      #site-intro {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 0 1rem 3rem;
+        color: #94a0b8;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      #site-intro h2 {
+        color: #e8ecf4;
+        font-size: 0.95rem;
+        margin: 0 0 0.5rem;
+      }
+      #site-intro p {
+        font-size: 0.8rem;
+        line-height: 1.6;
+        margin: 0 0 0.6rem;
+        max-width: 60rem;
+      }
+      #site-intro a {
+        color: #c89b3c;
+        text-decoration: none;
+      }
+      #site-intro a:hover {
+        text-decoration: underline;
+      }
+      @media (min-width: 640px) {
+        #site-intro { padding-left: 1.5rem; padding-right: 1.5rem; }
+      }
+      @media (min-width: 1024px) {
+        #site-intro { padding-left: 2rem; padding-right: 2rem; }
+      }
+    </style>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

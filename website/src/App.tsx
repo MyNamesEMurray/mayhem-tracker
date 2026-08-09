@@ -226,6 +226,30 @@ export default function App() {
 
         {/* Footer */}
         <footer className="mt-10 pt-6 border-t border-lol-border/50 space-y-3 text-xs text-lol-text/80">
+          <nav className="flex flex-wrap gap-x-4 gap-y-1 text-lol-text">
+            <a href="/about/" className="hover:text-lol-gold">
+              About &amp; methodology
+            </a>
+            <a href="/privacy/" className="hover:text-lol-gold">
+              Privacy
+            </a>
+            <a
+              href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-lol-gold"
+            >
+              Download Mayhem Tracker
+            </a>
+            <a
+              href="https://github.com/MyNamesEMurray/mayhem-tracker"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-lol-gold"
+            >
+              GitHub
+            </a>
+          </nav>
           <p>
             Powered by anonymized games contributed by{" "}
             <a

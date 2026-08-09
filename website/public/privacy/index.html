@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — MayhemStats</title>
+    <meta
+      name="description"
+      content="What data MayhemStats and the Mayhem Tracker app collect, what is never collected, and how to remove your contributions."
+    />
+    <link rel="canonical" href="https://mayhemstats.com/privacy/" />
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <style>
+      :root {
+        --dark: #0b0e14;
+        --card: #141924;
+        --border: #242c3d;
+        --gold: #c89b3c;
+        --text: #94a0b8;
+        --bright: #e8ecf4;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        background-color: var(--dark);
+        background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      main { max-width: 780px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+      h1 { color: var(--bright); font-size: 1.75rem; margin-bottom: 0.25rem; }
+      h2 { color: var(--bright); font-size: 1.15rem; margin: 2.25rem 0 0.75rem; }
+      p, li { margin-bottom: 0.85rem; font-size: 0.95rem; }
+      ul { padding-left: 1.25rem; }
+      a { color: var(--gold); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .back { display: inline-block; margin-bottom: 2rem; font-size: 0.9rem; }
+      .updated { font-size: 0.8rem; margin-bottom: 1.5rem; }
+      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.8rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">← Back to the stats</a>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: August 9, 2026</p>
+
+      <p>
+        MayhemStats (mayhemstats.com) is a community fan project showing aggregate statistics for
+        the ARAM Mayhem game mode. Privacy is the project's founding constraint: the system was
+        designed so that player identity is never collected in the first place, rather than
+        collected and protected. This page describes exactly what data exists and what doesn't.
+      </p>
+
+      <h2>Game data contributed through Mayhem Tracker</h2>
+      <p>
+        The Mayhem Tracker desktop app records your matches locally, on your machine. If you
+        enable the optional community contribution setting (off by default), the app uploads an
+        anonymous record of each match containing:
+      </p>
+      <ul>
+        <li>For each of the ten players: champion, augments, items, and combat statistics
+          (kills, deaths, assists, damage, healing, gold, multikills)</li>
+        <li>Match metadata: queue, game patch, duration, creation time, and region plus game id
+          (used only to count a match once when several players contribute it)</li>
+      </ul>
+      <p><strong>Never uploaded:</strong> summoner names, Riot IDs, tag lines, profile icons,
+        PUUIDs, or any other player identifier — for you <em>or</em> the other nine players in
+        your games. The community database contains no identity columns at all.
+      </p>
+      <p>
+        Uploads are associated with a random token generated on your machine, derived from
+        nothing, used only to rate-limit abuse and to honor deletion requests. Using
+        <strong>Settings → Community Stats → Delete my contributions</strong> in the app removes
+        every record your install has shared; matches no other player contributed are deleted
+        entirely.
+      </p>
+
+      <h2>Data collected by this website</h2>
+      <ul>
+        <li><strong>Hosting logs:</strong> the site is served by Vercel, whose infrastructure
+          processes IP addresses and request metadata to deliver and protect the service, as any
+          web host does.</li>
+        <li><strong>Local caching:</strong> the site stores public game metadata (champion,
+          augment, and item names) in your browser's local storage to speed up repeat visits.
+          This contains no personal data and never leaves your browser.</li>
+        <li><strong>Analytics:</strong> the site currently runs no analytics and sets no
+          tracking cookies of its own.</li>
+        <li><strong>Third-party content:</strong> champion, augment, and item images and names
+          load in your browser from Riot's Data Dragon and the community-run CommunityDragon
+          CDN; those requests are made directly by your browser to those services.</li>
+      </ul>
+
+      <h2>Advertising</h2>
+      <p>
+        MayhemStats may display advertisements served by third-party networks such as Google
+        AdSense to cover hosting costs. Ad providers may use cookies or similar technologies to
+        serve and measure ads, including, where permitted, personalized ads; where required by
+        law you will be asked for consent before any such cookies are set, and you can decline.
+        Google's use of advertising cookies is described at
+        <a href="https://policies.google.com/technologies/ads" rel="noopener">
+          policies.google.com/technologies/ads</a>. Advertising applies to this website only —
+        game data contributions are never used for advertising and contain no identity to
+        advertise to.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        Depending on where you live, you may have rights to access, correct, or delete personal
+        data. The community game database holds no personal data to access or correct; deletion
+        of contributed match records is self-service through the app as described above. For
+        anything else, contact the maintainer by opening an issue at
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/issues">the project's GitHub
+        repository</a>.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        If the site's data practices change — for example, when advertising or analytics are
+        introduced — this page will be updated and the date above revised before those changes
+        take effect.
+      </p>
+
+      <footer>
+        <p>
+          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
+          Riot Games or anyone officially involved in producing or managing League of Legends.
+          League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
+          Inc.
+        </p>
+        <p><a href="/">Stats</a> · <a href="/about/">About</a> ·
+          <a href="https://github.com/MyNamesEMurray/mayhem-tracker">GitHub</a></p>
+      </footer>
+    </main>
+  </body>
+</html>
