@@ -4,6 +4,12 @@
   "pkg": "mayhem-tracker",
   "globalName": "MayhemStats",
   "buildCmd": ".ds-sync/node_modules/.bin/tailwindcss -i website/src/global.css -o .design-sync/.cache/ds-tailwind.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "ChampionDetail": { "cardMode": "column" },
+    "StatCard": { "cardMode": "column" },
+    "PatchRangeSelect": { "cardMode": "column" }
+  },
   "cssEntry": ".design-sync/.cache/ds-tailwind.css",
   "componentSrcMap": {
     "AugmentIcon": "website/src/components/AugmentIcon.tsx",

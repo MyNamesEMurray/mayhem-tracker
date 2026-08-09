@@ -33,10 +33,47 @@
   node_modules) on this machine; a normal machine can just `npm i playwright`
   in `.ds-sync/`.
 
+## Authoring recipes (folded from the first-sync waves)
+
+- Icons (`src/renderer/components/icons.tsx`): no `size` prop — they spread
+  `SVGProps<SVGSVGElement>` with defaults `width/height="1em"`,
+  `stroke="currentColor"`. Size with `width={n} height={n}`; color via CSS
+  `color` on an ancestor.
+- MatchScoreboard preview needs a `window.api` shim (`getAugmentData`,
+  `getItemData`, `getChampionData`) defined at module top — the renderer
+  AugmentIcon/ItemIcon call the Electron bridge in mount effects and unmount
+  the tree without it. Any preview rendering renderer-hook components needs
+  the same.
+- Offline-sandbox img collapse: components hide failed CDN `<img>`s via
+  onError `display:none`, which deletes grid tracks and misaligns rows. The
+  MatchScoreboard preview carries a scoped
+  `img { display:inline-block !important; font-size:0 !important }` override
+  so broken images keep their attribute box. Capture-env only; harmless in
+  production.
+- Capture viewport is fixed 900x700. Wide/tall flagship views fit via
+  in-preview `zoom` (AugmentsTable 0.85, MatchScoreboard 0.82) and
+  ChampionDetail's fixed-height shifted-window cells. The config alternative
+  (`overrides.<Name>.viewport`) is grade-keyed — switching to it invalidates
+  those grades, so keep the workarounds unless re-grading anyway.
+- ChampionDetail mocks need a 12+ champion cohort (tier badge ranks within
+  the cohort — subject-only rows grade D); AugmentsTable tiers are
+  per-rarity (a 3-4 augment rarity can never show S); rankForBuild's 20-game
+  50% prior can rank hot 3-pick entries above 20-pick ones — keep low-sample
+  mock win rates near 50%.
+- CDN-image components: use `showName` and data-miss fallbacks ("Item N",
+  ringed placeholder slots) so cells stay gradable offline; keep real
+  CommunityDragon iconPaths so production captures show real art.
+- RarityFilter returns a fragment — the canvas must supply `display:flex`.
+
 ## Known render warns
 
 - (retired) icon components RENDER_THIN/BLANK on floor cards — resolved by
   authored previews sizing them explicitly on the dark canvas.
+- ChampionDetail: `bad` with `firstErr: TypeError: Failed to fetch` in the
+  offline sandbox — its internal `loadItemData()` fetches Data Dragon
+  items.json at mount. The page renders complete (item names fall back to
+  "Item <id>"); on a networked machine the errors disappear. Triaged
+  environmental, not a defect.
 
 ## Re-sync risks
 

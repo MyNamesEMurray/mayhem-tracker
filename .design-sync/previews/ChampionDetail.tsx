@@ -158,9 +158,9 @@ const detail = (minGames?: number) => (
 // The page is ~1500px tall and the capture viewport is 900x700, so the two
 // lower cells shift a fixed 590px window down the SAME page instead of
 // scaling it — every section gets graded at natural size.
-const windowed = (shift: number, minGames?: number) => (
+const windowed = (shift: number, height: number, minGames?: number) => (
   <div style={canvas}>
-    <div style={{ height: 590, overflow: "hidden" }}>
+    <div style={{ height, overflow: "hidden" }}>
       <div style={{ marginTop: -shift }}>{detail(minGames)}</div>
     </div>
   </div>
@@ -175,11 +175,11 @@ export function MalzaharDetail() {
 // The lower half of the same page: the All items table (with low-sample
 // asterisk rows) and the top of the All augments table
 export function FullTables() {
-  return windowed(650);
+  return windowed(650, 590);
 }
 
 // The 20+ games toggle narrows the full tables only; window shifted to the
 // All augments table, now trimmed to confident rows, plus the footnote
 export function ConfidentOnly() {
-  return windowed(960, 20);
+  return windowed(930, 440, 20);
 }
