@@ -8,17 +8,18 @@ Desktop app for tracking ARAM Mayhem match history in League of Legends. Connect
 
 ## Why this exists
 
-Riot's public API doesn't expose ARAM Mayhem's mode data — augment picks, in
-particular, never appear in Match-V5. That's why the big stats sites can cover
-ranked and ARAM but have nothing for Mayhem: **the data to build tier lists
-simply isn't available to anyone**. The one place it does exist is the League
-client itself, which holds the full post-game breakdown of your own matches.
+Riot's public API doesn't expose ARAM Mayhem's match data — augment picks, in
+particular, never appear in Match-V5. The big stats sites work around the gap
+with proxy data: item stats borrowed from regular ARAM and augment stats
+borrowed from Arena. Those are different modes with different balance, pacing,
+and augment pools — **nobody's numbers actually come from Mayhem games**.
 
-So this project crowdsources it. The tracker reads your matches from your own
-client, and players who opt in pool anonymized copies into a shared database.
-Every augment win rate and ideal build on
-[MayhemStats.com](https://mayhemstats.com/) exists only because players chose
-to share their games — there is no other source.
+The one place real Mayhem data exists is the League client itself, which holds
+the full post-game breakdown of your own matches. So this project crowdsources
+it: the tracker reads your matches from your own client, and players who opt
+in pool anonymized copies into a shared database. Every win rate and ideal
+build on [MayhemStats.com](https://mayhemstats.com/) comes from actual ARAM
+Mayhem games — contributed by players, because there is no other source.
 
 ## Features
 

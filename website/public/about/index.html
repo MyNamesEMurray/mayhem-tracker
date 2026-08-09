@@ -62,17 +62,18 @@
 
       <h2>Why this exists</h2>
       <p>
-        Riot's public API doesn't expose ARAM Mayhem's mode data — augment picks in particular
-        are simply absent from the match API. That's why the major stats sites cover ranked and
-        regular ARAM but have nothing for Mayhem: the data needed to build augment tier lists
-        isn't available to anyone, at any price. The one place it does exist is the League
-        client itself, which keeps the full post-game breakdown of your own matches.
+        Riot's public API doesn't expose ARAM Mayhem's match data — augment picks in particular
+        are simply absent from the match API. The major stats sites bridge the gap with proxy
+        data: item stats borrowed from regular ARAM and augment stats borrowed from Arena. Those
+        are different modes with different balance, pacing, and augment pools, so none of those
+        numbers actually come from Mayhem games. The one place real Mayhem data exists is the
+        League client itself, which keeps the full post-game breakdown of your own matches.
       </p>
       <p>
-        MayhemStats is the community's answer: crowdsource it. The tracker reads matches from
-        each player's own client, and everyone who opts in pools anonymized games into a shared
-        database. Every number on this site exists only because players chose to contribute —
-        there is no other source, which is also why
+        MayhemStats is the community's answer: crowdsource the real thing. The tracker reads
+        matches from each player's own client, and everyone who opts in pools anonymized games
+        into a shared database. Every number on this site comes from actual ARAM Mayhem games
+        contributed by players — there is no other source, which is also why
         <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">running the
         tracker</a> and opting in directly makes the stats better for everyone.
       </p>

@@ -79,10 +79,10 @@ export default function OnboardingWizard() {
               Count your games in the community stats
             </h2>
             <p className="text-[13px] text-lol-text leading-relaxed">
-              Riot's API doesn't expose Mayhem data — augment picks never leave the client — so
-              the tier lists and builds on mayhemstats.com are powered entirely by players who
-              share their games. Contributions are anonymous — champions, augments, items, and
-              combat stats only.{" "}
+              Riot's API doesn't expose Mayhem match data, so other sites substitute ARAM item
+              stats and Arena augment stats. The tier lists on mayhemstats.com come from real
+              Mayhem games instead — powered entirely by players who share theirs. Contributions
+              are anonymous — champions, augments, items, and combat stats only.{" "}
               <b className="text-lol-text-bright">
                 Never summoner names, Riot IDs, or anything that identifies you.
               </b>{" "}
