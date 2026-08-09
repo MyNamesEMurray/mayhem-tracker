@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
-import { SCORE_FORMULA_VERSION, computeMatchScores, scoreInputsFromRaw } from "../shared/opScore";
+import { SCORE_FORMULA_VERSION, computeMatchScores } from "../shared/opScore";
 import { AUGMENT_SLOTS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
 import { getDataDir } from "./paths";
 import { getChampionClasses, getChampionDataVersion } from "./dragon";
@@ -21,6 +21,9 @@ export function initDatabase() {
   db.pragma("foreign_keys = ON");
 
   createTables();
+
+  // Refresh stale planner statistics as the tables grow between launches
+  db.pragma("optimize");
 }
 
 function createTables() {
@@ -84,9 +87,58 @@ function createTables() {
       game_id INTEGER PRIMARY KEY
     );
 
+    -- Every player in every stored game, one row each, extracted from raw_json
+    -- at insert time. Global/friends stats aggregate over this instead of
+    -- re-parsing raw_json, and its shape is the payload a future opt-in stats
+    -- upload would send.
+    CREATE TABLE IF NOT EXISTS participants (
+      game_id               INTEGER NOT NULL REFERENCES games(game_id),
+      participant_id        INTEGER NOT NULL,
+      team_id               INTEGER NOT NULL,
+      puuid                 TEXT,
+      game_name             TEXT,
+      tag_line              TEXT,
+      profile_icon          INTEGER,
+      champion_id           INTEGER NOT NULL,
+      win                   INTEGER NOT NULL,
+      kills                 INTEGER NOT NULL DEFAULT 0,
+      deaths                INTEGER NOT NULL DEFAULT 0,
+      assists               INTEGER NOT NULL DEFAULT 0,
+      double_kills          INTEGER NOT NULL DEFAULT 0,
+      triple_kills          INTEGER NOT NULL DEFAULT 0,
+      quadra_kills          INTEGER NOT NULL DEFAULT 0,
+      penta_kills           INTEGER NOT NULL DEFAULT 0,
+      largest_killing_spree INTEGER NOT NULL DEFAULT 0,
+      total_damage_dealt    INTEGER NOT NULL DEFAULT 0,
+      total_damage_taken    INTEGER NOT NULL DEFAULT 0,
+      gold_earned           INTEGER NOT NULL DEFAULT 0,
+      total_heal            INTEGER NOT NULL DEFAULT 0,
+      item0 INTEGER, item1 INTEGER, item2 INTEGER,
+      item3 INTEGER, item4 INTEGER, item5 INTEGER, item6 INTEGER,
+      score       REAL,
+      score_badge TEXT,
+      PRIMARY KEY (game_id, participant_id)
+    );
+
+    -- champion_id and win are copied from the participant row so augment
+    -- aggregates never need the (much wider) participants table.
+    CREATE TABLE IF NOT EXISTS participant_augments (
+      game_id        INTEGER NOT NULL,
+      participant_id INTEGER NOT NULL,
+      slot           INTEGER NOT NULL,
+      augment_id     INTEGER NOT NULL,
+      champion_id    INTEGER NOT NULL DEFAULT 0,
+      win            INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (game_id, participant_id, slot)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_games_creation ON games(game_creation DESC);
     CREATE INDEX IF NOT EXISTS idx_player_stats_champion ON player_stats(champion_id);
     CREATE INDEX IF NOT EXISTS idx_game_augments_augment ON game_augments(augment_id);
+    CREATE INDEX IF NOT EXISTS idx_participants_champion ON participants(champion_id);
+    CREATE INDEX IF NOT EXISTS idx_participants_puuid ON participants(puuid);
+    CREATE INDEX IF NOT EXISTS idx_participant_augments_augment ON participant_augments(augment_id);
+    CREATE INDEX IF NOT EXISTS idx_participant_augments_champion ON participant_augments(champion_id);
   `);
 
   // Migration: add is_remake column to existing databases
@@ -100,7 +152,13 @@ function createTables() {
     }[];
     const updateStmt = db.prepare("UPDATE games SET is_remake = 1 WHERE game_id = ?");
     for (const game of games) {
-      if (detectRemake(game.game_duration, game.raw_json)) {
+      let raw: any = null;
+      try {
+        raw = game.raw_json ? JSON.parse(game.raw_json) : null;
+      } catch {
+        /* ignore parse errors */
+      }
+      if (detectRemake(game.game_duration, raw)) {
         updateStmt.run(game.game_id);
       }
     }
@@ -218,6 +276,17 @@ function createTables() {
     backfillAugmentSlots();
     setSetting("augment_slots", String(AUGMENT_SLOTS));
   }
+
+  // Populate the participants tables from raw_json for databases created
+  // before they existed (or when their schema/extraction changes).
+  if (getSetting("participants_version") !== PARTICIPANTS_SCHEMA_VERSION) {
+    backfillParticipants();
+    setSetting("participants_version", PARTICIPANTS_SCHEMA_VERSION);
+    // Participant scores need champion class data, which isn't loaded this
+    // early; clearing the score key makes the startup score backfill run and
+    // fill them in.
+    db.prepare("DELETE FROM settings WHERE key = 'score_formula_version'").run();
+  }
 }
 
 function backfillAugmentSlots() {
@@ -256,6 +325,219 @@ function backfillAugmentSlots() {
   tx();
 }
 
+// ---- Participants ----
+
+// Bump when the participants schema or the extraction below changes, so
+// existing databases rebuild the tables from raw_json on next launch.
+const PARTICIPANTS_SCHEMA_VERSION = "1";
+
+// Bot/placeholder puuids come through as all zeroes
+const PLACEHOLDER_PUUID = /^0+(-0+)*$/;
+
+interface ParticipantRow {
+  participantId: number;
+  teamId: number;
+  puuid: string | null;
+  gameName: string | null;
+  tagLine: string | null;
+  profileIcon: number | null;
+  championId: number;
+  win: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  doubleKills: number;
+  tripleKills: number;
+  quadraKills: number;
+  pentaKills: number;
+  largestKillingSpree: number;
+  totalDamageDealt: number;
+  totalDamageTaken: number;
+  goldEarned: number;
+  totalHeal: number;
+  items: (number | null)[];
+  augments: { slot: number; augmentId: number }[];
+  score: number | null;
+  scoreBadge: string | null;
+}
+
+// One row per player from a raw game JSON (LCU shape, both the old
+// participantIdentities and the new flat variants).
+function extractParticipants(raw: any): ParticipantRow[] {
+  if (!raw?.participants) return [];
+  const identities = raw.participantIdentities || [];
+  return raw.participants.map((p: any, i: number) => {
+    const s = p.stats || p;
+    const identity =
+      identities.find((pi: any) => pi.participantId === p.participantId) ?? identities[i];
+    const rawPuuid = p.puuid || identity?.player?.puuid || null;
+    const icon = identity?.player?.profileIcon;
+    const augments: { slot: number; augmentId: number }[] = [];
+    for (let slot = 1; slot <= AUGMENT_SLOTS; slot++) {
+      const augId = s[`playerAugment${slot}`];
+      if (augId && augId > 0) augments.push({ slot, augmentId: augId });
+    }
+    return {
+      participantId: p.participantId ?? i + 1,
+      teamId: p.teamId ?? s.teamId ?? 100,
+      puuid: rawPuuid && !PLACEHOLDER_PUUID.test(rawPuuid) ? rawPuuid : null,
+      gameName:
+        identity?.player?.gameName ||
+        identity?.player?.summonerName ||
+        p.summonerName ||
+        p.riotIdGameName ||
+        null,
+      tagLine: identity?.player?.tagLine || p.riotIdTagline || null,
+      profileIcon: typeof icon === "number" && icon > 0 ? icon : null,
+      championId: p.championId ?? s.championId ?? 0,
+      win: s.win ? 1 : 0,
+      kills: s.kills ?? 0,
+      deaths: s.deaths ?? 0,
+      assists: s.assists ?? 0,
+      doubleKills: s.doubleKills ?? 0,
+      tripleKills: s.tripleKills ?? 0,
+      quadraKills: s.quadraKills ?? 0,
+      pentaKills: s.pentaKills ?? 0,
+      largestKillingSpree: s.largestKillingSpree ?? 0,
+      totalDamageDealt: s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0,
+      totalDamageTaken: s.totalDamageTaken ?? 0,
+      goldEarned: s.goldEarned ?? 0,
+      totalHeal: s.totalHeal ?? 0,
+      items: [0, 1, 2, 3, 4, 5, 6].map((n) => s[`item${n}`] ?? null),
+      augments,
+      score: null,
+      scoreBadge: null,
+    };
+  });
+}
+
+// Score every participant in place with the current formula and champion
+// classes. Not called for remakes — their scores stay null.
+function scoreParticipants(rows: ParticipantRow[]) {
+  const scores = computeMatchScores(
+    rows.map((r) => ({
+      participantId: r.participantId,
+      teamId: r.teamId,
+      championId: r.championId,
+      kills: r.kills,
+      deaths: r.deaths,
+      assists: r.assists,
+      doubleKills: r.doubleKills,
+      tripleKills: r.tripleKills,
+      quadraKills: r.quadraKills,
+      pentaKills: r.pentaKills,
+      totalDamageDealtToChampions: r.totalDamageDealt,
+      totalDamageTaken: r.totalDamageTaken,
+      goldEarned: r.goldEarned,
+      totalHeal: r.totalHeal,
+      win: !!r.win,
+    })),
+    getChampionClasses(),
+  );
+  for (const r of rows) {
+    const s = scores.get(r.participantId);
+    if (s) {
+      r.score = s.score;
+      r.scoreBadge = s.badge;
+    }
+  }
+}
+
+// The owner's row: puuid match first, then the same stored-stats fallback the
+// puuid backfill migration uses for games that predate puuids.
+function findOwnerRow(
+  rows: ParticipantRow[],
+  puuid: string | null,
+  fallback?: {
+    champion_id: number | null;
+    kills: number | null;
+    deaths: number | null;
+    assists: number | null;
+  },
+): ParticipantRow | undefined {
+  let owner = puuid ? rows.find((r) => r.puuid === puuid) : undefined;
+  if (!owner && fallback && fallback.champion_id != null) {
+    owner = rows.find(
+      (r) =>
+        r.championId === fallback.champion_id &&
+        r.kills === fallback.kills &&
+        r.deaths === fallback.deaths &&
+        r.assists === fallback.assists,
+    );
+  }
+  return owner;
+}
+
+function replaceParticipantRows(gameId: number, rows: ParticipantRow[]) {
+  db.prepare("DELETE FROM participants WHERE game_id = ?").run(gameId);
+  db.prepare("DELETE FROM participant_augments WHERE game_id = ?").run(gameId);
+  const insertRow = db.prepare(`
+    INSERT OR REPLACE INTO participants (
+      game_id, participant_id, team_id, puuid, game_name, tag_line, profile_icon,
+      champion_id, win, kills, deaths, assists,
+      double_kills, triple_kills, quadra_kills, penta_kills, largest_killing_spree,
+      total_damage_dealt, total_damage_taken, gold_earned, total_heal,
+      item0, item1, item2, item3, item4, item5, item6,
+      score, score_badge
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertAug = db.prepare(
+    "INSERT OR REPLACE INTO participant_augments (game_id, participant_id, slot, augment_id, champion_id, win) VALUES (?, ?, ?, ?, ?, ?)",
+  );
+  for (const r of rows) {
+    insertRow.run(
+      gameId,
+      r.participantId,
+      r.teamId,
+      r.puuid,
+      r.gameName,
+      r.tagLine,
+      r.profileIcon,
+      r.championId,
+      r.win,
+      r.kills,
+      r.deaths,
+      r.assists,
+      r.doubleKills,
+      r.tripleKills,
+      r.quadraKills,
+      r.pentaKills,
+      r.largestKillingSpree,
+      r.totalDamageDealt,
+      r.totalDamageTaken,
+      r.goldEarned,
+      r.totalHeal,
+      ...r.items,
+      r.score,
+      r.scoreBadge,
+    );
+    for (const a of r.augments) {
+      insertAug.run(gameId, r.participantId, a.slot, a.augmentId, r.championId, r.win);
+    }
+  }
+}
+
+// One-time migration: fill the participants tables from every stored
+// raw_json. Scores are left null — the startup score backfill computes them
+// once champion class data is available.
+function backfillParticipants() {
+  const games = db
+    .prepare("SELECT game_id, raw_json FROM games WHERE raw_json IS NOT NULL")
+    .all() as { game_id: number; raw_json: string }[];
+  const tx = db.transaction(() => {
+    for (const game of games) {
+      try {
+        replaceParticipantRows(game.game_id, extractParticipants(JSON.parse(game.raw_json)));
+      } catch {
+        /* ignore parse errors */
+      }
+    }
+  });
+  tx();
+  // Fresh table statistics so the query planner picks good join orders
+  db.exec("ANALYZE");
+}
+
 // Appends queue conditions to a query's WHERE list. An explicit queue filter
 // wins; otherwise the hide-classic setting excludes Mayhem Classic everywhere.
 function applyQueueFilter(where: string[], params: any[], queue?: number, alias = "g") {
@@ -286,63 +568,97 @@ export function checkScoreBackfill(): boolean {
   return true;
 }
 
-function computeOwnerScore(
-  raw: any,
-  ownerPuuid: string | null,
-  fallback?: { champion_id: number; kills: number; deaths: number; assists: number },
-): { score: number; badge: string | null } | null {
-  const inputs = scoreInputsFromRaw(raw);
-  if (inputs.length === 0) return null;
-  let owner = ownerPuuid ? inputs.find((p) => p.puuid === ownerPuuid) : undefined;
-  if (!owner && fallback) {
-    owner = inputs.find(
-      (p) =>
-        p.championId === fallback.champion_id &&
-        p.kills === fallback.kills &&
-        p.deaths === fallback.deaths &&
-        p.assists === fallback.assists,
-    );
-  }
-  if (!owner) return null;
-  const s = computeMatchScores(inputs, getChampionClasses()).get(owner.participantId);
-  return s ? { score: s.score, badge: s.badge } : null;
-}
-
+// Recompute every stored score (all participants plus the owner's
+// player_stats row) from the participants tables — no raw_json parsing.
 function backfillScores() {
-  const rows = db
+  const games = db
     .prepare(`
-      SELECT g.game_id, g.puuid, g.raw_json, g.is_remake,
+      SELECT g.game_id, g.puuid, g.is_remake,
              ps.champion_id, ps.kills, ps.deaths, ps.assists
       FROM games g
-      JOIN player_stats ps ON g.game_id = ps.game_id
-      WHERE g.raw_json IS NOT NULL
+      LEFT JOIN player_stats ps ON g.game_id = ps.game_id
     `)
     .all() as {
     game_id: number;
     puuid: string;
-    raw_json: string;
     is_remake: number;
-    champion_id: number;
-    kills: number;
-    deaths: number;
-    assists: number;
+    champion_id: number | null;
+    kills: number | null;
+    deaths: number | null;
+    assists: number | null;
   }[];
 
-  const updateStmt = db.prepare(
+  const parts = db
+    .prepare(`
+      SELECT game_id, participant_id, team_id, puuid, champion_id, win,
+             kills, deaths, assists,
+             double_kills, triple_kills, quadra_kills, penta_kills,
+             total_damage_dealt, total_damage_taken, gold_earned, total_heal
+      FROM participants
+    `)
+    .all() as any[];
+  const byGame = new Map<number, any[]>();
+  for (const p of parts) {
+    let list = byGame.get(p.game_id);
+    if (!list) byGame.set(p.game_id, (list = []));
+    list.push(p);
+  }
+
+  const classes = getChampionClasses();
+  const updatePart = db.prepare(
+    "UPDATE participants SET score = ?, score_badge = ? WHERE game_id = ? AND participant_id = ?",
+  );
+  const updateOwner = db.prepare(
     "UPDATE player_stats SET score = ?, score_badge = ? WHERE game_id = ?",
   );
   const tx = db.transaction(() => {
-    for (const row of rows) {
-      if (row.is_remake) {
-        updateStmt.run(null, null, row.game_id);
+    for (const game of games) {
+      const rows = byGame.get(game.game_id);
+      if (!rows || rows.length === 0) continue;
+
+      if (game.is_remake) {
+        for (const r of rows) updatePart.run(null, null, game.game_id, r.participant_id);
+        updateOwner.run(null, null, game.game_id);
         continue;
       }
-      try {
-        const result = computeOwnerScore(JSON.parse(row.raw_json), row.puuid || null, row);
-        updateStmt.run(result?.score ?? null, result?.badge ?? null, row.game_id);
-      } catch {
-        /* ignore parse errors */
+
+      const scores = computeMatchScores(
+        rows.map((r) => ({
+          participantId: r.participant_id,
+          teamId: r.team_id,
+          championId: r.champion_id,
+          kills: r.kills,
+          deaths: r.deaths,
+          assists: r.assists,
+          doubleKills: r.double_kills,
+          tripleKills: r.triple_kills,
+          quadraKills: r.quadra_kills,
+          pentaKills: r.penta_kills,
+          totalDamageDealtToChampions: r.total_damage_dealt,
+          totalDamageTaken: r.total_damage_taken,
+          goldEarned: r.gold_earned,
+          totalHeal: r.total_heal,
+          win: !!r.win,
+        })),
+        classes,
+      );
+      for (const r of rows) {
+        const s = scores.get(r.participant_id);
+        updatePart.run(s?.score ?? null, s?.badge ?? null, game.game_id, r.participant_id);
       }
+
+      let owner = game.puuid ? rows.find((r) => r.puuid === game.puuid) : undefined;
+      if (!owner && game.champion_id != null) {
+        owner = rows.find(
+          (r) =>
+            r.champion_id === game.champion_id &&
+            r.kills === game.kills &&
+            r.deaths === game.deaths &&
+            r.assists === game.assists,
+        );
+      }
+      const ownerScore = owner ? scores.get(owner.participant_id) : undefined;
+      updateOwner.run(ownerScore?.score ?? null, ownerScore?.badge ?? null, game.game_id);
     }
   });
   tx();
@@ -354,21 +670,14 @@ function parsePatch(version: unknown): string | null {
   return m ? `${m[1]}.${m[2]}` : null;
 }
 
-function detectRemake(gameDuration: number, rawJson: string | null): boolean {
+function detectRemake(gameDuration: number, raw: any | null): boolean {
   // Very short games are always remakes
   if (gameDuration < 300) return true;
   // Check for early surrender flag in participant data
-  if (rawJson) {
-    try {
-      const raw = JSON.parse(rawJson);
-      if (raw.participants) {
-        for (const p of raw.participants) {
-          const s = p.stats || p;
-          if (s.gameEndedInEarlySurrender && gameDuration < 600) return true;
-        }
-      }
-    } catch {
-      /* ignore parse errors */
+  if (raw?.participants) {
+    for (const p of raw.participants) {
+      const s = p.stats || p;
+      if (s.gameEndedInEarlySurrender && gameDuration < 600) return true;
     }
   }
   return false;
@@ -376,33 +685,12 @@ function detectRemake(gameDuration: number, rawJson: string | null): boolean {
 
 // ---- Helpers ----
 
-function extractGameMaxStats(rawJson: string | null): {
-  game_max_dmg: number;
-  game_max_taken: number;
-  game_max_heal: number;
-} {
-  const fallback = { game_max_dmg: 1, game_max_taken: 1, game_max_heal: 1 };
-  if (!rawJson) return fallback;
-  try {
-    const raw = JSON.parse(rawJson);
-    if (!raw?.participants) return fallback;
-    let dmg = 0,
-      taken = 0,
-      heal = 0;
-    for (const p of raw.participants) {
-      const s = p.stats || p;
-      const d = s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0;
-      const t = s.totalDamageTaken ?? 0;
-      const h = s.totalHeal ?? 0;
-      if (d > dmg) dmg = d;
-      if (t > taken) taken = t;
-      if (h > heal) heal = h;
-    }
-    return { game_max_dmg: dmg || 1, game_max_taken: taken || 1, game_max_heal: heal || 1 };
-  } catch {
-    return fallback;
-  }
-}
+// Lobby-wide maxima for a match row's stat bars, from the participants table.
+// MAX(..., 1) covers both a missing lobby (NULL) and an all-zero stat.
+const MAX_STAT_COLUMNS = `
+  MAX(COALESCE((SELECT MAX(p.total_damage_dealt) FROM participants p WHERE p.game_id = g.game_id), 0), 1) AS game_max_dmg,
+  MAX(COALESCE((SELECT MAX(p.total_damage_taken) FROM participants p WHERE p.game_id = g.game_id), 0), 1) AS game_max_taken,
+  MAX(COALESCE((SELECT MAX(p.total_heal) FROM participants p WHERE p.game_id = g.game_id), 0), 1) AS game_max_heal`;
 
 // ---- Query functions ----
 
@@ -474,15 +762,16 @@ export function getMatchHistory(
     ${whereSql}
   `)
     .get(...params) as any;
-  const rows = db
+  const matches = db
     .prepare(`
-    SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.favorite, g.puuid, g.game_version, g.raw_json,
+    SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.favorite, g.puuid, g.game_version,
            ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
            ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
            ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
            ps.score, ps.score_badge,
            ps.item0, ps.item1, ps.item2, ps.item3, ps.item4, ps.item5,
-           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids
+           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids,
+           ${MAX_STAT_COLUMNS}
     FROM games g
     JOIN player_stats ps ON g.game_id = ps.game_id
     ${whereSql}
@@ -490,11 +779,6 @@ export function getMatchHistory(
     LIMIT ? OFFSET ?
   `)
     .all(...params, limit, offset);
-  const matches = rows.map((row: any) => {
-    const maxStats = extractGameMaxStats(row.raw_json);
-    const { raw_json, ...match } = row;
-    return { ...match, ...maxStats };
-  });
   return { matches, total: total.count };
 }
 
@@ -823,15 +1107,16 @@ export function getChampionMatchHistory(
     ${whereSql}
   `)
     .get(...params) as any;
-  const rows = db
+  const matches = db
     .prepare(`
-    SELECT g.game_id, g.game_creation, g.game_duration, g.is_remake, g.favorite, g.puuid, g.raw_json,
+    SELECT g.game_id, g.game_creation, g.game_duration, g.is_remake, g.favorite, g.puuid,
            ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
            ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
            ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
            ps.score, ps.score_badge,
            ps.item0, ps.item1, ps.item2, ps.item3, ps.item4, ps.item5,
-           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids
+           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids,
+           ${MAX_STAT_COLUMNS}
     FROM games g
     JOIN player_stats ps ON g.game_id = ps.game_id
     ${whereSql}
@@ -839,11 +1124,6 @@ export function getChampionMatchHistory(
     LIMIT ? OFFSET ?
   `)
     .all(...params, limit, offset);
-  const matches = rows.map((row: any) => {
-    const maxStats = extractGameMaxStats(row.raw_json);
-    const { raw_json, ...match } = row;
-    return { ...match, ...maxStats };
-  });
   return { matches, total: total.count };
 }
 
@@ -873,37 +1153,13 @@ export function markIgnoredGame(gameId: number): void {
   db.prepare("INSERT OR IGNORE INTO ignored_games (game_id) VALUES (?)").run(gameId);
 }
 
-// Find the raw participant object for a puuid (LCU shape, both flat and
-// participantIdentities variants).
-function findParticipant(raw: any, puuid: string): any | null {
-  if (!raw?.participants || !puuid) return null;
-  let participant = raw.participants.find((p: any) => p.puuid === puuid);
-  if (!participant && raw.participantIdentities) {
-    const identity = raw.participantIdentities.find((pi: any) => pi.player?.puuid === puuid);
-    if (identity) {
-      participant = raw.participants.find((p: any) => p.participantId === identity.participantId);
-    }
-  }
-  return participant || null;
-}
-
 export function insertGameFull(gameData: any, puuid: string): boolean {
-  const participant = findParticipant(gameData, puuid);
-  if (!participant) return false;
+  const rows = extractParticipants(gameData);
+  const owner = findOwnerRow(rows, puuid);
+  if (!owner) return false;
 
-  const s = participant.stats || participant;
-
-  const isRemake = detectRemake(gameData.gameDuration, JSON.stringify(gameData)) ? 1 : 0;
-
-  let ownerScore: { score: number; badge: string | null } | null = null;
-  if (!isRemake) {
-    ownerScore = computeOwnerScore(gameData, puuid, {
-      champion_id: participant.championId ?? s.championId ?? 0,
-      kills: s.kills ?? 0,
-      deaths: s.deaths ?? 0,
-      assists: s.assists ?? 0,
-    });
-  }
+  const isRemake = detectRemake(gameData.gameDuration, gameData) ? 1 : 0;
+  if (!isRemake) scoreParticipants(rows);
 
   const insertGameStmt = db.prepare(`
     INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json)
@@ -941,38 +1197,30 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
 
     insertStatsStmt.run(
       gameData.gameId,
-      participant.championId ?? s.championId ?? 0,
-      s.win ? 1 : 0,
-      s.kills ?? 0,
-      s.deaths ?? 0,
-      s.assists ?? 0,
-      s.doubleKills ?? 0,
-      s.tripleKills ?? 0,
-      s.quadraKills ?? 0,
-      s.pentaKills ?? 0,
-      s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0,
-      s.totalDamageTaken ?? 0,
-      s.goldEarned ?? 0,
-      s.totalHeal ?? 0,
-      s.largestKillingSpree ?? 0,
-      s.item0 ?? null,
-      s.item1 ?? null,
-      s.item2 ?? null,
-      s.item3 ?? null,
-      s.item4 ?? null,
-      s.item5 ?? null,
-      s.item6 ?? null,
-      ownerScore?.score ?? null,
-      ownerScore?.badge ?? null,
+      owner.championId,
+      owner.win,
+      owner.kills,
+      owner.deaths,
+      owner.assists,
+      owner.doubleKills,
+      owner.tripleKills,
+      owner.quadraKills,
+      owner.pentaKills,
+      owner.totalDamageDealt,
+      owner.totalDamageTaken,
+      owner.goldEarned,
+      owner.totalHeal,
+      owner.largestKillingSpree,
+      ...owner.items,
+      owner.score,
+      owner.scoreBadge,
     );
 
-    // Augments
-    for (let i = 1; i <= AUGMENT_SLOTS; i++) {
-      const augId = s[`playerAugment${i}`];
-      if (augId && augId > 0) {
-        insertAugmentStmt.run(gameData.gameId, i, augId);
-      }
+    for (const a of owner.augments) {
+      insertAugmentStmt.run(gameData.gameId, a.slot, a.augmentId);
     }
+
+    replaceParticipantRows(gameData.gameId, rows);
 
     return true;
   });
@@ -1007,58 +1255,14 @@ export function getAllPuuids(): string[] {
 // counts players we've shared at least this many games with.
 const MIN_SHARED_GAMES = 2;
 
-interface TeammateEntry {
-  participant: any;
-  puuid: string | null;
-  name: string;
-  profileIcon: number | null;
-}
-
-// Everyone on the same team as one of our accounts in a single game (excluding
-// our own accounts). Returns null when no tracked account played this game.
-function collectTeammates(raw: any, puuids: Set<string>): TeammateEntry[] | null {
-  const participants = raw.participants || [];
-  const identities = raw.participantIdentities || [];
-
-  let myTeamId: number | null = null;
-  let myParticipantId: number | null = null;
-  for (let i = 0; i < participants.length; i++) {
-    const p = participants[i];
-    const pPuuid = p.puuid || identities[i]?.player?.puuid;
-    if (pPuuid && puuids.has(pPuuid)) {
-      myTeamId = p.teamId || 100;
-      myParticipantId = p.participantId;
-      break;
-    }
-  }
-  if (myTeamId === null) return null;
-
-  const teammates: TeammateEntry[] = [];
-  for (let i = 0; i < participants.length; i++) {
-    const p = participants[i];
-    const identity = identities[i];
-    if ((p.teamId || 100) !== myTeamId) continue;
-    if (p.participantId === myParticipantId) continue;
-
-    const rawPuuid = p.puuid || identity?.player?.puuid || null;
-    if (rawPuuid && puuids.has(rawPuuid)) continue;
-
-    // Filter out placeholder/bot puuids
-    const playerPuuid = rawPuuid && !/^0+(-0+)*$/.test(rawPuuid) ? rawPuuid : null;
-    const gameName =
-      identity?.player?.gameName || identity?.player?.summonerName || p.summonerName || null;
-    const tagLine = identity?.player?.tagLine || null;
-    const name = gameName ? (tagLine ? `${gameName}#${tagLine}` : gameName) : `Player ${i + 1}`;
-    const icon = identity?.player?.profileIcon;
-
-    teammates.push({
-      participant: p,
-      puuid: playerPuuid,
-      name,
-      profileIcon: typeof icon === "number" && icon > 0 ? icon : null,
-    });
-  }
-  return teammates;
+// "name#tag", bare name, or a slot placeholder when the game predates names
+function participantDisplayName(row: {
+  game_name: string | null;
+  tag_line: string | null;
+  participant_id: number;
+}): string {
+  if (row.game_name) return row.tag_line ? `${row.game_name}#${row.tag_line}` : row.game_name;
+  return `Player ${row.participant_id}`;
 }
 
 // The id the Friends list keys a teammate on — puuid when we know it, so name
@@ -1067,18 +1271,40 @@ function teammateKey(entry: { puuid: string | null; name: string }): string {
   return entry.puuid || entry.name;
 }
 
-export function getTeammateStats(): any[] {
-  const puuids = new Set(getAllPuuids());
-  if (puuids.size === 0) return [];
+// SQL fragments for teammate queries: join every participant who shared a team
+// with one of our accounts, excluding the accounts themselves. Params: tracked
+// puuids twice (the me-join, then the exclusion), then any queue params.
+function teammateJoinSql(placeholders: string): { join: string; where: string } {
+  return {
+    join: `
+    JOIN participants me ON me.game_id = g.game_id AND me.puuid IN (${placeholders})
+    JOIN participants t ON t.game_id = g.game_id AND t.team_id = me.team_id
+         AND t.participant_id != me.participant_id`,
+    where: `(t.puuid IS NULL OR t.puuid NOT IN (${placeholders}))`,
+  };
+}
 
-  const teammateWhere = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
-  const teammateParams: any[] = [];
-  applyQueueFilter(teammateWhere, teammateParams, undefined);
-  const games = db
-    .prepare(
-      `SELECT g.game_id, g.raw_json, g.game_creation FROM games g WHERE ${teammateWhere.join(" AND ")}`,
-    )
-    .all(...teammateParams) as any[];
+export function getTeammateStats(): any[] {
+  const tracked = getAllPuuids().filter(Boolean);
+  if (tracked.length === 0) return [];
+  const ph = tracked.map(() => "?").join(", ");
+  const { join, where } = teammateJoinSql(ph);
+
+  const queueWhere: string[] = [];
+  const queueParams: any[] = [];
+  applyQueueFilter(queueWhere, queueParams, undefined);
+
+  const rows = db
+    .prepare(`
+    SELECT t.game_id, t.participant_id, t.puuid, t.game_name, t.tag_line, t.profile_icon,
+           t.champion_id, t.win, t.kills, t.deaths, t.assists,
+           g.game_creation
+    FROM games g
+    ${join}
+    WHERE g.is_remake = 0 AND ${where}
+      ${queueWhere.length > 0 ? `AND ${queueWhere.join(" AND ")}` : ""}
+  `)
+    .all(...tracked, ...tracked, ...queueParams) as any[];
 
   const playerMap = new Map<
     string,
@@ -1096,63 +1322,57 @@ export function getTeammateStats(): any[] {
     }
   >();
 
-  for (const game of games) {
-    let raw: any;
-    try {
-      raw = JSON.parse(game.raw_json);
-    } catch {
-      continue;
+  // Two tracked accounts in one lobby would join a teammate twice
+  const seen = new Set<string>();
+
+  for (const r of rows) {
+    const rowKey = `${r.game_id}:${r.participant_id}`;
+    if (seen.has(rowKey)) continue;
+    seen.add(rowKey);
+
+    const name = participantDisplayName(r);
+    const t = { puuid: r.puuid as string | null, name };
+    const key = teammateKey(t);
+
+    // If we now have a puuid but previously tracked this player by name, merge
+    if (t.puuid && !playerMap.has(t.puuid) && playerMap.has(t.name)) {
+      const old = playerMap.get(t.name)!;
+      if (!old.puuid) {
+        playerMap.set(t.puuid, old);
+        old.puuid = t.puuid;
+        playerMap.delete(t.name);
+      }
     }
 
-    const teammates = collectTeammates(raw, puuids);
-    if (!teammates) continue;
-
-    for (const t of teammates) {
-      const key = teammateKey(t);
-      const p = t.participant;
-      const s = p.stats || p;
-
-      // If we now have a puuid but previously tracked this player by name, merge
-      if (t.puuid && !playerMap.has(t.puuid) && playerMap.has(t.name)) {
-        const old = playerMap.get(t.name)!;
-        if (!old.puuid) {
-          playerMap.set(t.puuid, old);
-          old.puuid = t.puuid;
-          playerMap.delete(t.name);
-        }
-      }
-
-      if (!playerMap.has(key)) {
-        playerMap.set(key, {
-          name: t.name,
-          puuid: t.puuid,
-          profileIcon: null,
-          games: 0,
-          wins: 0,
-          kills: 0,
-          deaths: 0,
-          assists: 0,
-          champions: new Map(),
-          lastPlayed: 0,
-        });
-      }
-
-      const entry = playerMap.get(key)!;
-      // Update name and icon to the most recent version
-      if (game.game_creation > entry.lastPlayed) {
-        entry.name = t.name;
-        if (t.profileIcon != null) entry.profileIcon = t.profileIcon;
-      }
-      entry.games++;
-      if (s.win) entry.wins++;
-      entry.kills += s.kills ?? 0;
-      entry.deaths += s.deaths ?? 0;
-      entry.assists += s.assists ?? 0;
-      entry.lastPlayed = Math.max(entry.lastPlayed, game.game_creation);
-
-      const champId = p.championId ?? s.championId ?? 0;
-      entry.champions.set(champId, (entry.champions.get(champId) || 0) + 1);
+    if (!playerMap.has(key)) {
+      playerMap.set(key, {
+        name: t.name,
+        puuid: t.puuid,
+        profileIcon: null,
+        games: 0,
+        wins: 0,
+        kills: 0,
+        deaths: 0,
+        assists: 0,
+        champions: new Map(),
+        lastPlayed: 0,
+      });
     }
+
+    const entry = playerMap.get(key)!;
+    // Update name and icon to the most recent version
+    if (r.game_creation > entry.lastPlayed) {
+      entry.name = t.name;
+      if (r.profile_icon != null) entry.profileIcon = r.profile_icon;
+    }
+    entry.games++;
+    if (r.win) entry.wins++;
+    entry.kills += r.kills;
+    entry.deaths += r.deaths;
+    entry.assists += r.assists;
+    entry.lastPlayed = Math.max(entry.lastPlayed, r.game_creation);
+
+    entry.champions.set(r.champion_id, (entry.champions.get(r.champion_id) || 0) + 1);
   }
 
   return Array.from(playerMap.entries())
@@ -1179,28 +1399,42 @@ export function getTeammateStats(): any[] {
 // Every game we played alongside one teammate, from both sides: our stored
 // stats for the row plus the teammate's own line in that game.
 export function getTeammateDetail(key: string): { player: any; matches: any[] } | null {
-  const puuids = new Set(getAllPuuids());
-  if (puuids.size === 0) return null;
+  const tracked = getAllPuuids().filter(Boolean);
+  if (tracked.length === 0) return null;
+  const ph = tracked.map(() => "?").join(", ");
+  const { join, where } = teammateJoinSql(ph);
 
-  const where = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
-  const params: any[] = [];
-  applyQueueFilter(where, params, undefined);
+  const queueWhere: string[] = [];
+  const queueParams: any[] = [];
+  applyQueueFilter(queueWhere, queueParams, undefined);
+
   const rows = db
     .prepare(`
     SELECT g.game_id, g.queue_id, g.game_creation, g.game_duration, g.is_remake, g.favorite,
-           g.puuid, g.game_version, g.raw_json,
+           g.puuid, g.game_version,
            ps.champion_id, ps.win, ps.kills, ps.deaths, ps.assists,
            ps.double_kills, ps.triple_kills, ps.quadra_kills, ps.penta_kills,
            ps.total_damage_dealt, ps.total_damage_taken, ps.total_heal, ps.gold_earned,
            ps.score, ps.score_badge,
            ps.item0, ps.item1, ps.item2, ps.item3, ps.item4, ps.item5,
-           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids
+           (SELECT GROUP_CONCAT(ga.augment_id) FROM game_augments ga WHERE ga.game_id = g.game_id ORDER BY ga.slot) as augment_ids,
+           ${MAX_STAT_COLUMNS},
+           t.participant_id AS f_participant_id, t.puuid AS f_puuid,
+           t.game_name AS f_game_name, t.tag_line AS f_tag_line, t.profile_icon AS f_profile_icon,
+           t.champion_id AS f_champion_id, t.win AS f_win,
+           t.kills AS f_kills, t.deaths AS f_deaths, t.assists AS f_assists,
+           t.total_damage_dealt AS f_total_damage_dealt,
+           t.total_damage_taken AS f_total_damage_taken,
+           t.total_heal AS f_total_heal,
+           t.score AS f_score, t.score_badge AS f_score_badge
     FROM games g
     JOIN player_stats ps ON g.game_id = ps.game_id
-    WHERE ${where.join(" AND ")}
-    ORDER BY g.game_creation DESC
+    ${join}
+    WHERE g.is_remake = 0 AND ${where}
+      ${queueWhere.length > 0 ? `AND ${queueWhere.join(" AND ")}` : ""}
+    ORDER BY g.game_creation DESC, t.participant_id
   `)
-    .all(...params) as any[];
+    .all(...tracked, ...tracked, ...queueParams) as any[];
 
   interface ChampionTotals {
     games: number;
@@ -1226,74 +1460,81 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
     lastPlayed: 0,
   };
 
+  const matchedGames = new Set<number>();
   for (const row of rows) {
-    let raw: any;
-    try {
-      raw = JSON.parse(row.raw_json);
-    } catch {
-      continue;
-    }
+    if (matchedGames.has(row.game_id)) continue;
 
-    const teammates = collectTeammates(raw, puuids);
-    if (!teammates) continue;
+    const name = participantDisplayName({
+      game_name: row.f_game_name,
+      tag_line: row.f_tag_line,
+      participant_id: row.f_participant_id,
+    });
+    const entry = { puuid: row.f_puuid as string | null, name };
     // Older games can be missing puuids; once we know who we're looking at,
     // match those on name too — the same merge the Friends list does.
-    const match = teammates.find(
-      (t) =>
-        teammateKey(t) === key || (player.games > 0 && t.puuid == null && t.name === player.name),
-    );
-    if (!match) continue;
-
-    const p = match.participant;
-    const s = p.stats || p;
-    const participantId = p.participantId ?? 0;
-    const friendScore = computeMatchScores(scoreInputsFromRaw(raw), getChampionClasses()).get(
-      participantId,
-    );
+    const isMatch =
+      teammateKey(entry) === key ||
+      (player.games > 0 && entry.puuid == null && entry.name === player.name);
+    if (!isMatch) continue;
+    matchedGames.add(row.game_id);
 
     // Rows are newest-first, so the first hit carries the current name and icon
     if (player.games === 0) {
-      player.name = match.name;
-      player.puuid = match.puuid;
-      player.profileIcon = match.profileIcon;
+      player.name = name;
+      player.puuid = entry.puuid;
+      player.profileIcon = row.f_profile_icon;
       player.lastPlayed = row.game_creation;
     } else if (player.profileIcon == null) {
-      player.profileIcon = match.profileIcon;
+      player.profileIcon = row.f_profile_icon;
     }
 
     player.games++;
-    if (s.win) player.wins++;
-    player.kills += s.kills ?? 0;
-    player.deaths += s.deaths ?? 0;
-    player.assists += s.assists ?? 0;
+    if (row.f_win) player.wins++;
+    player.kills += row.f_kills;
+    player.deaths += row.f_deaths;
+    player.assists += row.f_assists;
 
-    const champId = p.championId ?? s.championId ?? 0;
-    if (!champions.has(champId)) {
-      champions.set(champId, { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 });
+    if (!champions.has(row.f_champion_id)) {
+      champions.set(row.f_champion_id, { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 });
     }
-    const champ = champions.get(champId)!;
+    const champ = champions.get(row.f_champion_id)!;
     champ.games++;
-    if (s.win) champ.wins++;
-    champ.kills += s.kills ?? 0;
-    champ.deaths += s.deaths ?? 0;
-    champ.assists += s.assists ?? 0;
+    if (row.f_win) champ.wins++;
+    champ.kills += row.f_kills;
+    champ.deaths += row.f_deaths;
+    champ.assists += row.f_assists;
 
-    const maxStats = extractGameMaxStats(row.raw_json);
-    const { raw_json, ...rest } = row;
+    const {
+      f_participant_id,
+      f_puuid,
+      f_game_name,
+      f_tag_line,
+      f_profile_icon,
+      f_champion_id,
+      f_win,
+      f_kills,
+      f_deaths,
+      f_assists,
+      f_total_damage_dealt,
+      f_total_damage_taken,
+      f_total_heal,
+      f_score,
+      f_score_badge,
+      ...rest
+    } = row;
     matches.push({
       ...rest,
-      ...maxStats,
       friend: {
-        champion_id: champId,
-        win: s.win ? 1 : 0,
-        kills: s.kills ?? 0,
-        deaths: s.deaths ?? 0,
-        assists: s.assists ?? 0,
-        total_damage_dealt: s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0,
-        total_damage_taken: s.totalDamageTaken ?? 0,
-        total_heal: s.totalHeal ?? 0,
-        score: friendScore?.score ?? null,
-        score_badge: friendScore?.badge ?? null,
+        champion_id: f_champion_id,
+        win: f_win ? 1 : 0,
+        kills: f_kills,
+        deaths: f_deaths,
+        assists: f_assists,
+        total_damage_dealt: f_total_damage_dealt,
+        total_damage_taken: f_total_damage_taken,
+        total_heal: f_total_heal,
+        score: f_score ?? null,
+        score_badge: f_score_badge ?? null,
       },
     });
   }
@@ -1345,68 +1586,41 @@ export function getGlobalStats(
   augments: { augment_id: number; picks: number; wins: number }[];
   totalParticipantSlots: number;
 } {
-  const where = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
+  const where = ["g.is_remake = 0"];
   const params: any[] = [];
   if (patch) {
     where.push("g.game_version = ?");
     params.push(patch);
   }
   applyQueueFilter(where, params, queue);
-  const games = db
-    .prepare(`SELECT g.raw_json FROM games g WHERE ${where.join(" AND ")}`)
-    .all(...params) as any[];
+  const whereSql = where.join(" AND ");
 
-  const championMap = new Map<number, { games: number; wins: number }>();
-  const augmentMap = new Map<number, { picks: number; wins: number }>();
-  let totalParticipantSlots = 0;
+  const champions = db
+    .prepare(`
+    SELECT p.champion_id, COUNT(*) as games, SUM(p.win) as wins
+    FROM participants p
+    JOIN games g ON p.game_id = g.game_id
+    WHERE p.champion_id > 0 AND ${whereSql}
+    GROUP BY p.champion_id
+    ORDER BY games DESC
+  `)
+    .all(...params) as { champion_id: number; games: number; wins: number }[];
 
-  for (const game of games) {
-    let raw: any;
-    try {
-      raw = JSON.parse(game.raw_json);
-    } catch {
-      continue;
-    }
-
-    const participants = raw.participants || [];
-
-    for (const p of participants) {
-      const s = p.stats || p;
-      const champId = p.championId ?? s.championId ?? 0;
-      const win = !!s.win;
-
-      if (champId <= 0) continue;
-      totalParticipantSlots++;
-
-      if (!championMap.has(champId)) {
-        championMap.set(champId, { games: 0, wins: 0 });
-      }
-      const champ = championMap.get(champId)!;
-      champ.games++;
-      if (win) champ.wins++;
-
-      for (let i = 1; i <= AUGMENT_SLOTS; i++) {
-        const augId = s[`playerAugment${i}`];
-        if (augId && augId > 0) {
-          if (!augmentMap.has(augId)) {
-            augmentMap.set(augId, { picks: 0, wins: 0 });
-          }
-          const aug = augmentMap.get(augId)!;
-          aug.picks++;
-          if (win) aug.wins++;
-        }
-      }
-    }
-  }
+  const augments = db
+    .prepare(`
+    SELECT pa.augment_id, COUNT(*) as picks, SUM(pa.win) as wins
+    FROM participant_augments pa
+    JOIN games g ON pa.game_id = g.game_id
+    WHERE pa.champion_id > 0 AND ${whereSql}
+    GROUP BY pa.augment_id
+    ORDER BY picks DESC
+  `)
+    .all(...params) as { augment_id: number; picks: number; wins: number }[];
 
   return {
-    champions: Array.from(championMap.entries())
-      .map(([champion_id, stats]) => ({ champion_id, ...stats }))
-      .sort((a, b) => b.games - a.games),
-    augments: Array.from(augmentMap.entries())
-      .map(([augment_id, stats]) => ({ augment_id, ...stats }))
-      .sort((a, b) => b.picks - a.picks),
-    totalParticipantSlots,
+    champions,
+    augments,
+    totalParticipantSlots: champions.reduce((sum, c) => sum + c.games, 0),
   };
 }
 
@@ -1439,19 +1653,37 @@ export function getGlobalChampionDetail(
   items: { item_id: number; picks: number; wins: number }[];
   augments: { augment_id: number; picks: number; wins: number }[];
 } {
-  const where = ["g.raw_json IS NOT NULL", "g.is_remake = 0"];
+  const where = ["g.is_remake = 0"];
   const params: any[] = [];
   if (patch) {
     where.push("g.game_version = ?");
     params.push(patch);
   }
   applyQueueFilter(where, params, queue);
+  const whereSql = where.join(" AND ");
+
+  // The champion's rows joined with their team's totals in that game
   const rows = db
-    .prepare(`SELECT g.raw_json FROM games g WHERE ${where.join(" AND ")}`)
-    .all(...params) as { raw_json: string }[];
+    .prepare(`
+    SELECT p.win, p.kills, p.deaths, p.assists,
+           p.total_damage_dealt, p.total_damage_taken, p.gold_earned, p.total_heal,
+           p.double_kills, p.triple_kills, p.quadra_kills, p.penta_kills,
+           p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6,
+           t.team_dmg, t.team_kills
+    FROM participants p
+    JOIN games g ON p.game_id = g.game_id
+    JOIN (
+      SELECT game_id, team_id,
+             SUM(total_damage_dealt) as team_dmg, SUM(kills) as team_kills
+      FROM participants
+      WHERE champion_id > 0
+      GROUP BY game_id, team_id
+    ) t ON t.game_id = p.game_id AND t.team_id = p.team_id
+    WHERE p.champion_id = ? AND ${whereSql}
+  `)
+    .all(championId, ...params) as any[];
 
   const itemMap = new Map<number, { picks: number; wins: number }>();
-  const augmentMap = new Map<number, { picks: number; wins: number }>();
   const totals = {
     games: 0,
     wins: 0,
@@ -1467,7 +1699,6 @@ export function getGlobalChampionDetail(
     quadraKills: 0,
     pentaKills: 0,
   };
-  let totalParticipantSlots = 0;
   // Shares are per-game ratios averaged over the games they're defined in, so
   // a game with no team damage/kills recorded can't drag the average to zero.
   let damageShareSum = 0;
@@ -1475,86 +1706,63 @@ export function getGlobalChampionDetail(
   let kpSum = 0;
   let kpGames = 0;
 
-  for (const row of rows) {
-    let raw: any;
-    try {
-      raw = JSON.parse(row.raw_json);
-    } catch {
-      continue;
+  for (const r of rows) {
+    totals.games++;
+    if (r.win) totals.wins++;
+    totals.kills += r.kills;
+    totals.deaths += r.deaths;
+    totals.assists += r.assists;
+    totals.damage += r.total_damage_dealt;
+    totals.damageTaken += r.total_damage_taken;
+    totals.gold += r.gold_earned;
+    totals.heal += r.total_heal;
+    totals.doubleKills += r.double_kills;
+    totals.tripleKills += r.triple_kills;
+    totals.quadraKills += r.quadra_kills;
+    totals.pentaKills += r.penta_kills;
+
+    if (r.team_dmg > 0) {
+      damageShareSum += r.total_damage_dealt / r.team_dmg;
+      damageShareGames++;
+    }
+    if (r.team_kills > 0) {
+      kpSum += (r.kills + r.assists) / r.team_kills;
+      kpGames++;
     }
 
-    const parsed = (raw.participants || [])
-      .map((p: any) => {
-        const s = p.stats || p;
-        return {
-          championId: p.championId ?? s.championId ?? 0,
-          teamId: p.teamId ?? s.teamId ?? 100,
-          s,
-        };
-      })
-      .filter((p: any) => p.championId > 0);
-
-    const teamDamage = new Map<number, number>();
-    const teamKills = new Map<number, number>();
-    for (const p of parsed) {
-      totalParticipantSlots++;
-      const dmg = p.s.totalDamageDealtToChampions ?? p.s.totalDamageDealt ?? 0;
-      teamDamage.set(p.teamId, (teamDamage.get(p.teamId) ?? 0) + dmg);
-      teamKills.set(p.teamId, (teamKills.get(p.teamId) ?? 0) + (p.s.kills ?? 0));
-    }
-
-    for (const p of parsed) {
-      if (p.championId !== championId) continue;
-      const s = p.s;
-      const win = !!s.win;
-      const dmg = s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0;
-
-      totals.games++;
-      if (win) totals.wins++;
-      totals.kills += s.kills ?? 0;
-      totals.deaths += s.deaths ?? 0;
-      totals.assists += s.assists ?? 0;
-      totals.damage += dmg;
-      totals.damageTaken += s.totalDamageTaken ?? 0;
-      totals.gold += s.goldEarned ?? 0;
-      totals.heal += s.totalHeal ?? 0;
-      totals.doubleKills += s.doubleKills ?? 0;
-      totals.tripleKills += s.tripleKills ?? 0;
-      totals.quadraKills += s.quadraKills ?? 0;
-      totals.pentaKills += s.pentaKills ?? 0;
-
-      const teamDmg = teamDamage.get(p.teamId) ?? 0;
-      if (teamDmg > 0) {
-        damageShareSum += dmg / teamDmg;
-        damageShareGames++;
-      }
-      const tk = teamKills.get(p.teamId) ?? 0;
-      if (tk > 0) {
-        kpSum += ((s.kills ?? 0) + (s.assists ?? 0)) / tk;
-        kpGames++;
-      }
-
-      for (let i = 0; i <= 6; i++) {
-        const itemId = s[`item${i}`];
-        if (itemId && itemId > 0 && !EXCLUDED_ITEM_IDS.includes(itemId)) {
-          if (!itemMap.has(itemId)) itemMap.set(itemId, { picks: 0, wins: 0 });
-          const item = itemMap.get(itemId)!;
-          item.picks++;
-          if (win) item.wins++;
-        }
-      }
-
-      for (let i = 1; i <= AUGMENT_SLOTS; i++) {
-        const augId = s[`playerAugment${i}`];
-        if (augId && augId > 0) {
-          if (!augmentMap.has(augId)) augmentMap.set(augId, { picks: 0, wins: 0 });
-          const aug = augmentMap.get(augId)!;
-          aug.picks++;
-          if (win) aug.wins++;
-        }
+    for (let i = 0; i <= 6; i++) {
+      const itemId = r[`item${i}`];
+      if (itemId && itemId > 0 && !EXCLUDED_ITEM_IDS.includes(itemId)) {
+        if (!itemMap.has(itemId)) itemMap.set(itemId, { picks: 0, wins: 0 });
+        const item = itemMap.get(itemId)!;
+        item.picks++;
+        if (r.win) item.wins++;
       }
     }
   }
+
+  // Slots across ALL champions in the filtered games, for pick rate
+  const totalParticipantSlots = (
+    db
+      .prepare(`
+    SELECT COUNT(*) as c
+    FROM participants p
+    JOIN games g ON p.game_id = g.game_id
+    WHERE p.champion_id > 0 AND ${whereSql}
+  `)
+      .get(...params) as { c: number }
+  ).c;
+
+  const augments = db
+    .prepare(`
+    SELECT pa.augment_id, COUNT(*) as picks, SUM(pa.win) as wins
+    FROM participant_augments pa
+    JOIN games g ON pa.game_id = g.game_id
+    WHERE pa.champion_id = ? AND ${whereSql}
+    GROUP BY pa.augment_id
+    ORDER BY picks DESC
+  `)
+    .all(championId, ...params) as { augment_id: number; picks: number; wins: number }[];
 
   const avg = (total: number) => (totals.games > 0 ? Math.round(total / totals.games) : 0);
 
@@ -1579,9 +1787,7 @@ export function getGlobalChampionDetail(
     items: Array.from(itemMap.entries())
       .map(([item_id, stats]) => ({ item_id, ...stats }))
       .sort((a, b) => b.picks - a.picks),
-    augments: Array.from(augmentMap.entries())
-      .map(([augment_id, stats]) => ({ augment_id, ...stats }))
-      .sort((a, b) => b.picks - a.picks),
+    augments,
   };
 }
 
@@ -1694,70 +1900,43 @@ function rebuildDerivedStats(): number {
     for (const row of rows) {
       try {
         const raw = JSON.parse(row.raw_json);
-        let participant = findParticipant(raw, row.puuid);
-        // Owner puuid unknown (old imports): fall back to matching the stored
-        // stats row, same as the puuid backfill migration.
-        if (!participant && row.champion_id != null && raw.participants) {
-          participant = raw.participants.find((p: any) => {
-            const st = p.stats || p;
-            return (
-              (p.championId ?? st.championId) === row.champion_id &&
-              (st.kills ?? 0) === row.kills &&
-              (st.deaths ?? 0) === row.deaths &&
-              (st.assists ?? 0) === row.assists
-            );
-          });
-        }
-        if (!participant) continue;
-        const s = participant.stats || participant;
+        const parts = extractParticipants(raw);
+        // Owner puuid unknown (old imports): findOwnerRow falls back to
+        // matching the stored stats row, same as the puuid backfill migration.
+        const owner = findOwnerRow(parts, row.puuid || null, row);
+        if (!owner) continue;
 
-        const isRemake = detectRemake(row.game_duration, row.raw_json) ? 1 : 0;
+        const isRemake = detectRemake(row.game_duration, raw) ? 1 : 0;
         updateRemake.run(isRemake, row.game_id);
-
-        let ownerScore: { score: number; badge: string | null } | null = null;
-        if (!isRemake) {
-          ownerScore = computeOwnerScore(raw, row.puuid || null, {
-            champion_id: participant.championId ?? s.championId ?? 0,
-            kills: s.kills ?? 0,
-            deaths: s.deaths ?? 0,
-            assists: s.assists ?? 0,
-          });
-        }
+        if (!isRemake) scoreParticipants(parts);
 
         upsertStats.run(
           row.game_id,
-          participant.championId ?? s.championId ?? 0,
-          s.win ? 1 : 0,
-          s.kills ?? 0,
-          s.deaths ?? 0,
-          s.assists ?? 0,
-          s.doubleKills ?? 0,
-          s.tripleKills ?? 0,
-          s.quadraKills ?? 0,
-          s.pentaKills ?? 0,
-          s.totalDamageDealtToChampions ?? s.totalDamageDealt ?? 0,
-          s.totalDamageTaken ?? 0,
-          s.goldEarned ?? 0,
-          s.totalHeal ?? 0,
-          s.largestKillingSpree ?? 0,
-          s.item0 ?? null,
-          s.item1 ?? null,
-          s.item2 ?? null,
-          s.item3 ?? null,
-          s.item4 ?? null,
-          s.item5 ?? null,
-          s.item6 ?? null,
-          ownerScore?.score ?? null,
-          ownerScore?.badge ?? null,
+          owner.championId,
+          owner.win,
+          owner.kills,
+          owner.deaths,
+          owner.assists,
+          owner.doubleKills,
+          owner.tripleKills,
+          owner.quadraKills,
+          owner.pentaKills,
+          owner.totalDamageDealt,
+          owner.totalDamageTaken,
+          owner.goldEarned,
+          owner.totalHeal,
+          owner.largestKillingSpree,
+          ...owner.items,
+          owner.score,
+          owner.scoreBadge,
         );
 
         deleteAugments.run(row.game_id);
-        for (let i = 1; i <= AUGMENT_SLOTS; i++) {
-          const augId = s[`playerAugment${i}`];
-          if (augId && augId > 0) {
-            insertAugment.run(row.game_id, i, augId);
-          }
+        for (const a of owner.augments) {
+          insertAugment.run(row.game_id, a.slot, a.augmentId);
         }
+
+        replaceParticipantRows(row.game_id, parts);
         rebuilt++;
       } catch {
         /* ignore parse errors */
@@ -1769,6 +1948,7 @@ function rebuildDerivedStats(): number {
   // Stamp the startup-backfill keys — the rebuild just did their work
   setSetting("score_formula_version", scoreFormulaKey());
   setSetting("augment_slots", String(AUGMENT_SLOTS));
+  setSetting("participants_version", PARTICIPANTS_SCHEMA_VERSION);
   return rebuilt;
 }
 
