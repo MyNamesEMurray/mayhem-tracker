@@ -1,4 +1,1 @@
-# MayhemStats ads.txt
-# After AdSense approval, replace the line below with the one from your
-# AdSense account (Account > ads.txt), which looks like:
-# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+google.com, pub-5149066186059686, DIRECT, f08c47fec0942fa0
