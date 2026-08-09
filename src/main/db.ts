@@ -121,6 +121,21 @@ function createTables() {
       total_damage_taken    INTEGER NOT NULL DEFAULT 0,
       gold_earned           INTEGER NOT NULL DEFAULT 0,
       total_heal            INTEGER NOT NULL DEFAULT 0,
+      -- Extended combat detail (schema v2). Nullable: the SGP backfill shape
+      -- doesn't carry these, so NULL means "not recorded", never zero.
+      physical_damage       INTEGER,
+      magic_damage          INTEGER,
+      true_damage           INTEGER,
+      damage_self_mitigated INTEGER,
+      damage_to_turrets     INTEGER,
+      cc_time               INTEGER,
+      longest_time_alive    INTEGER,
+      gold_spent            INTEGER,
+      minions_killed        INTEGER,
+      first_blood           INTEGER,
+      spell1_id             INTEGER,
+      spell2_id             INTEGER,
+      champ_level           INTEGER,
       item0 INTEGER, item1 INTEGER, item2 INTEGER,
       item3 INTEGER, item4 INTEGER, item5 INTEGER, item6 INTEGER,
       score       REAL,
@@ -319,6 +334,30 @@ function createTables() {
   // Populate the participants tables from raw_json for databases created
   // before they existed (or when their schema/extraction changes).
   if (getSetting("participants_version") !== PARTICIPANTS_SCHEMA_VERSION) {
+    // v1 -> v2 widens the table; ADD COLUMN only for columns not yet present
+    // so fresh installs (created with the full DDL) skip straight through
+    const existing = new Set(
+      (db.prepare("PRAGMA table_info(participants)").all() as { name: string }[]).map(
+        (c) => c.name,
+      ),
+    );
+    for (const col of [
+      "physical_damage",
+      "magic_damage",
+      "true_damage",
+      "damage_self_mitigated",
+      "damage_to_turrets",
+      "cc_time",
+      "longest_time_alive",
+      "gold_spent",
+      "minions_killed",
+      "first_blood",
+      "spell1_id",
+      "spell2_id",
+      "champ_level",
+    ]) {
+      if (!existing.has(col)) db.exec(`ALTER TABLE participants ADD COLUMN ${col} INTEGER`);
+    }
     backfillParticipants();
     setSetting("participants_version", PARTICIPANTS_SCHEMA_VERSION);
     // Participant scores need champion class data, which isn't loaded this
@@ -368,7 +407,8 @@ function backfillAugmentSlots() {
 
 // Bump when the participants schema or the extraction below changes, so
 // existing databases rebuild the tables from raw_json on next launch.
-const PARTICIPANTS_SCHEMA_VERSION = "1";
+// v2: extended combat detail columns (damage splits, CC, spells, ...)
+const PARTICIPANTS_SCHEMA_VERSION = "2";
 
 // Bot/placeholder puuids come through as all zeroes
 const PLACEHOLDER_PUUID = /^0+(-0+)*$/;
@@ -394,6 +434,19 @@ interface ParticipantRow {
   totalDamageTaken: number;
   goldEarned: number;
   totalHeal: number;
+  physicalDamage: number | null;
+  magicDamage: number | null;
+  trueDamage: number | null;
+  damageSelfMitigated: number | null;
+  damageToTurrets: number | null;
+  ccTime: number | null;
+  longestTimeAlive: number | null;
+  goldSpent: number | null;
+  minionsKilled: number | null;
+  firstBlood: number | null;
+  spell1Id: number | null;
+  spell2Id: number | null;
+  champLevel: number | null;
   items: (number | null)[];
   augments: { slot: number; augmentId: number }[];
   score: number | null;
@@ -442,12 +495,30 @@ function extractParticipants(raw: any): ParticipantRow[] {
       totalDamageTaken: s.totalDamageTaken ?? 0,
       goldEarned: s.goldEarned ?? 0,
       totalHeal: s.totalHeal ?? 0,
+      physicalDamage: num(s.physicalDamageDealtToChampions),
+      magicDamage: num(s.magicDamageDealtToChampions),
+      trueDamage: num(s.trueDamageDealtToChampions),
+      damageSelfMitigated: num(s.damageSelfMitigated),
+      damageToTurrets: num(s.damageDealtToTurrets),
+      ccTime: num(s.timeCCingOthers),
+      longestTimeAlive: num(s.longestTimeSpentLiving),
+      goldSpent: num(s.goldSpent),
+      minionsKilled: num(s.totalMinionsKilled),
+      firstBlood: typeof s.firstBloodKill === "boolean" ? (s.firstBloodKill ? 1 : 0) : null,
+      spell1Id: num(s.spell1Id),
+      spell2Id: num(s.spell2Id),
+      champLevel: num(s.champLevel),
       items: [0, 1, 2, 3, 4, 5, 6].map((n) => s[`item${n}`] ?? null),
       augments,
       score: null,
       scoreBadge: null,
     };
   });
+}
+
+// Extended fields exist only in the LCU shape — NULL (not zero) when absent
+function num(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
 // Score every participant in place with the current formula and champion
@@ -516,9 +587,12 @@ function replaceParticipantRows(gameId: number, rows: ParticipantRow[]) {
       champion_id, win, kills, deaths, assists,
       double_kills, triple_kills, quadra_kills, penta_kills, largest_killing_spree,
       total_damage_dealt, total_damage_taken, gold_earned, total_heal,
+      physical_damage, magic_damage, true_damage, damage_self_mitigated,
+      damage_to_turrets, cc_time, longest_time_alive, gold_spent,
+      minions_killed, first_blood, spell1_id, spell2_id, champ_level,
       item0, item1, item2, item3, item4, item5, item6,
       score, score_badge
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertAug = db.prepare(
     "INSERT OR REPLACE INTO participant_augments (game_id, participant_id, slot, augment_id, champion_id, win) VALUES (?, ?, ?, ?, ?, ?)",
@@ -546,6 +620,19 @@ function replaceParticipantRows(gameId: number, rows: ParticipantRow[]) {
       r.totalDamageTaken,
       r.goldEarned,
       r.totalHeal,
+      r.physicalDamage,
+      r.magicDamage,
+      r.trueDamage,
+      r.damageSelfMitigated,
+      r.damageToTurrets,
+      r.ccTime,
+      r.longestTimeAlive,
+      r.goldSpent,
+      r.minionsKilled,
+      r.firstBlood,
+      r.spell1Id,
+      r.spell2Id,
+      r.champLevel,
       ...r.items,
       r.score,
       r.scoreBadge,
@@ -2261,4 +2348,58 @@ export function repairPuuids(): {
   const rebuiltGames = rebuildDerivedStats();
 
   return { repairedGames, discoveredAccounts: userPuuids.size, rebuiltGames };
+}
+
+// ── Augment analytics (extended stats, schema v2) ───────────────────────────
+
+export interface AugmentSlotStat {
+  augmentId: number;
+  slot: number;
+  picks: number;
+  wins: number;
+}
+
+// How each augment performs by the breakpoint it was taken at. Slot order is
+// preserved from the client payload, so slot 1 is the first augment pick.
+export function getAugmentSlotStats(minPicks = 1): AugmentSlotStat[] {
+  return db
+    .prepare(
+      `SELECT pa.augment_id AS augmentId, pa.slot AS slot,
+              COUNT(*) AS picks, COALESCE(SUM(pa.win), 0) AS wins
+       FROM participant_augments pa
+       JOIN games g ON g.game_id = pa.game_id
+       WHERE g.is_remake = 0
+       GROUP BY pa.augment_id, pa.slot
+       HAVING COUNT(*) >= ?
+       ORDER BY pa.augment_id, pa.slot`,
+    )
+    .all(minPicks) as AugmentSlotStat[];
+}
+
+export interface AugmentPairStat {
+  augmentA: number;
+  augmentB: number;
+  picks: number;
+  wins: number;
+}
+
+// Win rates for augment pairs taken together by the same player in the same
+// game (canonical order augmentA < augmentB, each pair counted once).
+export function getAugmentPairStats(minPicks = 5): AugmentPairStat[] {
+  return db
+    .prepare(
+      `SELECT a.augment_id AS augmentA, b.augment_id AS augmentB,
+              COUNT(*) AS picks, COALESCE(SUM(a.win), 0) AS wins
+       FROM participant_augments a
+       JOIN participant_augments b
+         ON b.game_id = a.game_id
+        AND b.participant_id = a.participant_id
+        AND b.augment_id > a.augment_id
+       JOIN games g ON g.game_id = a.game_id
+       WHERE g.is_remake = 0
+       GROUP BY a.augment_id, b.augment_id
+       HAVING COUNT(*) >= ?
+       ORDER BY CAST(COALESCE(SUM(a.win), 0) AS REAL) / COUNT(*) DESC, COUNT(*) DESC`,
+    )
+    .all(minPicks) as AugmentPairStat[];
 }
