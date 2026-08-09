@@ -6,6 +6,7 @@ import type { UpdateInfo } from "../lib/types";
 import TitleBar from "./TitleBar";
 import TabBar from "./TabBar";
 import UpdateDialog from "./UpdateDialog";
+import OnboardingWizard from "./OnboardingWizard";
 
 export default function Layout() {
   const status = useLcuStatus();
@@ -81,6 +82,7 @@ export default function Layout() {
       {showUpdateDialog && update && (
         <UpdateDialog update={update} onClose={() => setShowUpdateDialog(false)} />
       )}
+      <OnboardingWizard />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useBackfill } from "../hooks/useBackfill";
 import type { UploadStatus } from "../lib/types";
+import Toggle from "../components/Toggle";
 
 // Design-system control styles (radius 8 controls, gold primary, destructive
 // secondary turns red on hover)
@@ -10,37 +11,6 @@ const BUTTON_SECONDARY =
   "px-3.5 py-1.5 text-[13px] font-semibold rounded-lg border border-lol-border bg-lol-dark text-lol-text-bright hover:bg-lol-card-hover transition-colors";
 const BUTTON_DESTRUCTIVE =
   "px-3.5 py-1.5 text-[13px] font-semibold rounded-lg border border-lol-border bg-lol-dark text-lol-text-bright hover:border-lol-loss/50 hover:text-lol-loss transition-colors";
-
-// 34×20 toggle: gold track + dark knob right when on, border track + muted
-// knob left when off.
-function Toggle({
-  checked,
-  onChange,
-  disabled = false,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      disabled={disabled}
-      className={`relative h-5 w-[34px] shrink-0 cursor-pointer rounded-[10px] transition-colors duration-150 disabled:opacity-50 ${
-        checked ? "bg-lol-gold" : "bg-lol-border"
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform duration-150 ${
-          checked ? "translate-x-[14px] bg-lol-dark" : "translate-x-0 bg-lol-text"
-        }`}
-      />
-    </button>
-  );
-}
 
 function Panel({ label, children }: { label: string; children: ReactNode }) {
   return (

@@ -24,7 +24,9 @@ export default function TitleBar({ version }: { version: string }) {
       {version && (
         <button
           onClick={() =>
-            window.api.openUrl(`https://github.com/Yhprum/mayhem-tracker/releases/tag/v${version}`)
+            window.api.openUrl(
+              `https://github.com/MyNamesEMurray/mayhem-tracker/releases/tag/v${version}`,
+            )
           }
           title="View release notes"
           className="titlebar-no-drag text-[11px] text-lol-text/60 hover:text-lol-text transition-colors cursor-pointer"
