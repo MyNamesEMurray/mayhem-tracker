@@ -232,7 +232,7 @@ export default function App() {
               setParam("tab", "augments");
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-2 py-2 max-[840px]:ml-0 max-[840px]:w-full max-[840px]:pt-0 max-[840px]:pb-2.5">
+          <div className="ml-auto flex items-center gap-2 py-2 max-[840px]:ml-0 max-[840px]:w-full max-[840px]:pt-0 max-[840px]:pb-2.5 max-[840px]:flex-wrap">
             <select
               className="select"
               value={queueParam ?? ""}
@@ -253,6 +253,29 @@ export default function App() {
               param={patchParam}
               onChange={(v) => setParam("patch", v)}
             />
+            <a
+              href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest"
+              target="_blank"
+              rel="noreferrer"
+              title="Download the Mayhem Tracker desktop app — play, track, and contribute your games"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3v12" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M4 21h16" />
+              </svg>
+              Download app
+            </a>
           </div>
         </div>
       </header>
