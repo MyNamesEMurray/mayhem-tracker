@@ -32,7 +32,7 @@ function createWindow() {
     width: 1280,
     height: 820,
     minWidth: 900,
-    minHeight: 600,
+    minHeight: 640,
     icon: iconPath,
     frame: false,
     backgroundColor: "#0b0e14",

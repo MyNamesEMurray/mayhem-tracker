@@ -217,7 +217,9 @@ export default function GlobalStats() {
   }) => (
     <th
       onClick={() => handleChampSort(field)}
-      className={`px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none ${className ?? ""}`}
+      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
+        champSortKey === field ? "text-lol-gold" : "text-lol-text"
+      } ${className ?? ""}`}
     >
       {label} {champSortKey === field ? (champSortDir === "desc" ? "\u25BC" : "\u25B2") : ""}
     </th>
@@ -234,7 +236,9 @@ export default function GlobalStats() {
   }) => (
     <th
       onClick={() => handleAugSort(field)}
-      className={`px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none ${className ?? ""}`}
+      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
+        augSortKey === field ? "text-lol-gold" : "text-lol-text"
+      } ${className ?? ""}`}
     >
       {label} {augSortKey === field ? (augSortDir === "desc" ? "\u25BC" : "\u25B2") : ""}
     </th>
@@ -243,7 +247,7 @@ export default function GlobalStats() {
   return (
     <div className="max-w-4xl space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-lol-text-bright">Total Stats</h1>
+        <h1 className="text-xl font-bold text-lol-text-bright">Global Stats</h1>
         <div className="flex items-center gap-3">
           <span className="text-xs text-lol-text">
             {totalGames} games &middot; {data.champions.length} champions &middot;{" "}
@@ -258,20 +262,20 @@ export default function GlobalStats() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setTab("champions")}
-          className={`px-4 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+          className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
             tab === "champions"
-              ? "bg-lol-gold/20 text-lol-gold border-lol-gold/50"
-              : "text-lol-text border-lol-border bg-lol-card hover:border-lol-border/80"
+              ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
+              : "text-lol-text border-lol-border bg-lol-dark hover:border-lol-gold/50"
           }`}
         >
           Champions
         </button>
         <button
           onClick={() => setTab("augments")}
-          className={`px-4 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+          className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
             tab === "augments"
-              ? "bg-lol-gold/20 text-lol-gold border-lol-gold/50"
-              : "text-lol-text border-lol-border bg-lol-card hover:border-lol-border/80"
+              ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
+              : "text-lol-text border-lol-border bg-lol-dark hover:border-lol-gold/50"
           }`}
         >
           Augments
@@ -293,7 +297,7 @@ export default function GlobalStats() {
             <table className="w-full">
               <thead className="bg-lol-dark/50">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-12">
+                  <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
                     #
                   </th>
                   <ChampSortHeader label="Champion" field="name" />
@@ -314,8 +318,8 @@ export default function GlobalStats() {
                       onClick={() => navigate(`/global/champion/${c.champion_id}${filterQuery}`)}
                       className="group border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
                     >
-                      <td className="px-3 py-2 text-xs text-lol-text">{i + 1}</td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
+                      <td className="px-3 py-1.5">
                         <div className="flex items-center gap-2">
                           <ChampionIcon championId={c.champion_id} size={28} />
                           <span className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors">
@@ -323,9 +327,9 @@ export default function GlobalStats() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-sm text-lol-text-bright">{c.games}</td>
-                      <td className="px-3 py-2 text-sm text-lol-text">{pickRate}%</td>
-                      <td className="px-3 py-2 w-32">
+                      <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                      <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                      <td className="px-3 py-1.5 w-32">
                         <WinRateBar wins={c.wins} total={c.games} />
                       </td>
                     </tr>
@@ -362,7 +366,7 @@ export default function GlobalStats() {
                 <tr>
                   <AugSortHeader label="Augment" field="name" />
                   <AugSortHeader label="Picks" field="picks" />
-                  <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                     Pick Rate
                   </th>
                   <AugSortHeader label="Win Rate" field="winRate" className="w-32" />
@@ -379,12 +383,12 @@ export default function GlobalStats() {
                       key={a.augment_id}
                       className="border-t border-lol-border/50 hover:bg-lol-card-hover transition-colors"
                     >
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5">
                         <AugmentIcon augmentId={a.augment_id} showName />
                       </td>
-                      <td className="px-3 py-2 text-sm text-lol-text-bright">{a.picks}</td>
-                      <td className="px-3 py-2 text-sm text-lol-text">{pickRate}%</td>
-                      <td className="px-3 py-2 w-32">
+                      <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
+                      <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                      <td className="px-3 py-1.5 w-32">
                         <WinRateBar wins={a.wins} total={a.picks} />
                       </td>
                     </tr>

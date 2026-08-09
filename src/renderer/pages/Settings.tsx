@@ -1,6 +1,75 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useBackfill } from "../hooks/useBackfill";
 import type { UploadStatus } from "../lib/types";
+
+// Design-system control styles (radius 8 controls, gold primary, destructive
+// secondary turns red on hover)
+const BUTTON_PRIMARY =
+  "px-3.5 py-1.5 text-[13px] font-semibold rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold hover:bg-lol-gold/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+const BUTTON_SECONDARY =
+  "px-3.5 py-1.5 text-[13px] font-semibold rounded-lg border border-lol-border bg-lol-dark text-lol-text-bright hover:bg-lol-card-hover transition-colors";
+const BUTTON_DESTRUCTIVE =
+  "px-3.5 py-1.5 text-[13px] font-semibold rounded-lg border border-lol-border bg-lol-dark text-lol-text-bright hover:border-lol-loss/50 hover:text-lol-loss transition-colors";
+
+// 34×20 toggle: gold track + dark knob right when on, border track + muted
+// knob left when off.
+function Toggle({
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      disabled={disabled}
+      className={`relative h-5 w-[34px] shrink-0 cursor-pointer rounded-[10px] transition-colors duration-150 disabled:opacity-50 ${
+        checked ? "bg-lol-gold" : "bg-lol-border"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-transform duration-150 ${
+          checked ? "translate-x-[14px] bg-lol-dark" : "translate-x-0 bg-lol-text"
+        }`}
+      />
+    </button>
+  );
+}
+
+function Panel({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="bg-lol-card border border-lol-border/60 rounded-xl p-[18px]">
+      <p className="text-[11px] text-lol-text uppercase tracking-[0.08em] mb-3.5">{label}</p>
+      <div className="flex flex-col gap-3.5">{children}</div>
+    </div>
+  );
+}
+
+function SettingRow({
+  name,
+  description,
+  children,
+}: {
+  name: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-semibold text-lol-text-bright">{name}</div>
+        <div className="text-xs text-lol-text">{description}</div>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function Settings() {
   // Shared so a backfill started automatically on first connect shows here too
@@ -150,97 +219,34 @@ export default function Settings() {
   if (loading) return null;
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <h1 className="text-xl font-bold text-lol-text-bright">Settings</h1>
-
-      {/* Exit Behavior */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-        <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Exit Behavior</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-lol-text-bright">Minimize to tray on close</p>
-            <p className="text-xs text-lol-text mt-0.5">
-              When enabled, the program can keep storing your games even when the window is closed.
-              You can still close the program from the system tray.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={minimizeToTray}
-            onClick={handleToggle}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-              minimizeToTray ? "bg-lol-gold" : "bg-lol-border"
-            }`}
+    <div className="max-w-5xl grid min-[861px]:grid-cols-2 gap-4 items-start">
+      <div className="flex flex-col gap-4">
+        <Panel label="General">
+          <SettingRow
+            name="Minimize to tray on close"
+            description="Keep recording games from the system tray when the window is closed"
           >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
-                minimizeToTray ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-        <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Stats</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-lol-text-bright">Hide ARAM Mayhem Classic games</p>
-            <p className="text-xs text-lol-text mt-0.5">
-              Exclude games from the limited-time Mayhem Classic queue from all stats and match
-              history. Games are still recorded either way.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={hideClassic}
-            onClick={handleHideClassicToggle}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-              hideClassic ? "bg-lol-gold" : "bg-lol-border"
-            }`}
+            <Toggle checked={minimizeToTray} onChange={handleToggle} />
+          </SettingRow>
+          <SettingRow
+            name="Hide ARAM Mayhem Classic games"
+            description="Exclude the limited-time Classic queue from all stats and match history"
           >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
-                hideClassic ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-      </div>
+            <Toggle checked={hideClassic} onChange={handleHideClassicToggle} />
+          </SettingRow>
+        </Panel>
 
-      {/* Community Stats */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-        <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Community Stats</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-lol-text-bright">Contribute anonymous match stats</p>
-              <p className="text-xs text-lol-text mt-0.5">
-                Share your games with the community database that powers global augment and champion
-                stats. Only champions, augments, items, and combat stat lines are sent — no summoner
-                names, Riot IDs, or anything that identifies a player.
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={uploadStatus?.enabled ?? false}
-              onClick={handleUploadToggle}
+        <Panel label="Community stats">
+          <SettingRow
+            name="Share match data with mayhemstats.com"
+            description="Opt in to the community database behind the global augment and champion stats — only champions, augments, items, and combat stat lines are sent, nothing that identifies a player"
+          >
+            <Toggle
+              checked={uploadStatus?.enabled ?? false}
+              onChange={handleUploadToggle}
               disabled={!uploadStatus}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-                uploadStatus?.enabled ? "bg-lol-gold" : "bg-lol-border"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
-                  uploadStatus?.enabled ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
+            />
+          </SettingRow>
           {uploadStatus && uploadStatus.enabled && (
             <p className="text-xs text-lol-text">
               {uploadStatus.running
@@ -251,108 +257,56 @@ export default function Settings() {
               {uploadStatus.lastError ? ` — ${uploadStatus.lastError}` : ""}
             </p>
           )}
-
-          <div className="border-t border-lol-border" />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-lol-text-bright">Delete my contributions</p>
-              <p className="text-xs text-lol-text mt-0.5">
-                Remove every game this install has shared from the community database and turn off
-                contributing.
-              </p>
-            </div>
-            <button
-              onClick={handleDeleteContributions}
-              className="px-4 py-1.5 rounded text-sm bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-            >
-              Delete
+          <SettingRow
+            name="Uploaded data"
+            description="Remove every game this install has shared from the community database and turn off contributing"
+          >
+            <button onClick={handleDeleteContributions} className={BUTTON_DESTRUCTIVE}>
+              Delete my data
             </button>
-          </div>
+          </SettingRow>
           {deleteStatus && <p className="text-xs text-lol-text">{deleteStatus}</p>}
-        </div>
+        </Panel>
       </div>
 
-      {/* Data Management */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-        <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Data Management</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-lol-text-bright">Backfill match history</p>
-              <p className="text-xs text-lol-text mt-0.5">
-                Pull your older Mayhem games from Riot and add any that aren't stored yet. This runs
-                automatically the first time an account connects; use this to run it again, or to
-                finish an import you cancelled.
-              </p>
-            </div>
-            <button
-              onClick={handleBackfill}
-              disabled={backfilling}
-              className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {backfilling ? "Working..." : "Backfill"}
-            </button>
-          </div>
-          {backfillStatus && <p className="text-xs text-lol-text">{backfillStatus}</p>}
+      <Panel label="Data">
+        <SettingRow
+          name="Backfill match history"
+          description="Pull your older Mayhem games from Riot and add any that aren't stored yet — runs automatically the first time an account connects"
+        >
+          <button onClick={handleBackfill} disabled={backfilling} className={BUTTON_PRIMARY}>
+            {backfilling ? "Working..." : "Backfill"}
+          </button>
+        </SettingRow>
+        {backfillStatus && <p className="text-xs text-lol-text">{backfillStatus}</p>}
 
-          <div className="border-t border-lol-border" />
+        <SettingRow name="Export data" description="Save all match data to a JSON file for backup">
+          <button onClick={handleExport} className={BUTTON_SECONDARY}>
+            Export
+          </button>
+        </SettingRow>
+        {exportStatus && <p className="text-xs text-lol-text">{exportStatus}</p>}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-lol-text-bright">Export data</p>
-              <p className="text-xs text-lol-text mt-0.5">
-                Save all match data to a JSON file for backup
-              </p>
-            </div>
-            <button
-              onClick={handleExport}
-              className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors"
-            >
-              Export
-            </button>
-          </div>
-          {exportStatus && <p className="text-xs text-lol-text">{exportStatus}</p>}
+        <SettingRow
+          name="Import data"
+          description="Load match data from a previously exported file"
+        >
+          <button onClick={handleImport} className={BUTTON_SECONDARY}>
+            Import
+          </button>
+        </SettingRow>
+        {importStatus && <p className="text-xs text-lol-text">{importStatus}</p>}
 
-          <div className="border-t border-lol-border" />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-lol-text-bright">Import data</p>
-              <p className="text-xs text-lol-text mt-0.5">
-                Load match data from a previously exported file
-              </p>
-            </div>
-            <button
-              onClick={handleImport}
-              className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors"
-            >
-              Import
-            </button>
-          </div>
-          {importStatus && <p className="text-xs text-lol-text">{importStatus}</p>}
-
-          <div className="border-t border-lol-border" />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-lol-text-bright">Repair account data</p>
-              <p className="text-xs text-lol-text mt-0.5">
-                Re-detect which accounts are yours by analyzing game history, then rebuild stored
-                stats, augments, and performance scores from the raw game data. Use this if games
-                are attributed to the wrong account or scores look stale.
-              </p>
-            </div>
-            <button
-              onClick={handleRepair}
-              className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors"
-            >
-              Repair
-            </button>
-          </div>
-          {repairStatus && <p className="text-xs text-lol-text">{repairStatus}</p>}
-        </div>
-      </div>
+        <SettingRow
+          name="Repair account data"
+          description="Re-detect which accounts are yours from game history, then rebuild stored stats, augments, and performance scores from the raw game data"
+        >
+          <button onClick={handleRepair} className={BUTTON_SECONDARY}>
+            Repair
+          </button>
+        </SettingRow>
+        {repairStatus && <p className="text-xs text-lol-text">{repairStatus}</p>}
+      </Panel>
     </div>
   );
 }

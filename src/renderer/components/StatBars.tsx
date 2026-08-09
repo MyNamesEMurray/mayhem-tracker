@@ -7,13 +7,15 @@ interface StatBarsProps {
   className?: string;
 }
 
-// Damage dealt / taken / healed, each as a share of the game's best.
+// Damage dealt / taken / healed, each as a share of the game's best. The
+// inline labels stay short because the strip is narrow; tooltips carry the
+// full names.
 export default function StatBars({ damage, taken, heal, max, className = "" }: StatBarsProps) {
   return (
     <div className={`shrink-0 space-y-0.5 ${className}`}>
-      <StatBar value={damage} max={max.dmg} color="bg-red-400/50" label="DMG" />
-      <StatBar value={taken} max={max.taken} color="bg-sky-400/50" label="TKN" />
-      <StatBar value={heal} max={max.heal} color="bg-emerald-400/50" label="HEL" />
+      <StatBar value={damage} max={max.dmg} color="bg-red-400/50" label="DMG" title="Damage dealt" />
+      <StatBar value={taken} max={max.taken} color="bg-sky-400/50" label="TKN" title="Damage taken" />
+      <StatBar value={heal} max={max.heal} color="bg-emerald-400/50" label="HEL" title="Healing" />
     </div>
   );
 }
@@ -23,18 +25,20 @@ function StatBar({
   max,
   color,
   label,
+  title,
 }: {
   value: number;
   max: number;
   color: string;
   label: string;
+  title: string;
 }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5" title={title}>
       <span className="text-[10px] text-lol-text w-6 text-right shrink-0">{label}</span>
-      <div className="flex-1 h-3.5 bg-white/5 rounded-sm overflow-hidden relative">
-        <div className={`h-full rounded-sm ${color}`} style={{ width: `${pct}%` }} />
+      <div className="flex-1 h-3.5 bg-white/[0.06] rounded overflow-hidden relative">
+        <div className={`h-full rounded ${color}`} style={{ width: `${pct}%` }} />
         <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] font-medium text-white/90 leading-none">
           {value > 0 ? (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value) : ""}
         </span>

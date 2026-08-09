@@ -77,7 +77,9 @@ export default function Friends() {
   }) => (
     <th
       onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none ${className ?? ""}`}
+      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
+        sortKey === field ? "text-lol-gold" : "text-lol-text"
+      } ${className ?? ""}`}
     >
       {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
     </th>
@@ -124,16 +126,16 @@ export default function Friends() {
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-12">
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
                 #
               </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Player
               </th>
               <SortHeader label="Games" field="games" />
               <SortHeader label="Win Rate" field="winRate" />
               <SortHeader label="Their KDA" field="kda" />
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Top Champions
               </th>
               <SortHeader label="Last Played" field="lastPlayed" />
@@ -154,18 +156,18 @@ export default function Friends() {
                   onClick={() => navigate(`/friends/${encodeURIComponent(t.key)}`)}
                   className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
                 >
-                  <td className="px-3 py-2 text-xs text-lol-text">{i + 1}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
+                  <td className="px-3 py-1.5">
                     <div className="flex items-center gap-2">
                       <SummonerIcon iconId={t.profileIcon} size={28} />
                       <span className="text-sm text-lol-text-bright">{t.name}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text-bright">{t.games}</td>
-                  <td className="px-3 py-2 w-32">
+                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{t.games}</td>
+                  <td className="px-3 py-1.5 w-32">
                     <WinRateBar wins={t.wins} total={t.games} />
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-1.5">
                     <div className="flex flex-col">
                       <span className={`text-sm ${kdaColor(ratio)}`}>{ratioStr}</span>
                       <span className="text-[10px] text-lol-text">
@@ -173,7 +175,7 @@ export default function Friends() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-1.5">
                     <div className="flex items-center gap-1">
                       {t.champions.slice(0, 3).map((c) => (
                         <div key={c.champion_id} className="relative group">
@@ -185,7 +187,7 @@ export default function Friends() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text">{formatTimeAgo(t.lastPlayed)}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatTimeAgo(t.lastPlayed)}</td>
                 </tr>
               );
             })}

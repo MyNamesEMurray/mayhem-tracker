@@ -1,29 +1,32 @@
 export type Rarity = "all" | "kSilver" | "kGold" | "kPrismatic";
 
-const filters: { key: Rarity; label: string; color: string; activeColor: string }[] = [
+// Rarity chips per the unified language: inactive chips carry the rarity
+// color as text on a dark chip whose border tints to the rarity on hover;
+// active chips get a translucent rarity fill.
+const filters: { key: Rarity; label: string; inactive: string; active: string }[] = [
   {
     key: "all",
     label: "All",
-    color: "text-lol-text",
-    activeColor: "bg-lol-gold/20 text-lol-gold border-lol-gold/50",
+    inactive: "bg-lol-dark text-lol-text border-lol-border hover:border-lol-gold/50",
+    active: "bg-lol-gold/15 text-lol-gold border-lol-gold/50",
   },
   {
     key: "kSilver",
     label: "Silver",
-    color: "text-gray-300",
-    activeColor: "bg-gray-400/20 text-gray-200 border-gray-400/50",
+    inactive: "bg-lol-dark text-gray-300 border-lol-border hover:border-gray-300/50",
+    active: "bg-gray-300/15 text-gray-300 border-gray-300/50",
   },
   {
     key: "kGold",
     label: "Gold",
-    color: "text-yellow-400",
-    activeColor: "bg-yellow-500/20 text-yellow-300 border-yellow-500/50",
+    inactive: "bg-lol-dark text-yellow-400 border-lol-border hover:border-yellow-400/50",
+    active: "bg-yellow-400/15 text-yellow-400 border-yellow-400/50",
   },
   {
     key: "kPrismatic",
     label: "Prismatic",
-    color: "text-fuchsia-400",
-    activeColor: "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/50",
+    inactive: "bg-lol-dark text-fuchsia-400 border-lol-border hover:border-fuchsia-400/50",
+    active: "bg-fuchsia-400/15 text-fuchsia-400 border-fuchsia-400/50",
   },
 ];
 
@@ -42,9 +45,7 @@ export default function RarityFilter({
           key={f.key}
           onClick={() => onChange(f.key)}
           className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-            value === f.key
-              ? f.activeColor
-              : `${f.color} border-lol-border hover:border-lol-border/80 bg-lol-card`
+            value === f.key ? f.active : f.inactive
           }`}
         >
           {f.label}

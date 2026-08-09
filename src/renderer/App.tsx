@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import Overview from "./pages/Overview";
 import MatchHistory from "./pages/MatchHistory";
 import Champions from "./pages/Champions";
 import Augments from "./pages/Augments";
@@ -14,7 +15,8 @@ export default function App() {
     <HashRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<MatchHistory />} />
+          <Route path="/" element={<Overview />} />
+          <Route path="/matches" element={<MatchHistory />} />
           <Route path="/champions" element={<Champions />} />
           <Route path="/augments" element={<Augments />} />
           <Route path="/friends" element={<Friends />} />

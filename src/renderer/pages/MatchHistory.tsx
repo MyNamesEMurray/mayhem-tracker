@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useIpc } from "../hooks/useIpc";
@@ -23,9 +24,16 @@ import MultikillBadge from "../components/MultikillBadge";
 import StatBars from "../components/StatBars";
 import StatCard from "../components/StatCard";
 import { ArrowDownIcon } from "../components/icons";
-import { formatDuration, formatTimeAgo, formatKDA, kdaRatio, formatPatch } from "../lib/format";
+import {
+  formatDuration,
+  formatTimeAgo,
+  formatKDA,
+  kdaRatio,
+  kdaStringColor,
+  formatPatch,
+  scoreRampColor,
+} from "../lib/format";
 import { queueLabel } from "../components/QueueSelect";
-import { scoreColor } from "../../shared/opScore";
 
 // An empty list means something different depending on whether we're still
 // waiting on the client, mid-import, or genuinely out of games.
@@ -103,6 +111,7 @@ export default function MatchHistory() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const lcuStatus = useLcuStatus();
   const backfill = useBackfill();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     window.api.getAllSummonerPuuids().then(setPuuids);
@@ -179,6 +188,17 @@ export default function MatchHistory() {
     },
     [expandedId],
   );
+
+  // Overview's recent-match rows deep-link here with ?game=<id> so the row
+  // opens expanded (newest games are always in the first page).
+  useEffect(() => {
+    const g = searchParams.get("game");
+    if (!g) return;
+    toggleExpand(Number(g));
+    setSearchParams({}, { replace: true });
+    // Run only for the value present on arrival
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggleFavorite = useCallback(
     async (match: MatchListItem) => {
@@ -289,7 +309,7 @@ export default function MatchHistory() {
       )}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-lol-text-bright">Match History</h1>
+        <h1 className="text-xl font-bold text-lol-text-bright">Matches</h1>
         <div className="flex items-center gap-2">
           <select
             value={championFilter ?? ""}
@@ -559,18 +579,14 @@ function GameRow({
           <div className="text-sm text-lol-text-bright">
             {formatKDA(match.kills, match.deaths, match.assists)}
           </div>
-          <div
-            className={`text-xs ${parseFloat(kda) >= 3 || kda === "Perfect" ? "text-lol-gold" : "text-lol-text"}`}
-          >
-            {kda} KDA
-          </div>
+          <div className={`text-xs font-semibold ${kdaStringColor(kda)}`}>{kda} KDA</div>
         </div>
 
         {/* Score */}
         <div className="w-10 shrink-0 text-center">
           {match.score != null && !isRemake && (
             <>
-              <div className={`text-sm font-semibold ${scoreColor(match.score)}`}>
+              <div className={`text-sm font-semibold ${scoreRampColor(match.score)}`}>
                 {match.score.toFixed(1)}
               </div>
               {match.score_badge ? (
@@ -632,7 +648,7 @@ function GameRow({
       </button>
 
       {expanded && (
-        <div className="mb-1 bg-lol-card rounded-b-lg border border-t-0 border-lol-border/60 p-3">
+        <div className="mb-1 bg-lol-dark/30 rounded-b-lg border border-t-0 border-lol-border/60 p-3">
           {detailLoading ? (
             <div className="text-sm text-lol-text text-center py-4">Loading...</div>
           ) : detail ? (

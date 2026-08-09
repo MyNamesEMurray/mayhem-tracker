@@ -12,37 +12,10 @@ import ChampionIcon from "../components/ChampionIcon";
 import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
+import RarityFilter, { type Rarity } from "../components/RarityFilter";
 
 type SortKey = "picks" | "winRate" | "name";
 type SortDir = "asc" | "desc";
-type RarityFilter = "all" | "kSilver" | "kGold" | "kPrismatic";
-
-const rarityFilters: { key: RarityFilter; label: string; color: string; activeColor: string }[] = [
-  {
-    key: "all",
-    label: "All",
-    color: "text-lol-text",
-    activeColor: "bg-lol-gold/20 text-lol-gold border-lol-gold/50",
-  },
-  {
-    key: "kSilver",
-    label: "Silver",
-    color: "text-gray-300",
-    activeColor: "bg-gray-400/20 text-gray-200 border-gray-400/50",
-  },
-  {
-    key: "kGold",
-    label: "Gold",
-    color: "text-yellow-400",
-    activeColor: "bg-yellow-500/20 text-yellow-300 border-yellow-500/50",
-  },
-  {
-    key: "kPrismatic",
-    label: "Prismatic",
-    color: "text-fuchsia-400",
-    activeColor: "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/50",
-  },
-];
 
 export default function Augments() {
   const champData = useChampionData();
@@ -57,7 +30,7 @@ export default function Augments() {
   const [sortKey, setSortKey] = useState<SortKey>("picks");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
+  const [rarityFilter, setRarityFilter] = useState<Rarity>("all");
 
   useEffect(() => {
     const unsub = window.api.onGamesUpdated(() => refetch());
@@ -133,7 +106,9 @@ export default function Augments() {
   }) => (
     <th
       onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none ${className ?? ""}`}
+      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
+        sortKey === field ? "text-lol-gold" : "text-lol-text"
+      } ${className ?? ""}`}
     >
       {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
     </th>
@@ -145,19 +120,7 @@ export default function Augments() {
 
       {/* Rarity Filter + Search */}
       <div className="flex items-center gap-2">
-        {rarityFilters.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setRarityFilter(f.key)}
-            className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-              rarityFilter === f.key
-                ? f.activeColor
-                : `${f.color} border-lol-border hover:border-lol-border/80 bg-lol-card`
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+        <RarityFilter value={rarityFilter} onChange={setRarityFilter} />
         <span className="text-xs text-lol-text self-center ml-2">{sorted.length} augments</span>
         <div className="ml-auto flex items-center gap-2">
           <QueueSelect value={queue} onChange={setQueue} />
@@ -197,10 +160,10 @@ export default function Augments() {
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-8"></th>
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
               <SortHeader label="Augment" field="name" />
               <SortHeader label="Picks" field="picks" />
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Pick Rate
               </th>
               <SortHeader label="Win Rate" field="winRate" className="w-32" />
@@ -217,19 +180,19 @@ export default function Augments() {
                     onClick={() => toggleExpand(a.augment_id)}
                     className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
                   >
-                    <td className="px-3 py-2 text-xs text-lol-text">
+                    <td className="px-3 py-1.5 text-xs text-lol-text">
                       <span
                         className={`inline-block transition-transform ${isExpanded ? "rotate-90" : ""}`}
                       >
                         ▶
                       </span>
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5">
                       <AugmentIcon augmentId={a.augment_id} showName />
                     </td>
-                    <td className="px-3 py-2 text-sm text-lol-text-bright">{a.picks}</td>
-                    <td className="px-3 py-2 text-sm text-lol-text">{pickRate}%</td>
-                    <td className="px-3 py-2 w-32">
+                    <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
+                    <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                    <td className="px-3 py-1.5 w-32">
                       <WinRateBar wins={a.wins} total={a.picks} />
                     </td>
                   </tr>

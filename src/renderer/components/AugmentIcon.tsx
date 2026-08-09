@@ -7,9 +7,11 @@ interface AugmentIconProps {
   showName?: boolean;
 }
 
+// Rarity ring colors from the unified token set: silver #d1d5db, gold
+// #facc15, prismatic #e879f9
 const rarityBorder: Record<string, string> = {
-  kSilver: "ring-1 ring-gray-400/60",
-  kGold: "ring-1 ring-yellow-500/70",
+  kSilver: "ring-1 ring-gray-300/60",
+  kGold: "ring-1 ring-yellow-400/70",
   kPrismatic: "ring-1 ring-fuchsia-400/80",
 };
 

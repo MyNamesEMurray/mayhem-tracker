@@ -9,8 +9,14 @@ import WinRateBar from "../components/WinRateBar";
 import MultikillBadge from "../components/MultikillBadge";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
-import { formatKDA, formatDuration, formatTimeAgo, kdaRatio, kdaColor } from "../lib/format";
-import { scoreColor } from "../../shared/opScore";
+import {
+  formatKDA,
+  formatDuration,
+  formatTimeAgo,
+  kdaRatio,
+  kdaColor,
+  scoreRampColor,
+} from "../lib/format";
 
 type SortKey =
   | "games"
@@ -132,7 +138,7 @@ function ChampionExpanded({
                     {formatKDA(m.kills, m.deaths, m.assists)}
                   </span>
                   {m.score != null && !m.is_remake && (
-                    <span className={`font-semibold shrink-0 ${scoreColor(m.score)}`}>
+                    <span className={`font-semibold shrink-0 ${scoreRampColor(m.score)}`}>
                       {m.score.toFixed(1)}
                     </span>
                   )}
@@ -218,7 +224,9 @@ export default function Champions() {
   const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
     <th
       onClick={() => handleSort(field)}
-      className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none"
+      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
+        sortKey === field ? "text-lol-gold" : "text-lol-text"
+      }`}
     >
       {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
     </th>
@@ -266,20 +274,20 @@ export default function Champions() {
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-12">
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
                 #
               </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Champion
               </th>
               <SortHeader label="Games" field="games" />
               <SortHeader label="Win Rate" field="wins" />
-              <SortHeader label="Avg K" field="avg_kills" />
-              <SortHeader label="Avg D" field="avg_deaths" />
-              <SortHeader label="Avg A" field="avg_assists" />
+              <SortHeader label="Kills" field="avg_kills" />
+              <SortHeader label="Deaths" field="avg_deaths" />
+              <SortHeader label="Assists" field="avg_assists" />
               <SortHeader label="KDA" field="kda" />
-              <SortHeader label="Avg Dmg" field="avg_damage" />
-              <SortHeader label="Avg Gold" field="avg_gold" />
+              <SortHeader label="Damage" field="avg_damage" />
+              <SortHeader label="Gold" field="avg_gold" />
               <SortHeader label="Multikills" field="multikills" />
             </tr>
           </thead>
@@ -292,8 +300,8 @@ export default function Champions() {
                     expandedId === c.champion_id ? "bg-lol-card-hover" : ""
                   }`}
                 >
-                  <td className="px-3 py-2 text-xs text-lol-text">{i + 1}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
+                  <td className="px-3 py-1.5">
                     <div className="flex items-center gap-2">
                       <ChampionIcon championId={c.champion_id} size={28} />
                       <span className="text-sm text-lol-text-bright">
@@ -301,25 +309,25 @@ export default function Champions() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text-bright">{c.games}</td>
-                  <td className="px-3 py-2 w-32">
+                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                  <td className="px-3 py-1.5 w-32">
                     <WinRateBar wins={c.wins} total={c.games} />
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text">{c.avg_kills}</td>
-                  <td className="px-3 py-2 text-sm text-lol-text">{c.avg_deaths}</td>
-                  <td className="px-3 py-2 text-sm text-lol-text">{c.avg_assists}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_kills}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_deaths}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_assists}</td>
                   <td
-                    className={`px-3 py-2 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
+                    className={`px-3 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
                   >
                     {kdaRatio(c.kills, c.deaths, c.assists)}
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text">
+                  <td className="px-3 py-1.5 text-sm text-lol-text">
                     {(c.avg_damage ?? 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-gold">
+                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">
                     {(c.avg_gold ?? 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-1.5">
                     <div className="grid grid-cols-4 gap-1 text-[10px]">
                       <span className={c.double_kills > 0 ? "text-sky-400" : "text-transparent"}>
                         D{c.double_kills}

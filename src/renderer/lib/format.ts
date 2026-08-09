@@ -7,11 +7,27 @@ export function kdaRatio(kills: number, deaths: number, assists: number): string
   return ((kills + assists) / deaths).toFixed(2);
 }
 
+// Unified performance ramp (design rule 3): amber ≥5 · sky ≥4 · emerald ≥3 ·
+// muted below. KDA is never gold — gold means brand/interaction/"you".
 export function kdaColor(ratio: number): string {
   if (ratio >= 5) return "text-amber-400";
   if (ratio >= 4) return "text-sky-400";
   if (ratio >= 3) return "text-emerald-400";
-  return "text-slate-300";
+  return "text-lol-text";
+}
+
+// Same ramp for a formatted kdaRatio() string ("Perfect" counts as top tier)
+export function kdaStringColor(kda: string): string {
+  return kdaColor(kda === "Perfect" ? Infinity : parseFloat(kda));
+}
+
+// Performance ramp for the 1-10 match score (design rule 3). Mirrors the
+// thresholds in shared/opScore but bottoms out on the muted text token.
+export function scoreRampColor(score: number): string {
+  if (score >= 9) return "text-amber-400";
+  if (score >= 7) return "text-sky-400";
+  if (score >= 5) return "text-emerald-400";
+  return "text-lol-text";
 }
 
 export function formatDuration(seconds: number): string {
@@ -47,10 +63,9 @@ export function winRatePercent(wins: number, total: number): string {
   return `${((wins / total) * 100).toFixed(1)}%`;
 }
 
+// Win rate is outcome-only (design rule 2): green ≥50%, red below, muted for
+// small samples (<20 games).
 export function winRateColor(wins: number, total: number): string {
-  if (total === 0) return "text-slate-400";
-  const rate = wins / total;
-  if (rate >= 0.6) return "text-emerald-400";
-  if (rate >= 0.5) return "text-sky-400";
-  return "text-red-400";
+  if (total < 20) return "text-lol-text";
+  return wins / total >= 0.5 ? "text-lol-win" : "text-lol-loss";
 }

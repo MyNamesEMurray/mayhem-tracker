@@ -13,8 +13,15 @@ import SummonerIcon from "../components/SummonerIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import StatBars from "../components/StatBars";
 import WinRateBar from "../components/WinRateBar";
-import { formatDuration, formatTimeAgo, formatKDA, kdaRatio, kdaColor } from "../lib/format";
-import { scoreColor } from "../../shared/opScore";
+import {
+  formatDuration,
+  formatTimeAgo,
+  formatKDA,
+  kdaRatio,
+  kdaColor,
+  kdaStringColor,
+  scoreRampColor,
+} from "../lib/format";
 
 export default function FriendDetail() {
   const { key = "" } = useParams();
@@ -127,7 +134,7 @@ export default function FriendDetail() {
                 Their Avg Score
               </div>
               <div
-                className={`text-xl font-bold ${avgScore != null ? scoreColor(avgScore) : "text-lol-text"}`}
+                className={`text-xl font-bold ${avgScore != null ? scoreRampColor(avgScore) : "text-lol-text"}`}
               >
                 {avgScore != null ? avgScore.toFixed(1) : "—"}
               </div>
@@ -256,16 +263,14 @@ function PlayerBlock({
       </div>
       <div className="w-20 shrink-0">
         <div className="text-xs text-lol-text-bright">{formatKDA(kills, deaths, assists)}</div>
-        <div
-          className={`text-[10px] ${parseFloat(kda) >= 3 || kda === "Perfect" ? "text-lol-gold" : "text-lol-text"}`}
-        >
-          {kda} KDA
-        </div>
+        <div className={`text-[10px] font-semibold ${kdaStringColor(kda)}`}>{kda} KDA</div>
       </div>
       <div className="w-10 shrink-0 text-center">
         {score != null && (
           <>
-            <div className={`text-sm font-semibold ${scoreColor(score)}`}>{score.toFixed(1)}</div>
+            <div className={`text-sm font-semibold ${scoreRampColor(score)}`}>
+              {score.toFixed(1)}
+            </div>
             {badge ? (
               <div
                 className={`text-[9px] font-bold leading-[15px] px-1 rounded w-fit mx-auto ${
@@ -372,7 +377,7 @@ function SharedGameRow({
       </button>
 
       {expanded && (
-        <div className="mb-1 bg-lol-card rounded-b-lg border border-t-0 border-lol-border/60 p-3">
+        <div className="mb-1 bg-lol-dark/30 rounded-b-lg border border-t-0 border-lol-border/60 p-3">
           {detailLoading ? (
             <div className="text-sm text-lol-text text-center py-4">Loading...</div>
           ) : detail ? (

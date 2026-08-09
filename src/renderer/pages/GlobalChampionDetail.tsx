@@ -82,7 +82,9 @@ function SortHeader({
   return (
     <th
       onClick={() => onSort(field)}
-      className={`px-2 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none ${className ?? ""}`}
+      className={`px-2 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
+        sortKey === field ? "text-lol-gold" : "text-lol-text"
+      } ${className ?? ""}`}
     >
       {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
     </th>
@@ -168,8 +170,8 @@ function ItemSection({
                 sortDir={sortDir}
                 onSort={onSort}
               />
-              <th className="px-2 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-wider">
-                Build
+              <th className="px-2 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] whitespace-nowrap">
+                Build Rate
               </th>
               <SortHeader
                 label="Win Rate"
@@ -250,8 +252,8 @@ function AugmentSection({ augments, games }: { augments: AugmentStats[]; games: 
                 sortDir={sortDir}
                 onSort={onSort}
               />
-              <th className="px-2 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-wider">
-                Pick
+              <th className="px-2 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] whitespace-nowrap">
+                Pick Rate
               </th>
               <SortHeader
                 label="Win Rate"
@@ -330,7 +332,7 @@ export default function GlobalChampionDetailPage() {
       to={`/global${backQuery ? `?${backQuery}` : ""}`}
       className="inline-flex items-center gap-1.5 text-xs text-lol-text hover:text-lol-text-bright transition-colors"
     >
-      <span aria-hidden>←</span> Total Stats
+      <span aria-hidden>←</span> Global Stats
     </Link>
   );
 
@@ -375,6 +377,13 @@ export default function GlobalChampionDetailPage() {
             <StatCard
               label="Win Rate"
               value={percent(winRate)}
+              valueClassName={
+                data.games < 20
+                  ? "text-lol-text"
+                  : winRate >= 0.5
+                    ? "text-lol-win"
+                    : "text-lol-loss"
+              }
               subtext={`${data.wins}W ${losses}L`}
             />
             <StatCard
@@ -395,9 +404,9 @@ export default function GlobalChampionDetailPage() {
           </div>
 
           <div className="grid grid-cols-5 gap-2">
-            <MiniStat label="Kill Part.">{percent(data.killParticipation)}</MiniStat>
+            <MiniStat label="Kill Participation">{percent(data.killParticipation)}</MiniStat>
             <MiniStat label="Avg Gold">{data.avgGold.toLocaleString()}</MiniStat>
-            <MiniStat label="Avg Dmg Taken">{data.avgDamageTaken.toLocaleString()}</MiniStat>
+            <MiniStat label="Avg Damage Taken">{data.avgDamageTaken.toLocaleString()}</MiniStat>
             <MiniStat label="Avg Healing">{data.avgHeal.toLocaleString()}</MiniStat>
             <MiniStat label="Multikills">
               <MultikillCounts
