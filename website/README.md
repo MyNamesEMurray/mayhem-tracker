@@ -24,6 +24,22 @@ npm run dev
 npm run build   # typechecks, then outputs to dist/
 ```
 
+## Enabling ads
+
+The AdSense integration ships inert: no ad scripts load and no layout space
+is reserved until configured. After AdSense approval:
+
+1. Put your publisher id (`ca-pub-…`) in `src/lib/adsense.ts` as `AD_CLIENT`.
+2. Create two responsive display units in the AdSense dashboard and put
+   their slot ids in `AD_SLOTS` (top = below the filter bar, bottom = above
+   the footer).
+3. Replace the placeholder in `public/ads.txt` with the line AdSense shows
+   under Account → ads.txt.
+4. Turn on consent messaging in AdSense under Privacy & messaging (served
+   automatically by the same script — no code changes).
+
+Setting `AD_CLIENT` back to an empty string fully disables ads again.
+
 ## Deploy
 
 Any static host works. On Vercel: import the repository, set the project's

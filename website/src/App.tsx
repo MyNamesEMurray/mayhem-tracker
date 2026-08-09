@@ -15,6 +15,7 @@ import {
 } from "./lib/dragon";
 import { aggregateChampions, availablePatches, availableQueues, QUEUE_LABELS, type Filters } from "./lib/stats";
 import { useUrlParams } from "./lib/urlState";
+import AdSlot from "./components/AdSlot";
 import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
 import ChampionsTable from "./components/ChampionsTable";
@@ -22,6 +23,7 @@ import PatchRangeSelect, {
   parsePatchParam,
   selectionPatchSet,
 } from "./components/PatchRangeSelect";
+import { AD_SLOTS, loadAdSense } from "./lib/adsense";
 
 type Tab = "augments" | "champions";
 
@@ -44,6 +46,10 @@ export default function App() {
   const queue = queueParam ? Number(queueParam) : undefined;
   const championParam = params.get("champion");
   const selectedChampion = championParam ? Number(championParam) : null;
+
+  useEffect(() => {
+    loadAdSense();
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -203,6 +209,8 @@ export default function App() {
               </div>
             </div>
 
+            <AdSlot slot={AD_SLOTS.top} />
+
             {tab === "augments" ? (
               <AugmentsTable
                 rows={data.augmentRows}
@@ -223,6 +231,8 @@ export default function App() {
             )}
           </>
         )}
+
+        <AdSlot slot={AD_SLOTS.bottom} />
 
         {/* Footer */}
         <footer className="mt-10 pt-6 border-t border-lol-border/50 space-y-3 text-xs text-lol-text/80">
