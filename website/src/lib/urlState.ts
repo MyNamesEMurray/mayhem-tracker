@@ -1,12 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 
-// Filters and tab live in the URL so views are linkable and survive reloads,
-// without pulling in a router for what is a single-page site.
-export function useUrlParams(): [URLSearchParams, (key: string, value: string | null) => void] {
+// Path + query state without pulling in a router. setParam tweaks the query
+// in place (replaceState — filters don't create history entries) while
+// navigate changes the path (pushState — page changes do), carrying the
+// current filters along.
+export function useUrlState(): {
+  path: string;
+  params: URLSearchParams;
+  setParam: (key: string, value: string | null) => void;
+  navigate: (path: string) => void;
+  replaceUrl: (path: string, params: URLSearchParams) => void;
+} {
+  const [path, setPath] = useState(window.location.pathname);
   const [params, setParams] = useState(() => new URLSearchParams(window.location.search));
 
   useEffect(() => {
-    const onPop = () => setParams(new URLSearchParams(window.location.search));
+    const onPop = () => {
+      setPath(window.location.pathname);
+      setParams(new URLSearchParams(window.location.search));
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
@@ -17,10 +29,35 @@ export function useUrlParams(): [URLSearchParams, (key: string, value: string | 
       if (value == null || value === "") next.delete(key);
       else next.set(key, value);
       const query = next.toString();
-      window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${query ? `?${query}` : ""}`,
+      );
       return next;
     });
   }, []);
 
-  return [params, setParam];
+  const navigate = useCallback((nextPath: string) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      // The legacy champion query param never survives a navigation
+      next.delete("champion");
+      const query = next.toString();
+      window.history.pushState(null, "", `${nextPath}${query ? `?${query}` : ""}`);
+      return next;
+    });
+    setPath(nextPath);
+    window.scrollTo(0, 0);
+  }, []);
+
+  // One-shot URL rewrite without a history entry (legacy-link canonicalization)
+  const replaceUrl = useCallback((nextPath: string, nextParams: URLSearchParams) => {
+    const query = nextParams.toString();
+    window.history.replaceState(null, "", `${nextPath}${query ? `?${query}` : ""}`);
+    setPath(nextPath);
+    setParams(nextParams);
+  }, []);
+
+  return { path, params, setParam, navigate, replaceUrl };
 }

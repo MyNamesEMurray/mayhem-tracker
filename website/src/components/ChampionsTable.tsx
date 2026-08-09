@@ -14,6 +14,7 @@ import ChampionIcon from "./ChampionIcon";
 import SearchInput from "./SearchInput";
 import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
+import { championSlug } from "../lib/slug";
 
 type SortKey = "score" | "games" | "winRate" | "kda" | "damage" | "name";
 type SortDir = "asc" | "desc";
@@ -150,9 +151,17 @@ export default function ChampionsTable({
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
                       <ChampionIcon championId={c.champion_id} size={28} />
-                      <span className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors whitespace-nowrap">
+                      <a
+                        href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onSelectChampion(c.champion_id);
+                        }}
+                        className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors whitespace-nowrap"
+                      >
                         {getChampionName(championData, c.champion_id)}
-                      </span>
+                      </a>
                     </div>
                   </td>
                   <td className="px-3 py-2">

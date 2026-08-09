@@ -18,6 +18,7 @@ import RarityFilter, { type Rarity } from "./RarityFilter";
 import SearchInput from "./SearchInput";
 import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
+import { championSlug } from "../lib/slug";
 
 type SortKey = "score" | "picks" | "winRate" | "kda" | "damage" | "name";
 type SortDir = "asc" | "desc";
@@ -257,8 +258,10 @@ function AugmentRow({
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-1.5">
               {breakdown.map((c) => (
                 <div key={c.champion_id} className="flex items-center gap-2">
-                  <button
+                  <a
+                    href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       onSelectChampion(c.champion_id);
                     }}
@@ -268,7 +271,7 @@ function AugmentRow({
                     <span className="text-xs text-lol-text-bright w-28 truncate text-left hover:text-lol-gold">
                       {getChampionName(championData, c.champion_id)}
                     </span>
-                  </button>
+                  </a>
                   <span className="text-xs text-lol-text w-14">{c.picks} picks</span>
                   <div className="flex-1 max-w-44">
                     <WinRateBar wins={c.wins} total={c.picks} />

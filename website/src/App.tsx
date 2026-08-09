@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchAugmentStats,
   fetchChampionStats,
@@ -14,7 +14,6 @@ import {
   type ChampionData,
 } from "./lib/dragon";
 import { aggregateChampions, availablePatches, availableQueues, QUEUE_LABELS, type Filters } from "./lib/stats";
-import { useUrlParams } from "./lib/urlState";
 import AdSlot from "./components/AdSlot";
 import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
@@ -24,6 +23,8 @@ import PatchRangeSelect, {
   selectionPatchSet,
 } from "./components/PatchRangeSelect";
 import { AD_SLOTS, loadAdSense } from "./lib/adsense";
+import { championSlug } from "./lib/slug";
+import { useUrlState } from "./lib/urlState";
 
 type Tab = "augments" | "champions";
 
@@ -38,14 +39,54 @@ interface LoadedData {
 export default function App() {
   const [data, setData] = useState<LoadedData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [params, setParam] = useUrlParams();
+  const { path, params, setParam, navigate, replaceUrl } = useUrlState();
 
   const tab: Tab = params.get("tab") === "champions" ? "champions" : "augments";
   const patchParam = params.get("patch");
   const queueParam = params.get("queue");
   const queue = queueParam ? Number(queueParam) : undefined;
-  const championParam = params.get("champion");
-  const selectedChampion = championParam ? Number(championParam) : null;
+
+  // Champion pages live at /champion/<slug>/ (prerendered server-side); the
+  // old ?champion=<id> links are honored and canonicalized below
+  const slugMatch = path.match(/^\/champion\/([a-z0-9-]+)\/?$/);
+  const championSlugFromPath = slugMatch ? slugMatch[1] : null;
+  const legacyChampion = params.get("champion");
+  const onChampionPage = championSlugFromPath != null || legacyChampion != null;
+
+  const selectedChampion = useMemo(() => {
+    if (championSlugFromPath) {
+      if (!data) return null;
+      for (const [id, info] of Object.entries(data.championData)) {
+        if (championSlug(info.name) === championSlugFromPath) return Number(id);
+      }
+      return null;
+    }
+    return legacyChampion ? Number(legacyChampion) : null;
+  }, [championSlugFromPath, legacyChampion, data]);
+
+  // The prerendered static block is superseded once the live app has data
+  useEffect(() => {
+    if (data) document.getElementById("prerender")?.remove();
+  }, [data]);
+
+  // Canonicalize legacy ?champion=<id> links to the path form
+  useEffect(() => {
+    if (!legacyChampion || !data) return;
+    const name = data.championData[Number(legacyChampion)]?.name;
+    if (!name) return;
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.delete("champion");
+    replaceUrl(`/champion/${championSlug(name)}/`, nextParams);
+  }, [legacyChampion, data, replaceUrl]);
+
+  const openChampion = useCallback(
+    (id: number) => {
+      const name = data?.championData[id]?.name;
+      if (name) navigate(`/champion/${championSlug(name)}/`);
+      else setParam("champion", String(id));
+    },
+    [data, navigate, setParam],
+  );
 
   useEffect(() => {
     loadAdSense();
@@ -123,7 +164,18 @@ export default function App() {
 
         {!error && !data && <div className="text-center text-lol-text py-20">Loading community stats...</div>}
 
-        {data && selectedChampion != null && (
+        {data && onChampionPage && selectedChampion == null && (
+          <div className="space-y-4">
+            <button onClick={() => navigate("/")} className="text-sm text-lol-gold hover:underline">
+              ← All champions
+            </button>
+            <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
+              No champion found at this address.
+            </div>
+          </div>
+        )}
+
+        {data && onChampionPage && selectedChampion != null && (
           <>
             <div className="flex justify-end mb-4">
               <div className="flex items-center gap-2">
@@ -154,12 +206,12 @@ export default function App() {
               filters={filters}
               championData={data.championData}
               augmentData={data.augmentData}
-              onBack={() => setParam("champion", null)}
+              onBack={() => navigate("/")}
             />
           </>
         )}
 
-        {data && selectedChampion == null && (
+        {data && !onChampionPage && (
           <>
             {/* Filters + summary */}
             <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -218,7 +270,7 @@ export default function App() {
                 totalSlots={totalSlots}
                 augmentData={data.augmentData}
                 championData={data.championData}
-                onSelectChampion={(id) => setParam("champion", String(id))}
+                onSelectChampion={openChampion}
               />
             ) : (
               <ChampionsTable
@@ -226,7 +278,7 @@ export default function App() {
                 filters={filters}
                 totalSlots={totalSlots}
                 championData={data.championData}
-                onSelectChampion={(id) => setParam("champion", String(id))}
+                onSelectChampion={openChampion}
               />
             )}
           </>
