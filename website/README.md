@@ -1,7 +1,8 @@
-# Mayhem Tracker — Community Stats Website
+# MayhemStats — Community Stats Website
 
-Public site showing community augment and champion win rates for ARAM Mayhem,
-built from anonymized games contributed by Mayhem Tracker players who opt in.
+[mayhemstats.com](https://mayhemstats.com/) — public site showing community
+augment and champion tier lists, builds, and win rates for ARAM Mayhem, built
+from anonymized games contributed by Mayhem Tracker players who opt in.
 
 It's a static Vite + React app with no backend of its own: data comes from the
 community Supabase project's aggregate-only views (`champion_stats`,

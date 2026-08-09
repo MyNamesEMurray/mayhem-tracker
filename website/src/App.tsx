@@ -84,9 +84,9 @@ export default function App() {
           <div className="flex items-center gap-3">
             <img src="/icon.png" alt="" width={40} height={40} className="rounded-lg" />
             <div>
-              <h1 className="text-2xl font-bold text-lol-text-bright">Mayhem Tracker</h1>
+              <h1 className="text-2xl font-bold text-lol-text-bright">MayhemStats</h1>
               <p className="text-sm text-lol-text">
-                Community augment &amp; champion stats for ARAM Mayhem
+                Community tier lists, builds &amp; win rates for ARAM Mayhem
               </p>
             </div>
           </div>
