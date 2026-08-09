@@ -2361,7 +2361,11 @@ export interface AugmentSlotStat {
 
 // How each augment performs by the breakpoint it was taken at. Slot order is
 // preserved from the client payload, so slot 1 is the first augment pick.
-export function getAugmentSlotStats(minPicks = 1): AugmentSlotStat[] {
+export function getAugmentSlotStats(
+  patch?: string,
+  queue?: number,
+  minPicks = 1,
+): AugmentSlotStat[] {
   return db
     .prepare(
       `SELECT pa.augment_id AS augmentId, pa.slot AS slot,
@@ -2369,11 +2373,13 @@ export function getAugmentSlotStats(minPicks = 1): AugmentSlotStat[] {
        FROM participant_augments pa
        JOIN games g ON g.game_id = pa.game_id
        WHERE g.is_remake = 0
+         AND (? IS NULL OR g.game_version = ?)
+         AND (? IS NULL OR g.queue_id = ?)
        GROUP BY pa.augment_id, pa.slot
        HAVING COUNT(*) >= ?
        ORDER BY pa.augment_id, pa.slot`,
     )
-    .all(minPicks) as AugmentSlotStat[];
+    .all(patch ?? null, patch ?? null, queue ?? null, queue ?? null, minPicks) as AugmentSlotStat[];
 }
 
 export interface AugmentPairStat {
@@ -2385,7 +2391,11 @@ export interface AugmentPairStat {
 
 // Win rates for augment pairs taken together by the same player in the same
 // game (canonical order augmentA < augmentB, each pair counted once).
-export function getAugmentPairStats(minPicks = 5): AugmentPairStat[] {
+export function getAugmentPairStats(
+  patch?: string,
+  queue?: number,
+  minPicks = 5,
+): AugmentPairStat[] {
   return db
     .prepare(
       `SELECT a.augment_id AS augmentA, b.augment_id AS augmentB,
@@ -2397,9 +2407,11 @@ export function getAugmentPairStats(minPicks = 5): AugmentPairStat[] {
         AND b.augment_id > a.augment_id
        JOIN games g ON g.game_id = a.game_id
        WHERE g.is_remake = 0
+         AND (? IS NULL OR g.game_version = ?)
+         AND (? IS NULL OR g.queue_id = ?)
        GROUP BY a.augment_id, b.augment_id
        HAVING COUNT(*) >= ?
        ORDER BY CAST(COALESCE(SUM(a.win), 0) AS REAL) / COUNT(*) DESC, COUNT(*) DESC`,
     )
-    .all(minPicks) as AugmentPairStat[];
+    .all(patch ?? null, patch ?? null, queue ?? null, queue ?? null, minPicks) as AugmentPairStat[];
 }

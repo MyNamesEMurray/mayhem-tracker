@@ -30,6 +30,12 @@ const api = {
   getAugmentStatsDetailed: (patch?: string, queue?: number) =>
     ipcRenderer.invoke("db:augment-stats-detailed", patch, queue),
 
+  getAugmentSlotStats: (patch?: string, queue?: number) =>
+    ipcRenderer.invoke("db:augment-slot-stats", patch, queue),
+
+  getAugmentPairStats: (patch?: string, queue?: number) =>
+    ipcRenderer.invoke("db:augment-pair-stats", patch, queue),
+
   getDashboard: (filters?: { championId?: number; patch?: string; queue?: number }) =>
     ipcRenderer.invoke("db:dashboard", filters),
 

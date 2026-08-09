@@ -56,6 +56,14 @@ export function registerIpcHandlers(win: BrowserWindow) {
     return db.getAugmentStatsWithChampions(patch, queue);
   });
 
+  ipcMain.handle("db:augment-slot-stats", (_event, patch?: string, queue?: number) => {
+    return db.getAugmentSlotStats(patch, queue);
+  });
+
+  ipcMain.handle("db:augment-pair-stats", (_event, patch?: string, queue?: number) => {
+    return db.getAugmentPairStats(patch, queue, 3);
+  });
+
   ipcMain.handle(
     "db:dashboard",
     (_event, filters?: { championId?: number; patch?: string; queue?: number }) => {
