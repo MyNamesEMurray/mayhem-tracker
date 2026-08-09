@@ -254,7 +254,7 @@ function AugmentRow({
             <p className="text-xs text-lol-text uppercase tracking-wider mb-2">
               Best with ({getAugmentName(augmentData, aug.augment_id)})
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-1.5">
               {breakdown.map((c) => (
                 <div key={c.champion_id} className="flex items-center gap-2">
                   <button
@@ -265,12 +265,12 @@ function AugmentRow({
                     className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
                   >
                     <ChampionIcon championId={c.champion_id} size={22} />
-                    <span className="text-xs text-lol-text-bright w-24 truncate text-left hover:text-lol-gold">
+                    <span className="text-xs text-lol-text-bright w-28 truncate text-left hover:text-lol-gold">
                       {getChampionName(championData, c.champion_id)}
                     </span>
                   </button>
                   <span className="text-xs text-lol-text w-14">{c.picks} picks</span>
-                  <div className="flex-1 max-w-40">
+                  <div className="flex-1 max-w-44">
                     <WinRateBar wins={c.wins} total={c.picks} />
                   </div>
                 </div>

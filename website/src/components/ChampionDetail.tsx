@@ -2,11 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import type { AugmentStatRow, ChampionStatRow, ItemStatRow } from "../lib/api";
 import {
   getChampionName,
+  getItemName,
   loadItemData,
   type AugmentData,
   type ChampionData,
   type ItemData,
 } from "../lib/dragon";
+
+function getItemTitle(itemData: ItemData, id: number): string {
+  return getItemName(itemData, id);
+}
 import {
   aggregateChampions,
   assignTiers,
@@ -151,55 +156,68 @@ export default function ChampionDetail({
         </div>
       </div>
 
-      {/* Core build */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-        <h2 className="text-sm font-semibold text-lol-text-bright mb-3">Core build</h2>
-        {coreBuild.length === 0 ? (
-          <p className="text-sm text-lol-text">No item data yet.</p>
-        ) : (
-          <div className="flex flex-wrap gap-4">
-            {coreBuild.map((i) => {
-              const wr = i.picks > 0 ? ((i.wins / i.picks) * 100).toFixed(0) : "0";
-              return (
-                <div key={i.item_id} className="flex flex-col items-center w-16" title={`${i.picks} games`}>
-                  <ItemIcon itemData={itemData} itemId={i.item_id} size={44} />
-                  <span className="text-xs text-lol-text-bright mt-1">
-                    {wr}%{i.picks < 20 ? "*" : ""}
-                  </span>
-                  <span className="text-[10px] text-lol-text">{i.picks} games</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Best augments by rarity */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-        <h2 className="text-sm font-semibold text-lol-text-bright mb-3">Best augments</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {augmentsByRarity.map((r) => (
-            <div key={r.key}>
-              <p className={`text-xs uppercase tracking-wider mb-2 ${r.color}`}>{r.label}</p>
-              {r.best.length === 0 ? (
-                <p className="text-xs text-lol-text">No picks yet</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {r.best.map((a) => (
-                    <div key={a.augment_id} className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <AugmentIcon augmentData={augmentData} augmentId={a.augment_id} size={22} showName />
-                      </div>
-                      <span className="text-xs text-lol-text w-12 text-right">{a.picks}x</span>
-                      <div className="w-24">
-                        <WinRateBar wins={a.wins} total={a.picks} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {/* Core build + best augments share the row on wide screens */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
+          <h2 className="text-sm font-semibold text-lol-text-bright mb-3">Core build</h2>
+          {coreBuild.length === 0 ? (
+            <p className="text-sm text-lol-text">No item data yet.</p>
+          ) : (
+            <div className="flex flex-wrap gap-4">
+              {coreBuild.map((i) => {
+                const wr = i.picks > 0 ? ((i.wins / i.picks) * 100).toFixed(0) : "0";
+                return (
+                  <div
+                    key={i.item_id}
+                    className="flex flex-col items-center w-16"
+                    title={`${getItemTitle(itemData, i.item_id)} — ${i.picks} games`}
+                  >
+                    <ItemIcon itemData={itemData} itemId={i.item_id} size={48} />
+                    <span className="text-xs text-lol-text-bright mt-1">
+                      {wr}%{i.picks < 20 ? "*" : ""}
+                    </span>
+                    <span className="text-[10px] text-lol-text">{i.picks} games</span>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          )}
+        </div>
+
+        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5 xl:col-span-2">
+          <h2 className="text-sm font-semibold text-lol-text-bright mb-3">Best augments</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+            {augmentsByRarity.map((r) => (
+              <div key={r.key}>
+                <p className={`text-xs uppercase tracking-wider mb-2 ${r.color}`}>{r.label}</p>
+                {r.best.length === 0 ? (
+                  <p className="text-xs text-lol-text">No picks yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {r.best.map((a) => (
+                      <div key={a.augment_id} className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <AugmentIcon
+                            augmentData={augmentData}
+                            augmentId={a.augment_id}
+                            size={24}
+                            showName
+                            wrap
+                          />
+                        </div>
+                        <span className="text-xs text-lol-text w-8 text-right shrink-0">
+                          {a.picks}x
+                        </span>
+                        <div className="w-24 shrink-0">
+                          <WinRateBar wins={a.wins} total={a.picks} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -260,7 +278,13 @@ export default function ChampionDetail({
               {augments.map((a) => (
                 <tr key={a.augment_id} className="border-t border-lol-border/50">
                   <td className="px-3 py-1.5">
-                    <AugmentIcon augmentData={augmentData} augmentId={a.augment_id} size={24} showName />
+                    <AugmentIcon
+                      augmentData={augmentData}
+                      augmentId={a.augment_id}
+                      size={24}
+                      showName
+                      wrap
+                    />
                   </td>
                   <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
                   <td className="px-3 py-1.5 w-32">

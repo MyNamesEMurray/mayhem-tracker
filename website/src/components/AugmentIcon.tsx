@@ -17,11 +17,15 @@ export default function AugmentIcon({
   augmentId,
   size = 28,
   showName = false,
+  wrap = false,
 }: {
   augmentData: AugmentData;
   augmentId: number;
   size?: number;
   showName?: boolean;
+  // Wrap long names onto a second line instead of truncating — for layouts
+  // where the full name matters more than a fixed row height
+  wrap?: boolean;
 }) {
   const aug = augmentData[augmentId];
 
@@ -49,7 +53,11 @@ export default function AugmentIcon({
         />
       )}
       {showName && (
-        <span className={`text-sm truncate ${nameColor}`}>{getAugmentName(augmentData, augmentId)}</span>
+        <span
+          className={`text-sm ${wrap ? "leading-snug" : "truncate"} ${nameColor}`}
+        >
+          {getAugmentName(augmentData, augmentId)}
+        </span>
       )}
     </div>
   );
