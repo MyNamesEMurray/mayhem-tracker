@@ -1,6 +1,6 @@
 {
   "name": "mayhem-tracker",
-  "version": "1.7.0",
+  "version": "2.0.0",
   "description": "ARAM Mayhem match history tracker",
   "license": "MIT",
   "main": "./out/main/index.js",

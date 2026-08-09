@@ -16,9 +16,12 @@ export interface UpdateInfo {
 
 export async function checkForUpdate(): Promise<UpdateInfo> {
   try {
-    const res = await fetch("https://api.github.com/repos/Yhprum/mayhem-tracker/releases/latest", {
-      headers: { "User-Agent": "mayhem-tracker" },
-    });
+    const res = await fetch(
+      "https://api.github.com/repos/MyNamesEMurray/mayhem-tracker/releases/latest",
+      {
+        headers: { "User-Agent": "mayhem-tracker" },
+      },
+    );
     if (!res.ok) return { hasUpdate: false, error: "No releases found" };
     const data = (await res.json()) as any;
     const latest = (data.tag_name as string).replace(/^v/, "");
@@ -46,7 +49,7 @@ export async function downloadAndInstall(
   if (!portableExe) {
     return { success: false, error: "In-app update only works in the portable exe build" };
   }
-  if (!assetUrl.startsWith("https://github.com/Yhprum/mayhem-tracker/")) {
+  if (!assetUrl.startsWith("https://github.com/MyNamesEMurray/mayhem-tracker/")) {
     return { success: false, error: "Unexpected download URL" };
   }
 
