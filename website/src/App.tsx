@@ -53,7 +53,6 @@ export default function App() {
   const tab: Tab = params.get("tab") === "augments" ? "augments" : "champions";
   const patchParam = params.get("patch");
   const queueParam = params.get("queue");
-  const queue = queueParam ? Number(queueParam) : undefined;
 
   // Champion pages live at /champion/<slug>/ (prerendered server-side); the
   // old ?champion=<id> links are honored and canonicalized below
@@ -124,6 +123,18 @@ export default function App() {
 
   const patches = useMemo(() => (data ? availablePatches(data.championRows) : []), [data]);
   const queues = useMemo(() => (data ? availableQueues(data.championRows) : []), [data]);
+
+  // ARAM Mayhem is the default queue; ?queue=all widens to everything. The
+  // default only applies when that queue actually has data.
+  const DEFAULT_QUEUE = 2400;
+  const queue =
+    queueParam === "all"
+      ? undefined
+      : queueParam
+        ? Number(queueParam)
+        : queues.includes(DEFAULT_QUEUE)
+          ? DEFAULT_QUEUE
+          : undefined;
 
   // Default view is the current patch; ?patch= also supports "all", a single
   // patch, or an inclusive "A-B" range
@@ -224,15 +235,18 @@ export default function App() {
           <div className="ml-auto flex items-center gap-2 py-2 max-[840px]:ml-0 max-[840px]:w-full max-[840px]:pt-0 max-[840px]:pb-2.5">
             <select
               className="select"
-              value={queue ?? ""}
+              value={queueParam ?? ""}
               onChange={(e) => setParam("queue", e.target.value || null)}
             >
-              <option value="">All queues</option>
-              {queues.map((q) => (
-                <option key={q} value={q}>
-                  {QUEUE_LABELS[q] ?? `Queue ${q}`}
-                </option>
-              ))}
+              <option value="">{QUEUE_LABELS[2400]}</option>
+              {queues
+                .filter((q) => q !== 2400)
+                .map((q) => (
+                  <option key={q} value={q}>
+                    {QUEUE_LABELS[q] ?? `Queue ${q}`}
+                  </option>
+                ))}
+              <option value="all">All queues</option>
             </select>
             <PatchRangeSelect
               patches={patches}
