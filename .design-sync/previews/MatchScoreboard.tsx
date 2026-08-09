@@ -143,10 +143,18 @@ const canvas: React.CSSProperties = {
 // augments. The viewer's row (BratCannon) is gold-highlighted via puuids.
 // NOTE: champion/item/augment art comes from CDN — offline captures show
 // placeholder boxes; layout and numbers are what's under review.
+// Two sandbox-only shims (no effect on the real app):
+// - failed CDN imgs get display:none from their onError handlers, and a
+//   display:none grid item generates no box, shifting every row cell one
+//   track left — the !important override keeps broken imgs in their tracks
+//   so the capture shows the production layout;
+// - the capture viewport is 900px and the grid's natural width is ~1020px,
+//   so the wrapper zooms to fit.
 export function FullMatch() {
   return (
-    <div style={canvas}>
-      <div style={{ width: 980 }}>
+    <div style={canvas} className="msb-preview">
+      <style>{`.msb-preview img { display: inline-block !important; font-size: 0 !important; line-height: 0 !important; }`}</style>
+      <div style={{ width: 980, zoom: 0.82 }}>
         <MatchScoreboard detail={detail} champData={champData} puuids={["puuid-self"]} />
       </div>
     </div>

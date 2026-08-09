@@ -25,7 +25,7 @@ const aug = (
   damage: Math.round(dmg * picks),
 });
 
-// 16 augments across the three rarities so the per-rarity tier ranking shows
+// 15 augments across the three rarities so the per-rarity tier ranking shows
 // a real S..D spread. Two low-sample entries (Ethereal Weapon, Blunt Force)
 // exercise the asterisk / 20+ filter path.
 const rows = [
@@ -73,8 +73,6 @@ const rows = [
   aug(203, 222, 34, 15, 7.4, 6.8, 9.7, 30500), // Warmup Routine - Jinx
   aug(204, 53, 5, 2, 6.8, 7.0, 9.2, 26000), // Blunt Force - Blitzcrank (low sample)
   aug(204, 17, 4, 1, 6.8, 7.0, 9.2, 26000), // Blunt Force - Teemo
-  aug(205, 17, 52, 23, 7.0, 7.1, 9.5, 29000), // Bread and Butter - Teemo
-  aug(205, 157, 44, 19, 7.0, 7.1, 9.5, 29000), // Bread and Butter - Yasuo
 ];
 
 const icon = (n: string) => `/lol-game-data/assets/ASSETS/UX/CherryAugments/Icons/${n}_small.png`;
@@ -95,7 +93,6 @@ const augmentData = {
   202: { name: "Sound Wave", desc: "Periodically emit a sound wave, damaging enemies it passes through.", rarity: "kSilver", iconPath: icon("SoundWave") },
   203: { name: "Warmup Routine", desc: "Gain stacking attack speed the longer combat lasts.", rarity: "kSilver", iconPath: icon("WarmupRoutine") },
   204: { name: "Blunt Force", desc: "Gain attack damage. Your attacks briefly slow.", rarity: "kSilver", iconPath: icon("BluntForce") },
-  205: { name: "Bread and Butter", desc: "Your basic ability gains 30 ability haste.", rarity: "kSilver", iconPath: icon("BreadAndButter") },
 };
 
 const championData = {
@@ -115,12 +112,16 @@ const championData = {
 // realistic 0.5-10% band
 const totalSlots = 2400;
 
-// MayhemStats components live on the site's dark canvas — previews carry it
+// MayhemStats components live on the site's dark canvas — previews carry it.
+// The table is min-w-[960px]; the capture viewport is 900x700, so a mild
+// zoom keeps every column (through KDA / DMG) and all 15 rows in frame
+// without touching the component.
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",
   padding: 20,
   borderRadius: 12,
+  zoom: 0.85,
 };
 
 // The full augment tier list, default-sorted by score; tiers rank within

@@ -141,41 +141,45 @@ const canvas: React.CSSProperties = {
   borderRadius: 12,
 };
 
-// Full detail view: header with tier + KDA line, core build, best augments
-// by rarity, and the two full tables
-export function MalzaharDetail() {
-  return (
-    <div style={canvas}>
-      <ChampionDetail
-        championId={101}
-        championRows={championRows}
-        augmentRows={augmentRows}
-        itemRows={itemRows}
-        filters={{}}
-        championData={championData}
-        augmentData={augmentData}
-        onBack={() => {}}
-      />
+const detail = (minGames?: number) => (
+  <ChampionDetail
+    championId={101}
+    championRows={championRows}
+    augmentRows={augmentRows}
+    itemRows={itemRows}
+    filters={{}}
+    minGames={minGames}
+    championData={championData}
+    augmentData={augmentData}
+    onBack={() => {}}
+  />
+);
+
+// The page is ~1500px tall and the capture viewport is 900x700, so the two
+// lower cells shift a fixed 590px window down the SAME page instead of
+// scaling it — every section gets graded at natural size.
+const windowed = (shift: number, minGames?: number) => (
+  <div style={canvas}>
+    <div style={{ height: 590, overflow: "hidden" }}>
+      <div style={{ marginTop: -shift }}>{detail(minGames)}</div>
     </div>
-  );
+  </div>
+);
+
+// Top of the detail page: header with tier + KDA line, core build, and the
+// three-column best augments by rarity
+export function MalzaharDetail() {
+  return <div style={canvas}>{detail()}</div>;
 }
 
-// The 20+ games toggle narrows the full tables only; Core build and Best
-// augments keep their shrinkage-ranked entries
+// The lower half of the same page: the All items table (with low-sample
+// asterisk rows) and the top of the All augments table
+export function FullTables() {
+  return windowed(650);
+}
+
+// The 20+ games toggle narrows the full tables only; window shifted to the
+// All augments table, now trimmed to confident rows, plus the footnote
 export function ConfidentOnly() {
-  return (
-    <div style={canvas}>
-      <ChampionDetail
-        championId={101}
-        championRows={championRows}
-        augmentRows={augmentRows}
-        itemRows={itemRows}
-        filters={{}}
-        minGames={20}
-        championData={championData}
-        augmentData={augmentData}
-        onBack={() => {}}
-      />
-    </div>
-  );
+  return windowed(960, 20);
 }
