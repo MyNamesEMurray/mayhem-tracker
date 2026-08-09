@@ -18,6 +18,10 @@ import { useUrlParams } from "./lib/urlState";
 import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
 import ChampionsTable from "./components/ChampionsTable";
+import PatchRangeSelect, {
+  parsePatchParam,
+  selectionPatchSet,
+} from "./components/PatchRangeSelect";
 
 type Tab = "augments" | "champions";
 
@@ -65,11 +69,13 @@ export default function App() {
   const patches = useMemo(() => (data ? availablePatches(data.championRows) : []), [data]);
   const queues = useMemo(() => (data ? availableQueues(data.championRows) : []), [data]);
 
-  // The latest patch is the default view — that's the current meta. "All
-  // patches" is an explicit ?patch=all so it stays shareable.
-  const patch =
-    patchParam === "all" ? undefined : (patchParam ?? patches[0] ?? undefined);
-  const filters: Filters = useMemo(() => ({ patch, queue }), [patch, queue]);
+  // Default view is the current patch; ?patch= also supports "all", a single
+  // patch, or an inclusive "A-B" range
+  const patchSet = useMemo(
+    () => selectionPatchSet(parsePatchParam(patchParam, patches), patches),
+    [patchParam, patches],
+  );
+  const filters: Filters = useMemo(() => ({ patches: patchSet, queue }), [patchSet, queue]);
   // Every participant slot under the current filter; the denominator for pick
   // rates and (÷10) the game count
   const totalSlots = useMemo(
@@ -127,18 +133,11 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-                <select
-                  className="select"
-                  value={patch ?? "all"}
-                  onChange={(e) => setParam("patch", e.target.value)}
-                >
-                  <option value="all">All patches</option>
-                  {patches.map((p) => (
-                    <option key={p} value={p}>
-                      Patch {p}
-                    </option>
-                  ))}
-                </select>
+                <PatchRangeSelect
+                  patches={patches}
+                  param={patchParam}
+                  onChange={(v) => setParam("patch", v)}
+                />
               </div>
             </div>
             <ChampionDetail
@@ -196,18 +195,11 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-                <select
-                  className="select"
-                  value={patch ?? "all"}
-                  onChange={(e) => setParam("patch", e.target.value)}
-                >
-                  <option value="all">All patches</option>
-                  {patches.map((p) => (
-                    <option key={p} value={p}>
-                      Patch {p}
-                    </option>
-                  ))}
-                </select>
+                <PatchRangeSelect
+                  patches={patches}
+                  param={patchParam}
+                  onChange={(v) => setParam("patch", v)}
+                />
               </div>
             </div>
 

@@ -13,24 +13,27 @@ export const QUEUE_LABELS: Record<number, string> = {
 };
 
 export interface Filters {
-  patch?: string;
+  // Undefined means all patches; otherwise the set of included patches
+  patches?: Set<string>;
   queue?: number;
 }
 
 function rowMatches(row: { patch: string; queue_id: number }, f: Filters): boolean {
-  if (f.patch && row.patch !== f.patch) return false;
+  if (f.patches && !f.patches.has(row.patch)) return false;
   if (f.queue != null && row.queue_id !== f.queue) return false;
   return true;
+}
+
+export function comparePatches(a: string, b: string): number {
+  const [aMajor, aMinor] = a.split(".").map(Number);
+  const [bMajor, bMinor] = b.split(".").map(Number);
+  return aMajor - bMajor || aMinor - bMinor;
 }
 
 // Patches present in the data, newest first
 export function availablePatches(rows: ChampionStatRow[]): string[] {
   const set = new Set(rows.map((r) => r.patch));
-  return Array.from(set).sort((a, b) => {
-    const [aMajor, aMinor] = a.split(".").map(Number);
-    const [bMajor, bMinor] = b.split(".").map(Number);
-    return bMajor - aMajor || bMinor - aMinor;
-  });
+  return Array.from(set).sort((a, b) => comparePatches(b, a));
 }
 
 export function availableQueues(rows: ChampionStatRow[]): number[] {
