@@ -28,12 +28,14 @@ export default function AugmentsTable({
   totalSlots,
   augmentData,
   championData,
+  onSelectChampion,
 }: {
   rows: AugmentStatRow[];
   filters: Filters;
   totalSlots: number;
   augmentData: AugmentData;
   championData: ChampionData;
+  onSelectChampion: (championId: number) => void;
 }) {
   const [search, setSearch] = useState("");
   const [rarity, setRarity] = useState<Rarity>("all");
@@ -171,6 +173,7 @@ export default function AugmentsTable({
                   filters={filters}
                   augmentData={augmentData}
                   championData={championData}
+                  onSelectChampion={onSelectChampion}
                 />
               );
             })}
@@ -201,6 +204,7 @@ function AugmentRow({
   filters,
   augmentData,
   championData,
+  onSelectChampion,
 }: {
   aug: { augment_id: number; picks: number; wins: number };
   tier: Tier;
@@ -214,6 +218,7 @@ function AugmentRow({
   filters: Filters;
   augmentData: AugmentData;
   championData: ChampionData;
+  onSelectChampion: (championId: number) => void;
 }) {
   const breakdown = useMemo(
     () => (expanded ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 8) : []),
@@ -252,10 +257,18 @@ function AugmentRow({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
               {breakdown.map((c) => (
                 <div key={c.champion_id} className="flex items-center gap-2">
-                  <ChampionIcon championId={c.champion_id} size={22} />
-                  <span className="text-xs text-lol-text-bright w-24 truncate">
-                    {getChampionName(championData, c.champion_id)}
-                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectChampion(c.champion_id);
+                    }}
+                    className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
+                  >
+                    <ChampionIcon championId={c.champion_id} size={22} />
+                    <span className="text-xs text-lol-text-bright w-24 truncate text-left hover:text-lol-gold">
+                      {getChampionName(championData, c.champion_id)}
+                    </span>
+                  </button>
                   <span className="text-xs text-lol-text w-14">{c.picks} picks</span>
                   <div className="flex-1 max-w-40">
                     <WinRateBar wins={c.wins} total={c.picks} />

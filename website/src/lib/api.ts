@@ -34,6 +34,15 @@ export interface AugmentStatRow {
   damage: number;
 }
 
+export interface ItemStatRow {
+  patch: string;
+  queue_id: number;
+  champion_id: number;
+  item_id: number;
+  picks: number;
+  wins: number;
+}
+
 // PostgREST caps responses at 1000 rows, so page with Range headers until a
 // short page arrives.
 async function fetchAll<T>(view: string): Promise<T[]> {
@@ -62,4 +71,8 @@ export function fetchChampionStats(): Promise<ChampionStatRow[]> {
 
 export function fetchAugmentStats(): Promise<AugmentStatRow[]> {
   return fetchAll<AugmentStatRow>("augment_stats");
+}
+
+export function fetchItemStats(): Promise<ItemStatRow[]> {
+  return fetchAll<ItemStatRow>("item_stats");
 }

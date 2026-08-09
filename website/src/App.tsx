@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchAugmentStats,
   fetchChampionStats,
+  fetchItemStats,
   type AugmentStatRow,
   type ChampionStatRow,
+  type ItemStatRow,
 } from "./lib/api";
 import {
   loadAugmentData,
@@ -14,6 +16,7 @@ import {
 import { aggregateChampions, availablePatches, availableQueues, QUEUE_LABELS, type Filters } from "./lib/stats";
 import { useUrlParams } from "./lib/urlState";
 import AugmentsTable from "./components/AugmentsTable";
+import ChampionDetail from "./components/ChampionDetail";
 import ChampionsTable from "./components/ChampionsTable";
 
 type Tab = "augments" | "champions";
@@ -21,6 +24,7 @@ type Tab = "augments" | "champions";
 interface LoadedData {
   championRows: ChampionStatRow[];
   augmentRows: AugmentStatRow[];
+  itemRows: ItemStatRow[];
   championData: ChampionData;
   augmentData: AugmentData;
 }
@@ -34,14 +38,22 @@ export default function App() {
   const patch = params.get("patch") ?? undefined;
   const queueParam = params.get("queue");
   const queue = queueParam ? Number(queueParam) : undefined;
+  const championParam = params.get("champion");
+  const selectedChampion = championParam ? Number(championParam) : null;
   const filters: Filters = useMemo(() => ({ patch, queue }), [patch, queue]);
 
   useEffect(() => {
     let active = true;
     setError(null);
-    Promise.all([fetchChampionStats(), fetchAugmentStats(), loadChampionData(), loadAugmentData()])
-      .then(([championRows, augmentRows, championData, augmentData]) => {
-        if (active) setData({ championRows, augmentRows, championData, augmentData });
+    Promise.all([
+      fetchChampionStats(),
+      fetchAugmentStats(),
+      fetchItemStats(),
+      loadChampionData(),
+      loadAugmentData(),
+    ])
+      .then(([championRows, augmentRows, itemRows, championData, augmentData]) => {
+        if (active) setData({ championRows, augmentRows, itemRows, championData, augmentData });
       })
       .catch((err) => {
         if (active) setError(err instanceof Error ? err.message : String(err));
@@ -94,7 +106,50 @@ export default function App() {
 
         {!error && !data && <div className="text-center text-lol-text py-20">Loading community stats...</div>}
 
-        {data && (
+        {data && selectedChampion != null && (
+          <>
+            <div className="flex justify-end mb-4">
+              <div className="flex items-center gap-2">
+                <select
+                  className="select"
+                  value={queue ?? ""}
+                  onChange={(e) => setParam("queue", e.target.value || null)}
+                >
+                  <option value="">All queues</option>
+                  {queues.map((q) => (
+                    <option key={q} value={q}>
+                      {QUEUE_LABELS[q] ?? `Queue ${q}`}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="select"
+                  value={patch ?? ""}
+                  onChange={(e) => setParam("patch", e.target.value || null)}
+                >
+                  <option value="">All patches</option>
+                  {patches.map((p) => (
+                    <option key={p} value={p}>
+                      Patch {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <ChampionDetail
+              championId={selectedChampion}
+              championRows={data.championRows}
+              augmentRows={data.augmentRows}
+              itemRows={data.itemRows}
+              filters={filters}
+              championData={data.championData}
+              augmentData={data.augmentData}
+              onBack={() => setParam("champion", null)}
+            />
+          </>
+        )}
+
+        {data && selectedChampion == null && (
           <>
             {/* Filters + summary */}
             <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -158,15 +213,15 @@ export default function App() {
                 totalSlots={totalSlots}
                 augmentData={data.augmentData}
                 championData={data.championData}
+                onSelectChampion={(id) => setParam("champion", String(id))}
               />
             ) : (
               <ChampionsTable
                 rows={data.championRows}
-                augmentRows={data.augmentRows}
                 filters={filters}
                 totalSlots={totalSlots}
                 championData={data.championData}
-                augmentData={data.augmentData}
+                onSelectChampion={(id) => setParam("champion", String(id))}
               />
             )}
           </>

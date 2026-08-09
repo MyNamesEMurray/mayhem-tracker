@@ -101,3 +101,55 @@ export function getChampionName(data: ChampionData, id: number): string {
 export function getAugmentName(data: AugmentData, id: number): string {
   return data[id]?.name || `Augment ${id}`;
 }
+
+// ---- Items ----
+
+export interface ItemInfo {
+  name: string;
+  iconPath: string;
+}
+
+export type ItemData = Record<number, ItemInfo>;
+
+export function itemIconUrl(iconPath: string): string {
+  if (!iconPath) return "";
+  return (
+    "https://raw.communitydragon.org/latest/game/" +
+    iconPath.replace("/lol-game-data/assets/", "").toLowerCase()
+  );
+}
+
+// items.json is a few MB, so it's loaded only when a champion detail view
+// needs it, reduced to id → {name, icon}, and cached like the others.
+let itemPromise: Promise<ItemData> | null = null;
+
+export function loadItemData(): Promise<ItemData> {
+  if (itemPromise) return itemPromise;
+  itemPromise = (async () => {
+    const cached = readCache<ItemData>("item-data");
+    if (cached) return cached;
+
+    const data = await (
+      await fetch(
+        "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json",
+      )
+    ).json();
+
+    const out: ItemData = {};
+    if (Array.isArray(data)) {
+      for (const item of data) {
+        out[item.id] = { name: item.name || `Item ${item.id}`, iconPath: item.iconPath || "" };
+      }
+    }
+    writeCache("item-data", out);
+    return out;
+  })();
+  itemPromise.catch(() => {
+    itemPromise = null;
+  });
+  return itemPromise;
+}
+
+export function getItemName(data: ItemData, id: number): string {
+  return data[id]?.name || `Item ${id}`;
+}
