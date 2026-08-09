@@ -2,13 +2,22 @@ import { useMemo, useState } from "react";
 import type { AugmentStatRow, ChampionStatRow } from "../lib/api";
 import type { AugmentData, ChampionData } from "../lib/dragon";
 import { getChampionName } from "../lib/dragon";
-import { aggregateChampions, championAugmentBreakdown, type Filters } from "../lib/stats";
+import {
+  aggregateChampions,
+  assignTiers,
+  championAugmentBreakdown,
+  formatCompact,
+  kdaRatio,
+  score,
+  type Filters,
+} from "../lib/stats";
 import AugmentIcon from "./AugmentIcon";
 import ChampionIcon from "./ChampionIcon";
 import SearchInput from "./SearchInput";
+import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
 
-type SortKey = "games" | "pickRate" | "winRate" | "name";
+type SortKey = "score" | "games" | "winRate" | "kda" | "damage" | "name";
 type SortDir = "asc" | "desc";
 
 export default function ChampionsTable({
@@ -27,7 +36,7 @@ export default function ChampionsTable({
   augmentData: AugmentData;
 }) {
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("games");
+  const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -40,15 +49,28 @@ export default function ChampionsTable({
     }
   };
 
+  // Tiers are ranked across ALL champions under the current filter, before
+  // search narrows the list — searching "teemo" must not make Teemo S+
+  const { list, tiers } = useMemo(() => {
+    const list = aggregateChampions(rows, filters);
+    const tiers = assignTiers(
+      list,
+      (c) => score(c.wins, c.games),
+      (c) => c.champion_id,
+    );
+    return { list, tiers };
+  }, [rows, filters]);
+
   const sorted = useMemo(() => {
-    let list = aggregateChampions(rows, filters);
+    let filtered = list;
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter((c) =>
+      filtered = filtered.filter((c) =>
         getChampionName(championData, c.champion_id).toLowerCase().includes(q),
       );
     }
-    list.sort((a, b) => {
+    const result = [...filtered];
+    result.sort((a, b) => {
       if (sortKey === "name") {
         const cmp = getChampionName(championData, a.champion_id).localeCompare(
           getChampionName(championData, b.champion_id),
@@ -56,17 +78,26 @@ export default function ChampionsTable({
         return sortDir === "asc" ? cmp : -cmp;
       }
       let av: number, bv: number;
-      if (sortKey === "winRate") {
+      if (sortKey === "score") {
+        av = score(a.wins, a.games);
+        bv = score(b.wins, b.games);
+      } else if (sortKey === "winRate") {
         av = a.games > 0 ? a.wins / a.games : 0;
         bv = b.games > 0 ? b.wins / b.games : 0;
+      } else if (sortKey === "kda") {
+        av = kdaRatio(a.kills, a.deaths, a.assists);
+        bv = kdaRatio(b.kills, b.deaths, b.assists);
+      } else if (sortKey === "damage") {
+        av = a.games > 0 ? a.damage / a.games : 0;
+        bv = b.games > 0 ? b.damage / b.games : 0;
       } else {
         av = a.games;
         bv = b.games;
       }
       return sortDir === "desc" ? bv - av : av - bv;
     });
-    return list;
-  }, [rows, filters, search, sortKey, sortDir, championData]);
+    return result;
+  }, [list, search, sortKey, sortDir, championData]);
 
   const SortHeader = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
     <th
@@ -85,30 +116,44 @@ export default function ChampionsTable({
       </div>
 
       <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-x-auto">
-        <table className="w-full min-w-[560px]">
+        <table className="w-full min-w-[760px]">
           <thead className="bg-lol-dark/50">
             <tr>
               <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-10">
                 #
               </th>
               <SortHeader label="Champion" field="name" />
-              <SortHeader label="Games" field="games" />
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider whitespace-nowrap">
-                Pick Rate
+              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+                Tier
               </th>
+              <SortHeader label="Score" field="score" />
               <SortHeader label="Win Rate" field="winRate" className="w-36" />
+              <SortHeader label="Games" field="games" />
+              <SortHeader label="KDA" field="kda" />
+              <SortHeader label="DMG" field="damage" />
+              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
+                Pentas
+              </th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((c, i) => {
-              const pickRate = totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0";
               const expanded = expandedId === c.champion_id;
+              const games = c.games;
+              const avgK = games > 0 ? c.kills / games : 0;
+              const avgD = games > 0 ? c.deaths / games : 0;
+              const avgA = games > 0 ? c.assists / games : 0;
               return (
                 <ChampionRow
                   key={c.champion_id}
                   index={i}
                   champ={c}
-                  pickRate={pickRate}
+                  tier={tiers.get(c.champion_id)!}
+                  scoreValue={score(c.wins, c.games)}
+                  kda={kdaRatio(c.kills, c.deaths, c.assists)}
+                  avgLine={`${avgK.toFixed(1)} / ${avgD.toFixed(1)} / ${avgA.toFixed(1)}`}
+                  avgDamage={games > 0 ? c.damage / games : 0}
+                  pickRate={totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}
                   expanded={expanded}
                   onToggle={() => setExpandedId(expanded ? null : c.champion_id)}
                   augmentRows={augmentRows}
@@ -124,7 +169,10 @@ export default function ChampionsTable({
           <div className="py-8 text-center text-sm text-lol-text">No champions found</div>
         )}
       </div>
-      <p className="text-xs text-lol-text/70">* fewer than 20 games — treat with caution</p>
+      <p className="text-xs text-lol-text/70">
+        Score is the win rate adjusted toward 50% for small samples; tiers rank Score across the
+        current filter. * fewer than 20 games — treat with caution.
+      </p>
     </div>
   );
 }
@@ -132,6 +180,11 @@ export default function ChampionsTable({
 function ChampionRow({
   index,
   champ,
+  tier,
+  scoreValue,
+  kda,
+  avgLine,
+  avgDamage,
   pickRate,
   expanded,
   onToggle,
@@ -141,7 +194,12 @@ function ChampionRow({
   augmentData,
 }: {
   index: number;
-  champ: { champion_id: number; games: number; wins: number };
+  champ: { champion_id: number; games: number; wins: number; pentas: number };
+  tier: import("../lib/stats").Tier;
+  scoreValue: number;
+  kda: number;
+  avgLine: string;
+  avgDamage: number;
   pickRate: string;
   expanded: boolean;
   onToggle: () => void;
@@ -165,20 +223,39 @@ function ChampionRow({
         <td className="px-3 py-2">
           <div className="flex items-center gap-2">
             <ChampionIcon championId={champ.champion_id} size={28} />
-            <span className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors">
+            <span className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors whitespace-nowrap">
               {getChampionName(championData, champ.champion_id)}
             </span>
           </div>
         </td>
-        <td className="px-3 py-2 text-sm text-lol-text-bright">{champ.games}</td>
-        <td className="px-3 py-2 text-sm text-lol-text">{pickRate}%</td>
+        <td className="px-3 py-2">
+          <TierBadge tier={tier} games={champ.games} />
+        </td>
+        <td className="px-3 py-2 text-sm text-lol-text-bright font-medium">
+          {scoreValue.toFixed(1)}
+        </td>
         <td className="px-3 py-2 w-36">
           <WinRateBar wins={champ.wins} total={champ.games} />
+        </td>
+        <td className="px-3 py-2 text-sm text-lol-text" title={`${pickRate}% of participant slots`}>
+          {champ.games}
+        </td>
+        <td className="px-3 py-2 whitespace-nowrap">
+          <span className="text-sm text-lol-text-bright">{kda.toFixed(2)}</span>{" "}
+          <span className="text-xs text-lol-text">{avgLine}</span>
+        </td>
+        <td className="px-3 py-2 text-sm text-lol-text">{formatCompact(avgDamage)}</td>
+        <td className="px-3 py-2 text-sm">
+          {champ.pentas > 0 ? (
+            <span className="text-lol-gold">{champ.pentas}</span>
+          ) : (
+            <span className="text-lol-text/40">–</span>
+          )}
         </td>
       </tr>
       {expanded && (
         <tr className="border-t border-lol-border/30 bg-lol-dark/40">
-          <td colSpan={5} className="px-4 py-3">
+          <td colSpan={9} className="px-4 py-3">
             <p className="text-xs text-lol-text uppercase tracking-wider mb-2">
               Most-picked augments on {getChampionName(championData, champ.champion_id)}
             </p>

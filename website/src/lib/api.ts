@@ -11,6 +11,14 @@ export interface ChampionStatRow {
   champion_id: number;
   games: number;
   wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+  damage_taken: number;
+  heal: number;
+  gold: number;
+  pentas: number;
 }
 
 export interface AugmentStatRow {
@@ -20,6 +28,10 @@ export interface AugmentStatRow {
   champion_id: number;
   picks: number;
   wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
 }
 
 // PostgREST caps responses at 1000 rows, so page with Range headers until a
