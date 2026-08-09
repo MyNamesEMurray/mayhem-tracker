@@ -42,6 +42,7 @@ export default function ChampionDetail({
   augmentRows,
   itemRows,
   filters,
+  minGames = 0,
   championData,
   augmentData,
   onBack,
@@ -51,6 +52,7 @@ export default function ChampionDetail({
   augmentRows: AugmentStatRow[];
   itemRows: ItemStatRow[];
   filters: Filters;
+  minGames?: number;
   championData: ChampionData;
   augmentData: AugmentData;
   onBack: () => void;
@@ -82,6 +84,11 @@ export default function ChampionDetail({
     () => championAugmentBreakdown(augmentRows, filters, championId),
     [augmentRows, filters, championId],
   );
+
+  // The low-sample toggle narrows the full tables only; Core build and Best
+  // augments already rank with sample-size shrinkage and stay intact
+  const visibleItems = minGames > 0 ? items.filter((i) => i.picks >= minGames) : items;
+  const visibleAugments = minGames > 0 ? augments.filter((a) => a.picks >= minGames) : augments;
 
   const coreBuild = useMemo(
     () =>
@@ -249,7 +256,7 @@ export default function ChampionDetail({
               </tr>
             </thead>
             <tbody>
-              {items.map((i) => (
+              {visibleItems.map((i) => (
                 <tr key={i.item_id} className="border-t border-lol-border/50">
                   <td className="px-3 py-1.5">
                     <ItemIcon itemData={itemData} itemId={i.item_id} size={24} showName />
@@ -262,8 +269,12 @@ export default function ChampionDetail({
               ))}
             </tbody>
           </table>
-          {items.length === 0 && (
-            <div className="py-6 text-center text-sm text-lol-text">No item data</div>
+          {visibleItems.length === 0 && (
+            <div className="py-6 text-center text-sm text-lol-text">
+              {items.length > 0
+                ? `All ${items.length} items are below 20 games`
+                : "No item data"}
+            </div>
           )}
         </div>
 
@@ -284,7 +295,7 @@ export default function ChampionDetail({
               </tr>
             </thead>
             <tbody>
-              {augments.map((a) => (
+              {visibleAugments.map((a) => (
                 <tr key={a.augment_id} className="border-t border-lol-border/50">
                   <td className="px-3 py-1.5">
                     <AugmentIcon
@@ -303,8 +314,12 @@ export default function ChampionDetail({
               ))}
             </tbody>
           </table>
-          {augments.length === 0 && (
-            <div className="py-6 text-center text-sm text-lol-text">No augment data</div>
+          {visibleAugments.length === 0 && (
+            <div className="py-6 text-center text-sm text-lol-text">
+              {augments.length > 0
+                ? `All ${augments.length} augments are below 20 games`
+                : "No augment data"}
+            </div>
           )}
         </div>
       </div>

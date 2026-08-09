@@ -13,7 +13,14 @@ import {
   type AugmentData,
   type ChampionData,
 } from "./lib/dragon";
-import { aggregateChampions, availablePatches, availableQueues, QUEUE_LABELS, type Filters } from "./lib/stats";
+import {
+  aggregateChampions,
+  availablePatches,
+  availableQueues,
+  MIN_SAMPLE,
+  QUEUE_LABELS,
+  type Filters,
+} from "./lib/stats";
 import AdSlot from "./components/AdSlot";
 import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
@@ -134,21 +141,50 @@ export default function App() {
   );
   const totalGames = Math.round(totalSlots / 10);
 
+  // Hide entries below the low-sample threshold (the *-marked ones)
+  const confidentOnly = params.get("min") === "20";
+  const minGames = confidentOnly ? MIN_SAMPLE : 0;
+
   return (
     <div className="min-h-screen">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <header className="mb-6">
-          <div className="flex items-center gap-3">
-            <img src="/icon.png" alt="" width={40} height={40} className="rounded-lg" />
-            <div>
-              <h1 className="text-2xl font-bold text-lol-text-bright">MayhemStats</h1>
-              <p className="text-sm text-lol-text">
+      {/* Full-width header bar; frozen to the top while scrolling on desktop */}
+      <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/40">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/");
+            }}
+            className="flex items-center gap-3 min-w-0"
+          >
+            <img src="/icon.png" alt="" width={40} height={40} className="rounded-lg shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-lol-text-bright leading-tight">
+                MayhemStats
+              </h1>
+              <p className="text-xs sm:text-sm text-lol-text">
                 Community tier lists, builds &amp; win rates for ARAM Mayhem
               </p>
             </div>
-          </div>
-        </header>
+          </a>
+          <button
+            onClick={() => setParam("min", confidentOnly ? null : "20")}
+            aria-pressed={confidentOnly}
+            title="Hide results with fewer than 20 games (the ones marked with *)"
+            className={`ml-auto shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              confidentOnly
+                ? "bg-lol-gold/20 text-lol-gold border-lol-gold/50"
+                : "text-lol-text border-lol-border bg-lol-card hover:border-lol-border/80"
+            }`}
+          >
+            <span className="hidden sm:inline">{confidentOnly ? "✓ " : ""}20+ games only</span>
+            <span className="sm:hidden">{confidentOnly ? "✓ " : ""}20+</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {error && (
           <div className="bg-lol-card border border-lol-loss/40 rounded-xl p-5 text-sm">
@@ -204,6 +240,7 @@ export default function App() {
               augmentRows={data.augmentRows}
               itemRows={data.itemRows}
               filters={filters}
+              minGames={minGames}
               championData={data.championData}
               augmentData={data.augmentData}
               onBack={() => navigate("/")}
@@ -268,6 +305,7 @@ export default function App() {
                 rows={data.augmentRows}
                 filters={filters}
                 totalSlots={totalSlots}
+                minGames={minGames}
                 augmentData={data.augmentData}
                 championData={data.championData}
                 onSelectChampion={openChampion}
@@ -277,6 +315,7 @@ export default function App() {
                 rows={data.championRows}
                 filters={filters}
                 totalSlots={totalSlots}
+                minGames={minGames}
                 championData={data.championData}
                 onSelectChampion={openChampion}
               />

@@ -23,12 +23,14 @@ export default function ChampionsTable({
   rows,
   filters,
   totalSlots,
+  minGames = 0,
   championData,
   onSelectChampion,
 }: {
   rows: ChampionStatRow[];
   filters: Filters;
   totalSlots: number;
+  minGames?: number;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
 }) {
@@ -58,7 +60,9 @@ export default function ChampionsTable({
   }, [rows, filters]);
 
   const sorted = useMemo(() => {
-    let filtered = list;
+    // Tier assignment above still sees the full cohort — hiding low-sample
+    // rows must not promote what remains
+    let filtered = minGames > 0 ? list.filter((c) => c.games >= minGames) : list;
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter((c) =>
@@ -93,7 +97,7 @@ export default function ChampionsTable({
       return sortDir === "desc" ? bv - av : av - bv;
     });
     return result;
-  }, [list, search, sortKey, sortDir, championData]);
+  }, [list, search, sortKey, sortDir, championData, minGames]);
 
   const SortHeader = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
     <th
@@ -203,7 +207,11 @@ export default function ChampionsTable({
           </tbody>
         </table>
         {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">No champions found</div>
+          <div className="py-8 text-center text-sm text-lol-text">
+            {minGames > 0 && list.length > 0
+              ? "No champions with 20+ games under these filters — try a wider patch range or turn off the 20+ filter"
+              : "No champions found"}
+          </div>
         )}
       </div>
       <p className="text-xs text-lol-text/70">

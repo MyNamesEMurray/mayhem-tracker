@@ -27,6 +27,7 @@ export default function AugmentsTable({
   rows,
   filters,
   totalSlots,
+  minGames = 0,
   augmentData,
   championData,
   onSelectChampion,
@@ -34,6 +35,7 @@ export default function AugmentsTable({
   rows: AugmentStatRow[];
   filters: Filters;
   totalSlots: number;
+  minGames?: number;
   augmentData: AugmentData;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
@@ -79,7 +81,9 @@ export default function AugmentsTable({
   }, [rows, filters, augmentData]);
 
   const sorted = useMemo(() => {
-    let filtered = list;
+    // Tier assignment above still sees the full cohort — hiding low-sample
+    // rows must not promote what remains
+    let filtered = minGames > 0 ? list.filter((a) => a.picks >= minGames) : list;
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter((a) =>
@@ -117,7 +121,7 @@ export default function AugmentsTable({
       return sortDir === "desc" ? bv - av : av - bv;
     });
     return result;
-  }, [list, search, rarity, sortKey, sortDir, augmentData]);
+  }, [list, search, rarity, sortKey, sortDir, augmentData, minGames]);
 
   const SortHeader = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
     <th
@@ -181,7 +185,11 @@ export default function AugmentsTable({
           </tbody>
         </table>
         {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">No augments found</div>
+          <div className="py-8 text-center text-sm text-lol-text">
+            {minGames > 0 && list.length > 0
+              ? "No augments with 20+ picks under these filters — try a wider patch range or turn off the 20+ filter"
+              : "No augments found"}
+          </div>
         )}
       </div>
       <p className="text-xs text-lol-text/70">
