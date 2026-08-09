@@ -79,9 +79,10 @@ export default function OnboardingWizard() {
               Count your games in the community stats
             </h2>
             <p className="text-[13px] text-lol-text leading-relaxed">
-              Mayhem is a community project: the tier lists and builds on mayhemstats.com are
-              powered entirely by players who share their games. Contributions are anonymous —
-              champions, augments, items, and combat stats only.{" "}
+              Riot's API doesn't expose Mayhem data — augment picks never leave the client — so
+              the tier lists and builds on mayhemstats.com are powered entirely by players who
+              share their games. Contributions are anonymous — champions, augments, items, and
+              combat stats only.{" "}
               <b className="text-lol-text-bright">
                 Never summoner names, Riot IDs, or anything that identifies you.
               </b>{" "}
