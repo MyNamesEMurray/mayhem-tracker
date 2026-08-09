@@ -35,12 +35,11 @@ export default function App() {
   const [params, setParam] = useUrlParams();
 
   const tab: Tab = params.get("tab") === "champions" ? "champions" : "augments";
-  const patch = params.get("patch") ?? undefined;
+  const patchParam = params.get("patch");
   const queueParam = params.get("queue");
   const queue = queueParam ? Number(queueParam) : undefined;
   const championParam = params.get("champion");
   const selectedChampion = championParam ? Number(championParam) : null;
-  const filters: Filters = useMemo(() => ({ patch, queue }), [patch, queue]);
 
   useEffect(() => {
     let active = true;
@@ -65,6 +64,12 @@ export default function App() {
 
   const patches = useMemo(() => (data ? availablePatches(data.championRows) : []), [data]);
   const queues = useMemo(() => (data ? availableQueues(data.championRows) : []), [data]);
+
+  // The latest patch is the default view — that's the current meta. "All
+  // patches" is an explicit ?patch=all so it stays shareable.
+  const patch =
+    patchParam === "all" ? undefined : (patchParam ?? patches[0] ?? undefined);
+  const filters: Filters = useMemo(() => ({ patch, queue }), [patch, queue]);
   // Every participant slot under the current filter; the denominator for pick
   // rates and (÷10) the game count
   const totalSlots = useMemo(
@@ -124,10 +129,10 @@ export default function App() {
                 </select>
                 <select
                   className="select"
-                  value={patch ?? ""}
-                  onChange={(e) => setParam("patch", e.target.value || null)}
+                  value={patch ?? "all"}
+                  onChange={(e) => setParam("patch", e.target.value)}
                 >
-                  <option value="">All patches</option>
+                  <option value="all">All patches</option>
                   {patches.map((p) => (
                     <option key={p} value={p}>
                       Patch {p}
@@ -193,10 +198,10 @@ export default function App() {
                 </select>
                 <select
                   className="select"
-                  value={patch ?? ""}
-                  onChange={(e) => setParam("patch", e.target.value || null)}
+                  value={patch ?? "all"}
+                  onChange={(e) => setParam("patch", e.target.value)}
                 >
-                  <option value="">All patches</option>
+                  <option value="all">All patches</option>
                   {patches.map((p) => (
                     <option key={p} value={p}>
                       Patch {p}
