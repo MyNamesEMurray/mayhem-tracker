@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import { gzipSync, gunzipSync } from "zlib";
 import { SCORE_FORMULA_VERSION, computeMatchScores } from "../shared/opScore";
 import { AUGMENT_SLOTS, MAYHEM_QUEUE_IDS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
 import { getDataDir } from "./paths";
@@ -171,13 +172,13 @@ function createTables() {
     const games = db.prepare("SELECT game_id, game_duration, raw_json FROM games").all() as {
       game_id: number;
       game_duration: number;
-      raw_json: string | null;
+      raw_json: string | Buffer | null;
     }[];
     const updateStmt = db.prepare("UPDATE games SET is_remake = 1 WHERE game_id = ?");
     for (const game of games) {
       let raw: any = null;
       try {
-        raw = game.raw_json ? JSON.parse(game.raw_json) : null;
+        raw = unpackRaw(game.raw_json);
       } catch {
         /* ignore parse errors */
       }
@@ -204,7 +205,7 @@ function createTables() {
       `)
       .all() as {
       game_id: number;
-      raw_json: string;
+      raw_json: string | Buffer;
       champion_id: number;
       kills: number;
       deaths: number;
@@ -219,7 +220,7 @@ function createTables() {
 
     for (const game of gamesToBackfill) {
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const participants = raw.participants || [];
         const identities = raw.participantIdentities || [];
 
@@ -267,7 +268,7 @@ function createTables() {
     const updateStmt = db.prepare("UPDATE games SET game_version = ? WHERE game_id = ?");
     for (const game of games) {
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const patch = parsePatch(raw.gameVersion);
         if (patch) updateStmt.run(patch, game.game_id);
       } catch {
@@ -303,7 +304,7 @@ function createTables() {
     const tx = db.transaction(() => {
       for (const game of games) {
         try {
-          const raw = JSON.parse(game.raw_json);
+          const raw = unpackRaw(game.raw_json);
           if (typeof raw.platformId === "string" && raw.platformId) {
             updateStmt.run(raw.platformId.toUpperCase(), game.game_id);
           }
@@ -329,6 +330,29 @@ function createTables() {
   if (getSetting("augment_slots") !== String(AUGMENT_SLOTS)) {
     backfillAugmentSlots();
     setSetting("augment_slots", String(AUGMENT_SLOTS));
+  }
+
+  // One-time raw_json compression (~6x): gzip every plain-text row, then
+  // VACUUM to actually hand the space back to the filesystem.
+  if (getSetting("raw_json_compressed") !== "1") {
+    const ids = db
+      .prepare(
+        "SELECT game_id FROM games WHERE raw_json IS NOT NULL AND typeof(raw_json) = 'text'",
+      )
+      .all() as { game_id: number }[];
+    if (ids.length > 0) {
+      const get = db.prepare("SELECT raw_json FROM games WHERE game_id = ?");
+      const set = db.prepare("UPDATE games SET raw_json = ? WHERE game_id = ?");
+      const tx = db.transaction((batch: { game_id: number }[]) => {
+        for (const r of batch) {
+          const row = get.get(r.game_id) as { raw_json: string } | undefined;
+          if (row?.raw_json) set.run(packRaw(row.raw_json), r.game_id);
+        }
+      });
+      for (let i = 0; i < ids.length; i += 500) tx(ids.slice(i, i + 500));
+    }
+    setSetting("raw_json_compressed", "1");
+    if (ids.length > 0) db.exec("VACUUM");
   }
 
   // Populate the participants tables from raw_json for databases created
@@ -377,7 +401,7 @@ function backfillAugmentSlots() {
   const tx = db.transaction(() => {
     for (const game of games) {
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const participants = raw.participants || [];
         const identities = raw.participantIdentities || [];
         let participant = participants.find((p: any) => p.puuid === game.puuid);
@@ -412,6 +436,25 @@ const PARTICIPANTS_SCHEMA_VERSION = "2";
 
 // Bot/placeholder puuids come through as all zeroes
 const PLACEHOLDER_PUUID = /^0+(-0+)*$/;
+
+// raw_json compression: new rows store gzipped BLOBs (~6x smaller); rows
+// written before the migration are plain TEXT. unpackRaw reads every shape,
+// so no code path ever needs to know which vintage a row is.
+function packRaw(json: string): Buffer {
+  return gzipSync(json);
+}
+
+function unpackRaw(value: string | Buffer | null | undefined): any {
+  if (value == null) return null;
+  if (Buffer.isBuffer(value)) {
+    const text =
+      value.length > 2 && value[0] === 0x1f && value[1] === 0x8b
+        ? gunzipSync(value).toString("utf8")
+        : value.toString("utf8");
+    return JSON.parse(text);
+  }
+  return JSON.parse(value);
+}
 
 interface ParticipantRow {
   participantId: number;
@@ -653,7 +696,7 @@ function backfillParticipants() {
   const tx = db.transaction(() => {
     for (const game of games) {
       try {
-        replaceParticipantRows(game.game_id, extractParticipants(JSON.parse(game.raw_json)));
+        replaceParticipantRows(game.game_id, extractParticipants(unpackRaw(game.raw_json)));
       } catch {
         /* ignore parse errors */
       }
@@ -997,7 +1040,7 @@ export function getMatchDetail(gameId: number): any {
     game,
     stats,
     augments,
-    raw: game.raw_json ? JSON.parse(game.raw_json) : null,
+    raw: unpackRaw(game.raw_json),
   };
 }
 
@@ -1316,7 +1359,7 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
       isRemake,
       puuid,
       parsePatch(gameData.gameVersion),
-      JSON.stringify(gameData),
+      packRaw(JSON.stringify(gameData)),
       typeof gameData.platformId === "string" && gameData.platformId
         ? gameData.platformId.toUpperCase()
         : null,
@@ -2070,11 +2113,11 @@ export function exportAllData(): {
 } {
   const summoners = db.prepare("SELECT * FROM summoner").all();
   const rows = db.prepare("SELECT raw_json, puuid FROM games WHERE raw_json IS NOT NULL").all() as {
-    raw_json: string;
+    raw_json: string | Buffer;
     puuid: string;
   }[];
   const games = rows.map((r) => {
-    const game = JSON.parse(r.raw_json);
+    const game = unpackRaw(r.raw_json);
     game._ownerPuuid = r.puuid;
     return game;
   });
@@ -2125,7 +2168,7 @@ function rebuildDerivedStats(): number {
     game_id: number;
     puuid: string;
     game_duration: number;
-    raw_json: string;
+    raw_json: string | Buffer;
     champion_id: number | null;
     kills: number | null;
     deaths: number | null;
@@ -2151,7 +2194,7 @@ function rebuildDerivedStats(): number {
   const tx = db.transaction(() => {
     for (const row of rows) {
       try {
-        const raw = JSON.parse(row.raw_json);
+        const raw = unpackRaw(row.raw_json);
         const parts = extractParticipants(raw);
         // Owner puuid unknown (old imports): findOwnerRow falls back to
         // matching the stored stats row, same as the puuid backfill migration.
@@ -2219,7 +2262,7 @@ export function repairPuuids(): {
 
   for (const game of games) {
     try {
-      const raw = JSON.parse(game.raw_json);
+      const raw = unpackRaw(game.raw_json);
       const participants = raw.participants || [];
       const identities = raw.participantIdentities || [];
       const puuidsInGame = new Set<string>();
@@ -2276,7 +2319,7 @@ export function repairPuuids(): {
 
   for (const game of games) {
     try {
-      const raw = JSON.parse(game.raw_json);
+      const raw = unpackRaw(game.raw_json);
       const participants = raw.participants || [];
       const identities = raw.participantIdentities || [];
 
@@ -2310,7 +2353,7 @@ export function repairPuuids(): {
     for (const game of games) {
       if (!gameIds.has(game.game_id)) continue;
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const creation = raw.gameCreation || 0;
         if (creation <= latestCreation) continue;
 

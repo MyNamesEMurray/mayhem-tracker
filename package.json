@@ -50,13 +50,24 @@
       "node_modules/better-sqlite3/**/*"
     ],
     "win": {
-      "target": "portable",
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "assets/icon.png",
-      "artifactName": "MayhemTracker.exe",
       "signAndEditExecutable": false
     },
     "asarUnpack": [
       "node_modules/better-sqlite3/**/*"
-    ]
+    ],
+    "portable": {
+      "artifactName": "MayhemTracker.exe"
+    },
+    "nsis": {
+      "artifactName": "MayhemTracker-Setup.${ext}",
+      "oneClick": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

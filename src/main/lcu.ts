@@ -9,6 +9,7 @@ import {
 import { BrowserWindow } from "electron";
 import * as db from "./db";
 import { uploadPendingGames } from "./upload";
+import { getMainWindow } from "./window-ref";
 import { MAYHEM_QUEUE_IDS } from "../shared/queues";
 
 let credentials: Credentials | null = null;
@@ -16,10 +17,11 @@ let status: "disconnected" | "connecting" | "connected" = "disconnected";
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let connectTimer: ReturnType<typeof setInterval> | null = null;
 
-function setStatus(newStatus: typeof status, win?: BrowserWindow | null) {
+function setStatus(newStatus: typeof status, _win?: BrowserWindow | null) {
   status = newStatus;
-  if (win && !win.isDestroyed()) {
-    win.webContents.send("lcu:status-changed", status);
+  const w = getMainWindow();
+  if (w) {
+    w.webContents.send("lcu:status-changed", status);
   }
 }
 
@@ -138,9 +140,10 @@ let backfillCancelled = false;
 // run from Settings always ignores it.
 let autoBackfillPausedUntil = 0;
 
-function notifyGamesUpdated(win?: BrowserWindow | null) {
-  if (win && !win.isDestroyed()) {
-    win.webContents.send("lcu:games-updated");
+function notifyGamesUpdated(_win?: BrowserWindow | null) {
+  const w = getMainWindow();
+  if (w) {
+    w.webContents.send("lcu:games-updated");
   }
 }
 
@@ -290,8 +293,9 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
     const pending = ids.filter((id) => !known.has(id));
 
     const progress = (current: number, added: number) => {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send("lcu:backfill-progress", { current, total: pending.length, added });
+      const w = getMainWindow();
+      if (w) {
+        w.webContents.send("lcu:backfill-progress", { current, total: pending.length, added });
       }
     };
     progress(0, 0);
@@ -435,7 +439,7 @@ async function isInGame(): Promise<boolean> {
 // pvp.net service is only touched while an account still needs its first walk.
 // Deferred while a game is in progress so we aren't hammering the client
 // mid-match; a later poll picks it up.
-async function syncGames(win: BrowserWindow) {
+async function syncGames(win?: BrowserWindow | null) {
   let summoner: any = null;
   try {
     summoner = await fetchCurrentSummoner();
@@ -461,7 +465,8 @@ async function syncGames(win: BrowserWindow) {
   await fetchNewGames(win, summoner ?? undefined);
 }
 
-export function startPolling(win: BrowserWindow, firstAttempt = true) {
+export function startPolling(firstAttempt = true) {
+  const win = null;
   // Show "connecting" only on the very first attempt after app launch
   setStatus(firstAttempt ? "connecting" : "disconnected", win);
 
@@ -490,7 +495,7 @@ export function startPolling(win: BrowserWindow, firstAttempt = true) {
             clearInterval(pollTimer);
             pollTimer = null;
           }
-          startPolling(win, false);
+          startPolling(false);
         }
       }, 60000);
     } catch {

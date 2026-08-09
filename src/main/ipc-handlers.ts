@@ -1,4 +1,5 @@
 import { ipcMain, BrowserWindow, dialog, app, shell } from "electron";
+import { getMainWindow } from "./window-ref";
 import fs from "fs";
 import * as db from "./db";
 import * as lcu from "./lcu";
@@ -6,7 +7,14 @@ import * as dragon from "./dragon";
 import * as updater from "./updater";
 import * as upload from "./upload";
 
-export function registerIpcHandlers(win: BrowserWindow) {
+// Handlers are window-agnostic (registered once for the app's lifetime) —
+// the main window is destroyed while idling in the tray and rebuilt on
+// demand, so anything window-shaped resolves at call time.
+let registered = false;
+
+export function registerIpcHandlers() {
+  if (registered) return;
+  registered = true;
   ipcMain.handle(
     "db:match-history",
     (
@@ -82,7 +90,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
     // Return errors as data instead of throwing, so the renderer gets a clean
     // message rather than Electron's "Error invoking remote method" wrapper
     try {
-      return await lcu.fetchNewGames(win);
+      return await lcu.fetchNewGames(getMainWindow());
     } catch (err) {
       return { error: lcu.friendlyErrorMessage(err) };
     }
@@ -90,7 +98,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
 
   ipcMain.handle("lcu:backfill", async () => {
     try {
-      return await lcu.backfillHistory(win);
+      return await lcu.backfillHistory(getMainWindow());
     } catch (err) {
       return { error: lcu.friendlyErrorMessage(err) };
     }
@@ -173,25 +181,24 @@ export function registerIpcHandlers(win: BrowserWindow) {
   });
 
   // Window controls (custom title bar)
-  ipcMain.handle("window:minimize", () => {
-    win.minimize();
+  ipcMain.handle("window:minimize", (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize();
   });
 
-  ipcMain.handle("window:toggle-maximize", () => {
-    if (win.isMaximized()) win.unmaximize();
-    else win.maximize();
+  ipcMain.handle("window:toggle-maximize", (event) => {
+    const w = BrowserWindow.fromWebContents(event.sender);
+    if (!w) return;
+    if (w.isMaximized()) w.unmaximize();
+    else w.maximize();
   });
 
-  ipcMain.handle("window:close", () => {
-    win.close();
+  ipcMain.handle("window:close", (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close();
   });
 
-  ipcMain.handle("window:is-maximized", () => {
-    return win.isMaximized();
+  ipcMain.handle("window:is-maximized", (event) => {
+    return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false;
   });
-
-  win.on("maximize", () => win.webContents.send("window:maximized-changed", true));
-  win.on("unmaximize", () => win.webContents.send("window:maximized-changed", false));
 
   // Version & updates
   ipcMain.handle("app:version", () => {
@@ -203,7 +210,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
   });
 
   ipcMain.handle("app:download-update", (_event, assetUrl: string) => {
-    return updater.downloadAndInstall(win, assetUrl);
+    return updater.downloadAndInstall(getMainWindow(), assetUrl);
   });
 
   ipcMain.handle("app:open-url", (_event, url: string) => {
@@ -212,7 +219,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
 
   // Data export/import
   ipcMain.handle("data:export", async () => {
-    const result = await dialog.showSaveDialog(win, {
+    const result = await dialog.showSaveDialog(getMainWindow()!, {
       title: "Export Mayhem Data",
       defaultPath: `mayhem-backup-${new Date().toISOString().slice(0, 10)}.json`,
       filters: [{ name: "JSON", extensions: ["json"] }],
@@ -224,7 +231,7 @@ export function registerIpcHandlers(win: BrowserWindow) {
   });
 
   ipcMain.handle("data:import", async () => {
-    const result = await dialog.showOpenDialog(win, {
+    const result = await dialog.showOpenDialog(getMainWindow()!, {
       title: "Import Mayhem Data",
       filters: [{ name: "JSON", extensions: ["json"] }],
       properties: ["openFile"],
@@ -249,14 +256,20 @@ export function registerIpcHandlers(win: BrowserWindow) {
   });
 
   ipcMain.handle("upload:set-enabled", (_event, enabled: boolean) => {
-    return upload.setUploadEnabled(enabled, win);
+    return upload.setUploadEnabled(enabled, getMainWindow());
   });
 
   ipcMain.handle("upload:sync", () => {
-    return upload.uploadPendingGames(win);
+    return upload.uploadPendingGames(getMainWindow());
   });
 
   ipcMain.handle("upload:delete-contributions", () => {
-    return upload.deleteContributions(win);
+    return upload.deleteContributions(getMainWindow());
   });
+}
+
+// Per-window listeners — re-attached each time the window is rebuilt
+export function attachWindowEvents(win: BrowserWindow) {
+  win.on("maximize", () => win.webContents.send("window:maximized-changed", true));
+  win.on("unmaximize", () => win.webContents.send("window:maximized-changed", false));
 }

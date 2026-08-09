@@ -1,7 +1,8 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from "electron";
 import path from "path";
 import { initDatabase, getSetting, checkScoreBackfill } from "./db";
-import { registerIpcHandlers } from "./ipc-handlers";
+import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
+import { setMainWindow, getMainWindow } from "./window-ref";
 import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
 import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
@@ -17,11 +18,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
-    }
+    showWindow();
   });
 }
 
@@ -49,13 +46,19 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
 
-  // Close behavior: minimize to tray (default) or quit
+  setMainWindow(mainWindow);
+  attachWindowEvents(mainWindow);
+
+  // Close behavior: minimize to tray (default) or quit. In the tray the
+  // window is destroyed outright — the renderer's ~100MB+ goes back to the
+  // OS while the main process keeps recording games; the tray rebuilds the
+  // window on demand.
   mainWindow.on("close", (event) => {
     if (!isQuitting) {
       const minimizeToTray = getSetting("minimize_to_tray");
       if (minimizeToTray !== "false") {
         event.preventDefault();
-        mainWindow?.hide();
+        mainWindow?.destroy();
       } else {
         isQuitting = true;
         app.quit();
@@ -65,13 +68,18 @@ function createWindow() {
 
   mainWindow.on("closed", () => {
     mainWindow = null;
+    setMainWindow(null);
   });
+}
 
-  // Register IPC handlers
-  registerIpcHandlers(mainWindow);
-
-  // Start LCU polling
-  startPolling(mainWindow);
+function showWindow() {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
+    createWindow();
+  }
 }
 
 function createTray() {
@@ -81,10 +89,7 @@ function createTray() {
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Show Window",
-      click: () => {
-        mainWindow?.show();
-        mainWindow?.focus();
-      },
+      click: () => showWindow(),
     },
     { type: "separator" },
     {
@@ -98,10 +103,7 @@ function createTray() {
 
   tray.setToolTip("Mayhem Tracker");
   tray.setContextMenu(contextMenu);
-  tray.on("double-click", () => {
-    mainWindow?.show();
-    mainWindow?.focus();
-  });
+  tray.on("double-click", () => showWindow());
 }
 
 app.whenReady().then(async () => {
@@ -116,15 +118,19 @@ app.whenReady().then(async () => {
   // backfill uses the same class weights as insert-time scoring.
   waitForChampionData().then(() => {
     if (checkScoreBackfill()) {
-      mainWindow?.webContents.send("lcu:games-updated");
+      getMainWindow()?.webContents.send("lcu:games-updated");
     }
   });
 
+  registerIpcHandlers();
   createWindow();
   createTray();
 
+  // LCU polling runs for the app's lifetime, window or no window
+  startPolling();
+
   // Finish any community upload a previous session left pending
-  void uploadPendingGames(mainWindow);
+  void uploadPendingGames(getMainWindow());
 });
 
 app.on("before-quit", async (event) => {
@@ -135,7 +141,7 @@ app.on("before-quit", async (event) => {
     didFinalFetch = true;
     try {
       console.log("Fetching games before quit...");
-      await fetchNewGames(mainWindow);
+      await fetchNewGames(getMainWindow());
     } catch (err) {
       console.log("Final fetch on quit failed:", err);
     }
@@ -153,9 +159,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (mainWindow === null) {
-    createWindow();
-  } else {
-    mainWindow.show();
-  }
+  showWindow();
 });
