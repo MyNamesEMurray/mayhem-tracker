@@ -332,6 +332,18 @@ function createTables() {
     setSetting("augment_slots", String(AUGMENT_SLOTS));
   }
 
+  // Imported games never upload to community stats — only games fetched
+  // from the player's own client are trusted as authentic (data-poisoning
+  // hardening; imports remain fully usable locally).
+  {
+    const gcols = new Set(
+      (db.prepare("PRAGMA table_info(games)").all() as { name: string }[]).map((c) => c.name),
+    );
+    if (!gcols.has("upload_eligible")) {
+      db.exec("ALTER TABLE games ADD COLUMN upload_eligible INTEGER NOT NULL DEFAULT 1");
+    }
+  }
+
   // One-time raw_json compression (~6x): gzip every plain-text row, then
   // VACUUM to actually hand the space back to the filesystem.
   if (getSetting("raw_json_compressed") !== "1") {
@@ -1322,7 +1334,7 @@ export function markIgnoredGame(gameId: number): void {
   db.prepare("INSERT OR IGNORE INTO ignored_games (game_id) VALUES (?)").run(gameId);
 }
 
-export function insertGameFull(gameData: any, puuid: string): boolean {
+export function insertGameFull(gameData: any, puuid: string, uploadEligible = true): boolean {
   const rows = extractParticipants(gameData);
   const owner = findOwnerRow(rows, puuid);
   if (!owner) return false;
@@ -1331,8 +1343,8 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
   if (!isRemake) scoreParticipants(rows);
 
   const insertGameStmt = db.prepare(`
-    INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json, platform_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json, platform_id, upload_eligible)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertStatsStmt = db.prepare(`
@@ -1363,6 +1375,7 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
       typeof gameData.platformId === "string" && gameData.platformId
         ? gameData.platformId.toUpperCase()
         : null,
+      uploadEligible ? 1 : 0,
     );
 
     if (result.changes === 0) return false; // duplicate
@@ -1977,6 +1990,7 @@ const PENDING_UPLOAD_WHERE = `
   AND g.platform_id IS NOT NULL
   AND g.game_version IS NOT NULL
   AND g.queue_id IN (${MAYHEM_QUEUE_IDS.join(", ")})
+  AND g.upload_eligible = 1
   AND g.game_id NOT IN (SELECT game_id FROM uploaded_games)
   AND EXISTS (SELECT 1 FROM participants p WHERE p.game_id = g.game_id)`;
 
@@ -2133,7 +2147,7 @@ export function importData(data: any): number {
     for (const game of data.games ?? []) {
       const puuid = game._ownerPuuid || data.summoners?.[0]?.puuid;
       if (!puuid) continue;
-      if (insertGameFull(game, puuid)) imported++;
+      if (insertGameFull(game, puuid, false)) imported++;
     }
     return imported;
   }
@@ -2143,7 +2157,7 @@ export function importData(data: any): number {
   upsertSummoner(data.summoner);
   let imported = 0;
   for (const game of data.games ?? []) {
-    if (insertGameFull(game, puuid)) imported++;
+    if (insertGameFull(game, puuid, false)) imported++;
   }
   return imported;
 }
