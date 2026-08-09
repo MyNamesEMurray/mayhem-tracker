@@ -150,7 +150,7 @@ export default function ChampionDetail({
               {champ.pentas > 0 ? ` · ${champ.pentas} penta${champ.pentas > 1 ? "s" : ""}` : ""}
             </p>
           </div>
-          <div className="ml-auto w-44">
+          <div className="w-full sm:w-44 sm:ml-auto">
             <WinRateBar wins={champ.wins} total={champ.games} />
           </div>
         </div>
@@ -208,7 +208,7 @@ export default function ChampionDetail({
                         <span className="text-xs text-lol-text w-8 text-right shrink-0">
                           {a.picks}x
                         </span>
-                        <div className="w-24 shrink-0">
+                        <div className="w-28 shrink-0">
                           <WinRateBar wins={a.wins} total={a.picks} />
                         </div>
                       </div>
