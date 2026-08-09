@@ -111,6 +111,20 @@ const api = {
 
   repairPuuids: () => ipcRenderer.invoke("data:repair-puuids"),
 
+  getUploadStatus: () => ipcRenderer.invoke("upload:status"),
+
+  setUploadEnabled: (enabled: boolean) => ipcRenderer.invoke("upload:set-enabled", enabled),
+
+  syncUpload: () => ipcRenderer.invoke("upload:sync"),
+
+  deleteContributions: () => ipcRenderer.invoke("upload:delete-contributions"),
+
+  onUploadChanged: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on("upload:changed", handler);
+    return () => ipcRenderer.removeListener("upload:changed", handler);
+  },
+
   getVersion: () => ipcRenderer.invoke("app:version"),
 
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),

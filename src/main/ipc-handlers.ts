@@ -4,6 +4,7 @@ import * as db from "./db";
 import * as lcu from "./lcu";
 import * as dragon from "./dragon";
 import * as updater from "./updater";
+import * as upload from "./upload";
 
 export function registerIpcHandlers(win: BrowserWindow) {
   ipcMain.handle(
@@ -232,5 +233,22 @@ export function registerIpcHandlers(win: BrowserWindow) {
     // right after launch doesn't score with default weights.
     await dragon.waitForChampionData();
     return db.repairPuuids();
+  });
+
+  // Community stats upload
+  ipcMain.handle("upload:status", () => {
+    return upload.getUploadStatus();
+  });
+
+  ipcMain.handle("upload:set-enabled", (_event, enabled: boolean) => {
+    return upload.setUploadEnabled(enabled, win);
+  });
+
+  ipcMain.handle("upload:sync", () => {
+    return upload.uploadPendingGames(win);
+  });
+
+  ipcMain.handle("upload:delete-contributions", () => {
+    return upload.deleteContributions(win);
   });
 }

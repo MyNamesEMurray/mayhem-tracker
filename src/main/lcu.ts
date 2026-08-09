@@ -8,6 +8,7 @@ import {
 } from "league-connect";
 import { BrowserWindow } from "electron";
 import * as db from "./db";
+import { uploadPendingGames } from "./upload";
 import { MAYHEM_QUEUE_IDS } from "../shared/queues";
 
 let credentials: Credentials | null = null;
@@ -340,6 +341,7 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
     }
 
     if (added > announced) notifyGamesUpdated(win);
+    if (added > 0) void uploadPendingGames(win);
 
     const dashboard = db.getDashboardData();
     const result: BackfillResult = {
@@ -411,6 +413,7 @@ export async function fetchNewGames(
   if (newGamesCount > 0 && win && !win.isDestroyed()) {
     win.webContents.send("lcu:games-updated");
   }
+  if (newGamesCount > 0) void uploadPendingGames(win);
 
   const dashboard = db.getDashboardData();
   return { newGames: newGamesCount, totalGames: dashboard.totalGames };

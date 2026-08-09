@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import { SCORE_FORMULA_VERSION, computeMatchScores } from "../shared/opScore";
-import { AUGMENT_SLOTS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
+import { AUGMENT_SLOTS, MAYHEM_QUEUE_IDS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
 import { getDataDir } from "./paths";
 import { getChampionClasses, getChampionDataVersion } from "./dragon";
 
@@ -85,6 +85,14 @@ function createTables() {
     -- repeat backfills from re-fetching every ARAM/Arena game each time.
     CREATE TABLE IF NOT EXISTS ignored_games (
       game_id INTEGER PRIMARY KEY
+    );
+
+    -- Games already sent to (or permanently rejected by) the community stats
+    -- service, so the opt-in upload only ever sends each game once.
+    CREATE TABLE IF NOT EXISTS uploaded_games (
+      game_id     INTEGER PRIMARY KEY,
+      status      TEXT NOT NULL,
+      uploaded_at INTEGER NOT NULL
     );
 
     -- Every player in every stored game, one row each, extracted from raw_json
@@ -260,6 +268,37 @@ function createTables() {
     db.exec("ALTER TABLE games ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0");
   } catch {
     // Column already exists
+  }
+
+  // Migration: add platform_id (e.g. "NA1") and backfill from raw_json. Game
+  // ids are only unique per platform, so it's half of the community upload's
+  // dedup key.
+  try {
+    db.exec("ALTER TABLE games ADD COLUMN platform_id TEXT");
+  } catch {
+    // Column already exists
+  }
+  if (getSetting("platform_backfill") !== "1") {
+    const games = db
+      .prepare(
+        "SELECT game_id, raw_json FROM games WHERE platform_id IS NULL AND raw_json IS NOT NULL",
+      )
+      .all() as { game_id: number; raw_json: string }[];
+    const updateStmt = db.prepare("UPDATE games SET platform_id = ? WHERE game_id = ?");
+    const tx = db.transaction(() => {
+      for (const game of games) {
+        try {
+          const raw = JSON.parse(game.raw_json);
+          if (typeof raw.platformId === "string" && raw.platformId) {
+            updateStmt.run(raw.platformId.toUpperCase(), game.game_id);
+          }
+        } catch {
+          /* ignore parse errors */
+        }
+      }
+    });
+    tx();
+    setSetting("platform_backfill", "1");
   }
 
   // Migration: add performance score columns to player_stats
@@ -1162,8 +1201,8 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
   if (!isRemake) scoreParticipants(rows);
 
   const insertGameStmt = db.prepare(`
-    INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json, platform_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertStatsStmt = db.prepare(`
@@ -1191,6 +1230,9 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
       puuid,
       parsePatch(gameData.gameVersion),
       JSON.stringify(gameData),
+      typeof gameData.platformId === "string" && gameData.platformId
+        ? gameData.platformId.toUpperCase()
+        : null,
     );
 
     if (result.changes === 0) return false; // duplicate
@@ -1793,6 +1835,129 @@ export function getGlobalChampionDetail(
 
 export function getDatabase(): Database.Database {
   return db;
+}
+
+// ---- Community upload ----
+
+// A game is uploadable once it has a platform (dedup key), a patch, and
+// extracted participant rows, and hasn't been sent or rejected before.
+// Remakes carry no stat value and are skipped entirely.
+const PENDING_UPLOAD_WHERE = `
+  g.is_remake = 0
+  AND g.platform_id IS NOT NULL
+  AND g.game_version IS NOT NULL
+  AND g.queue_id IN (${MAYHEM_QUEUE_IDS.join(", ")})
+  AND g.game_id NOT IN (SELECT game_id FROM uploaded_games)
+  AND EXISTS (SELECT 1 FROM participants p WHERE p.game_id = g.game_id)`;
+
+export interface PendingUploadGame {
+  game_id: number;
+  platform_id: string;
+  queue_id: number;
+  game_version: string;
+  game_duration: number;
+  game_creation: number;
+  participants: {
+    participant_id: number;
+    team_id: number;
+    champion_id: number;
+    win: number;
+    kills: number;
+    deaths: number;
+    assists: number;
+    double_kills: number;
+    triple_kills: number;
+    quadra_kills: number;
+    penta_kills: number;
+    largest_killing_spree: number;
+    total_damage_dealt: number;
+    total_damage_taken: number;
+    gold_earned: number;
+    total_heal: number;
+    item0: number | null;
+    item1: number | null;
+    item2: number | null;
+    item3: number | null;
+    item4: number | null;
+    item5: number | null;
+    item6: number | null;
+    augments: { slot: number; augment_id: number }[];
+  }[];
+}
+
+// The next batch of games for the anonymous community upload. Identity
+// columns (puuid, names, icons) are deliberately never selected here — this
+// is the complete set of data that leaves the machine.
+export function getPendingUploadGames(limit: number): PendingUploadGame[] {
+  const games = db
+    .prepare(`
+    SELECT g.game_id, g.platform_id, g.queue_id, g.game_version, g.game_duration, g.game_creation
+    FROM games g
+    WHERE ${PENDING_UPLOAD_WHERE}
+    ORDER BY g.game_creation
+    LIMIT ?
+  `)
+    .all(limit) as any[];
+
+  const partStmt = db.prepare(`
+    SELECT participant_id, team_id, champion_id, win, kills, deaths, assists,
+           double_kills, triple_kills, quadra_kills, penta_kills, largest_killing_spree,
+           total_damage_dealt, total_damage_taken, gold_earned, total_heal,
+           item0, item1, item2, item3, item4, item5, item6
+    FROM participants WHERE game_id = ? ORDER BY participant_id
+  `);
+  const augStmt = db.prepare(`
+    SELECT participant_id, slot, augment_id
+    FROM participant_augments WHERE game_id = ? ORDER BY participant_id, slot
+  `);
+
+  return games.map((g) => {
+    const participants = partStmt.all(g.game_id) as any[];
+    const augments = augStmt.all(g.game_id) as {
+      participant_id: number;
+      slot: number;
+      augment_id: number;
+    }[];
+    const byParticipant = new Map<number, { slot: number; augment_id: number }[]>();
+    for (const a of augments) {
+      let list = byParticipant.get(a.participant_id);
+      if (!list) byParticipant.set(a.participant_id, (list = []));
+      list.push({ slot: a.slot, augment_id: a.augment_id });
+    }
+    for (const p of participants) {
+      p.augments = byParticipant.get(p.participant_id) ?? [];
+    }
+    return { ...g, participants };
+  });
+}
+
+export function markGameUploads(results: { gameId: number; status: "done" | "rejected" }[]): void {
+  const stmt = db.prepare(
+    "INSERT OR REPLACE INTO uploaded_games (game_id, status, uploaded_at) VALUES (?, ?, ?)",
+  );
+  const tx = db.transaction(() => {
+    for (const r of results) stmt.run(r.gameId, r.status, Date.now());
+  });
+  tx();
+}
+
+export function getUploadCounts(): { uploaded: number; rejected: number; pending: number } {
+  const uploaded = db
+    .prepare("SELECT COUNT(*) as c FROM uploaded_games WHERE status = 'done'")
+    .get() as { c: number };
+  const rejected = db
+    .prepare("SELECT COUNT(*) as c FROM uploaded_games WHERE status = 'rejected'")
+    .get() as { c: number };
+  const pending = db
+    .prepare(`SELECT COUNT(*) as c FROM games g WHERE ${PENDING_UPLOAD_WHERE}`)
+    .get() as { c: number };
+  return { uploaded: uploaded.c, rejected: rejected.c, pending: pending.c };
+}
+
+// Forget what was uploaded, so a future opt-in starts a fresh full upload —
+// used after the user deletes their remote contributions.
+export function clearUploadMarks(): void {
+  db.prepare("DELETE FROM uploaded_games").run();
 }
 
 // ---- Settings ----

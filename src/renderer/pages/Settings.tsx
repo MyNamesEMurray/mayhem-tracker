@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useBackfill } from "../hooks/useBackfill";
+import type { UploadStatus } from "../lib/types";
 
 export default function Settings() {
   // Shared so a backfill started automatically on first connect shows here too
@@ -11,6 +12,8 @@ export default function Settings() {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [repairStatus, setRepairStatus] = useState<string | null>(null);
   const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -34,6 +37,42 @@ export default function Settings() {
     setHideClassic(next);
     await window.api.setSetting("hide_classic_games", String(next));
   }, [hideClassic]);
+
+  useEffect(() => {
+    window.api.getUploadStatus().then(setUploadStatus);
+    const unsub = window.api.onUploadChanged(() => {
+      window.api.getUploadStatus().then(setUploadStatus);
+    });
+    return unsub;
+  }, []);
+
+  const handleUploadToggle = useCallback(async () => {
+    if (!uploadStatus) return;
+    const next = !uploadStatus.enabled;
+    setUploadStatus({ ...uploadStatus, enabled: next });
+    setDeleteStatus(null);
+    await window.api.setUploadEnabled(next);
+    setUploadStatus(await window.api.getUploadStatus());
+  }, [uploadStatus]);
+
+  const handleDeleteContributions = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Remove every game this install has contributed from the community database? " +
+          "Games also contributed by other players stay, without your contribution record.",
+      )
+    ) {
+      return;
+    }
+    setDeleteStatus("Deleting...");
+    const result = await window.api.deleteContributions();
+    if (result.success) {
+      setDeleteStatus(`Deleted ${result.removedMatches ?? 0} game(s) from the community database`);
+    } else {
+      setDeleteStatus(`Error: ${result.error}`);
+    }
+    setUploadStatus(await window.api.getUploadStatus());
+  }, []);
 
   const handleExport = useCallback(async () => {
     setExportStatus(null);
@@ -169,6 +208,68 @@ export default function Settings() {
               }`}
             />
           </button>
+        </div>
+      </div>
+
+      {/* Community Stats */}
+      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
+        <h2 className="text-sm font-semibold text-lol-text-bright mb-4">Community Stats</h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-lol-text-bright">Contribute anonymous match stats</p>
+              <p className="text-xs text-lol-text mt-0.5">
+                Share your games with the community database that powers global augment and champion
+                stats. Only champions, augments, items, and combat stat lines are sent — no summoner
+                names, Riot IDs, or anything that identifies a player.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={uploadStatus?.enabled ?? false}
+              onClick={handleUploadToggle}
+              disabled={!uploadStatus}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                uploadStatus?.enabled ? "bg-lol-gold" : "bg-lol-border"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                  uploadStatus?.enabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+          {uploadStatus && uploadStatus.enabled && (
+            <p className="text-xs text-lol-text">
+              {uploadStatus.running
+                ? `Uploading... ${uploadStatus.uploaded} game(s) contributed, ${uploadStatus.pending} to go`
+                : `${uploadStatus.uploaded} game(s) contributed${
+                    uploadStatus.pending > 0 ? `, ${uploadStatus.pending} pending` : ""
+                  }`}
+              {uploadStatus.lastError ? ` — ${uploadStatus.lastError}` : ""}
+            </p>
+          )}
+
+          <div className="border-t border-lol-border" />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-lol-text-bright">Delete my contributions</p>
+              <p className="text-xs text-lol-text mt-0.5">
+                Remove every game this install has shared from the community database and turn off
+                contributing.
+              </p>
+            </div>
+            <button
+              onClick={handleDeleteContributions}
+              className="px-4 py-1.5 rounded text-sm bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+          {deleteStatus && <p className="text-xs text-lol-text">{deleteStatus}</p>}
         </div>
       </div>
 

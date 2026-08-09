@@ -3,6 +3,7 @@ import path from "path";
 import { initDatabase, getSetting, checkScoreBackfill } from "./db";
 import { registerIpcHandlers } from "./ipc-handlers";
 import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
+import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
 
 let mainWindow: BrowserWindow | null = null;
@@ -121,6 +122,9 @@ app.whenReady().then(async () => {
 
   createWindow();
   createTray();
+
+  // Finish any community upload a previous session left pending
+  void uploadPendingGames(mainWindow);
 });
 
 app.on("before-quit", async (event) => {

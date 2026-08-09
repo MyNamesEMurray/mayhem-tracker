@@ -315,6 +315,15 @@ export interface UpdateInfo {
   error?: string;
 }
 
+export interface UploadStatus {
+  enabled: boolean;
+  running: boolean;
+  lastError: string | null;
+  uploaded: number;
+  rejected: number;
+  pending: number;
+}
+
 export interface ElectronAPI {
   getMatchHistory: (
     limit: number,
@@ -375,6 +384,15 @@ export interface ElectronAPI {
     discoveredAccounts: number;
     rebuiltGames: number;
   }>;
+  getUploadStatus: () => Promise<UploadStatus>;
+  setUploadEnabled: (enabled: boolean) => Promise<void>;
+  syncUpload: () => Promise<{ uploaded: number; rejected: number; error?: string }>;
+  deleteContributions: () => Promise<{
+    success: boolean;
+    removedMatches?: number;
+    error?: string;
+  }>;
+  onUploadChanged: (callback: () => void) => () => void;
   getVersion: () => Promise<string>;
   checkForUpdate: () => Promise<UpdateInfo>;
   downloadUpdate: (assetUrl: string) => Promise<{ success: boolean; error?: string }>;
