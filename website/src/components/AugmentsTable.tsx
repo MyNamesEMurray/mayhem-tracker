@@ -7,6 +7,7 @@ import {
   assignTiers,
   augmentChampionBreakdown,
   formatCompact,
+  kdaRampClass,
   kdaRatio,
   score,
   type Filters,
@@ -28,6 +29,8 @@ export default function AugmentsTable({
   filters,
   totalSlots,
   minGames = 0,
+  confidentOnly = false,
+  onToggleConfident,
   augmentData,
   championData,
   onSelectChampion,
@@ -36,6 +39,8 @@ export default function AugmentsTable({
   filters: Filters;
   totalSlots: number;
   minGames?: number;
+  confidentOnly?: boolean;
+  onToggleConfident?: () => void;
   augmentData: AugmentData;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
@@ -123,10 +128,22 @@ export default function AugmentsTable({
     return result;
   }, [list, search, rarity, sortKey, sortDir, augmentData, minGames]);
 
-  const SortHeader = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
+  const th =
+    "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
+  const SortHeader = ({
+    label,
+    field,
+    className,
+  }: {
+    label: string;
+    field: SortKey;
+    className?: string;
+  }) => (
     <th
       onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${className ?? ""}`}
+      className={`${th} cursor-pointer whitespace-nowrap ${
+        sortKey === field ? "text-lol-gold" : "text-lol-text hover:text-lol-gold"
+      } ${className ?? ""}`}
     >
       {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
     </th>
@@ -136,30 +153,38 @@ export default function AugmentsTable({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <RarityFilter value={rarity} onChange={setRarity} />
-        <span className="text-xs text-lol-text self-center ml-1">{sorted.length} augments</span>
+        {onToggleConfident && (
+          <button
+            onClick={onToggleConfident}
+            aria-pressed={confidentOnly}
+            title="Hide results with fewer than 20 picks (the ones marked with *)"
+            className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
+              confidentOnly
+                ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
+                : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
+            }`}
+          >
+            20+ games
+          </button>
+        )}
+        <span className="text-xs self-center ml-1">{sorted.length} augments</span>
         <div className="ml-auto">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search augment..." />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search augment..." width={190} />
         </div>
       </div>
 
       <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-x-auto">
-        {/* Fixed layout: explicit widths everywhere but the name column, so
-            filtering (e.g. the 20+ toggle) never reflows the columns */}
-        <table className="table-fixed w-full min-w-[960px]">
+        <table className="atbl table-fixed w-full min-w-[960px] border-collapse">
           <thead className="bg-lol-dark/50">
             <tr>
               <SortHeader label="Augment" field="name" />
-              <th className="w-16 px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                Tier
-              </th>
-              <SortHeader label="Score" field="score" className="w-24" />
-              <SortHeader label="Win Rate" field="winRate" className="w-36" />
-              <SortHeader label="Picks" field="picks" className="w-24" />
-              <th className="w-24 px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider whitespace-nowrap">
-                Pick Rate
-              </th>
-              <SortHeader label="KDA" field="kda" className="w-20" />
-              <SortHeader label="DMG" field="damage" className="w-20" />
+              <th className={`${th} text-lol-text w-16`}>Tier</th>
+              <SortHeader label="Score" field="score" className="w-[84px]" />
+              <SortHeader label="Win rate" field="winRate" className="w-[150px]" />
+              <SortHeader label="Picks" field="picks" className="w-[76px]" />
+              <th className={`${th} text-lol-text w-[84px] whitespace-nowrap`}>Pick rate</th>
+              <SortHeader label="KDA" field="kda" className="w-[76px]" />
+              <SortHeader label="Damage" field="damage" className="w-[84px]" />
             </tr>
           </thead>
           <tbody>
@@ -232,7 +257,7 @@ function AugmentRow({
   onSelectChampion: (championId: number) => void;
 }) {
   const breakdown = useMemo(
-    () => (expanded ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 8) : []),
+    () => (expanded ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 9) : []),
     [expanded, rows, filters, aug.augment_id],
   );
 
@@ -242,32 +267,35 @@ function AugmentRow({
         onClick={onToggle}
         className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
       >
-        <td className="px-3 py-2">
-          <AugmentIcon augmentData={augmentData} augmentId={aug.augment_id} showName />
+        <td className="px-3 py-[9px]">
+          <AugmentIcon augmentData={augmentData} augmentId={aug.augment_id} size={26} showName />
         </td>
-        <td className="px-3 py-2">
+        <td className="px-3 py-[9px]">
           <TierBadge tier={tier} games={aug.picks} />
         </td>
-        <td className="px-3 py-2 text-sm text-lol-text-bright font-medium">
+        <td className="px-3 py-[9px] text-[13px] font-semibold text-lol-text-bright">
           {scoreValue.toFixed(1)}
         </td>
-        <td className="px-3 py-2 w-36">
+        <td className="px-3 py-[9px]">
           <WinRateBar wins={aug.wins} total={aug.picks} />
         </td>
-        <td className="px-3 py-2 text-sm text-lol-text-bright">{aug.picks}</td>
-        <td className="px-3 py-2 text-sm text-lol-text">{pickRate}%</td>
-        <td className="px-3 py-2 text-sm text-lol-text-bright">{kda.toFixed(2)}</td>
-        <td className="px-3 py-2 text-sm text-lol-text">{formatCompact(avgDamage)}</td>
+        <td className="px-3 py-[9px] text-[13px] text-lol-text-bright">{aug.picks}</td>
+        <td className="px-3 py-[9px] text-[13px] text-lol-text">{pickRate}%</td>
+        <td className={`px-3 py-[9px] text-[13px] font-semibold ${kdaRampClass(kda)}`}>
+          {kda.toFixed(2)}
+        </td>
+        <td className="px-3 py-[9px] text-[13px] text-lol-text">{formatCompact(avgDamage)}</td>
       </tr>
       {expanded && (
-        <tr className="border-t border-lol-border/30 bg-lol-dark/40">
+        <tr className="xrow border-t border-lol-border/30 bg-lol-dark/40">
           <td colSpan={8} className="px-4 py-3">
-            <p className="text-xs text-lol-text uppercase tracking-wider mb-2">
-              Best with ({getAugmentName(augmentData, aug.augment_id)})
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-1.5">
+            <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">Best with</p>
+            <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
               {breakdown.map((c) => (
-                <div key={c.champion_id} className="flex items-center gap-2">
+                <div
+                  key={c.champion_id}
+                  className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
+                >
                   <a
                     href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
                     onClick={(e) => {
@@ -278,12 +306,12 @@ function AugmentRow({
                     className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
                   >
                     <ChampionIcon championId={c.champion_id} size={22} />
-                    <span className="text-xs text-lol-text-bright w-28 truncate text-left hover:text-lol-gold">
+                    <span className="text-xs text-lol-text-bright w-[100px] truncate text-left hover:text-lol-gold">
                       {getChampionName(championData, c.champion_id)}
                     </span>
                   </a>
-                  <span className="text-xs text-lol-text w-14">{c.picks} picks</span>
-                  <div className="flex-1 max-w-44">
+                  <span className="text-xs text-lol-text w-14 shrink-0">{c.picks} picks</span>
+                  <div className="flex-1 min-w-16">
                     <WinRateBar wins={c.wins} total={c.picks} />
                   </div>
                 </div>

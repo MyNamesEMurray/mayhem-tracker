@@ -2,10 +2,12 @@ export default function SearchInput({
   value,
   onChange,
   placeholder,
+  width = 190,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
+  width?: number;
 }) {
   return (
     <div className="relative">
@@ -14,7 +16,8 @@ export default function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="input w-44 sm:w-48 pr-7"
+        className="input pr-7"
+        style={{ width }}
       />
       {value && (
         <button

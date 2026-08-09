@@ -6,6 +6,7 @@ import {
   aggregateChampions,
   assignTiers,
   formatCompact,
+  kdaRampClass,
   kdaRatio,
   score,
   type Filters,
@@ -24,6 +25,8 @@ export default function ChampionsTable({
   filters,
   totalSlots,
   minGames = 0,
+  confidentOnly = false,
+  onToggleConfident,
   championData,
   onSelectChampion,
 }: {
@@ -31,6 +34,8 @@ export default function ChampionsTable({
   filters: Filters;
   totalSlots: number;
   minGames?: number;
+  confidentOnly?: boolean;
+  onToggleConfident?: () => void;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
 }) {
@@ -99,10 +104,22 @@ export default function ChampionsTable({
     return result;
   }, [list, search, sortKey, sortDir, championData, minGames]);
 
-  const SortHeader = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
+  const th =
+    "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
+  const SortHeader = ({
+    label,
+    field,
+    className,
+  }: {
+    label: string;
+    field: SortKey;
+    className?: string;
+  }) => (
     <th
       onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${className ?? ""}`}
+      className={`${th} cursor-pointer whitespace-nowrap ${
+        sortKey === field ? "text-lol-gold" : "text-lol-text hover:text-lol-gold"
+      } ${className ?? ""}`}
     >
       {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
     </th>
@@ -110,34 +127,40 @@ export default function ChampionsTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-lol-text">
-          {sorted.length} champions — click one for its ideal build
-        </span>
-        <SearchInput value={search} onChange={setSearch} placeholder="Search champion..." />
+      <div className="flex flex-wrap items-center gap-2">
+        {onToggleConfident && (
+          <button
+            onClick={onToggleConfident}
+            aria-pressed={confidentOnly}
+            title="Hide results with fewer than 20 games (the ones marked with *)"
+            className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
+              confidentOnly
+                ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
+                : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
+            }`}
+          >
+            20+ games
+          </button>
+        )}
+        <span className="text-xs">{sorted.length} champions — click one for its ideal build</span>
+        <div className="ml-auto">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search champion..." width={190} />
+        </div>
       </div>
 
       <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-x-auto">
-        {/* Fixed layout: explicit widths everywhere but the name column, so
-            filtering (e.g. the 20+ toggle) never reflows the columns */}
-        <table className="table-fixed w-full min-w-[1000px]">
+        <table className="ctbl table-fixed w-full min-w-[1000px] border-collapse">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-10">
-                #
-              </th>
+              <th className={`${th} text-lol-text w-10`}>#</th>
               <SortHeader label="Champion" field="name" />
-              <th className="w-16 px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                Tier
-              </th>
-              <SortHeader label="Score" field="score" className="w-24" />
-              <SortHeader label="Win Rate" field="winRate" className="w-36" />
-              <SortHeader label="Games" field="games" className="w-24" />
-              <SortHeader label="KDA" field="kda" className="w-44" />
-              <SortHeader label="DMG" field="damage" className="w-20" />
-              <th className="w-20 px-3 py-2 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                Pentas
-              </th>
+              <th className={`${th} text-lol-text w-16`}>Tier</th>
+              <SortHeader label="Score" field="score" className="w-[84px]" />
+              <SortHeader label="Win rate" field="winRate" className="w-[150px]" />
+              <SortHeader label="Games" field="games" className="w-[76px]" />
+              <th className={`${th} text-lol-text w-[84px] whitespace-nowrap`}>Pick rate</th>
+              <SortHeader label="KDA" field="kda" className="w-[170px]" />
+              <SortHeader label="Damage" field="damage" className="w-[84px]" />
             </tr>
           </thead>
           <tbody>
@@ -146,6 +169,7 @@ export default function ChampionsTable({
               const avgK = games > 0 ? c.kills / games : 0;
               const avgD = games > 0 ? c.deaths / games : 0;
               const avgA = games > 0 ? c.assists / games : 0;
+              const ratio = kdaRatio(c.kills, c.deaths, c.assists);
               const pickRate = totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0";
               return (
                 <tr
@@ -153,9 +177,9 @@ export default function ChampionsTable({
                   onClick={() => onSelectChampion(c.champion_id)}
                   className="group border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
                 >
-                  <td className="px-3 py-2 text-xs text-lol-text">{i + 1}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
+                  <td className="px-3 py-[9px] text-xs text-lol-text">{i + 1}</td>
+                  <td className="px-3 py-[9px]">
+                    <div className="flex items-center gap-2.5">
                       <ChampionIcon championId={c.champion_id} size={28} />
                       <a
                         href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
@@ -164,44 +188,38 @@ export default function ChampionsTable({
                           e.stopPropagation();
                           onSelectChampion(c.champion_id);
                         }}
-                        className="text-sm text-lol-text-bright group-hover:text-lol-gold transition-colors whitespace-nowrap"
+                        className="text-[13px] text-lol-text-bright group-hover:text-lol-gold transition-colors whitespace-nowrap"
                       >
                         {getChampionName(championData, c.champion_id)}
                       </a>
                     </div>
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-[9px]">
                     <TierBadge tier={tiers.get(c.champion_id)!} games={c.games} />
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text-bright font-medium">
+                  <td className="px-3 py-[9px] text-[13px] font-semibold text-lol-text-bright">
                     {score(c.wins, c.games).toFixed(1)}
                   </td>
-                  <td className="px-3 py-2 w-36">
+                  <td className="px-3 py-[9px]">
                     <WinRateBar wins={c.wins} total={c.games} />
                   </td>
                   <td
-                    className="px-3 py-2 text-sm text-lol-text"
+                    className="px-3 py-[9px] text-[13px] text-lol-text-bright"
                     title={`${pickRate}% of participant slots`}
                   >
                     {c.games}
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className="text-sm text-lol-text-bright">
-                      {kdaRatio(c.kills, c.deaths, c.assists).toFixed(2)}
+                  <td className="px-3 py-[9px] text-[13px] text-lol-text">{pickRate}%</td>
+                  <td className="px-3 py-[9px] whitespace-nowrap">
+                    <span className={`text-[13px] font-semibold ${kdaRampClass(ratio)}`}>
+                      {ratio.toFixed(2)}
                     </span>{" "}
-                    <span className="text-xs text-lol-text">
+                    <span className="text-[11px] text-lol-text">
                       {avgK.toFixed(1)} / {avgD.toFixed(1)} / {avgA.toFixed(1)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-sm text-lol-text">
+                  <td className="px-3 py-[9px] text-[13px] text-lol-text">
                     {formatCompact(games > 0 ? c.damage / games : 0)}
-                  </td>
-                  <td className="px-3 py-2 text-sm">
-                    {c.pentas > 0 ? (
-                      <span className="text-lol-gold">{c.pentas}</span>
-                    ) : (
-                      <span className="text-lol-text/40">–</span>
-                    )}
                   </td>
                 </tr>
               );

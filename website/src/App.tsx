@@ -48,7 +48,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const { path, params, setParam, navigate, replaceUrl } = useUrlState();
 
-  const tab: Tab = params.get("tab") === "champions" ? "champions" : "augments";
+  // Champions tier list is the home tab; ?tab=champions from legacy links
+  // simply falls through to the default
+  const tab: Tab = params.get("tab") === "augments" ? "augments" : "champions";
   const patchParam = params.get("patch");
   const queueParam = params.get("queue");
   const queue = queueParam ? Number(queueParam) : undefined;
@@ -144,47 +146,104 @@ export default function App() {
   // Hide entries below the low-sample threshold (the *-marked ones)
   const confidentOnly = params.get("min") === "20";
   const minGames = confidentOnly ? MIN_SAMPLE : 0;
+  const toggleConfident = useCallback(
+    () => setParam("min", confidentOnly ? null : "20"),
+    [setParam, confidentOnly],
+  );
+
+  // Human label for the current patch selection, shown in page titles
+  const patchLabel = !patchParam
+    ? patches.length
+      ? `Patch ${patches[0]}`
+      : ""
+    : patchParam === "all"
+      ? "All patches"
+      : patchParam.includes("-")
+        ? `Patches ${patchParam.replace("-", "–")}`
+        : `Patch ${patchParam}`;
+
+  const navTab = (label: string, active: boolean, onClick: () => void) => (
+    <button
+      onClick={onClick}
+      className={`flex items-center px-3.5 text-[13px] font-semibold transition-colors ${
+        active
+          ? "text-lol-gold-light shadow-[inset_0_-2px_0_#c89b3c]"
+          : "text-lol-text hover:text-lol-gold-light"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="min-h-screen">
-      {/* Full-width header bar; frozen to the top while scrolling on desktop */}
-      <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/40">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+      {/* Unified chrome: full-width bar, frozen to the top on desktop */}
+      <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/60">
+        <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 flex items-center gap-6 flex-wrap min-[841px]:flex-nowrap">
           <a
             href="/"
             onClick={(e) => {
               e.preventDefault();
               navigate("/");
             }}
-            className="flex items-center gap-3 min-w-0"
+            className="flex items-center gap-2 py-3 font-extrabold text-[17px] tracking-[.03em] text-lol-gold-light shrink-0"
           >
-            <img src="/icon.png" alt="" width={40} height={40} className="rounded-lg shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-lol-text-bright leading-tight">
-                MayhemStats
-              </h1>
-              <p className="text-xs sm:text-sm text-lol-text">
-                Community tier lists, builds &amp; win rates for ARAM Mayhem
-              </p>
-            </div>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#c89b3c"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+              <line x1="13" x2="19" y1="19" y2="13" />
+              <line x1="16" x2="20" y1="16" y2="20" />
+              <line x1="19" x2="21" y1="21" y2="19" />
+              <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 10" />
+              <line x1="5" x2="9" y1="14" y2="18" />
+              <line x1="7" x2="4" y1="17" y2="20" />
+              <line x1="3" x2="5" y1="19" y2="21" />
+            </svg>
+            <span>
+              MAYHEM<span className="text-lol-gold">STATS</span>
+            </span>
           </a>
-          <button
-            onClick={() => setParam("min", confidentOnly ? null : "20")}
-            aria-pressed={confidentOnly}
-            title="Hide results with fewer than 20 games (the ones marked with *)"
-            className={`ml-auto shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              confidentOnly
-                ? "bg-lol-gold/20 text-lol-gold border-lol-gold/50"
-                : "text-lol-text border-lol-border bg-lol-card hover:border-lol-border/80"
-            }`}
-          >
-            <span className="hidden sm:inline">{confidentOnly ? "✓ " : ""}20+ games only</span>
-            <span className="sm:hidden">{confidentOnly ? "✓ " : ""}20+</span>
-          </button>
+          <nav className="flex gap-1 self-stretch">
+            {navTab("Champions", tab === "champions" || onChampionPage, () => {
+              if (onChampionPage) navigate("/");
+              setParam("tab", null);
+            })}
+            {navTab("Augments", tab === "augments" && !onChampionPage, () => {
+              if (onChampionPage) navigate("/");
+              setParam("tab", "augments");
+            })}
+          </nav>
+          <div className="ml-auto flex items-center gap-2 py-2 max-[840px]:ml-0 max-[840px]:w-full max-[840px]:pt-0 max-[840px]:pb-2.5">
+            <select
+              className="select"
+              value={queue ?? ""}
+              onChange={(e) => setParam("queue", e.target.value || null)}
+            >
+              <option value="">All queues</option>
+              {queues.map((q) => (
+                <option key={q} value={q}>
+                  {QUEUE_LABELS[q] ?? `Queue ${q}`}
+                </option>
+              ))}
+            </select>
+            <PatchRangeSelect
+              patches={patches}
+              param={patchParam}
+              onChange={(v) => setParam("patch", v)}
+            />
+          </div>
         </div>
       </header>
 
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 pt-7 pb-14">
 
         {error && (
           <div className="bg-lol-card border border-lol-loss/40 rounded-xl p-5 text-sm">
@@ -213,27 +272,6 @@ export default function App() {
 
         {data && onChampionPage && selectedChampion != null && (
           <>
-            <div className="flex justify-end mb-4">
-              <div className="flex items-center gap-2">
-                <select
-                  className="select"
-                  value={queue ?? ""}
-                  onChange={(e) => setParam("queue", e.target.value || null)}
-                >
-                  <option value="">All queues</option>
-                  {queues.map((q) => (
-                    <option key={q} value={q}>
-                      {QUEUE_LABELS[q] ?? `Queue ${q}`}
-                    </option>
-                  ))}
-                </select>
-                <PatchRangeSelect
-                  patches={patches}
-                  param={patchParam}
-                  onChange={(v) => setParam("patch", v)}
-                />
-              </div>
-            </div>
             <ChampionDetail
               championId={selectedChampion}
               championRows={data.championRows}
@@ -250,53 +288,20 @@ export default function App() {
 
         {data && !onChampionPage && (
           <>
-            {/* Filters + summary */}
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setParam("tab", null)}
-                  className={`px-4 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                    tab === "augments"
-                      ? "bg-lol-gold/20 text-lol-gold border-lol-gold/50"
-                      : "text-lol-text border-lol-border bg-lol-card hover:border-lol-border/80"
-                  }`}
-                >
-                  Augments
-                </button>
-                <button
-                  onClick={() => setParam("tab", "champions")}
-                  className={`px-4 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                    tab === "champions"
-                      ? "bg-lol-gold/20 text-lol-gold border-lol-gold/50"
-                      : "text-lol-text border-lol-border bg-lol-card hover:border-lol-border/80"
-                  }`}
-                >
-                  Champions
-                </button>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <span className="text-xs text-lol-text mr-1">
-                  {totalGames.toLocaleString()} community games
-                </span>
-                <select
-                  className="select"
-                  value={queue ?? ""}
-                  onChange={(e) => setParam("queue", e.target.value || null)}
-                >
-                  <option value="">All queues</option>
-                  {queues.map((q) => (
-                    <option key={q} value={q}>
-                      {QUEUE_LABELS[q] ?? `Queue ${q}`}
-                    </option>
-                  ))}
-                </select>
-                <PatchRangeSelect
-                  patches={patches}
-                  param={patchParam}
-                  onChange={(v) => setParam("patch", v)}
-                />
-              </div>
+            {/* Page title */}
+            <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
+              <h1 className="text-[22px] font-extrabold text-lol-gold-light m-0">
+                {tab === "champions" ? "ARAM Mayhem tier list" : "Augment tier list"}
+              </h1>
+              <span className="text-xs">
+                {patchLabel} · {totalGames.toLocaleString()} games
+              </span>
             </div>
+            <p className="text-[13px] mb-4">
+              {tab === "champions"
+                ? "Every champion ranked by score — win rate shrunk toward 50% for small samples."
+                : "Augments ranked within their rarity — click a row for the champions it carries hardest."}
+            </p>
 
             <AdSlot slot={AD_SLOTS.top} />
 
@@ -306,6 +311,8 @@ export default function App() {
                 filters={filters}
                 totalSlots={totalSlots}
                 minGames={minGames}
+                confidentOnly={confidentOnly}
+                onToggleConfident={toggleConfident}
                 augmentData={data.augmentData}
                 championData={data.championData}
                 onSelectChampion={openChampion}
@@ -316,6 +323,8 @@ export default function App() {
                 filters={filters}
                 totalSlots={totalSlots}
                 minGames={minGames}
+                confidentOnly={confidentOnly}
+                onToggleConfident={toggleConfident}
                 championData={data.championData}
                 onSelectChampion={openChampion}
               />

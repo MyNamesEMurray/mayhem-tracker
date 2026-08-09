@@ -204,6 +204,15 @@ export function score(wins: number, games: number): number {
 
 export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
 
+// The unified performance ramp for KDA ratios: amber ≥5, sky ≥4, emerald ≥3,
+// slate below — shared visual language with the desktop app's score colors.
+export function kdaRampClass(ratio: number): string {
+  if (ratio >= 5) return "text-amber-400";
+  if (ratio >= 4) return "text-sky-400";
+  if (ratio >= 3) return "text-emerald-400";
+  return "text-lol-text";
+}
+
 // Rank-percentile cutoffs, top to bottom
 const TIER_CUTOFFS: [Tier, number][] = [
   ["S+", 0.05],

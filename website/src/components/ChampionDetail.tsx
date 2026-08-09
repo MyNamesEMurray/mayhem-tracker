@@ -9,16 +9,12 @@ import {
   type ChampionData,
   type ItemData,
 } from "../lib/dragon";
-
-function getItemTitle(itemData: ItemData, id: number): string {
-  return getItemName(itemData, id);
-}
 import {
   aggregateChampions,
   assignTiers,
   championAugmentBreakdown,
   championItemBreakdown,
-  formatCompact,
+  kdaRampClass,
   kdaRatio,
   rankForBuild,
   score,
@@ -27,6 +23,7 @@ import {
 import AugmentIcon from "./AugmentIcon";
 import ChampionIcon from "./ChampionIcon";
 import ItemIcon from "./ItemIcon";
+import RarityFilter, { type Rarity } from "./RarityFilter";
 import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
 
@@ -35,6 +32,9 @@ const RARITIES: { key: string; label: string; color: string }[] = [
   { key: "kGold", label: "Gold", color: "text-yellow-400" },
   { key: "kSilver", label: "Silver", color: "text-gray-300" },
 ];
+
+const PANEL = "bg-lol-card rounded-xl border border-lol-border/60";
+const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text";
 
 export default function ChampionDetail({
   championId,
@@ -58,6 +58,9 @@ export default function ChampionDetail({
   onBack: () => void;
 }) {
   const [itemData, setItemData] = useState<ItemData>({});
+  const [itemSearch, setItemSearch] = useState("");
+  const [augSearch, setAugSearch] = useState("");
+  const [augRarity, setAugRarity] = useState<Rarity>("all");
   useEffect(() => {
     loadItemData().then(setItemData);
   }, []);
@@ -85,10 +88,30 @@ export default function ChampionDetail({
     [augmentRows, filters, championId],
   );
 
-  // The low-sample toggle narrows the full tables only; Core build and Best
-  // augments already rank with sample-size shrinkage and stay intact
-  const visibleItems = minGames > 0 ? items.filter((i) => i.picks >= minGames) : items;
-  const visibleAugments = minGames > 0 ? augments.filter((a) => a.picks >= minGames) : augments;
+  // The low-sample toggle and the panel search/rarity filters narrow the full
+  // tables only; Core build and Best augments already rank with shrinkage
+  const visibleItems = useMemo(() => {
+    let list = minGames > 0 ? items.filter((i) => i.picks >= minGames) : items;
+    if (itemSearch) {
+      const q = itemSearch.toLowerCase();
+      list = list.filter((i) => getItemName(itemData, i.item_id).toLowerCase().includes(q));
+    }
+    return list;
+  }, [items, minGames, itemSearch, itemData]);
+
+  const visibleAugments = useMemo(() => {
+    let list = minGames > 0 ? augments.filter((a) => a.picks >= minGames) : augments;
+    if (augRarity !== "all") {
+      list = list.filter((a) => augmentData[a.augment_id]?.rarity === augRarity);
+    }
+    if (augSearch) {
+      const q = augSearch.toLowerCase();
+      list = list.filter((a) =>
+        getAugmentName(augmentData, a.augment_id).toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [augments, minGames, augRarity, augSearch, augmentData]);
 
   const coreBuild = useMemo(
     () =>
@@ -120,10 +143,10 @@ export default function ChampionDetail({
   if (!champ) {
     return (
       <div className="space-y-4">
-        <button onClick={onBack} className="text-sm text-lol-gold hover:underline">
+        <button onClick={onBack} className="text-sm text-lol-gold hover:text-lol-gold-light">
           ← All champions
         </button>
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
+        <div className={`${PANEL} p-8 text-center text-sm text-lol-text`}>
           No games recorded for {name} under the current filters.
         </div>
       </div>
@@ -135,56 +158,66 @@ export default function ChampionDetail({
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-lol-gold hover:underline">
+      <button onClick={onBack} className="text-sm text-lol-gold hover:text-lol-gold-light">
         ← All champions
       </button>
 
-      {/* Header */}
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
+      {/* Hero */}
+      <div className={`${PANEL} p-5`}>
         <div className="flex flex-wrap items-center gap-4">
-          <ChampionIcon championId={championId} size={64} />
+          <span className="rounded-full ring-2 ring-lol-gold/40 shrink-0 leading-none">
+            <ChampionIcon championId={championId} size={64} />
+          </span>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-lol-text-bright">{name}</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-[22px] font-extrabold text-lol-gold-light m-0">{name}</h1>
               {tier && <TierBadge tier={tier} games={champ.games} />}
-              <span className="text-sm text-lol-text-bright font-medium">
+              <span className="text-[13px] text-lol-text-bright font-semibold">
                 {score(champ.wins, champ.games).toFixed(1)}
               </span>
             </div>
-            <p className="text-xs text-lol-text mt-0.5">
-              {champ.games} games · KDA {kda.toFixed(2)} ({avg(champ.kills).toFixed(1)} /{" "}
-              {avg(champ.deaths).toFixed(1)} / {avg(champ.assists).toFixed(1)}) ·{" "}
-              {formatCompact(avg(champ.damage))} dmg
-              {champ.pentas > 0 ? ` · ${champ.pentas} penta${champ.pentas > 1 ? "s" : ""}` : ""}
+            <p className="text-[13px] text-lol-text mt-0.5">
+              {champ.games} games · KDA{" "}
+              <span className={`font-semibold ${kdaRampClass(kda)}`}>{kda.toFixed(2)}</span> (
+              {avg(champ.kills).toFixed(1)} / {avg(champ.deaths).toFixed(1)} /{" "}
+              {avg(champ.assists).toFixed(1)})
             </p>
           </div>
-          <div className="w-full sm:w-44 sm:ml-auto">
+          <div className="herobar w-full min-[701px]:w-[200px] min-[701px]:ml-auto">
+            <p className={`${LABEL} mb-1.5`}>Win rate</p>
             <WinRateBar wins={champ.wins} total={champ.games} />
           </div>
         </div>
       </div>
 
-      {/* Core build + best augments share the row on wide screens */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5">
-          <h2 className="text-sm font-semibold text-lol-text-bright mb-3">Core build</h2>
+      {/* Core build + best augments */}
+      <div className="grid grid-cols-1 min-[981px]:grid-cols-[1fr_2fr] gap-4">
+        <div className={`${PANEL} p-5`}>
+          <h2 className={`${LABEL} mb-3`}>Core build</h2>
           {coreBuild.length === 0 ? (
             <p className="text-sm text-lol-text">No item data yet.</p>
           ) : (
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3.5">
               {coreBuild.map((i) => {
                 const wr = i.picks > 0 ? ((i.wins / i.picks) * 100).toFixed(0) : "0";
+                const low = i.picks < 20;
                 return (
                   <div
                     key={i.item_id}
-                    className="flex flex-col items-center w-16"
-                    title={`${getItemTitle(itemData, i.item_id)} — ${i.picks} games`}
+                    className="flex flex-col items-center w-[52px]"
+                    title={`${getItemName(itemData, i.item_id)} — ${i.picks} games`}
                   >
-                    <ItemIcon itemData={itemData} itemId={i.item_id} size={48} />
-                    <span className="text-xs text-lol-text-bright mt-1">
-                      {wr}%{i.picks < 20 ? "*" : ""}
+                    <span className="rounded-md overflow-hidden leading-none">
+                      <ItemIcon itemData={itemData} itemId={i.item_id} size={44} />
                     </span>
-                    <span className="text-[10px] text-lol-text">{i.picks} games</span>
+                    <span
+                      className={`text-xs mt-1 ${
+                        low ? "text-lol-text" : "text-lol-text-bright"
+                      }`}
+                    >
+                      {wr}%{low ? "*" : ""}
+                    </span>
+                    <span className="text-[10px] text-lol-text">{i.picks} g</span>
                   </div>
                 );
               })}
@@ -192,28 +225,28 @@ export default function ChampionDetail({
           )}
         </div>
 
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-5 xl:col-span-2">
-          <h2 className="text-sm font-semibold text-lol-text-bright mb-3">Best augments</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+        <div className={`${PANEL} p-5`}>
+          <h2 className={`${LABEL} mb-3`}>Best augments</h2>
+          <div className="g3 grid grid-cols-1 min-[701px]:grid-cols-3 gap-x-6 gap-y-5">
             {augmentsByRarity.map((r) => (
               <div key={r.key}>
-                <p className={`text-xs uppercase tracking-wider mb-2 ${r.color}`}>{r.label}</p>
+                <p className={`text-[11px] uppercase tracking-[.08em] mb-2 ${r.color}`}>
+                  {r.label}
+                </p>
                 {r.best.length === 0 ? (
                   <p className="text-xs text-lol-text">No picks yet</p>
                 ) : (
                   <div className="space-y-3">
-                    {/* Two-line rows: name gets the full column width so it never
-                        wraps, and every entry is the same height across columns */}
                     {r.best.map((a) => (
                       <div key={a.augment_id} className="flex items-center gap-2.5">
                         <AugmentIcon
                           augmentData={augmentData}
                           augmentId={a.augment_id}
-                          size={32}
+                          size={30}
                         />
                         <div className="flex-1 min-w-0">
                           <p
-                            className={`text-sm truncate leading-tight ${r.color}`}
+                            className={`text-[13px] truncate leading-tight ${r.color}`}
                             title={getAugmentName(augmentData, a.augment_id)}
                           >
                             {getAugmentName(augmentData, a.augment_id)}
@@ -222,8 +255,8 @@ export default function ChampionDetail({
                             <div className="flex-1 max-w-44">
                               <WinRateBar wins={a.wins} total={a.picks} />
                             </div>
-                            <span className="text-[11px] text-lol-text shrink-0 w-14">
-                              {a.picks} {a.picks === 1 ? "game" : "games"}
+                            <span className="text-[11px] text-lol-text shrink-0 w-12">
+                              {a.picks} g
                             </span>
                           </div>
                         </div>
@@ -238,21 +271,20 @@ export default function ChampionDetail({
       </div>
 
       {/* Full tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
-          <h2 className="text-sm font-semibold text-lol-text-bright px-4 pt-4 pb-2">All items</h2>
-          <table className="table-fixed w-full">
+      <div className="grid grid-cols-1 min-[981px]:grid-cols-2 gap-4">
+        <div className={`${PANEL} overflow-hidden`}>
+          <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+            <h2 className={LABEL}>All items</h2>
+            <div className="ml-auto">
+              <SearchBox value={itemSearch} onChange={setItemSearch} placeholder="Search item..." width={150} />
+            </div>
+          </div>
+          <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
-                <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                  Item
-                </th>
-                <th className="w-20 px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                  Games
-                </th>
-                <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-32">
-                  Win Rate
-                </th>
+                <th className={`px-3 py-1.5 text-left ${LABEL}`}>Item</th>
+                <th className={`w-[72px] px-3 py-1.5 text-left ${LABEL}`}>Games</th>
+                <th className={`w-[140px] px-3 py-1.5 text-left ${LABEL}`}>Win rate</th>
               </tr>
             </thead>
             <tbody>
@@ -261,8 +293,8 @@ export default function ChampionDetail({
                   <td className="px-3 py-1.5">
                     <ItemIcon itemData={itemData} itemId={i.item_id} size={24} showName />
                   </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{i.picks}</td>
-                  <td className="px-3 py-1.5 w-32">
+                  <td className="px-3 py-1.5 text-[13px] text-lol-text-bright">{i.picks}</td>
+                  <td className="px-3 py-1.5">
                     <WinRateBar wins={i.wins} total={i.picks} />
                   </td>
                 </tr>
@@ -271,27 +303,27 @@ export default function ChampionDetail({
           </table>
           {visibleItems.length === 0 && (
             <div className="py-6 text-center text-sm text-lol-text">
-              {items.length > 0
-                ? `All ${items.length} items are below 20 games`
-                : "No item data"}
+              {items.length > 0 ? "No items match the current filters" : "No item data"}
             </div>
           )}
         </div>
 
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
-          <h2 className="text-sm font-semibold text-lol-text-bright px-4 pt-4 pb-2">All augments</h2>
-          <table className="table-fixed w-full">
+        <div className={`${PANEL} overflow-hidden`}>
+          <div className="flex flex-wrap items-center gap-2 px-4 pt-4 pb-3">
+            <h2 className={LABEL}>All augments</h2>
+            <div className="flex items-center gap-1.5 ml-2">
+              <RarityFilter value={augRarity} onChange={setAugRarity} compact />
+            </div>
+            <div className="ml-auto">
+              <SearchBox value={augSearch} onChange={setAugSearch} placeholder="Search..." width={110} />
+            </div>
+          </div>
+          <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
-                <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                  Augment
-                </th>
-                <th className="w-20 px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider">
-                  Picks
-                </th>
-                <th className="px-3 py-1.5 text-left text-xs font-medium text-lol-text uppercase tracking-wider w-32">
-                  Win Rate
-                </th>
+                <th className={`px-3 py-1.5 text-left ${LABEL}`}>Augment</th>
+                <th className={`w-[72px] px-3 py-1.5 text-left ${LABEL}`}>Picks</th>
+                <th className={`w-[140px] px-3 py-1.5 text-left ${LABEL}`}>Win rate</th>
               </tr>
             </thead>
             <tbody>
@@ -306,8 +338,8 @@ export default function ChampionDetail({
                       wrap
                     />
                   </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
-                  <td className="px-3 py-1.5 w-32">
+                  <td className="px-3 py-1.5 text-[13px] text-lol-text-bright">{a.picks}</td>
+                  <td className="px-3 py-1.5">
                     <WinRateBar wins={a.wins} total={a.picks} />
                   </td>
                 </tr>
@@ -316,9 +348,7 @@ export default function ChampionDetail({
           </table>
           {visibleAugments.length === 0 && (
             <div className="py-6 text-center text-sm text-lol-text">
-              {augments.length > 0
-                ? `All ${augments.length} augments are below 20 games`
-                : "No augment data"}
+              {augments.length > 0 ? "No augments match the current filters" : "No augment data"}
             </div>
           )}
         </div>
@@ -329,5 +359,30 @@ export default function ChampionDetail({
         * fewer than 20 games — treat with caution.
       </p>
     </div>
+  );
+}
+
+// Local slim search input (the shared SearchInput carries a clear button and
+// larger default width than these panel headers want)
+function SearchBox({
+  value,
+  onChange,
+  placeholder,
+  width,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  width: number;
+}) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="input"
+      style={{ width }}
+    />
   );
 }

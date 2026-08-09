@@ -1,29 +1,30 @@
 import { MIN_SAMPLE } from "../lib/stats";
 
-// The percentage is always shown as text beside the bar, so color never
-// carries the value alone. Below MIN_SAMPLE the number renders muted: a tiny
-// sample shouldn't wear the same confident color as a proven one.
+// The unified "rate meter": 6px bar on a translucent loss track. Fill and
+// label carry outcome colors only — green at 50%+, red below. Small samples
+// mute the label (with *) and halve the fill's opacity so a lucky 3-0 never
+// wears a confident green.
 export default function WinRateBar({ wins, total }: { wins: number; total: number }) {
   const rate = total > 0 ? (wins / total) * 100 : 0;
   const lowSample = total < MIN_SAMPLE;
+  const winning = rate >= 50;
 
   return (
     <div
       className="flex items-center gap-2"
       title={lowSample ? `Only ${total} game(s) — small sample` : undefined}
     >
-      <div className="flex-1 h-2 bg-lol-loss/30 rounded-full overflow-hidden min-w-8">
-        <div className="h-full bg-lol-win rounded-full" style={{ width: `${rate}%` }} />
+      <div className="flex-1 h-1.5 rounded bg-lol-loss/25 overflow-hidden min-w-8">
+        <div
+          className={`h-full rounded ${winning ? "bg-lol-win" : "bg-lol-loss"} ${
+            lowSample ? "opacity-50" : ""
+          }`}
+          style={{ width: `${rate}%` }}
+        />
       </div>
       <span
-        className={`text-xs font-medium w-14 shrink-0 text-right whitespace-nowrap ${
-          lowSample
-            ? "text-lol-text"
-            : rate >= 60
-              ? "text-lol-win"
-              : rate >= 50
-                ? "text-sky-400"
-                : "text-lol-loss"
+        className={`text-xs font-medium w-11 shrink-0 text-right whitespace-nowrap ${
+          lowSample ? "text-lol-text" : winning ? "text-lol-win" : "text-lol-loss"
         }`}
       >
         {rate.toFixed(1)}%{lowSample ? "*" : ""}
