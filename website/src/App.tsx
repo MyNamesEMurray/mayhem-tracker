@@ -22,6 +22,7 @@ import {
   type Filters,
 } from "./lib/stats";
 import AdSlot from "./components/AdSlot";
+import CommunityPage from "./components/CommunityPage";
 import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
 import ChampionsTable from "./components/ChampionsTable";
@@ -60,6 +61,7 @@ export default function App() {
   const championSlugFromPath = slugMatch ? slugMatch[1] : null;
   const legacyChampion = params.get("champion");
   const onChampionPage = championSlugFromPath != null || legacyChampion != null;
+  const onCommunityPage = /^\/community\/?$/.test(path);
 
   const selectedChampion = useMemo(() => {
     if (championSlugFromPath) {
@@ -223,13 +225,16 @@ export default function App() {
             </span>
           </a>
           <nav className="flex gap-1 self-stretch">
-            {navTab("Champions", tab === "champions" || onChampionPage, () => {
-              if (onChampionPage) navigate("/");
+            {navTab("Champions", !onCommunityPage && (tab === "champions" || onChampionPage), () => {
+              if (onChampionPage || onCommunityPage) navigate("/");
               setParam("tab", null);
             })}
-            {navTab("Augments", tab === "augments" && !onChampionPage, () => {
-              if (onChampionPage) navigate("/");
+            {navTab("Augments", !onCommunityPage && tab === "augments" && !onChampionPage, () => {
+              if (onChampionPage || onCommunityPage) navigate("/");
               setParam("tab", "augments");
+            })}
+            {navTab("Community", onCommunityPage, () => {
+              if (!onCommunityPage) navigate("/community/");
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2 py-2 max-[840px]:ml-0 max-[840px]:w-full max-[840px]:pt-0 max-[840px]:pb-2.5 max-[840px]:flex-wrap">
@@ -294,7 +299,11 @@ export default function App() {
           </div>
         )}
 
-        {!error && !data && <div className="text-center text-lol-text py-20">Loading community stats...</div>}
+        {onCommunityPage && <CommunityPage />}
+
+        {!error && !data && !onCommunityPage && (
+          <div className="text-center text-lol-text py-20">Loading community stats...</div>
+        )}
 
         {data && onChampionPage && selectedChampion == null && (
           <div className="space-y-4">
@@ -323,7 +332,7 @@ export default function App() {
           </>
         )}
 
-        {data && !onChampionPage && (
+        {data && !onChampionPage && !onCommunityPage && (
           <>
             {/* Page title */}
             <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
@@ -376,6 +385,16 @@ export default function App() {
           <nav className="flex flex-wrap gap-x-4 gap-y-1 text-lol-text">
             <a href="/about/" className="hover:text-lol-gold">
               About &amp; methodology
+            </a>
+            <a
+              href="/community/"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/community/");
+              }}
+              className="hover:text-lol-gold"
+            >
+              Community impact
             </a>
             <a href="/privacy/" className="hover:text-lol-gold">
               Privacy

@@ -76,3 +76,35 @@ export function fetchAugmentStats(): Promise<AugmentStatRow[]> {
 export function fetchItemStats(): Promise<ItemStatRow[]> {
   return fetchAll<ItemStatRow>("item_stats");
 }
+
+export interface CommunityTotals {
+  games: number;
+  contributors: number;
+  total_seconds: number;
+  patches: number;
+  first_game_ms: number | null;
+  last_game_ms: number | null;
+}
+
+export interface GamesPerDayRow {
+  day: string;
+  games: number;
+}
+
+export async function fetchCommunityTotals(): Promise<CommunityTotals> {
+  const rows = await fetchAll<CommunityTotals>("community_totals");
+  return (
+    rows[0] ?? {
+      games: 0,
+      contributors: 0,
+      total_seconds: 0,
+      patches: 0,
+      first_game_ms: null,
+      last_game_ms: null,
+    }
+  );
+}
+
+export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
+  return fetchAll<GamesPerDayRow>("community_games_per_day");
+}
