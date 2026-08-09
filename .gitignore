@@ -2,3 +2,10 @@ node_modules/
 out/
 dist/
 data/
+
+# design-sync machine state (converter staging, build output, caches)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
