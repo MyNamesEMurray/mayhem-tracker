@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AugmentStatRow, ChampionStatRow, ItemStatRow } from "../lib/api";
 import {
+  getAugmentName,
   getChampionName,
   getItemName,
   loadItemData,
@@ -193,23 +194,31 @@ export default function ChampionDetail({
                 {r.best.length === 0 ? (
                   <p className="text-xs text-lol-text">No picks yet</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {/* Two-line rows: name gets the full column width so it never
+                        wraps, and every entry is the same height across columns */}
                     {r.best.map((a) => (
-                      <div key={a.augment_id} className="flex items-center gap-2">
+                      <div key={a.augment_id} className="flex items-center gap-2.5">
+                        <AugmentIcon
+                          augmentData={augmentData}
+                          augmentId={a.augment_id}
+                          size={32}
+                        />
                         <div className="flex-1 min-w-0">
-                          <AugmentIcon
-                            augmentData={augmentData}
-                            augmentId={a.augment_id}
-                            size={24}
-                            showName
-                            wrap
-                          />
-                        </div>
-                        <span className="text-xs text-lol-text w-8 text-right shrink-0">
-                          {a.picks}x
-                        </span>
-                        <div className="w-28 shrink-0">
-                          <WinRateBar wins={a.wins} total={a.picks} />
+                          <p
+                            className={`text-sm truncate leading-tight ${r.color}`}
+                            title={getAugmentName(augmentData, a.augment_id)}
+                          >
+                            {getAugmentName(augmentData, a.augment_id)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex-1 max-w-44">
+                              <WinRateBar wins={a.wins} total={a.picks} />
+                            </div>
+                            <span className="text-[11px] text-lol-text shrink-0 w-14">
+                              {a.picks} {a.picks === 1 ? "game" : "games"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
