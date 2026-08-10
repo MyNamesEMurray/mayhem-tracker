@@ -51,9 +51,10 @@ Electron + React + TypeScript, built with electron-vite. Uses Tailwind CSS for s
 
 ## Development
 
+Requires Node.js 22.12 or newer.
+
 ```bash
-npm install
-npm run rebuild   # rebuild native modules for Electron
+npm install       # also rebuilds native modules for Electron (postinstall)
 npm run dev       # start in dev mode
 ```
 
