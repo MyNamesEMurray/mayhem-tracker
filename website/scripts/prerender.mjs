@@ -232,6 +232,7 @@ async function main() {
     <meta property="og:url" content="${SITE}/champion/${slug}/" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="${iconUrl}" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/icon.png" />
     ${assetTags}
     <style>
