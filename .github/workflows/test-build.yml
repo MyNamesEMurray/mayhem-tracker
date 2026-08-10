@@ -35,7 +35,7 @@ jobs:
           # ref_name can contain "/", which is illegal in artifact names
           name: MayhemTracker-test-${{ github.run_number }}-${{ github.sha }}
           path: |
-            dist/MayhemTracker.exe
+            dist/MayhemTracker-Portable.exe
             dist/MayhemTracker-Setup.exe
           retention-days: 7
           if-no-files-found: error

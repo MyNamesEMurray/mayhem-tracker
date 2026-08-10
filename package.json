@@ -1,6 +1,6 @@
 {
   "name": "mayhem-tracker",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "ARAM Mayhem match history tracker",
   "author": "MyNamesEMurray",
   "license": "MIT",
@@ -65,7 +65,7 @@
       "node_modules/better-sqlite3/**/*"
     ],
     "portable": {
-      "artifactName": "MayhemTracker.exe"
+      "artifactName": "MayhemTracker-Portable.exe"
     },
     "nsis": {
       "artifactName": "MayhemTracker-Setup.${ext}",

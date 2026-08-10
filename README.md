@@ -33,7 +33,7 @@ Mayhem games — contributed by players, because there is no other source.
 
 ## Download
 
-Grab `MayhemTracker.exe` from the [latest release](https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest). It's a portable exe — no installer. The app checks for updates automatically.
+Grab `MayhemTracker-Portable.exe` (no install, runs anywhere) or `MayhemTracker-Setup.exe` (installer) from the [latest release](https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest). The app checks for updates automatically.
 
 ## Community stats & privacy
 

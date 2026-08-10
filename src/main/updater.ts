@@ -26,7 +26,13 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
     const data = (await res.json()) as any;
     const latest = (data.tag_name as string).replace(/^v/, "");
     const current = app.getVersion();
-    const asset = (data.assets as any[])?.find((a) => a.name?.endsWith(".exe"));
+    // Pick the portable exe specifically, never the installer — releases carry
+    // both. Older releases named the portable plain MayhemTracker.exe.
+    const assets = (data.assets as any[]) ?? [];
+    const asset =
+      assets.find((a) => a.name === "MayhemTracker-Portable.exe") ??
+      assets.find((a) => a.name === "MayhemTracker.exe") ??
+      assets.find((a) => a.name?.endsWith(".exe") && !a.name.includes("Setup"));
     return {
       hasUpdate: latest !== current,
       latest,
@@ -94,10 +100,9 @@ export async function downloadAndInstall(
     return { success: false, error: `Download failed: ${err.message}` };
   }
 
-  // Install under the artifact name (productName minus spaces) regardless of the
-  // current filename, so exes downloaded before the version was dropped from the
-  // artifact name get migrated.
-  const targetExe = path.join(path.dirname(portableExe), `${app.getName().replace(/ /g, "")}.exe`);
+  // Install under the current artifact name regardless of the running
+  // filename, so exes downloaded under older names get migrated.
+  const targetExe = path.join(path.dirname(portableExe), "MayhemTracker-Portable.exe");
   const stagedExe = `${targetExe}.new`;
 
   // The running portable exe is locked by the OS until the app fully exits, so a
