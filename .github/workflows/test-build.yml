@@ -1,0 +1,40 @@
+name: Test Build
+
+# Builds the Windows exes from any branch and uploads them as workflow
+# artifacts — no release, no tag, invisible to the in-app updater. For
+# trying out dev branches before merging.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Rebuild native modules for Electron
+        run: npm run rebuild
+
+      - run: npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MayhemTracker-${{ github.ref_name }}-${{ github.sha }}
+          path: |
+            dist/MayhemTracker.exe
+            dist/MayhemTracker-Setup.exe
+          retention-days: 7
+          if-no-files-found: error
