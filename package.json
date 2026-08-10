@@ -59,7 +59,7 @@
         "portable"
       ],
       "icon": "assets/icon.png",
-      "signAndEditExecutable": false
+      "signExecutable": false
     },
     "asarUnpack": [
       "node_modules/better-sqlite3/**/*"
