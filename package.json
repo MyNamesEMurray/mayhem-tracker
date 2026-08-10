@@ -14,7 +14,7 @@
     "preview": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
     "rebuild": "electron-builder install-app-deps",
-    "dist": "electron-vite build && electron-builder --win",
+    "dist": "electron-vite build && electron-builder --win --publish never",
     "format": "oxfmt"
   },
   "dependencies": {
