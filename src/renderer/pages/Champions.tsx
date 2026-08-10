@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, Fragment } from "react";
 import { useIpc } from "../hooks/useIpc";
+import { useStatsFilters } from "../hooks/useStatsFilters";
 import { useChampionData, getChampionName, useAugmentData } from "../hooks/useChampions";
 import type { ChampionStats, AugmentStats, ItemStats, MatchListItem } from "../lib/types";
 import ChampionIcon from "../components/ChampionIcon";
@@ -160,8 +161,7 @@ function ChampionExpanded({
 
 export default function Champions() {
   const champData = useChampionData();
-  const [patch, setPatch] = useState<string | undefined>(undefined);
-  const [queue, setQueue] = useState<number | undefined>(undefined);
+  const { patch, setPatch, queue, setQueue } = useStatsFilters();
   const { data, refetch } = useIpc<ChampionStats[]>(
     () => window.api.getChampionStats(patch, queue),
     [patch, queue],

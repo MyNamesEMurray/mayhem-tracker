@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useIpc } from "../hooks/useIpc";
+import { useStatsFilters } from "../hooks/useStatsFilters";
 import {
   useChampionData,
   getChampionName,
@@ -27,8 +28,7 @@ const VIEWS: { key: View; label: string }[] = [
 export default function Augments() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
-  const [patch, setPatch] = useState<string | undefined>(undefined);
-  const [queue, setQueue] = useState<number | undefined>(undefined);
+  const { patch, setPatch, queue, setQueue } = useStatsFilters();
   const { data, refetch } = useIpc<AugmentStatsDetailed[]>(
     () => window.api.getAugmentStatsDetailed(patch, queue),
     [patch, queue],

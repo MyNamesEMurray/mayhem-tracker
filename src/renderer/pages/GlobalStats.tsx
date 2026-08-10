@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
+import { useUrlStatsFilters } from "../hooks/useStatsFilters";
 import {
   useChampionData,
   getChampionName,
@@ -66,37 +67,23 @@ export default function GlobalStats() {
   const augmentData = useAugmentData();
   const navigate = useNavigate();
   // Filters and tab live in the URL so returning from a champion page lands
-  // back on the same view
+  // back on the same view. filterQuery is carried into the champion page so
+  // it opens with the same filters, and comes back on its back link.
   const [searchParams, setSearchParams] = useSearchParams();
-  const patch = searchParams.get("patch") ?? undefined;
-  const queueParam = searchParams.get("queue");
-  const queue = queueParam ? Number(queueParam) : undefined;
+  const { patch, setPatch, queue, setQueue, filterQuery } = useUrlStatsFilters();
   const tab: Tab = searchParams.get("tab") === "augments" ? "augments" : "champions";
 
-  const setParam = (key: string, value: string | number | undefined) => {
+  const setTab = (t: Tab) => {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (value == null || value === "") next.delete(key);
-        else next.set(key, String(value));
+        if (t === "champions") next.delete("tab");
+        else next.set("tab", t);
         return next;
       },
       { replace: true },
     );
   };
-  const setPatch = (p: string | undefined) => setParam("patch", p);
-  const setQueue = (q: number | undefined) => setParam("queue", q);
-  const setTab = (t: Tab) => setParam("tab", t === "champions" ? undefined : t);
-
-  // Carried into the champion page so it opens with the same filters, and
-  // comes back on its back link
-  const filterQuery = useMemo(() => {
-    const params = new URLSearchParams();
-    if (patch) params.set("patch", patch);
-    if (queue != null) params.set("queue", String(queue));
-    const query = params.toString();
-    return query ? `?${query}` : "";
-  }, [patch, queue]);
 
   const { data, refetch } = useIpc<GlobalStats>(
     () => window.api.getGlobalStats(patch, queue),
