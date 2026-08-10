@@ -133,6 +133,20 @@ export interface ItemStats {
   wins: number;
 }
 
+export interface AugmentSlotStat {
+  augmentId: number;
+  slot: number;
+  picks: number;
+  wins: number;
+}
+
+export interface AugmentPairStat {
+  augmentA: number;
+  augmentB: number;
+  picks: number;
+  wins: number;
+}
+
 export interface AugmentStatsDetailed {
   augment_id: number;
   picks: number;
@@ -338,6 +352,8 @@ export interface ElectronAPI {
   getChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
   getAugmentStats: (championId?: number, patch?: string, queue?: number) => Promise<AugmentStats[]>;
   getAugmentStatsDetailed: (patch?: string, queue?: number) => Promise<AugmentStatsDetailed[]>;
+  getAugmentSlotStats: (patch?: string, queue?: number) => Promise<AugmentSlotStat[]>;
+  getAugmentPairStats: (patch?: string, queue?: number) => Promise<AugmentPairStat[]>;
   getDashboard: (
     filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
   ) => Promise<DashboardData>;

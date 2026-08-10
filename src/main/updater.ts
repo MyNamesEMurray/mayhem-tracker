@@ -41,7 +41,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
 }
 
 export async function downloadAndInstall(
-  win: BrowserWindow,
+  win: BrowserWindow | null,
   assetUrl: string,
 ): Promise<{ success: boolean; error?: string }> {
   // Set by electron-builder's portable launcher; absent in dev and non-portable builds
@@ -78,7 +78,8 @@ export async function downloadAndInstall(
         await new Promise((resolve) => out.once("drain", resolve));
       }
       if (total) {
-        win.webContents.send("update:progress", Math.round((received / total) * 100));
+        if (win && !win.isDestroyed())
+          win.webContents.send("update:progress", Math.round((received / total) * 100));
       }
     }
     await new Promise<void>((resolve, reject) => {

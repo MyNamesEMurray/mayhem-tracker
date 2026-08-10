@@ -1,3 +1,4 @@
+import { getMainWindow } from "./window-ref";
 import { BrowserWindow } from "electron";
 import { randomUUID } from "crypto";
 import * as db from "./db";
@@ -42,9 +43,10 @@ export function getUploadStatus() {
   };
 }
 
-function notifyChanged(win?: BrowserWindow | null) {
-  if (win && !win.isDestroyed()) {
-    win.webContents.send("upload:changed");
+function notifyChanged(_win?: BrowserWindow | null) {
+  const w = getMainWindow();
+  if (w) {
+    w.webContents.send("upload:changed");
   }
 }
 

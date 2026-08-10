@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import { gzipSync, gunzipSync } from "zlib";
 import { SCORE_FORMULA_VERSION, computeMatchScores } from "../shared/opScore";
 import { AUGMENT_SLOTS, MAYHEM_QUEUE_IDS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
 import { getDataDir } from "./paths";
@@ -121,6 +122,21 @@ function createTables() {
       total_damage_taken    INTEGER NOT NULL DEFAULT 0,
       gold_earned           INTEGER NOT NULL DEFAULT 0,
       total_heal            INTEGER NOT NULL DEFAULT 0,
+      -- Extended combat detail (schema v2). Nullable: the SGP backfill shape
+      -- doesn't carry these, so NULL means "not recorded", never zero.
+      physical_damage       INTEGER,
+      magic_damage          INTEGER,
+      true_damage           INTEGER,
+      damage_self_mitigated INTEGER,
+      damage_to_turrets     INTEGER,
+      cc_time               INTEGER,
+      longest_time_alive    INTEGER,
+      gold_spent            INTEGER,
+      minions_killed        INTEGER,
+      first_blood           INTEGER,
+      spell1_id             INTEGER,
+      spell2_id             INTEGER,
+      champ_level           INTEGER,
       item0 INTEGER, item1 INTEGER, item2 INTEGER,
       item3 INTEGER, item4 INTEGER, item5 INTEGER, item6 INTEGER,
       score       REAL,
@@ -156,13 +172,13 @@ function createTables() {
     const games = db.prepare("SELECT game_id, game_duration, raw_json FROM games").all() as {
       game_id: number;
       game_duration: number;
-      raw_json: string | null;
+      raw_json: string | Buffer | null;
     }[];
     const updateStmt = db.prepare("UPDATE games SET is_remake = 1 WHERE game_id = ?");
     for (const game of games) {
       let raw: any = null;
       try {
-        raw = game.raw_json ? JSON.parse(game.raw_json) : null;
+        raw = unpackRaw(game.raw_json);
       } catch {
         /* ignore parse errors */
       }
@@ -189,7 +205,7 @@ function createTables() {
       `)
       .all() as {
       game_id: number;
-      raw_json: string;
+      raw_json: string | Buffer;
       champion_id: number;
       kills: number;
       deaths: number;
@@ -204,7 +220,7 @@ function createTables() {
 
     for (const game of gamesToBackfill) {
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const participants = raw.participants || [];
         const identities = raw.participantIdentities || [];
 
@@ -252,7 +268,7 @@ function createTables() {
     const updateStmt = db.prepare("UPDATE games SET game_version = ? WHERE game_id = ?");
     for (const game of games) {
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const patch = parsePatch(raw.gameVersion);
         if (patch) updateStmt.run(patch, game.game_id);
       } catch {
@@ -288,7 +304,7 @@ function createTables() {
     const tx = db.transaction(() => {
       for (const game of games) {
         try {
-          const raw = JSON.parse(game.raw_json);
+          const raw = unpackRaw(game.raw_json);
           if (typeof raw.platformId === "string" && raw.platformId) {
             updateStmt.run(raw.platformId.toUpperCase(), game.game_id);
           }
@@ -316,9 +332,68 @@ function createTables() {
     setSetting("augment_slots", String(AUGMENT_SLOTS));
   }
 
+  // Imported games never upload to community stats — only games fetched
+  // from the player's own client are trusted as authentic (data-poisoning
+  // hardening; imports remain fully usable locally).
+  {
+    const gcols = new Set(
+      (db.prepare("PRAGMA table_info(games)").all() as { name: string }[]).map((c) => c.name),
+    );
+    if (!gcols.has("upload_eligible")) {
+      db.exec("ALTER TABLE games ADD COLUMN upload_eligible INTEGER NOT NULL DEFAULT 1");
+    }
+  }
+
+  // One-time raw_json compression (~6x): gzip every plain-text row, then
+  // VACUUM to actually hand the space back to the filesystem.
+  if (getSetting("raw_json_compressed") !== "1") {
+    const ids = db
+      .prepare(
+        "SELECT game_id FROM games WHERE raw_json IS NOT NULL AND typeof(raw_json) = 'text'",
+      )
+      .all() as { game_id: number }[];
+    if (ids.length > 0) {
+      const get = db.prepare("SELECT raw_json FROM games WHERE game_id = ?");
+      const set = db.prepare("UPDATE games SET raw_json = ? WHERE game_id = ?");
+      const tx = db.transaction((batch: { game_id: number }[]) => {
+        for (const r of batch) {
+          const row = get.get(r.game_id) as { raw_json: string } | undefined;
+          if (row?.raw_json) set.run(packRaw(row.raw_json), r.game_id);
+        }
+      });
+      for (let i = 0; i < ids.length; i += 500) tx(ids.slice(i, i + 500));
+    }
+    setSetting("raw_json_compressed", "1");
+    if (ids.length > 0) db.exec("VACUUM");
+  }
+
   // Populate the participants tables from raw_json for databases created
   // before they existed (or when their schema/extraction changes).
   if (getSetting("participants_version") !== PARTICIPANTS_SCHEMA_VERSION) {
+    // v1 -> v2 widens the table; ADD COLUMN only for columns not yet present
+    // so fresh installs (created with the full DDL) skip straight through
+    const existing = new Set(
+      (db.prepare("PRAGMA table_info(participants)").all() as { name: string }[]).map(
+        (c) => c.name,
+      ),
+    );
+    for (const col of [
+      "physical_damage",
+      "magic_damage",
+      "true_damage",
+      "damage_self_mitigated",
+      "damage_to_turrets",
+      "cc_time",
+      "longest_time_alive",
+      "gold_spent",
+      "minions_killed",
+      "first_blood",
+      "spell1_id",
+      "spell2_id",
+      "champ_level",
+    ]) {
+      if (!existing.has(col)) db.exec(`ALTER TABLE participants ADD COLUMN ${col} INTEGER`);
+    }
     backfillParticipants();
     setSetting("participants_version", PARTICIPANTS_SCHEMA_VERSION);
     // Participant scores need champion class data, which isn't loaded this
@@ -338,7 +413,7 @@ function backfillAugmentSlots() {
   const tx = db.transaction(() => {
     for (const game of games) {
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const participants = raw.participants || [];
         const identities = raw.participantIdentities || [];
         let participant = participants.find((p: any) => p.puuid === game.puuid);
@@ -368,10 +443,30 @@ function backfillAugmentSlots() {
 
 // Bump when the participants schema or the extraction below changes, so
 // existing databases rebuild the tables from raw_json on next launch.
-const PARTICIPANTS_SCHEMA_VERSION = "1";
+// v2: extended combat detail columns (damage splits, CC, spells, ...)
+const PARTICIPANTS_SCHEMA_VERSION = "2";
 
 // Bot/placeholder puuids come through as all zeroes
 const PLACEHOLDER_PUUID = /^0+(-0+)*$/;
+
+// raw_json compression: new rows store gzipped BLOBs (~6x smaller); rows
+// written before the migration are plain TEXT. unpackRaw reads every shape,
+// so no code path ever needs to know which vintage a row is.
+function packRaw(json: string): Buffer {
+  return gzipSync(json);
+}
+
+function unpackRaw(value: string | Buffer | null | undefined): any {
+  if (value == null) return null;
+  if (Buffer.isBuffer(value)) {
+    const text =
+      value.length > 2 && value[0] === 0x1f && value[1] === 0x8b
+        ? gunzipSync(value).toString("utf8")
+        : value.toString("utf8");
+    return JSON.parse(text);
+  }
+  return JSON.parse(value);
+}
 
 interface ParticipantRow {
   participantId: number;
@@ -394,6 +489,19 @@ interface ParticipantRow {
   totalDamageTaken: number;
   goldEarned: number;
   totalHeal: number;
+  physicalDamage: number | null;
+  magicDamage: number | null;
+  trueDamage: number | null;
+  damageSelfMitigated: number | null;
+  damageToTurrets: number | null;
+  ccTime: number | null;
+  longestTimeAlive: number | null;
+  goldSpent: number | null;
+  minionsKilled: number | null;
+  firstBlood: number | null;
+  spell1Id: number | null;
+  spell2Id: number | null;
+  champLevel: number | null;
   items: (number | null)[];
   augments: { slot: number; augmentId: number }[];
   score: number | null;
@@ -442,12 +550,30 @@ function extractParticipants(raw: any): ParticipantRow[] {
       totalDamageTaken: s.totalDamageTaken ?? 0,
       goldEarned: s.goldEarned ?? 0,
       totalHeal: s.totalHeal ?? 0,
+      physicalDamage: num(s.physicalDamageDealtToChampions),
+      magicDamage: num(s.magicDamageDealtToChampions),
+      trueDamage: num(s.trueDamageDealtToChampions),
+      damageSelfMitigated: num(s.damageSelfMitigated),
+      damageToTurrets: num(s.damageDealtToTurrets),
+      ccTime: num(s.timeCCingOthers),
+      longestTimeAlive: num(s.longestTimeSpentLiving),
+      goldSpent: num(s.goldSpent),
+      minionsKilled: num(s.totalMinionsKilled),
+      firstBlood: typeof s.firstBloodKill === "boolean" ? (s.firstBloodKill ? 1 : 0) : null,
+      spell1Id: num(s.spell1Id),
+      spell2Id: num(s.spell2Id),
+      champLevel: num(s.champLevel),
       items: [0, 1, 2, 3, 4, 5, 6].map((n) => s[`item${n}`] ?? null),
       augments,
       score: null,
       scoreBadge: null,
     };
   });
+}
+
+// Extended fields exist only in the LCU shape — NULL (not zero) when absent
+function num(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
 // Score every participant in place with the current formula and champion
@@ -516,9 +642,12 @@ function replaceParticipantRows(gameId: number, rows: ParticipantRow[]) {
       champion_id, win, kills, deaths, assists,
       double_kills, triple_kills, quadra_kills, penta_kills, largest_killing_spree,
       total_damage_dealt, total_damage_taken, gold_earned, total_heal,
+      physical_damage, magic_damage, true_damage, damage_self_mitigated,
+      damage_to_turrets, cc_time, longest_time_alive, gold_spent,
+      minions_killed, first_blood, spell1_id, spell2_id, champ_level,
       item0, item1, item2, item3, item4, item5, item6,
       score, score_badge
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertAug = db.prepare(
     "INSERT OR REPLACE INTO participant_augments (game_id, participant_id, slot, augment_id, champion_id, win) VALUES (?, ?, ?, ?, ?, ?)",
@@ -546,6 +675,19 @@ function replaceParticipantRows(gameId: number, rows: ParticipantRow[]) {
       r.totalDamageTaken,
       r.goldEarned,
       r.totalHeal,
+      r.physicalDamage,
+      r.magicDamage,
+      r.trueDamage,
+      r.damageSelfMitigated,
+      r.damageToTurrets,
+      r.ccTime,
+      r.longestTimeAlive,
+      r.goldSpent,
+      r.minionsKilled,
+      r.firstBlood,
+      r.spell1Id,
+      r.spell2Id,
+      r.champLevel,
       ...r.items,
       r.score,
       r.scoreBadge,
@@ -566,7 +708,7 @@ function backfillParticipants() {
   const tx = db.transaction(() => {
     for (const game of games) {
       try {
-        replaceParticipantRows(game.game_id, extractParticipants(JSON.parse(game.raw_json)));
+        replaceParticipantRows(game.game_id, extractParticipants(unpackRaw(game.raw_json)));
       } catch {
         /* ignore parse errors */
       }
@@ -910,7 +1052,7 @@ export function getMatchDetail(gameId: number): any {
     game,
     stats,
     augments,
-    raw: game.raw_json ? JSON.parse(game.raw_json) : null,
+    raw: unpackRaw(game.raw_json),
   };
 }
 
@@ -1192,7 +1334,7 @@ export function markIgnoredGame(gameId: number): void {
   db.prepare("INSERT OR IGNORE INTO ignored_games (game_id) VALUES (?)").run(gameId);
 }
 
-export function insertGameFull(gameData: any, puuid: string): boolean {
+export function insertGameFull(gameData: any, puuid: string, uploadEligible = true): boolean {
   const rows = extractParticipants(gameData);
   const owner = findOwnerRow(rows, puuid);
   if (!owner) return false;
@@ -1201,8 +1343,8 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
   if (!isRemake) scoreParticipants(rows);
 
   const insertGameStmt = db.prepare(`
-    INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json, platform_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO games (game_id, queue_id, game_mode, game_creation, game_duration, is_remake, puuid, game_version, raw_json, platform_id, upload_eligible)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertStatsStmt = db.prepare(`
@@ -1229,10 +1371,11 @@ export function insertGameFull(gameData: any, puuid: string): boolean {
       isRemake,
       puuid,
       parsePatch(gameData.gameVersion),
-      JSON.stringify(gameData),
+      packRaw(JSON.stringify(gameData)),
       typeof gameData.platformId === "string" && gameData.platformId
         ? gameData.platformId.toUpperCase()
         : null,
+      uploadEligible ? 1 : 0,
     );
 
     if (result.changes === 0) return false; // duplicate
@@ -1847,6 +1990,7 @@ const PENDING_UPLOAD_WHERE = `
   AND g.platform_id IS NOT NULL
   AND g.game_version IS NOT NULL
   AND g.queue_id IN (${MAYHEM_QUEUE_IDS.join(", ")})
+  AND g.upload_eligible = 1
   AND g.game_id NOT IN (SELECT game_id FROM uploaded_games)
   AND EXISTS (SELECT 1 FROM participants p WHERE p.game_id = g.game_id)`;
 
@@ -1983,11 +2127,11 @@ export function exportAllData(): {
 } {
   const summoners = db.prepare("SELECT * FROM summoner").all();
   const rows = db.prepare("SELECT raw_json, puuid FROM games WHERE raw_json IS NOT NULL").all() as {
-    raw_json: string;
+    raw_json: string | Buffer;
     puuid: string;
   }[];
   const games = rows.map((r) => {
-    const game = JSON.parse(r.raw_json);
+    const game = unpackRaw(r.raw_json);
     game._ownerPuuid = r.puuid;
     return game;
   });
@@ -2003,7 +2147,7 @@ export function importData(data: any): number {
     for (const game of data.games ?? []) {
       const puuid = game._ownerPuuid || data.summoners?.[0]?.puuid;
       if (!puuid) continue;
-      if (insertGameFull(game, puuid)) imported++;
+      if (insertGameFull(game, puuid, false)) imported++;
     }
     return imported;
   }
@@ -2013,7 +2157,7 @@ export function importData(data: any): number {
   upsertSummoner(data.summoner);
   let imported = 0;
   for (const game of data.games ?? []) {
-    if (insertGameFull(game, puuid)) imported++;
+    if (insertGameFull(game, puuid, false)) imported++;
   }
   return imported;
 }
@@ -2038,7 +2182,7 @@ function rebuildDerivedStats(): number {
     game_id: number;
     puuid: string;
     game_duration: number;
-    raw_json: string;
+    raw_json: string | Buffer;
     champion_id: number | null;
     kills: number | null;
     deaths: number | null;
@@ -2064,7 +2208,7 @@ function rebuildDerivedStats(): number {
   const tx = db.transaction(() => {
     for (const row of rows) {
       try {
-        const raw = JSON.parse(row.raw_json);
+        const raw = unpackRaw(row.raw_json);
         const parts = extractParticipants(raw);
         // Owner puuid unknown (old imports): findOwnerRow falls back to
         // matching the stored stats row, same as the puuid backfill migration.
@@ -2132,7 +2276,7 @@ export function repairPuuids(): {
 
   for (const game of games) {
     try {
-      const raw = JSON.parse(game.raw_json);
+      const raw = unpackRaw(game.raw_json);
       const participants = raw.participants || [];
       const identities = raw.participantIdentities || [];
       const puuidsInGame = new Set<string>();
@@ -2189,7 +2333,7 @@ export function repairPuuids(): {
 
   for (const game of games) {
     try {
-      const raw = JSON.parse(game.raw_json);
+      const raw = unpackRaw(game.raw_json);
       const participants = raw.participants || [];
       const identities = raw.participantIdentities || [];
 
@@ -2223,7 +2367,7 @@ export function repairPuuids(): {
     for (const game of games) {
       if (!gameIds.has(game.game_id)) continue;
       try {
-        const raw = JSON.parse(game.raw_json);
+        const raw = unpackRaw(game.raw_json);
         const creation = raw.gameCreation || 0;
         if (creation <= latestCreation) continue;
 
@@ -2261,4 +2405,70 @@ export function repairPuuids(): {
   const rebuiltGames = rebuildDerivedStats();
 
   return { repairedGames, discoveredAccounts: userPuuids.size, rebuiltGames };
+}
+
+// ── Augment analytics (extended stats, schema v2) ───────────────────────────
+
+export interface AugmentSlotStat {
+  augmentId: number;
+  slot: number;
+  picks: number;
+  wins: number;
+}
+
+// How each augment performs by the breakpoint it was taken at. Slot order is
+// preserved from the client payload, so slot 1 is the first augment pick.
+export function getAugmentSlotStats(
+  patch?: string,
+  queue?: number,
+  minPicks = 1,
+): AugmentSlotStat[] {
+  return db
+    .prepare(
+      `SELECT pa.augment_id AS augmentId, pa.slot AS slot,
+              COUNT(*) AS picks, COALESCE(SUM(pa.win), 0) AS wins
+       FROM participant_augments pa
+       JOIN games g ON g.game_id = pa.game_id
+       WHERE g.is_remake = 0
+         AND (? IS NULL OR g.game_version = ?)
+         AND (? IS NULL OR g.queue_id = ?)
+       GROUP BY pa.augment_id, pa.slot
+       HAVING COUNT(*) >= ?
+       ORDER BY pa.augment_id, pa.slot`,
+    )
+    .all(patch ?? null, patch ?? null, queue ?? null, queue ?? null, minPicks) as AugmentSlotStat[];
+}
+
+export interface AugmentPairStat {
+  augmentA: number;
+  augmentB: number;
+  picks: number;
+  wins: number;
+}
+
+// Win rates for augment pairs taken together by the same player in the same
+// game (canonical order augmentA < augmentB, each pair counted once).
+export function getAugmentPairStats(
+  patch?: string,
+  queue?: number,
+  minPicks = 5,
+): AugmentPairStat[] {
+  return db
+    .prepare(
+      `SELECT a.augment_id AS augmentA, b.augment_id AS augmentB,
+              COUNT(*) AS picks, COALESCE(SUM(a.win), 0) AS wins
+       FROM participant_augments a
+       JOIN participant_augments b
+         ON b.game_id = a.game_id
+        AND b.participant_id = a.participant_id
+        AND b.augment_id > a.augment_id
+       JOIN games g ON g.game_id = a.game_id
+       WHERE g.is_remake = 0
+         AND (? IS NULL OR g.game_version = ?)
+         AND (? IS NULL OR g.queue_id = ?)
+       GROUP BY a.augment_id, b.augment_id
+       HAVING COUNT(*) >= ?
+       ORDER BY CAST(COALESCE(SUM(a.win), 0) AS REAL) / COUNT(*) DESC, COUNT(*) DESC`,
+    )
+    .all(patch ?? null, patch ?? null, queue ?? null, queue ?? null, minPicks) as AugmentPairStat[];
 }

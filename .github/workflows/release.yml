@@ -52,6 +52,7 @@ jobs:
         run: |
           gh release create "${{ steps.version.outputs.tag }}" \
             dist/MayhemTracker.exe \
+            dist/MayhemTracker-Setup.exe \
             --target "$GITHUB_SHA" \
             --title "${{ steps.version.outputs.tag }}" \
             --generate-notes

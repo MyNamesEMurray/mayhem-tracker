@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
+import { useStatsFilters } from "../hooks/useStatsFilters";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useIpc } from "../hooks/useIpc";
 import { useLcuStatus } from "../hooks/useLcuStatus";
@@ -65,8 +66,12 @@ const SELECT_CLASS = "select";
 
 export default function MatchHistory() {
   const [championFilter, setChampionFilter] = useState<number | undefined>(undefined);
-  const [patchFilter, setPatchFilter] = useState<string | undefined>(undefined);
-  const [queueFilter, setQueueFilter] = useState<number | undefined>(undefined);
+  const {
+    patch: patchFilter,
+    setPatch: setPatchFilter,
+    queue: queueFilter,
+    setQueue: setQueueFilter,
+  } = useStatsFilters();
   const [multikillFilter, setMultikillFilter] = useState<MultikillType[]>([]);
   const [sort, setSort] = useState<MatchSort | undefined>(undefined);
   const [sortDir, setSortDir] = useState<MatchSortDir>("desc");
