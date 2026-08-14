@@ -101,6 +101,18 @@ function gamePayload(g: db.PendingUploadGame) {
       totalHeal: p.total_heal,
       items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6],
       augments: p.augments.map((a) => ({ slot: a.slot, augmentId: a.augment_id })),
+      // Only present for games the live watcher tracked; the server caps
+      // and validates these, so trim to its per-participant bound
+      ...(p.itemEvents.length > 0
+        ? {
+            itemEvents: p.itemEvents.slice(0, 120).map((e) => ({
+              gameTime: Math.max(0, Math.round(e.game_time)),
+              action: e.action,
+              itemId: e.item_id,
+              count: e.count,
+            })),
+          }
+        : {}),
     })),
   };
 }

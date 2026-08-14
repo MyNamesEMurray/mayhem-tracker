@@ -183,6 +183,33 @@ export function championItemBreakdown(
   return Array.from(map.values()).sort((a, b) => b.picks - a.picks);
 }
 
+// Typical build path: items merged across the filtered patches with a
+// picks-weighted average first-buy time — sorting by that time reads as the
+// order the champion usually builds in.
+export function championBuildPath(
+  rows: import("./api").ItemPurchaseRow[],
+  f: Filters,
+  championId: number,
+): { item_id: number; picks: number; wins: number; avgBuyS: number }[] {
+  const map = new Map<number, { item_id: number; picks: number; wins: number; timeSum: number }>();
+  for (const r of rows) {
+    if (r.champion_id !== championId || !rowMatches(r, f)) continue;
+    let e = map.get(r.item_id);
+    if (!e) map.set(r.item_id, (e = { item_id: r.item_id, picks: 0, wins: 0, timeSum: 0 }));
+    e.picks += r.picks;
+    e.wins += r.wins;
+    e.timeSum += r.avg_first_buy_s * r.picks;
+  }
+  return Array.from(map.values())
+    .map((e) => ({
+      item_id: e.item_id,
+      picks: e.picks,
+      wins: e.wins,
+      avgBuyS: e.picks > 0 ? e.timeSum / e.picks : 0,
+    }))
+    .sort((a, b) => a.avgBuyS - b.avgBuyS);
+}
+
 // The "ideal build" ranking: entries with a workable sample sorted by score,
 // then low-sample entries by popularity as filler. Keeps a 2-1 item from
 // outranking a proven core item while small datasets still fill the row.

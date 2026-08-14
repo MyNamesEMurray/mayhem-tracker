@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchAugmentStats,
   fetchChampionStats,
+  fetchItemPurchaseStats,
   fetchItemStats,
   type AugmentStatRow,
   type ChampionStatRow,
+  type ItemPurchaseRow,
   type ItemStatRow,
 } from "./lib/api";
 import {
@@ -41,6 +43,7 @@ interface LoadedData {
   championRows: ChampionStatRow[];
   augmentRows: AugmentStatRow[];
   itemRows: ItemStatRow[];
+  purchaseRows: ItemPurchaseRow[];
   championData: ChampionData;
   augmentData: AugmentData;
 }
@@ -110,11 +113,13 @@ export default function App() {
       fetchChampionStats(),
       fetchAugmentStats(),
       fetchItemStats(),
+      fetchItemPurchaseStats(),
       loadChampionData(),
       loadAugmentData(),
     ])
-      .then(([championRows, augmentRows, itemRows, championData, augmentData]) => {
-        if (active) setData({ championRows, augmentRows, itemRows, championData, augmentData });
+      .then(([championRows, augmentRows, itemRows, purchaseRows, championData, augmentData]) => {
+        if (active)
+          setData({ championRows, augmentRows, itemRows, purchaseRows, championData, augmentData });
       })
       .catch((err) => {
         if (active) setError(err instanceof Error ? err.message : String(err));
@@ -324,6 +329,7 @@ export default function App() {
               championRows={data.championRows}
               augmentRows={data.augmentRows}
               itemRows={data.itemRows}
+              purchaseRows={data.purchaseRows}
               filters={filters}
               minGames={minGames}
               championData={data.championData}

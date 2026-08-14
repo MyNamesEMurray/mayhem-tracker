@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AugmentStatRow, ChampionStatRow, ItemStatRow } from "../lib/api";
+import type { AugmentStatRow, ChampionStatRow, ItemPurchaseRow, ItemStatRow } from "../lib/api";
 import {
   getAugmentName,
   getChampionName,
@@ -13,6 +13,7 @@ import {
   aggregateChampions,
   assignTiers,
   championAugmentBreakdown,
+  championBuildPath,
   championItemBreakdown,
   kdaRampClass,
   kdaRatio,
@@ -41,6 +42,7 @@ export default function ChampionDetail({
   championRows,
   augmentRows,
   itemRows,
+  purchaseRows,
   filters,
   minGames = 0,
   championData,
@@ -51,6 +53,7 @@ export default function ChampionDetail({
   championRows: ChampionStatRow[];
   augmentRows: AugmentStatRow[];
   itemRows: ItemStatRow[];
+  purchaseRows: ItemPurchaseRow[];
   filters: Filters;
   minGames?: number;
   championData: ChampionData;
@@ -87,6 +90,16 @@ export default function ChampionDetail({
     () => championAugmentBreakdown(augmentRows, filters, championId),
     [augmentRows, filters, championId],
   );
+
+  // Live-tracked purchase timings, narrowed to finished items and ordered by
+  // when they're typically bought — only games recorded by the desktop app's
+  // build-order watcher feed this, so it can be empty
+  const buildPath = useMemo(() => {
+    const all = championBuildPath(purchaseRows, filters, championId);
+    return all
+      .filter((e) => itemData[e.item_id]?.completed && e.picks >= 2)
+      .slice(0, 7);
+  }, [purchaseRows, filters, championId, itemData]);
 
   // The low-sample toggle and the panel search/rarity filters narrow the full
   // tables only; Core build and Best augments already rank with shrinkage
@@ -269,6 +282,45 @@ export default function ChampionDetail({
           </div>
         </div>
       </div>
+
+      {/* Typical build path — from live build-order tracking; hidden until
+          tracked games exist for this champion */}
+      {buildPath.length >= 2 && (
+        <div className={`${PANEL} p-5`}>
+          <div className="flex items-baseline gap-2.5 mb-3">
+            <h2 className={LABEL}>Typical build path</h2>
+            <span className="text-[11px] text-lol-text">
+              purchase order recorded live by Mayhem Tracker players
+            </span>
+          </div>
+          <div className="flex flex-wrap items-start gap-x-2 gap-y-3">
+            {buildPath.map((e, i) => {
+              const wr = e.picks > 0 ? ((e.wins / e.picks) * 100).toFixed(0) : "0";
+              const low = e.picks < 20;
+              const min = Math.round(e.avgBuyS / 60);
+              return (
+                <div key={e.item_id} className="flex items-center gap-x-2">
+                  {i > 0 && <span className="text-lol-text/50 text-sm mb-5">→</span>}
+                  <div
+                    className="flex flex-col items-center w-[56px]"
+                    title={`${getItemName(itemData, e.item_id)} — bought in ${e.picks} tracked games`}
+                  >
+                    <span className="rounded-md overflow-hidden leading-none">
+                      <ItemIcon itemData={itemData} itemId={e.item_id} size={40} />
+                    </span>
+                    <span className="text-[11px] text-lol-gold mt-1">~{min} min</span>
+                    <span
+                      className={`text-[10px] ${low ? "text-lol-text" : "text-lol-text-bright"}`}
+                    >
+                      {wr}%{low ? "*" : ""} · {e.picks} g
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Full tables */}
       <div className="grid grid-cols-1 min-[981px]:grid-cols-2 gap-4">

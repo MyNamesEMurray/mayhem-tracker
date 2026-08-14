@@ -107,6 +107,9 @@ export function getAugmentName(data: AugmentData, id: number): string {
 export interface ItemInfo {
   name: string;
   iconPath: string;
+  // Builds into nothing and isn't a consumable — a finished purchase, so
+  // build paths can skip components and potions
+  completed?: boolean;
 }
 
 export type ItemData = Record<number, ItemInfo>;
@@ -126,7 +129,7 @@ let itemPromise: Promise<ItemData> | null = null;
 export function loadItemData(): Promise<ItemData> {
   if (itemPromise) return itemPromise;
   itemPromise = (async () => {
-    const cached = readCache<ItemData>("item-data");
+    const cached = readCache<ItemData>("item-data-v2");
     if (cached) return cached;
 
     const data = await (
@@ -138,10 +141,21 @@ export function loadItemData(): Promise<ItemData> {
     const out: ItemData = {};
     if (Array.isArray(data)) {
       for (const item of data) {
-        out[item.id] = { name: item.name || `Item ${item.id}`, iconPath: item.iconPath || "" };
+        const buildsInto = Array.isArray(item.to) ? item.to.length : 0;
+        const categories: string[] = Array.isArray(item.categories) ? item.categories : [];
+        // Mode-specific prismatics (six-digit ids) count regardless of price
+        const completed =
+          buildsInto === 0 &&
+          !categories.includes("Consumable") &&
+          ((item.priceTotal ?? 0) >= 500 || item.id >= 100000);
+        out[item.id] = {
+          name: item.name || `Item ${item.id}`,
+          iconPath: item.iconPath || "",
+          completed,
+        };
       }
     }
-    writeCache("item-data", out);
+    writeCache("item-data-v2", out);
     return out;
   })();
   itemPromise.catch(() => {

@@ -43,6 +43,18 @@ export interface ItemStatRow {
   wins: number;
 }
 
+// From live build-order tracking: how many participants bought the item and
+// how early on average
+export interface ItemPurchaseRow {
+  patch: string;
+  queue_id: number;
+  champion_id: number;
+  item_id: number;
+  picks: number;
+  wins: number;
+  avg_first_buy_s: number;
+}
+
 // PostgREST caps responses at 1000 rows, so page with Range headers until a
 // short page arrives.
 async function fetchAll<T>(view: string): Promise<T[]> {
@@ -75,6 +87,10 @@ export function fetchAugmentStats(): Promise<AugmentStatRow[]> {
 
 export function fetchItemStats(): Promise<ItemStatRow[]> {
   return fetchAll<ItemStatRow>("item_stats");
+}
+
+export function fetchItemPurchaseStats(): Promise<ItemPurchaseRow[]> {
+  return fetchAll<ItemPurchaseRow>("item_purchase_stats");
 }
 
 export interface CommunityTotals {

@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.7.0 — 2026-08-14
+
+- Build orders now feed the community stats: if you share match data, the item purchase timings your app records (for all ten players in your games) upload with them — still fully anonymous.
+- mayhemstats.com champion pages gained a **Typical build path** section showing the order items are actually bought and when, built from live-tracked games. It appears per champion once enough tracked games exist.
+
 ## v2.6.0 — 2026-08-14
 
 - **Build orders**: while you play, the app now records the order every player buys their items in — open any tracked match's details to see each player's item timeline with minute stamps. Works automatically for games played with the app running (window or tray); can be turned off in Settings → General.

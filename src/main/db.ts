@@ -2094,6 +2094,7 @@ export interface PendingUploadGame {
     item5: number | null;
     item6: number | null;
     augments: { slot: number; augment_id: number }[];
+    itemEvents: { game_time: number; action: string; item_id: number; count: number }[];
   }[];
 }
 
@@ -2123,6 +2124,13 @@ export function getPendingUploadGames(limit: number): PendingUploadGame[] {
     FROM participant_augments WHERE game_id = ? ORDER BY participant_id, slot
   `);
 
+  const eventStmt = db.prepare(`
+    SELECT participant_id, game_time, action, item_id, count
+    FROM item_events
+    WHERE game_id = ? AND action IN ('add', 'remove')
+    ORDER BY participant_id, game_time
+  `);
+
   return games.map((g) => {
     const participants = partStmt.all(g.game_id) as any[];
     const augments = augStmt.all(g.game_id) as {
@@ -2136,8 +2144,24 @@ export function getPendingUploadGames(limit: number): PendingUploadGame[] {
       if (!list) byParticipant.set(a.participant_id, (list = []));
       list.push({ slot: a.slot, augment_id: a.augment_id });
     }
+    // Build-order events (live-tracked games only) ride along with the
+    // upload; augment-name events stay local
+    const events = eventStmt.all(g.game_id) as {
+      participant_id: number;
+      game_time: number;
+      action: string;
+      item_id: number;
+      count: number;
+    }[];
+    const eventsByParticipant = new Map<number, typeof events>();
+    for (const e of events) {
+      let list = eventsByParticipant.get(e.participant_id);
+      if (!list) eventsByParticipant.set(e.participant_id, (list = []));
+      list.push(e);
+    }
     for (const p of participants) {
       p.augments = byParticipant.get(p.participant_id) ?? [];
+      p.itemEvents = eventsByParticipant.get(p.participant_id) ?? [];
     }
     return { ...g, participants };
   });
