@@ -100,7 +100,18 @@ export interface MatchDetail {
   game: GameRecord;
   stats: PlayerStatsRecord;
   augments: GameAugment[];
+  itemEvents?: ItemEventRow[];
   raw: any;
+}
+
+// A build-order event captured live during the game
+export interface ItemEventRow {
+  participant_id: number;
+  game_time: number;
+  action: string;
+  item_id: number | null;
+  count: number;
+  detail: string | null;
 }
 
 export interface ChampionStats {

@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.6.0 — 2026-08-14
+
+- **Build orders**: while you play, the app now records the order every player buys their items in — open any tracked match's details to see each player's item timeline with minute stamps. Works automatically for games played with the app running (window or tray); can be turned off in Settings → General.
+- Augments that grant an active ability show up in the build order too, with when they were picked. (Riot's live data doesn't expose the augment choices you're offered, so offered-vs-taken stats aren't possible — we checked.)
+
 ## v2.5.2 — 2026-08-14
 
 - The update window now shows what's new right inside the app, before you click update.

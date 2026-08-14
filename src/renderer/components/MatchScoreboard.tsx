@@ -61,6 +61,88 @@ export default function MatchScoreboard({
           patch={detail.game.game_version}
         />
       ))}
+      {(detail.itemEvents?.length ?? 0) > 0 && (
+        <BuildOrders
+          events={detail.itemEvents!}
+          participants={participants}
+          champData={champData}
+          patch={detail.game.game_version}
+        />
+      )}
+    </div>
+  );
+}
+
+// Free handouts that would clutter every build path
+const BUILD_ORDER_HIDDEN_ITEMS = new Set([2052, 220013]);
+
+// Timeline of item purchases per player, captured live while the game was
+// played — only present on games recorded by the build-order watcher
+function BuildOrders({
+  events,
+  participants,
+  champData,
+  patch,
+}: {
+  events: NonNullable<MatchDetail["itemEvents"]>;
+  participants: ParsedParticipant[];
+  champData: any;
+  patch?: string | null;
+}) {
+  const byParticipant = useMemo(() => {
+    const map = new Map<number, typeof events>();
+    for (const e of events) {
+      if (e.action === "remove") continue;
+      if (e.item_id !== null && BUILD_ORDER_HIDDEN_ITEMS.has(e.item_id)) continue;
+      const list = map.get(e.participant_id) ?? [];
+      list.push(e);
+      map.set(e.participant_id, list);
+    }
+    return map;
+  }, [events]);
+
+  return (
+    <div className="rounded-xl border border-lol-border/60 bg-lol-card overflow-hidden">
+      <div className="px-3 py-[7px] border-b border-lol-border/60">
+        <span className="text-xs font-bold text-lol-text-bright">Build orders</span>
+        <span className="ml-2 text-[11px] text-lol-text">recorded live during the game</span>
+      </div>
+      <div className="divide-y divide-lol-border/40">
+        {participants.map((p) => {
+          const list = byParticipant.get(p.participantId);
+          if (!list || list.length === 0) return null;
+          return (
+            <div key={p.participantId} className="flex items-center gap-2.5 px-3 py-2">
+              <div className="flex items-center gap-1.5 w-36 shrink-0">
+                <ChampionIcon championId={p.championId} size={22} />
+                <span className="text-[12px] text-lol-text-bright truncate">
+                  {getChampionName(champData, p.championId)}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-end gap-x-1.5 gap-y-1">
+                {list.map((e, i) =>
+                  e.action === "augment" ? (
+                    <span
+                      key={i}
+                      className="rounded bg-lol-gold/10 border border-lol-gold/25 px-1.5 py-0.5 text-[10px] text-lol-gold"
+                      title={`Augment gained at ${Math.floor(e.game_time / 60)}m`}
+                    >
+                      {e.detail}
+                    </span>
+                  ) : (
+                    <span key={i} className="flex flex-col items-center gap-0.5">
+                      <ItemIcon itemId={e.item_id ?? 0} size={20} patch={patch} />
+                      <span className="text-[9px] leading-none text-lol-text">
+                        {Math.floor(e.game_time / 60)}m
+                      </span>
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

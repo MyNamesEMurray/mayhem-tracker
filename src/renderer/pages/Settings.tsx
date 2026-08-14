@@ -58,9 +58,11 @@ export default function Settings() {
     Promise.all([
       window.api.getSetting("minimize_to_tray"),
       window.api.getSetting("hide_classic_games"),
-    ]).then(([tray, classic]) => {
+      window.api.getSetting("live_tracking_enabled"),
+    ]).then(([tray, classic, liveTrack]) => {
       setMinimizeToTray(tray !== "false");
       setHideClassic(classic === "true");
+      setLiveTracking(liveTrack !== "false");
       setLoading(false);
     });
   }, []);
@@ -76,6 +78,13 @@ export default function Settings() {
     setHideClassic(next);
     await window.api.setSetting("hide_classic_games", String(next));
   }, [hideClassic]);
+
+  const [liveTracking, setLiveTracking] = useState(true);
+  const handleLiveTrackingToggle = useCallback(async () => {
+    const next = !liveTracking;
+    setLiveTracking(next);
+    await window.api.setSetting("live_tracking_enabled", String(next));
+  }, [liveTracking]);
 
   useEffect(() => {
     window.api.getUploadStatus().then(setUploadStatus);
@@ -248,6 +257,12 @@ export default function Settings() {
             description="Exclude the limited-time Classic queue from all stats and match history"
           >
             <Toggle checked={hideClassic} onChange={handleHideClassicToggle} />
+          </SettingRow>
+          <SettingRow
+            name="Track build orders during games"
+            description="While you play, records the order every player buys items in (locally, from the game's own live data) and shows it in match details"
+          >
+            <Toggle checked={liveTracking} onChange={handleLiveTrackingToggle} />
           </SettingRow>
           <SettingRow
             name="Check for updates"

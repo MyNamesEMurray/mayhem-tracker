@@ -7,6 +7,7 @@ import * as dragon from "./dragon";
 import * as updater from "./updater";
 import * as upload from "./upload";
 import * as liveDebug from "./live-debug";
+import * as liveWatcher from "./live-watcher";
 
 // Handlers are window-agnostic (registered once for the app's lifetime) —
 // the main window is destroyed while idling in the tray and rebuilt on
@@ -179,6 +180,8 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("settings:set", (_event, key: string, value: string) => {
     db.setSetting(key, value);
+    // The build-order watcher runs off this setting; react immediately
+    if (key === "live_tracking_enabled") liveWatcher.refreshLiveWatcher();
   });
 
   // Window controls (custom title bar)

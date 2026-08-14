@@ -5,6 +5,7 @@ import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
 import { setMainWindow, getMainWindow } from "./window-ref";
 import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
 import { refreshLiveDebug } from "./live-debug";
+import { refreshLiveWatcher } from "./live-watcher";
 import { isUpdating } from "./update-state";
 import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
@@ -133,6 +134,9 @@ app.whenReady().then(async () => {
 
   // Live game debug recorder (no-op unless enabled in Settings)
   refreshLiveDebug();
+
+  // Build-order tracking during games (on by default)
+  refreshLiveWatcher();
 
   // Finish any community upload a previous session left pending
   void uploadPendingGames(getMainWindow());

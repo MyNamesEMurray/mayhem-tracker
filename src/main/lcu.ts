@@ -8,6 +8,7 @@ import {
 } from "league-connect";
 import { BrowserWindow } from "electron";
 import * as db from "./db";
+import { tryAttachLiveEvents } from "./live-watcher";
 import { uploadPendingGames } from "./upload";
 import { getMainWindow } from "./window-ref";
 import { MAYHEM_QUEUE_IDS } from "../shared/queues";
@@ -320,6 +321,7 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
       } else if (db.insertGameFull(game, summoner.puuid)) {
         added++;
         console.log(`Backfilled ARAM Mayhem game ${gameId}`);
+        tryAttachLiveEvents(game, gameId);
       }
 
       // Let the app fill in as it goes rather than staying empty for minutes
@@ -411,6 +413,8 @@ export async function fetchNewGames(
     if (inserted) {
       newGamesCount++;
       console.log(`Stored ARAM Mayhem game ${fullGame.gameId}`);
+      // A just-finished game may have a live build-order session waiting
+      tryAttachLiveEvents(fullGame, fullGame.gameId);
     }
   }
 

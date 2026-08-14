@@ -157,6 +157,19 @@ function createTables() {
       PRIMARY KEY (game_id, participant_id, slot)
     );
 
+    -- Build-order events captured live during games (all ten players):
+    -- item adds/removes with timestamps, plus spell-slot augment pickups
+    CREATE TABLE IF NOT EXISTS item_events (
+      game_id        INTEGER NOT NULL,
+      participant_id INTEGER NOT NULL,
+      game_time      REAL NOT NULL,
+      action         TEXT NOT NULL,
+      item_id        INTEGER,
+      count          INTEGER NOT NULL DEFAULT 1,
+      detail         TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_item_events_game ON item_events(game_id);
+
     CREATE INDEX IF NOT EXISTS idx_games_creation ON games(game_creation DESC);
     CREATE INDEX IF NOT EXISTS idx_player_stats_champion ON player_stats(champion_id);
     CREATE INDEX IF NOT EXISTS idx_game_augments_augment ON game_augments(augment_id);
@@ -1068,12 +1081,47 @@ export function getMatchDetail(gameId: number): any {
   const augments = db
     .prepare("SELECT * FROM game_augments WHERE game_id = ? ORDER BY slot")
     .all(gameId);
+  const itemEvents = db
+    .prepare(
+      "SELECT participant_id, game_time, action, item_id, count, detail FROM item_events WHERE game_id = ? ORDER BY game_time",
+    )
+    .all(gameId);
   return {
     game,
     stats,
     augments,
+    itemEvents,
     raw: unpackRaw(game.raw_json),
   };
+}
+
+// Build-order events from the live watcher, written once per game when a
+// finished live session is matched to a stored game
+export function storeLiveEvents(
+  gameId: number,
+  events: {
+    participantId: number;
+    gameTime: number;
+    action: string;
+    itemId: number | null;
+    count: number;
+    detail: string | null;
+  }[],
+): void {
+  const existing = db
+    .prepare("SELECT COUNT(*) AS n FROM item_events WHERE game_id = ?")
+    .get(gameId) as { n: number };
+  if (existing.n > 0) return;
+  const insert = db.prepare(`
+    INSERT INTO item_events (game_id, participant_id, game_time, action, item_id, count, detail)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+  const tx = db.transaction(() => {
+    for (const e of events) {
+      insert.run(gameId, e.participantId, e.gameTime, e.action, e.itemId, e.count, e.detail);
+    }
+  });
+  tx();
 }
 
 export function getChampionStatsAll(patch?: string, queue?: number): any[] {

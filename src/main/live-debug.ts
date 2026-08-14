@@ -33,7 +33,7 @@ export function recordingsDir(): string {
   return path.join(getDataDir(), "live-debug");
 }
 
-function fetchLive(): Promise<any> {
+export function fetchLive(): Promise<any> {
   return new Promise((resolve, reject) => {
     const req = https.get(LIVE_URL, { rejectUnauthorized: false, timeout: 1500 }, (res) => {
       if (res.statusCode !== 200) {
