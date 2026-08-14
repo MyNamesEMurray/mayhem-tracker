@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { setUpdating } from "./update-state";
 
 export interface UpdateInfo {
   hasUpdate: boolean;
@@ -62,6 +63,19 @@ export async function downloadAndInstall(
     return { success: false, error: "Unexpected download URL" };
   }
 
+  // Best-effort sweep of temp dirs left by earlier updates (the installed
+  // path can't clean up after itself — nothing outlives the process)
+  try {
+    const tmpRoot = os.tmpdir();
+    for (const entry of fs.readdirSync(tmpRoot)) {
+      if (entry.startsWith("mayhem-update-")) {
+        fs.rmSync(path.join(tmpRoot, entry), { recursive: true, force: true });
+      }
+    }
+  } catch {
+    // Locked or missing entries are fine to leave behind
+  }
+
   let tmpDir: string;
   try {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mayhem-update-"));
@@ -103,29 +117,19 @@ export async function downloadAndInstall(
     return { success: false, error: `Download failed: ${err.message}` };
   }
 
-  // Installed build: re-run the downloaded one-click installer silently.
-  // /S installs per-user without UI and --force-run relaunches the app when
-  // it finishes; the script first waits for this process to exit so the
-  // installer never races a live install directory.
+  // Installed build: run the downloaded one-click installer directly —
+  // it's a GUI executable, so no console window appears. /S installs
+  // per-user without UI, --force-run relaunches the app when it finishes,
+  // and the installer itself waits out (or kills) a still-running app, so
+  // no wrapper script is needed. The temp installer is swept on the next
+  // update rather than here, since nothing outlives us to clean it.
   if (installed) {
-    const script = path.join(tmpDir, "update.cmd");
-    fs.writeFileSync(
-      script,
-      [
-        "@echo off",
-        "set tries=0",
-        ":wait",
-        "set /a tries+=1",
-        "if %tries% gtr 120 goto run",
-        `tasklist /FI "PID eq ${process.pid}" 2>nul | find "${process.pid}" >nul`,
-        "if not errorlevel 1 (ping -n 2 127.0.0.1 >nul & goto wait)",
-        ":run",
-        `start "" /wait "${newExe}" /S --force-run`,
-        `rd /s /q "${tmpDir}"`,
-        "",
-      ].join("\r\n"),
-    );
-    spawn("cmd.exe", ["/c", script], { detached: true, stdio: "ignore", windowsHide: true }).unref();
+    setUpdating(true);
+    spawn(newExe, ["/S", "--force-run"], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+    }).unref();
     // Let the IPC response reach the renderer before quitting
     setTimeout(() => app.quit(), 200);
     return { success: true };
@@ -167,6 +171,7 @@ export async function downloadAndInstall(
     ].join("\r\n"),
   );
 
+  setUpdating(true);
   spawn("cmd.exe", ["/c", script], { detached: true, stdio: "ignore", windowsHide: true }).unref();
   // Let the IPC response reach the renderer before quitting
   setTimeout(() => app.quit(), 200);

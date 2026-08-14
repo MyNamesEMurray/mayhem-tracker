@@ -5,6 +5,7 @@ import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
 import { setMainWindow, getMainWindow } from "./window-ref";
 import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
 import { refreshLiveDebug } from "./live-debug";
+import { isUpdating } from "./update-state";
 import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
 
@@ -140,12 +141,18 @@ app.whenReady().then(async () => {
 app.on("before-quit", async (event) => {
   isQuitting = true;
 
-  if (!didFinalFetch && getStatus() === "connected") {
+  // Skipped entirely during an update — the installer/swap script is
+  // waiting for this process to exit and a slow LCU would stall it
+  if (!didFinalFetch && !isUpdating() && getStatus() === "connected") {
     event.preventDefault();
     didFinalFetch = true;
     try {
       console.log("Fetching games before quit...");
-      await fetchNewGames(getMainWindow());
+      // A hung LCU request must never block quitting indefinitely
+      await Promise.race([
+        fetchNewGames(getMainWindow()),
+        new Promise((resolve) => setTimeout(resolve, 10_000)),
+      ]);
     } catch (err) {
       console.log("Final fetch on quit failed:", err);
     }
