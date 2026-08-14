@@ -2,6 +2,7 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import { getDataDir } from "./paths";
+import { toClientPatch } from "../shared/patch";
 
 let championCache: Record<number, { name: string; key: string; class?: string }> = {};
 // Data Dragon version the champion cache came from ("none" until any data
@@ -146,6 +147,9 @@ const itemsJsonUrl = (branch: string) =>
 // and a patch newer than live only exists on "pbe".
 async function resolveItemBranch(patch?: string): Promise<string> {
   if (!patch) return "latest";
+  // Stored patches are year-based ("26.16"); CDN branches and DDragon
+  // versions use client numbering ("16.16")
+  patch = toClientPatch(patch);
   try {
     if (!latestLivePatch) {
       const versions = await fetchJson("https://ddragon.leagueoflegends.com/api/versions.json");

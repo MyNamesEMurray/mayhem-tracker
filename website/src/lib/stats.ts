@@ -30,14 +30,15 @@ export function comparePatches(a: string, b: string): number {
   return aMajor - bMajor || aMinor - bMinor;
 }
 
-// Riot's match data kept sequential client versions ("16.16") when patch
-// names went year-based in 2025 ("26.16"), so display majors 15+ shifted
-// by ten. Raw values stay in URLs and filters; this is display-only.
+// Patches are stored year-based ("26.16") since the community database was
+// normalized; mapping again here is a harmless safety net for any stray
+// client-style value ("16.16") — client majors stay below 25 until 2035,
+// so the shift is idempotent.
 export function formatPatch(patch: string): string {
   const m = patch.match(/^(\d+)\.(.+)$/);
   if (!m) return patch;
   const major = Number(m[1]);
-  return major >= 15 ? `${major + 10}.${m[2]}` : patch;
+  return major >= 15 && major < 25 ? `${major + 10}.${m[2]}` : patch;
 }
 
 // Patches present in the data, newest first

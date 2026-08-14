@@ -57,13 +57,13 @@ const championSlug = (name) =>
 // Mirrors src/lib/stats.ts score()
 const score = (wins, games) => (100 * (wins + 10)) / (games + 20);
 
-// Mirrors src/lib/stats.ts formatPatch(): data carries sequential client
-// versions ("16.16") but Riot names patches by year ("26.16")
+// Mirrors src/lib/stats.ts formatPatch(): stored patches are year-based
+// ("26.16"); shifting stray client-style values ("16.16") is idempotent
 const formatPatch = (patch) => {
   const m = patch.match(/^(\d+)\.(.+)$/);
   if (!m) return patch;
   const major = Number(m[1]);
-  return major >= 15 ? `${major + 10}.${m[2]}` : patch;
+  return major >= 15 && major < 25 ? `${major + 10}.${m[2]}` : patch;
 };
 
 const esc = (s) =>

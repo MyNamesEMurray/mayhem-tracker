@@ -3,6 +3,7 @@ import path from "path";
 import { gzipSync, gunzipSync } from "zlib";
 import { SCORE_FORMULA_VERSION, computeMatchScores } from "../shared/opScore";
 import { AUGMENT_SLOTS, MAYHEM_QUEUE_IDS, QUEUE_ID_MAYHEM_CLASSIC } from "../shared/queues";
+import { toYearPatch } from "../shared/patch";
 import { getDataDir } from "./paths";
 import { getChampionClasses, getChampionDataVersion } from "./dragon";
 
@@ -365,6 +366,23 @@ function createTables() {
     }
     setSetting("raw_json_compressed", "1");
     if (ids.length > 0) db.exec("VACUUM");
+  }
+
+  // One-time switch to Riot's year-based patch names ("16.16" -> "26.16"):
+  // parsePatch now normalizes on insert, this brings stored rows in line.
+  if (getSetting("patch_yearbased") !== "1") {
+    const rows = db
+      .prepare("SELECT DISTINCT game_version FROM games WHERE game_version IS NOT NULL")
+      .all() as { game_version: string }[];
+    const upd = db.prepare("UPDATE games SET game_version = ? WHERE game_version = ?");
+    const tx = db.transaction(() => {
+      for (const r of rows) {
+        const mapped = toYearPatch(r.game_version);
+        if (mapped !== r.game_version) upd.run(mapped, r.game_version);
+      }
+    });
+    tx();
+    setSetting("patch_yearbased", "1");
   }
 
   // Populate the participants tables from raw_json for databases created
@@ -845,10 +863,12 @@ function backfillScores() {
   tx();
 }
 
+// The raw JSON carries client build versions; we store Riot's year-based
+// patch names, so every writer of game_version normalizes here.
 function parsePatch(version: unknown): string | null {
   if (typeof version !== "string") return null;
   const m = version.match(/^(\d+)\.(\d+)/);
-  return m ? `${m[1]}.${m[2]}` : null;
+  return m ? toYearPatch(`${m[1]}.${m[2]}`) : null;
 }
 
 function detectRemake(gameDuration: number, raw: any | null): boolean {
