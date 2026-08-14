@@ -278,6 +278,13 @@ export interface GlobalChampionDetail {
   augments: AugmentStats[];
 }
 
+export interface LiveDebugStatus {
+  enabled: boolean;
+  recording: boolean;
+  dir: string;
+  lastFile: string | null;
+}
+
 export interface ParsedParticipant {
   participantId: number;
   championId: number;
@@ -409,6 +416,9 @@ export interface ElectronAPI {
     error?: string;
   }>;
   onUploadChanged: (callback: () => void) => () => void;
+  getLiveDebugStatus: () => Promise<LiveDebugStatus>;
+  setLiveDebugEnabled: (enabled: boolean) => Promise<LiveDebugStatus>;
+  openLiveDebugFolder: () => Promise<void>;
   getVersion: () => Promise<string>;
   checkForUpdate: () => Promise<UpdateInfo>;
   downloadUpdate: (assetUrl: string) => Promise<{ success: boolean; error?: string }>;

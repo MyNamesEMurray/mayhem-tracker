@@ -131,6 +131,12 @@ const api = {
     return () => ipcRenderer.removeListener("upload:changed", handler);
   },
 
+  getLiveDebugStatus: () => ipcRenderer.invoke("livedebug:status"),
+
+  setLiveDebugEnabled: (enabled: boolean) => ipcRenderer.invoke("livedebug:set-enabled", enabled),
+
+  openLiveDebugFolder: () => ipcRenderer.invoke("livedebug:open-folder"),
+
   getVersion: () => ipcRenderer.invoke("app:version"),
 
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),

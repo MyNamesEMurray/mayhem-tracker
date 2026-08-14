@@ -6,6 +6,7 @@ import * as lcu from "./lcu";
 import * as dragon from "./dragon";
 import * as updater from "./updater";
 import * as upload from "./upload";
+import * as liveDebug from "./live-debug";
 
 // Handlers are window-agnostic (registered once for the app's lifetime) —
 // the main window is destroyed while idling in the tray and rebuilt on
@@ -265,6 +266,23 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("upload:delete-contributions", () => {
     return upload.deleteContributions(getMainWindow());
+  });
+
+  // Live game debug recorder
+  ipcMain.handle("livedebug:status", () => {
+    return liveDebug.getLiveDebugStatus();
+  });
+
+  ipcMain.handle("livedebug:set-enabled", (_event, enabled: boolean) => {
+    db.setSetting("live_debug_enabled", String(enabled));
+    liveDebug.refreshLiveDebug();
+    return liveDebug.getLiveDebugStatus();
+  });
+
+  ipcMain.handle("livedebug:open-folder", () => {
+    const dir = liveDebug.recordingsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    shell.openPath(dir);
   });
 }
 

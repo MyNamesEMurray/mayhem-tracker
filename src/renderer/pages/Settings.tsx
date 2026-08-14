@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useBackfill } from "../hooks/useBackfill";
-import type { UploadStatus } from "../lib/types";
+import type { LiveDebugStatus, UploadStatus } from "../lib/types";
 import Toggle from "../components/Toggle";
 
 // Design-system control styles (radius 8 controls, gold primary, destructive
@@ -93,6 +93,29 @@ export default function Settings() {
     await window.api.setUploadEnabled(next);
     setUploadStatus(await window.api.getUploadStatus());
   }, [uploadStatus]);
+
+  const [liveDebug, setLiveDebug] = useState<LiveDebugStatus | null>(null);
+
+  // Poll while the page is open so the "recording" indicator tracks games
+  // starting and ending
+  useEffect(() => {
+    let alive = true;
+    const refresh = () =>
+      window.api.getLiveDebugStatus().then((s) => {
+        if (alive) setLiveDebug(s);
+      });
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const handleLiveDebugToggle = useCallback(async () => {
+    if (!liveDebug) return;
+    setLiveDebug(await window.api.setLiveDebugEnabled(!liveDebug.enabled));
+  }, [liveDebug]);
 
   const handleDeleteContributions = useCallback(async () => {
     if (
@@ -276,6 +299,38 @@ export default function Settings() {
           </button>
         </SettingRow>
         {repairStatus && <p className="text-xs text-lol-text">{repairStatus}</p>}
+      </Panel>
+
+      <Panel label="Developer">
+        <SettingRow
+          name="Record live game data"
+          description="While enabled, polls the League client's live-data API every 2 seconds during games and saves raw snapshots to local files — debug only, nothing is uploaded"
+        >
+          <Toggle
+            checked={liveDebug?.enabled ?? false}
+            onChange={handleLiveDebugToggle}
+            disabled={!liveDebug}
+          />
+        </SettingRow>
+        {liveDebug?.recording && (
+          <p className="text-xs text-emerald-400">● Recording live game data…</p>
+        )}
+        {liveDebug?.lastFile && !liveDebug.recording && (
+          <p className="text-xs text-lol-text">
+            Last recording: {liveDebug.lastFile.split(/[\\/]/).pop()}
+          </p>
+        )}
+        <SettingRow
+          name="Recordings folder"
+          description="Open the folder holding recorded live-game files"
+        >
+          <button
+            onClick={() => window.api.openLiveDebugFolder()}
+            className={BUTTON_SECONDARY}
+          >
+            Open folder
+          </button>
+        </SettingRow>
       </Panel>
     </div>
   );
