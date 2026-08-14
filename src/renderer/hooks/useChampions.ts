@@ -38,30 +38,57 @@ export function useAugmentData() {
   return data;
 }
 
-// Item data is keyed by patch so icons come from the same patch as the game
+// Item data is keyed by patch so icons come from the same patch as the game.
+// Loads notify every mounted subscriber (not just the instance that started
+// the fetch), and an empty result — the main process returns {} on network
+// failure — is retried a few times instead of sticking until remount.
+const itemListeners = new Map<string, Set<(d: ItemData) => void>>();
+
+function loadItems(key: string, patch?: string | null): void {
+  if (itemPromises.has(key)) return;
+  const promise = window.api.getItemData(patch || undefined).then((d) => {
+    if (Object.keys(d).length > 0) {
+      itemCaches.set(key, d);
+      itemListeners.get(key)?.forEach((fn) => fn(d));
+    } else {
+      // Failed load: drop the promise so a later attempt can retry
+      itemPromises.delete(key);
+    }
+    return d;
+  });
+  itemPromises.set(key, promise);
+}
+
 export function useItemData(patch?: string | null) {
   const key = patch || "latest";
   const [data, setData] = useState<ItemData>(itemCaches.get(key) || {});
 
   useEffect(() => {
     const cached = itemCaches.get(key);
-    if (cached && Object.keys(cached).length > 0) {
+    if (cached) {
       setData(cached);
       return;
     }
-    let promise = itemPromises.get(key);
-    if (!promise) {
-      promise = window.api.getItemData(patch || undefined);
-      itemPromises.set(key, promise);
+    setData({});
+    let listeners = itemListeners.get(key);
+    if (!listeners) {
+      listeners = new Set();
+      itemListeners.set(key, listeners);
     }
-    let active = true;
-    promise.then((d) => {
-      if (Object.keys(d).length > 0) itemCaches.set(key, d);
-      else itemPromises.delete(key);
-      if (active) setData(d);
-    });
+    const listener = (d: ItemData) => setData(d);
+    listeners.add(listener);
+    loadItems(key, patch);
+    let tries = 0;
+    const retry = setInterval(() => {
+      if (itemCaches.has(key) || ++tries > 5) {
+        clearInterval(retry);
+        return;
+      }
+      loadItems(key, patch);
+    }, 4000);
     return () => {
-      active = false;
+      listeners!.delete(listener);
+      clearInterval(retry);
     };
   }, [key]);
 

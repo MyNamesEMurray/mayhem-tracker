@@ -19,9 +19,13 @@ function stripIconVariant(iconPath: string): string | null {
 
 export default function ItemIcon({ itemId, size = 24, patch }: ItemIconProps) {
   const itemData = useItemData(patch);
+  // Latest-patch data is almost always cached already, so it fills the gap
+  // while the per-patch mapping loads (or when that load keeps failing) —
+  // item icons rarely change between patches.
+  const latestItems = useItemData(null);
   const [attempt, setAttempt] = useState(0);
 
-  const item = itemData[itemId];
+  const item = itemData[itemId] ?? (patch ? latestItems[itemId] : undefined);
   const sources = useMemo(() => {
     const urls: string[] = [];
     if (item?.iconPath) {

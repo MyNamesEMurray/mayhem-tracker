@@ -176,13 +176,16 @@ export function loadItemData(patch?: string): Promise<Record<number, ItemInfo>> 
   let promise = itemPromises.get(key);
   if (!promise) {
     promise = (async () => {
-      const branch = await resolveItemBranch(patch);
+      let branch = await resolveItemBranch(patch);
       let data: any;
       try {
         data = await fetchJson(itemsJsonUrl(branch));
       } catch (err) {
         if (branch === "latest") throw err;
-        data = await fetchJson(itemsJsonUrl("latest"));
+        // Label items with the branch the data actually came from, or the
+        // asset URLs built from them would 404 on the unavailable branch
+        branch = "latest";
+        data = await fetchJson(itemsJsonUrl(branch));
       }
       const items: Record<number, ItemInfo> = {};
       if (Array.isArray(data)) {
