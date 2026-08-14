@@ -17,6 +17,7 @@ import {
   aggregateChampions,
   availablePatches,
   availableQueues,
+  formatPatch,
   MIN_SAMPLE,
   QUEUE_LABELS,
   type Filters,
@@ -167,13 +168,13 @@ export default function App() {
   // Human label for the current patch selection, shown in page titles
   const patchLabel = !patchParam
     ? patches.length
-      ? `Patch ${patches[0]}`
+      ? `Patch ${formatPatch(patches[0])}`
       : ""
     : patchParam === "all"
       ? "All patches"
       : patchParam.includes("-")
-        ? `Patches ${patchParam.replace("-", "–")}`
-        : `Patch ${patchParam}`;
+        ? `Patches ${patchParam.split("-").map(formatPatch).join("–")}`
+        : `Patch ${formatPatch(patchParam)}`;
 
   const navTab = (label: string, active: boolean, onClick: () => void) => (
     <button

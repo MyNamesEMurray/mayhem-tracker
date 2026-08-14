@@ -1,4 +1,4 @@
-import { comparePatches } from "../lib/stats";
+import { comparePatches, formatPatch } from "../lib/stats";
 
 // Patch filter with three modes, encoded in the ?patch= param:
 //   absent  -> current patch only (the default view)
@@ -68,7 +68,9 @@ export default function PatchRangeSelect({
   return (
     <div className="flex items-center gap-2">
       <select className="select" value={selection.mode} onChange={(e) => handleMode(e.target.value)}>
-        <option value="current">{latest ? `Current patch (${latest})` : "Current patch"}</option>
+        <option value="current">
+          {latest ? `Current patch (${formatPatch(latest)})` : "Current patch"}
+        </option>
         <option value="all">All patches</option>
         <option value="range">Patch range…</option>
       </select>
@@ -81,7 +83,7 @@ export default function PatchRangeSelect({
           >
             {patches.map((p) => (
               <option key={p} value={p}>
-                {p}
+                {formatPatch(p)}
               </option>
             ))}
           </select>
@@ -93,7 +95,7 @@ export default function PatchRangeSelect({
           >
             {patches.map((p) => (
               <option key={p} value={p}>
-                {p}
+                {formatPatch(p)}
               </option>
             ))}
           </select>

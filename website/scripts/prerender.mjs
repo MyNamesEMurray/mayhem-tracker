@@ -57,6 +57,15 @@ const championSlug = (name) =>
 // Mirrors src/lib/stats.ts score()
 const score = (wins, games) => (100 * (wins + 10)) / (games + 20);
 
+// Mirrors src/lib/stats.ts formatPatch(): data carries sequential client
+// versions ("16.16") but Riot names patches by year ("26.16")
+const formatPatch = (patch) => {
+  const m = patch.match(/^(\d+)\.(.+)$/);
+  if (!m) return patch;
+  const major = Number(m[1]);
+  return major >= 15 ? `${major + 10}.${m[2]}` : patch;
+};
+
 const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -265,7 +274,7 @@ async function main() {
               ${itemTable}
         </tbody>
       </table>
-      <p><em>Updated ${buildDate} · data through patch ${latestPatch} · win rates under 20 games carry low confidence.</em></p>
+      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · win rates under 20 games carry low confidence.</em></p>
       <p>More champions: ${crossLinks}</p>
       <p><a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>
