@@ -300,7 +300,13 @@ export default function ChampionDetail({
               const min = Math.round(e.avgBuyS / 60);
               return (
                 <div key={e.item_id} className="flex items-center gap-x-2">
-                  {i > 0 && <span className="text-lol-text/50 text-sm mb-5">→</span>}
+                  {/* Hidden on narrow screens, where wrapping would leave a
+                      row starting with an arrow */}
+                  {i > 0 && (
+                    <span className="hidden min-[701px]:inline text-lol-text/50 text-sm mb-5">
+                      →
+                    </span>
+                  )}
                   <div
                     className="flex flex-col items-center w-[56px]"
                     title={`${getItemName(itemData, e.item_id)} — bought in ${e.picks} tracked games`}

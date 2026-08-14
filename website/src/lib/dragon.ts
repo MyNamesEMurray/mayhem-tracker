@@ -129,7 +129,7 @@ let itemPromise: Promise<ItemData> | null = null;
 export function loadItemData(): Promise<ItemData> {
   if (itemPromise) return itemPromise;
   itemPromise = (async () => {
-    const cached = readCache<ItemData>("item-data-v2");
+    const cached = readCache<ItemData>("item-data-v3");
     if (cached) return cached;
 
     const data = await (
@@ -143,11 +143,14 @@ export function loadItemData(): Promise<ItemData> {
       for (const item of data) {
         const buildsInto = Array.isArray(item.to) ? item.to.length : 0;
         const categories: string[] = Array.isArray(item.categories) ? item.categories : [];
-        // Mode-specific prismatics (six-digit ids) count regardless of price
+        const price: number = item.priceTotal ?? 0;
+        // Mode-specific prismatics (six-digit ids) count regardless of price.
+        // Tier-2 boots upgrade into tier-3, so they build into something while
+        // still being a real build step — include them by price instead.
         const completed =
-          buildsInto === 0 &&
-          !categories.includes("Consumable") &&
-          ((item.priceTotal ?? 0) >= 500 || item.id >= 100000);
+          (buildsInto === 0 && !categories.includes("Consumable") &&
+            (price >= 500 || item.id >= 100000)) ||
+          (categories.includes("Boots") && price >= 1000);
         out[item.id] = {
           name: item.name || `Item ${item.id}`,
           iconPath: item.iconPath || "",
@@ -155,7 +158,7 @@ export function loadItemData(): Promise<ItemData> {
         };
       }
     }
-    writeCache("item-data-v2", out);
+    writeCache("item-data-v3", out);
     return out;
   })();
   itemPromise.catch(() => {
