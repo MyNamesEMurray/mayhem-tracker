@@ -26,13 +26,15 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
     const data = (await res.json()) as any;
     const latest = (data.tag_name as string).replace(/^v/, "");
     const current = app.getVersion();
-    // Pick the portable exe specifically, never the installer — releases carry
-    // both. Older releases named the portable plain MayhemTracker.exe.
+    // Pick the asset matching how this copy runs: the portable build swaps
+    // its own exe, the installed build re-runs the installer silently.
+    // Older releases named the portable plain MayhemTracker.exe.
     const assets = (data.assets as any[]) ?? [];
-    const asset =
-      assets.find((a) => a.name === "MayhemTracker-Portable.exe") ??
-      assets.find((a) => a.name === "MayhemTracker.exe") ??
-      assets.find((a) => a.name?.endsWith(".exe") && !a.name.includes("Setup"));
+    const asset = process.env.PORTABLE_EXECUTABLE_FILE
+      ? (assets.find((a) => a.name === "MayhemTracker-Portable.exe") ??
+        assets.find((a) => a.name === "MayhemTracker.exe") ??
+        assets.find((a) => a.name?.endsWith(".exe") && !a.name.includes("Setup")))
+      : assets.find((a) => a.name === "MayhemTracker-Setup.exe");
     return {
       hasUpdate: latest !== current,
       latest,
@@ -50,10 +52,11 @@ export async function downloadAndInstall(
   win: BrowserWindow | null,
   assetUrl: string,
 ): Promise<{ success: boolean; error?: string }> {
-  // Set by electron-builder's portable launcher; absent in dev and non-portable builds
+  // Set by electron-builder's portable launcher; absent in dev and installed builds
   const portableExe = process.env.PORTABLE_EXECUTABLE_FILE;
-  if (!portableExe) {
-    return { success: false, error: "In-app update only works in the portable exe build" };
+  const installed = !portableExe && app.isPackaged;
+  if (!portableExe && !installed) {
+    return { success: false, error: "In-app update only works in packaged builds" };
   }
   if (!assetUrl.startsWith("https://github.com/MyNamesEMurray/mayhem-tracker/")) {
     return { success: false, error: "Unexpected download URL" };
@@ -100,9 +103,37 @@ export async function downloadAndInstall(
     return { success: false, error: `Download failed: ${err.message}` };
   }
 
+  // Installed build: re-run the downloaded one-click installer silently.
+  // /S installs per-user without UI and --force-run relaunches the app when
+  // it finishes; the script first waits for this process to exit so the
+  // installer never races a live install directory.
+  if (installed) {
+    const script = path.join(tmpDir, "update.cmd");
+    fs.writeFileSync(
+      script,
+      [
+        "@echo off",
+        "set tries=0",
+        ":wait",
+        "set /a tries+=1",
+        "if %tries% gtr 120 goto run",
+        `tasklist /FI "PID eq ${process.pid}" 2>nul | find "${process.pid}" >nul`,
+        "if not errorlevel 1 (ping -n 2 127.0.0.1 >nul & goto wait)",
+        ":run",
+        `start "" /wait "${newExe}" /S --force-run`,
+        `rd /s /q "${tmpDir}"`,
+        "",
+      ].join("\r\n"),
+    );
+    spawn("cmd.exe", ["/c", script], { detached: true, stdio: "ignore", windowsHide: true }).unref();
+    // Let the IPC response reach the renderer before quitting
+    setTimeout(() => app.quit(), 200);
+    return { success: true };
+  }
+
   // Install under the current artifact name regardless of the running
   // filename, so exes downloaded under older names get migrated.
-  const targetExe = path.join(path.dirname(portableExe), "MayhemTracker-Portable.exe");
+  const targetExe = path.join(path.dirname(portableExe!), "MayhemTracker-Portable.exe");
   const stagedExe = `${targetExe}.new`;
 
   // The running portable exe is locked by the OS until the app fully exits, so a
