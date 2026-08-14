@@ -19,6 +19,24 @@ export default function Layout() {
   useEffect(() => {
     window.api.getVersion().then(setVersion);
     window.api.checkForUpdate().then(setUpdate);
+    // The window can stay open for days; keep the tab-bar pill honest
+    const recheck = setInterval(
+      () => window.api.checkForUpdate().then(setUpdate),
+      6 * 3600_000,
+    );
+    return () => clearInterval(recheck);
+  }, []);
+
+  // Settings' manual "Check for updates" found one — adopt it and open the
+  // dialog (the dialog and pill live here, not in Settings)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const info = (e as CustomEvent<UpdateInfo>).detail;
+      setUpdate(info);
+      setShowUpdateDialog(true);
+    };
+    window.addEventListener("mayhem-update-available", handler);
+    return () => window.removeEventListener("mayhem-update-available", handler);
   }, []);
 
   useEffect(() => {

@@ -117,6 +117,28 @@ export default function Settings() {
     setLiveDebug(await window.api.setLiveDebugEnabled(!liveDebug.enabled));
   }, [liveDebug]);
 
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateCheckStatus, setUpdateCheckStatus] = useState<string | null>(null);
+
+  const handleCheckUpdates = useCallback(async () => {
+    setCheckingUpdate(true);
+    setUpdateCheckStatus(null);
+    try {
+      const info = await window.api.checkForUpdate();
+      if (info.error) {
+        setUpdateCheckStatus(`Check failed: ${info.error}`);
+      } else if (info.hasUpdate) {
+        setUpdateCheckStatus(`Version ${info.latest} is available`);
+        // The update dialog lives in the layout chrome
+        window.dispatchEvent(new CustomEvent("mayhem-update-available", { detail: info }));
+      } else {
+        setUpdateCheckStatus(`You're on the latest version (${info.current})`);
+      }
+    } finally {
+      setCheckingUpdate(false);
+    }
+  }, []);
+
   const handleDeleteContributions = useCallback(async () => {
     if (
       !window.confirm(
@@ -227,6 +249,19 @@ export default function Settings() {
           >
             <Toggle checked={hideClassic} onChange={handleHideClassicToggle} />
           </SettingRow>
+          <SettingRow
+            name="Check for updates"
+            description="Updates are checked at launch and every few hours; this checks right now"
+          >
+            <button
+              onClick={handleCheckUpdates}
+              disabled={checkingUpdate}
+              className={BUTTON_SECONDARY}
+            >
+              {checkingUpdate ? "Checking..." : "Check now"}
+            </button>
+          </SettingRow>
+          {updateCheckStatus && <p className="text-xs text-lol-text">{updateCheckStatus}</p>}
         </Panel>
 
         <Panel label="Community stats">
