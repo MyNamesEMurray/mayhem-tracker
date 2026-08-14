@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import CommunityGate from "./components/CommunityGate";
 import Overview from "./pages/Overview";
 import MatchHistory from "./pages/MatchHistory";
 import Champions from "./pages/Champions";
@@ -21,8 +22,22 @@ export default function App() {
           <Route path="/augments" element={<Augments />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/:key" element={<FriendDetail />} />
-          <Route path="/global" element={<GlobalStats />} />
-          <Route path="/global/champion/:championId" element={<GlobalChampionDetail />} />
+          <Route
+            path="/global"
+            element={
+              <CommunityGate>
+                <GlobalStats />
+              </CommunityGate>
+            }
+          />
+          <Route
+            path="/global/champion/:championId"
+            element={
+              <CommunityGate>
+                <GlobalChampionDetail />
+              </CommunityGate>
+            }
+          />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
