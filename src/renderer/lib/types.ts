@@ -332,6 +332,7 @@ export interface UpdateInfo {
   current?: string;
   url?: string;
   assetUrl?: string;
+  notes?: string;
   assetSize?: number;
   error?: string;
 }

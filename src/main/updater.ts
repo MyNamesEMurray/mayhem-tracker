@@ -12,6 +12,7 @@ export interface UpdateInfo {
   url?: string;
   assetUrl?: string;
   assetSize?: number;
+  notes?: string;
   error?: string;
 }
 
@@ -43,6 +44,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
       url: data.html_url as string,
       assetUrl: asset?.browser_download_url,
       assetSize: asset?.size,
+      notes: typeof data.body === "string" ? data.body : undefined,
     };
   } catch {
     return { hasUpdate: false, error: "Failed to check for updates" };

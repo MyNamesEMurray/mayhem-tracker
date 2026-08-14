@@ -34,6 +34,13 @@ export default function UpdateDialog({
 
   const sizeMb = update.assetSize ? (update.assetSize / 1024 / 1024).toFixed(1) : null;
 
+  // Release notes are simple markdown bullets; render them as text lines so
+  // nothing needs a markdown dependency
+  const noteLines = (update.notes ?? "")
+    .split("\n")
+    .map((l) => l.replace(/\*\*([^*]+)\*\*/g, "$1").trimEnd())
+    .filter((l, i, arr) => l.trim() !== "" || (i > 0 && arr[i - 1].trim() !== ""));
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -48,11 +55,29 @@ export default function UpdateDialog({
           Version <span className="text-lol-gold">v{update.latest}</span> is available (you have v
           {update.current}).
         </p>
+        {noteLines.length > 0 && (
+          <div className="mt-3 max-h-44 overflow-y-auto rounded-md border border-lol-border/60 bg-lol-dark/50 px-3 py-2 text-[12px] leading-relaxed text-lol-text">
+            {noteLines.map((line, i) =>
+              line.startsWith("- ") ? (
+                <div key={i} className="flex gap-1.5">
+                  <span className="text-lol-gold shrink-0">•</span>
+                  <span>{line.slice(2)}</span>
+                </div>
+              ) : line.startsWith("#") ? (
+                <div key={i} className="font-semibold text-lol-text-bright mt-1">
+                  {line.replace(/^#+\s*/, "")}
+                </div>
+              ) : (
+                <div key={i}>{line}</div>
+              ),
+            )}
+          </div>
+        )}
         <button
           onClick={() => window.api.openUrl(update.url!)}
           className="mt-1.5 text-[12px] text-lol-gold hover:text-lol-gold-light transition-colors cursor-pointer"
         >
-          View release notes
+          View all release notes
         </button>
 
         {downloading && (

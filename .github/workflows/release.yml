@@ -45,6 +45,21 @@ jobs:
 
       - run: npm run dist
 
+      # Release notes come from this version's CHANGELOG.md section so they
+      # read like notes for players; auto-generated notes are the fallback
+      # if a section is missing.
+      - name: Extract release notes
+        id: notes
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          awk -v ver="$TAG" '$0 ~ "^## "ver"([^0-9.]|$)" {flag=1; next} /^## /{flag=0} flag' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then
+            echo "args=--notes-file notes.md" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::no CHANGELOG.md section for $TAG, using generated notes"
+            echo "args=--generate-notes" >> "$GITHUB_OUTPUT"
+          fi
+
       # On manual runs the tag doesn't exist yet; gh creates it at --target
       - name: Create GitHub release
         env:
@@ -55,4 +70,4 @@ jobs:
             dist/MayhemTracker-Setup.exe \
             --target "$GITHUB_SHA" \
             --title "${{ steps.version.outputs.tag }}" \
-            --generate-notes
+            ${{ steps.notes.outputs.args }}
