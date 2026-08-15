@@ -7,6 +7,7 @@ import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
 import { refreshLiveDebug } from "./live-debug";
 import { refreshLiveWatcher } from "./live-watcher";
 import { isUpdating } from "./update-state";
+import { refreshStartupPath, startedHidden } from "./startup";
 import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
 
@@ -126,8 +127,11 @@ app.whenReady().then(async () => {
   });
 
   registerIpcHandlers();
-  createWindow();
+  // Launched by the OS login entry: no window, just the tray. Recording and
+  // uploading run without one, and the tray builds it on demand.
+  if (!startedHidden()) createWindow();
   createTray();
+  refreshStartupPath();
 
   // LCU polling runs for the app's lifetime, window or no window
   startPolling();

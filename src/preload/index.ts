@@ -131,6 +131,10 @@ const api = {
     return () => ipcRenderer.removeListener("upload:changed", handler);
   },
 
+  getStartupStatus: () => ipcRenderer.invoke("startup:status"),
+
+  setStartupEnabled: (enabled: boolean) => ipcRenderer.invoke("startup:set-enabled", enabled),
+
   getLiveDebugStatus: () => ipcRenderer.invoke("livedebug:status"),
 
   setLiveDebugEnabled: (enabled: boolean) => ipcRenderer.invoke("livedebug:set-enabled", enabled),

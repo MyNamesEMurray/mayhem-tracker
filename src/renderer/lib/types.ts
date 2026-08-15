@@ -289,6 +289,12 @@ export interface GlobalChampionDetail {
   augments: AugmentStats[];
 }
 
+export interface StartupStatus {
+  // False in dev builds, where there is no installed exe to register
+  supported: boolean;
+  enabled: boolean;
+}
+
 export interface LiveDebugStatus {
   enabled: boolean;
   recording: boolean;
@@ -428,6 +434,8 @@ export interface ElectronAPI {
     error?: string;
   }>;
   onUploadChanged: (callback: () => void) => () => void;
+  getStartupStatus: () => Promise<StartupStatus>;
+  setStartupEnabled: (enabled: boolean) => Promise<StartupStatus>;
   getLiveDebugStatus: () => Promise<LiveDebugStatus>;
   setLiveDebugEnabled: (enabled: boolean) => Promise<LiveDebugStatus>;
   openLiveDebugFolder: () => Promise<void>;

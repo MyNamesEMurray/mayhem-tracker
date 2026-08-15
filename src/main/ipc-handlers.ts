@@ -8,6 +8,7 @@ import * as updater from "./updater";
 import * as upload from "./upload";
 import * as liveDebug from "./live-debug";
 import * as liveWatcher from "./live-watcher";
+import * as startup from "./startup";
 
 // Handlers are window-agnostic (registered once for the app's lifetime) —
 // the main window is destroyed while idling in the tray and rebuilt on
@@ -269,6 +270,16 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("upload:delete-contributions", () => {
     return upload.deleteContributions(getMainWindow());
+  });
+
+  // Launch on login (into the tray)
+  ipcMain.handle("startup:status", () => {
+    return { supported: startup.isStartupSupported(), enabled: startup.getStartupEnabled() };
+  });
+
+  ipcMain.handle("startup:set-enabled", (_event, enabled: boolean) => {
+    const applied = startup.setStartupEnabled(enabled);
+    return { supported: startup.isStartupSupported(), enabled: applied };
   });
 
   // Live game debug recorder

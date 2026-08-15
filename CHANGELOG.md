@@ -6,6 +6,10 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.8.0 — 2026-08-15
+
+- New **Start with Windows** option (Settings → General). Mayhem Tracker signs in with you and waits in the tray, so games are recorded and synced without opening it first — no window pops up at login.
+
 ## v2.7.0 — 2026-08-14
 
 - Build orders now feed the community stats: if you share match data, the item purchase timings your app records (for all ten players in your games) upload with them — still fully anonymous.

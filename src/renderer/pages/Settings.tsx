@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useBackfill } from "../hooks/useBackfill";
-import type { LiveDebugStatus, UploadStatus } from "../lib/types";
+import type { LiveDebugStatus, StartupStatus, UploadStatus } from "../lib/types";
 import Toggle from "../components/Toggle";
 
 // Design-system control styles (radius 8 controls, gold primary, destructive
@@ -78,6 +78,16 @@ export default function Settings() {
     setHideClassic(next);
     await window.api.setSetting("hide_classic_games", String(next));
   }, [hideClassic]);
+
+  // Launch on login is stored with the OS, not in our settings table
+  const [startup, setStartup] = useState<StartupStatus | null>(null);
+  useEffect(() => {
+    window.api.getStartupStatus().then(setStartup);
+  }, []);
+  const handleStartupToggle = useCallback(async () => {
+    if (!startup) return;
+    setStartup(await window.api.setStartupEnabled(!startup.enabled));
+  }, [startup]);
 
   const [liveTracking, setLiveTracking] = useState(true);
   const handleLiveTrackingToggle = useCallback(async () => {
@@ -257,6 +267,20 @@ export default function Settings() {
             description="Exclude the limited-time Classic queue from all stats and match history"
           >
             <Toggle checked={hideClassic} onChange={handleHideClassicToggle} />
+          </SettingRow>
+          <SettingRow
+            name="Start with Windows"
+            description={
+              startup?.supported === false
+                ? "Available in the installed and portable builds — not when running from source"
+                : "Launch Mayhem Tracker to the tray when you sign in, so games are recorded without opening it first"
+            }
+          >
+            <Toggle
+              checked={startup?.enabled ?? false}
+              onChange={handleStartupToggle}
+              disabled={!startup?.supported}
+            />
           </SettingRow>
           <SettingRow
             name="Track build orders during games"
