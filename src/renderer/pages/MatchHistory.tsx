@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
 import { useStatsFilters } from "../hooks/useStatsFilters";
 import { useOnWindowFocus } from "../hooks/useOnWindowFocus";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useIpc } from "../hooks/useIpc";
 import { useLcuStatus } from "../hooks/useLcuStatus";
@@ -120,6 +121,8 @@ export default function MatchHistory() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const lcuStatus = useLcuStatus();
   const backfill = useBackfill();
+  // One listener for the page rather than one per row
+  const wide = useMediaQuery("(min-width: 1500px)");
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -426,6 +429,7 @@ export default function MatchHistory() {
             key={m.game_id}
             match={m}
             champData={champData}
+            wide={wide}
             expanded={expandedId === m.game_id}
             detail={expandedId === m.game_id ? detail : null}
             detailLoading={expandedId === m.game_id && detailLoading}
@@ -513,6 +517,9 @@ function ContextMenu({
 interface GameRowProps {
   match: MatchListItem;
   champData: any;
+  // Wide windows scale the icons up and spread the row out; the icon
+  // components size in pixels, so this can't be pure CSS
+  wide: boolean;
   expanded: boolean;
   detail: MatchDetail | null;
   detailLoading: boolean;
@@ -526,15 +533,16 @@ function parseAugmentIds(raw: string | null): number[] {
   return raw.split(",").map(Number).filter(Boolean);
 }
 
-function AugmentGrid({ augmentIds }: { augmentIds: number[] }) {
+function AugmentGrid({ augmentIds, wide }: { augmentIds: number[]; wide: boolean }) {
   if (augmentIds.length === 0) return null;
   // Classic can grant bonus augments; spill past 4 into a third column so the
-  // grid stays two rows tall and rows keep a uniform height.
-  const cols = augmentIds.length > 4 ? "grid-cols-3" : "grid-cols-2";
+  // grid stays two rows tall and rows keep a uniform height. Wide windows
+  // have room to lay them out in a single row at a larger size.
+  const cols = wide ? "grid-flow-col auto-cols-max" : augmentIds.length > 4 ? "grid-cols-3" : "grid-cols-2";
   return (
     <div className={`grid ${cols} gap-0.5 w-fit`}>
       {augmentIds.map((id, i) => (
-        <AugmentIcon key={i} augmentId={id} size={22} />
+        <AugmentIcon key={i} augmentId={id} size={wide ? 30 : 22} />
       ))}
     </div>
   );
@@ -543,6 +551,7 @@ function AugmentGrid({ augmentIds }: { augmentIds: number[] }) {
 function GameRow({
   match,
   champData,
+  wide,
   expanded,
   detail,
   detailLoading,
@@ -585,8 +594,8 @@ function GameRow({
         >
           {isRemake ? "RMK" : isWin ? "WIN" : "LOSS"}
         </div>
-        <ChampionIcon championId={match.champion_id} size={36} />
-        <div className="w-24 shrink-0">
+        <ChampionIcon championId={match.champion_id} size={wide ? 46 : 36} />
+        <div className={`shrink-0 ${wide ? "w-32" : "w-24"}`}>
           <div className="text-sm text-lol-text-bright truncate">
             {getChampionName(champData, match.champion_id)}
           </div>
@@ -636,28 +645,42 @@ function GameRow({
         />
 
         {/* Augments – reserve 3 columns so mixed-queue lists stay aligned */}
-        <div className="w-[70px] shrink-0">
-          <AugmentGrid augmentIds={augmentIds} />
+        <div className={`shrink-0 ${wide ? "w-[200px]" : "w-[70px]"}`}>
+          <AugmentGrid augmentIds={augmentIds} wide={wide} />
         </div>
 
-        {/* Items – 3x2 grid, no trinket (slot 6) */}
-        <div className="shrink-0 grid grid-cols-3 gap-0.5">
+        {/* Items – a 3x2 block normally, one row of six when there's room */}
+        <div className={`shrink-0 grid gap-0.5 ${wide ? "grid-cols-6" : "grid-cols-3"}`}>
           {[match.item0, match.item1, match.item2, match.item3, match.item4, match.item5].map(
             (itemId, i) => (
-              <ItemIcon key={i} itemId={itemId ?? 0} size={22} patch={match.game_version} />
+              <ItemIcon
+                key={i}
+                itemId={itemId ?? 0}
+                size={wide ? 30 : 22}
+                patch={match.game_version}
+              />
             ),
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex items-center justify-end gap-4">
           <MultikillBadge
             doubles={match.double_kills}
             triples={match.triple_kills}
             quadras={match.quadra_kills}
             pentas={match.penta_kills}
           />
+          {/* Room at this width for a stat the narrow layout has to drop */}
+          {wide && (
+            <div className="text-right shrink-0 w-16">
+              <div className="text-sm text-lol-text-bright">
+                {(match.gold_earned / 1000).toFixed(1)}k
+              </div>
+              <div className="text-[10px] text-lol-text uppercase tracking-wider">gold</div>
+            </div>
+          )}
         </div>
-        <div className="text-xs text-lol-text text-right shrink-0">
+        <div className="text-xs text-lol-text text-right shrink-0 w-20">
           <div>{formatDuration(match.game_duration)}</div>
           <div>{formatTimeAgo(match.game_creation)}</div>
         </div>

@@ -46,7 +46,10 @@ const itemListeners = new Map<string, Set<(d: ItemData) => void>>();
 
 function loadItems(key: string, patch?: string | null): void {
   if (itemPromises.has(key)) return;
-  const promise = window.api.getItemData(patch || undefined).then((d) => {
+  const promise = window.api.getItemData(patch || undefined).then((raw) => {
+    // Defensive: a failed IPC round-trip should degrade to "no data", never
+    // throw inside the shared loader
+    const d = raw ?? {};
     if (Object.keys(d).length > 0) {
       itemCaches.set(key, d);
       itemListeners.get(key)?.forEach((fn) => fn(d));
