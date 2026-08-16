@@ -159,6 +159,7 @@ async function main() {
   const sitemapUrls = [
     { loc: `${SITE}/`, freq: "daily", pri: "1.0" },
     { loc: `${SITE}/?tab=champions`, freq: "daily", pri: "0.9" },
+    { loc: `${SITE}/download/`, freq: "weekly", pri: "0.8" },
     { loc: `${SITE}/about/`, freq: "monthly", pri: "0.5" },
     { loc: `${SITE}/community/`, freq: "daily", pri: "0.5" },
     { loc: `${SITE}/privacy/`, freq: "monthly", pri: "0.3" },

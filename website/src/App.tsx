@@ -265,9 +265,7 @@ export default function App() {
               onChange={(v) => setParam("patch", v)}
             />
             <a
-              href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest"
-              target="_blank"
-              rel="noreferrer"
+              href="/download/"
               title="Download the Mayhem Tracker desktop app — play, track, and contribute your games"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
             >
@@ -406,12 +404,7 @@ export default function App() {
             <a href="/privacy/" className="hover:text-lol-gold">
               Privacy
             </a>
-            <a
-              href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-lol-gold"
-            >
+            <a href="/download/" className="hover:text-lol-gold">
               Download Mayhem Tracker
             </a>
             <a

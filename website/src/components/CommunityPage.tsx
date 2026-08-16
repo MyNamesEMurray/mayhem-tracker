@@ -146,9 +146,7 @@ export default function CommunityPage() {
           </p>
         </div>
         <a
-          href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest"
-          target="_blank"
-          rel="noreferrer"
+          href="/download/"
           className="shrink-0 min-[861px]:ml-auto inline-flex items-center justify-center gap-2 rounded-lg border border-lol-gold/30 bg-lol-gold/10 px-4 py-2.5 text-[13px] font-semibold text-lol-gold hover:bg-lol-gold/20 transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

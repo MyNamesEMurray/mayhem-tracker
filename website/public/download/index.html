@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Download Mayhem Tracker — Free ARAM Mayhem Match Tracker</title>
+    <meta
+      name="description"
+      content="Download Mayhem Tracker, the free, open-source desktop app that records your ARAM Mayhem matches, shows augment and item stats, and powers MayhemStats.com. Windows installer and portable exe."
+    />
+    <link rel="canonical" href="https://mayhemstats.com/download/" />
+    <meta property="og:title" content="Download Mayhem Tracker" />
+    <meta
+      property="og:description"
+      content="Free, open-source ARAM Mayhem match tracker for Windows. Records your games, shows real augment and item stats, and contributes anonymously to MayhemStats.com."
+    />
+    <meta property="og:url" content="https://mayhemstats.com/download/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://mayhemstats.com/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <style>
+      :root {
+        --dark: #0b0e14;
+        --card: #141924;
+        --border: #242c3d;
+        --gold: #c89b3c;
+        --text: #94a0b8;
+        --bright: #e8ecf4;
+        --muted: #6b7689;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        background-color: var(--dark);
+        background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      main { max-width: 780px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+      h1 { color: var(--bright); font-size: 1.75rem; margin-bottom: 0.5rem; }
+      h2 { color: var(--bright); font-size: 1.15rem; margin: 2.25rem 0 0.75rem; }
+      h3 { color: var(--bright); font-size: 1rem; margin: 0 0 0.15rem; }
+      p, li { margin-bottom: 0.85rem; font-size: 0.95rem; }
+      ul, ol { padding-left: 1.25rem; }
+      a { color: var(--gold); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .back { display: inline-block; margin-bottom: 2rem; font-size: 0.9rem; }
+      .lead { font-size: 1.02rem; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+      }
+      .card p:last-child, .card ul:last-child, .card li:last-child { margin-bottom: 0; }
+      .downloads {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr;
+        margin: 1.5rem 0 0.5rem;
+      }
+      @media (min-width: 640px) {
+        .downloads { grid-template-columns: 1fr 1fr; }
+      }
+      .dl {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+      }
+      .dl.primary { border-color: rgba(200, 155, 60, 0.5); }
+      .dl .tag {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 0.4rem;
+      }
+      .dl p { font-size: 0.875rem; color: var(--text); margin-bottom: 1rem; }
+      .dl .btn { margin-top: auto; }
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(200, 155, 60, 0.5);
+        background: rgba(200, 155, 60, 0.15);
+        color: var(--gold);
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: background-color 0.15s;
+      }
+      .btn:hover { background: rgba(200, 155, 60, 0.25); text-decoration: none; }
+      .btn.secondary {
+        border-color: var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--bright);
+      }
+      .btn.secondary:hover { background: rgba(255, 255, 255, 0.07); }
+      .meta { font-size: 0.8rem; color: var(--muted); margin: 0.75rem 0 0; text-align: center; }
+      .meta code { color: var(--text); }
+      .note {
+        border-left: 2px solid rgba(200, 155, 60, 0.5);
+        padding-left: 0.9rem;
+        margin: 1rem 0;
+      }
+      .note p { font-size: 0.9rem; margin-bottom: 0.5rem; }
+      .note p:last-child { margin-bottom: 0; }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">← Back to the stats</a>
+      <h1>Download Mayhem Tracker</h1>
+      <p class="lead">
+        The free, open-source desktop app that records your <strong>ARAM Mayhem</strong> matches
+        automatically, shows you augment and item stats from your own games, and — if you opt in —
+        contributes them anonymously to the community database behind
+        <a href="/">MayhemStats.com</a>. No account, no ads, no telemetry.
+      </p>
+
+      <div class="downloads">
+        <div class="dl primary">
+          <span class="tag">Recommended</span>
+          <h3>Installer</h3>
+          <p>
+            Installs normally, updates itself in the background, and can start with Windows and
+            wait in the tray so your games record without opening it first.
+          </p>
+          <a
+            class="btn"
+            href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest/download/MayhemTracker-Setup.exe"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M4 21h16" />
+            </svg>
+            MayhemTracker-Setup.exe
+          </a>
+        </div>
+
+        <div class="dl">
+          <span class="tag">No install</span>
+          <h3>Portable</h3>
+          <p>
+            A single executable you can run from anywhere — a USB stick, a second PC, or a folder
+            you delete later. Updates itself too.
+          </p>
+          <a
+            class="btn secondary"
+            href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest/download/MayhemTracker-Portable.exe"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M4 21h16" />
+            </svg>
+            MayhemTracker-Portable.exe
+          </a>
+        </div>
+      </div>
+
+      <p class="meta" id="release-meta">
+        Windows 10 or 11, 64-bit · about 94&nbsp;MB ·
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">all releases</a>
+      </p>
+
+      <h2>Getting started</h2>
+      <ol>
+        <li>Run the download above and open Mayhem Tracker.</li>
+        <li>
+          Leave it running and play a game of ARAM Mayhem. The app finds your League client on its
+          own — there is nothing to configure and nothing to sign in to. Your existing Mayhem match
+          history is imported the first time it connects.
+        </li>
+        <li>
+          Optional: turn on <strong>Settings → Community Stats</strong> to contribute your games
+          anonymously to <a href="/">MayhemStats.com</a>. It is off until you flip it on.
+        </li>
+      </ol>
+
+      <h2>Is it safe to run?</h2>
+      <p>
+        Fair question to ask of any downloaded executable, so here is everything you need to check
+        for yourself:
+      </p>
+      <div class="card">
+        <ul>
+          <li>
+            <strong>It is open source.</strong> Every line is public at
+            <a href="https://github.com/MyNamesEMurray/mayhem-tracker">github.com/MyNamesEMurray/mayhem-tracker</a>,
+            MIT licensed, and the downloads above are built from that source by a public GitHub
+            Actions workflow — not uploaded by hand.
+          </li>
+          <li>
+            <strong>Your data stays on your machine by default.</strong> Matches are stored in a
+            local SQLite database. Nothing is uploaded until you turn on community stats.
+          </li>
+          <li>
+            <strong>Contributions carry no identity.</strong> No summoner names, Riot IDs, tag
+            lines, or account identifiers are ever uploaded — the server's database has no columns
+            to store them. See the <a href="/privacy/">privacy policy</a>.
+          </li>
+          <li>
+            <strong>It only reads.</strong> The app talks to your own League client's local API to
+            read finished matches. It cannot and does not modify the game, and it is not a script,
+            overlay, or automation tool.
+          </li>
+          <li>
+            <strong>You can take it back.</strong> Settings → Community Stats → Delete my
+            contributions removes everything your install has ever shared.
+          </li>
+        </ul>
+      </div>
+
+      <h2>Windows SmartScreen</h2>
+      <p>
+        Windows may show a <em>"Windows protected your PC"</em> screen the first time you run the
+        download. That warning is about the file's signature and reputation, not about anything it
+        found in the file. To continue, click <strong>More info</strong> and then
+        <strong>Run anyway</strong>. If you would rather verify first, GitHub publishes a SHA-256
+        digest for every file on the
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">releases page</a>
+        that you can compare against your download.
+      </p>
+
+      <h2>Code signing</h2>
+      <p>
+        Mayhem Tracker uses the <a href="https://signpath.org/">SignPath Foundation</a> for code
+        signing of its Windows releases. Free code signing provided by
+        <a href="https://about.signpath.io/">SignPath.io</a>, certificate by SignPath Foundation.
+      </p>
+      <div class="note" id="signing-status">
+        <p>
+          <strong>Status: certificate pending.</strong> Releases published before the certificate
+          is issued are unsigned, which is why SmartScreen warns on them. Once signing is live,
+          this notice goes away and Windows will show the verified publisher instead.
+        </p>
+      </div>
+
+      <h2>Updates</h2>
+      <p>
+        Both downloads update themselves. The app checks for a new version at launch and
+        periodically while it runs, and you can check on demand from
+        <strong>Settings → General → Check for updates</strong>. Updates install in the background
+        and the app relaunches on its own — you never have to come back to this page. Every
+        release's changes are written up in plain language in the
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/blob/main/CHANGELOG.md">changelog</a>.
+      </p>
+
+      <h2>Something not working?</h2>
+      <p>
+        Open an issue at
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/issues">github.com/MyNamesEMurray/mayhem-tracker/issues</a>.
+        If the app isn't picking up your games, <strong>Settings → Developer → Sync
+        diagnostics</strong> has a copy button that captures exactly what to include.
+      </p>
+
+      <footer>
+        <p>
+          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
+          Riot Games or anyone officially involved in producing or managing League of Legends.
+          League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
+          Inc.
+        </p>
+        <p>
+          <a href="/">Stats</a> · <a href="/about/">About</a> ·
+          <a href="/community/">Community impact</a> · <a href="/privacy/">Privacy</a> ·
+          <a href="https://github.com/MyNamesEMurray/mayhem-tracker">GitHub</a>
+        </p>
+      </footer>
+    </main>
+
+    <script>
+      // Fill in the live version and file size so this page never quotes a stale
+      // release. Static text above stands in if the API is unreachable or rate-limited.
+      (function () {
+        var el = document.getElementById("release-meta");
+        if (!el) return;
+        fetch("https://api.github.com/repos/MyNamesEMurray/mayhem-tracker/releases/latest")
+          .then(function (r) {
+            if (!r.ok) throw new Error("no release");
+            return r.json();
+          })
+          .then(function (data) {
+            var setup = (data.assets || []).filter(function (a) {
+              return a.name === "MayhemTracker-Setup.exe";
+            })[0];
+            var parts = [];
+            if (data.tag_name) parts.push(data.tag_name);
+            parts.push("Windows 10 or 11, 64-bit");
+            if (setup && setup.size) {
+              parts.push(Math.round(setup.size / 1048576) + " MB");
+            }
+            if (data.published_at) {
+              var d = new Date(data.published_at);
+              if (!isNaN(d)) {
+                parts.push(
+                  "released " +
+                    d.toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }),
+                );
+              }
+            }
+            el.textContent = parts.join(" · ") + " · ";
+            var a = document.createElement("a");
+            a.href = "https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest";
+            a.textContent = "all releases";
+            el.appendChild(a);
+          })
+          .catch(function () {
+            /* keep the static fallback */
+          });
+      })();
+    </script>
+  </body>
+</html>
