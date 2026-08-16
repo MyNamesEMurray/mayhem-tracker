@@ -6,6 +6,10 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.8.2 — 2026-08-15
+
+- The "Last game Xm ago" label on the Overview page now counts up on its own while the app is open, instead of freezing at whatever it said when the page loaded.
+
 ## v2.8.1 — 2026-08-15
 
 - Fixed new games not appearing until you clicked Refresh. Finished matches now show up on their own again, and history imports that run in the background report themselves too.

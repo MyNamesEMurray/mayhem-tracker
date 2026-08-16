@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
+import { useNow } from "../hooks/useNow";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useLcuStatus } from "../hooks/useLcuStatus";
 import { useBackfill } from "../hooks/useBackfill";
@@ -127,6 +128,9 @@ export default function Overview() {
     ? kdaRatio(dashboard.totalKills, dashboard.totalDeaths, dashboard.totalAssists)
     : "—";
   const avg = (total: number) => (totalGames > 0 ? (total / totalGames).toFixed(1) : "0");
+
+  // Ticks the minute counter below while the window stays open
+  useNow();
 
   const latest = recent?.matches[0];
   const updatedText =
