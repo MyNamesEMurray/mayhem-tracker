@@ -108,7 +108,14 @@
       }
       .btn.secondary:hover { background: rgba(255, 255, 255, 0.07); }
       .meta { font-size: 0.8rem; color: var(--muted); margin: 0.75rem 0 0; text-align: center; }
-      .meta code { color: var(--text); }
+      .both { font-size: 0.875rem; color: var(--muted); margin: 1.1rem 0 0; }
+      .both code {
+        color: var(--text);
+        font-size: 0.9em;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0.25rem;
+        padding: 0.05rem 0.3rem;
+      }
       .note {
         border-left: 2px solid rgba(200, 155, 60, 0.5);
         padding-left: 0.9rem;
@@ -140,8 +147,8 @@
           <span class="tag">Recommended</span>
           <h3>Installer</h3>
           <p>
-            Installs normally, updates itself in the background, and can start with Windows and
-            wait in the tray so your games record without opening it first.
+            Installs like a normal app, with a Start menu entry and an uninstaller. Pick this one
+            unless you have a reason not to.
           </p>
           <a
             class="btn"
@@ -170,8 +177,8 @@
           <span class="tag">No install</span>
           <h3>Portable</h3>
           <p>
-            A single executable you can run from anywhere — a USB stick, a second PC, or a folder
-            you delete later. Updates itself too.
+            One file, nothing installed. Worth taking if you'd rather not run an installer from a
+            publisher Windows doesn't recognize yet — open it, and delete it if you don't keep it.
           </p>
           <a
             class="btn secondary"
@@ -200,6 +207,14 @@
       <p class="meta" id="release-meta">
         Windows 10 or 11, 64-bit · about 94&nbsp;MB ·
         <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">all releases</a>
+      </p>
+
+      <p class="both">
+        There is no feature difference between the two. Both update themselves, and both can start
+        with Windows and wait in the tray so your games record without opening the app first. Both
+        also keep their match history in the same place
+        (<code>%APPDATA%\Mayhem&nbsp;Tracker</code>), so you can start with the portable exe and
+        install properly later without losing a single game.
       </p>
 
       <h2>Getting started</h2>
@@ -277,8 +292,8 @@
 
       <h2>Updates</h2>
       <p>
-        Both downloads update themselves. The app checks for a new version at launch and
-        periodically while it runs, and you can check on demand from
+        The app checks for a new version at launch and periodically while it runs, and you can
+        check on demand from
         <strong>Settings → General → Check for updates</strong>. Updates install in the background
         and the app relaunches on its own — you never have to come back to this page. Every
         release's changes are written up in plain language in the
