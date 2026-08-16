@@ -540,7 +540,7 @@ function AugmentGrid({ augmentIds, wide }: { augmentIds: number[]; wide: boolean
   // have room to lay them out in a single row at a larger size.
   const cols = wide ? "grid-flow-col auto-cols-max" : augmentIds.length > 4 ? "grid-cols-3" : "grid-cols-2";
   return (
-    <div className={`grid ${cols} gap-0.5 w-fit`}>
+    <div className={`grid ${cols} gap-[clamp(2px,0.32vw,9px)] w-fit`}>
       {augmentIds.map((id, i) => (
         <AugmentIcon key={i} augmentId={id} size={wide ? 30 : 22} />
       ))}
@@ -587,7 +587,7 @@ function GameRow({
       <button
         onClick={onToggle}
         onContextMenu={onContextMenu}
-        className={`relative overflow-hidden w-full flex items-center gap-3 pl-4 pr-3 py-2.5 border border-lol-border/60 bg-lol-card hover:bg-lol-card-hover transition-colors text-left ${
+        className={`relative overflow-hidden w-full flex items-center gap-[clamp(0.75rem,0.85vw,1.75rem)] pl-4 pr-3 py-2.5 border border-lol-border/60 bg-lol-card hover:bg-lol-card-hover transition-colors text-left ${
           expanded ? "rounded-t-lg" : "rounded-lg"
         }`}
       >
@@ -657,7 +657,9 @@ function GameRow({
         </div>
 
         {/* Items – a 3x2 block normally, one row of six when there's room */}
-        <div className={`shrink-0 grid gap-0.5 ${wide ? "grid-cols-6" : "grid-cols-3"}`}>
+        <div
+          className={`shrink-0 grid gap-[clamp(2px,0.32vw,9px)] ${wide ? "grid-cols-6" : "grid-cols-3"}`}
+        >
           {[match.item0, match.item1, match.item2, match.item3, match.item4, match.item5].map(
             (itemId, i) => (
               <ItemIcon

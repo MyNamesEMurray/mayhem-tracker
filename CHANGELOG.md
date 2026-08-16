@@ -6,6 +6,10 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.9.3 — 2026-08-16
+
+- Match rows now breathe with the window: the spacing between item and augment icons, and between the row's sections, grows smoothly as you widen the app instead of staying pinned at its smallest size.
+
 ## v2.9.2 — 2026-08-16
 
 - Champions, Augments and Global tables now use a maximized window too: win-rate meters grow with the space and champion icons scale up, instead of leaving wide empty columns.
