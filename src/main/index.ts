@@ -3,7 +3,7 @@ import path from "path";
 import { initDatabase, getSetting, checkScoreBackfill } from "./db";
 import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
 import { setMainWindow, getMainWindow } from "./window-ref";
-import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
+import { startPolling, stopPolling, getStatus, fetchNewGames, captureFinishedGame } from "./lcu";
 import { refreshLiveDebug } from "./live-debug";
 import { refreshLiveWatcher, setGameEndedHandler } from "./live-watcher";
 import { isUpdating } from "./update-state";
@@ -146,16 +146,18 @@ app.whenReady().then(async () => {
   // game ends, so chase it briefly instead of waiting for the next poll
   setGameEndedHandler(() => {
     void (async () => {
-      // Riot can take a couple of minutes to publish a finished match to the
-      // client, so keep checking across that window rather than giving up
-      // after the first few tries
-      for (const delay of [8000, 12000, 20000, 30000, 45000, 60000]) {
+      // The post-game screen exposes the finished game long before it shows
+      // up in the match list (measured: minutes), so try that first and fall
+      // back to a history sweep. Keep at it across ~5 minutes; the 60s poll
+      // is the backstop after that.
+      for (const delay of [5000, 8000, 12000, 20000, 30000, 45000, 60000, 60000, 60000]) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         try {
+          if (await captureFinishedGame()) return;
           const result = await fetchNewGames(getMainWindow());
           if (result && "newGames" in result && result.newGames > 0) return;
         } catch {
-          // Client closed or busy — the 60s poll is still the backstop
+          // Client closed or busy — keep trying for the remaining attempts
         }
       }
     })();

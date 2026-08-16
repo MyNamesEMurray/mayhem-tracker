@@ -38,6 +38,7 @@ export const syncTrace = {
   lastSyncNewGames: 0,
   lastNotifyAt: 0,
   notifySkippedNoWindow: 0,
+  lastEogGameId: 0,
   lastError: "" as string,
 };
 
@@ -89,6 +90,59 @@ async function fetchMatchHistory(begIndex = 0, endIndex = 19): Promise<any> {
 
 async function fetchGameDetails(gameId: number): Promise<any> {
   return lcuRequest(`/lol-match-history/v1/games/${gameId}`);
+}
+
+// The client's post-game screen knows the game id immediately, while the
+// match *list* can lag several minutes behind. Reading the id here lets a
+// finished game be stored right away — the game itself is still fetched
+// through the canonical endpoint, so nothing about its shape changes.
+async function fetchEndOfGameId(): Promise<number | null> {
+  try {
+    const block: any = await lcuRequest("/lol-end-of-game/v1/eog-stats-block");
+    const id = block?.gameId ?? block?.gameMetadata?.gameId;
+    return typeof id === "number" && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+// Store the just-finished game the moment the client will hand it over.
+// Returns true once it's in (or already was), so the caller can stop chasing.
+export async function captureFinishedGame(): Promise<boolean> {
+  const gameId = await fetchEndOfGameId();
+  if (gameId == null) return false;
+  syncTrace.lastEogGameId = gameId;
+  if (db.gameExists(gameId)) return true;
+
+  let game: any;
+  try {
+    game = await fetchGameDetails(gameId);
+  } catch {
+    // Details not served yet — the caller retries, and the poll backs it up
+    return false;
+  }
+  if (!game || !MAYHEM_QUEUE_IDS.includes(game.queueId) || !Array.isArray(game.participants)) {
+    // Not a Mayhem game (or an unexpected shape): leave it to the normal path
+    return game ? !MAYHEM_QUEUE_IDS.includes(game.queueId) : false;
+  }
+
+  let summoner: any;
+  try {
+    summoner = await fetchCurrentSummoner();
+  } catch {
+    return false;
+  }
+  if (db.insertGameFull(game, summoner.puuid)) {
+    console.log(`Stored ARAM Mayhem game ${game.gameId} from the end-of-game screen`);
+    tryAttachLiveEvents(game, game.gameId);
+    syncTrace.lastSyncAt = Date.now();
+    syncTrace.lastSyncSource = "end-of-game";
+    syncTrace.lastSyncNewGames = 1;
+    notifyGamesUpdated();
+    void uploadPendingGames(null);
+    return true;
+  }
+  return false;
 }
 
 // --- Deep history (SGP) ---------------------------------------------------

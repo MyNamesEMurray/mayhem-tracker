@@ -144,6 +144,7 @@ export default function Settings() {
     const lines = [
       `app ${snap.version} · client ${snap.lcuStatus} · live tracking ${snap.liveTracking ? "on" : "off"}${snap.hideClassic ? " · classic hidden" : ""}`,
       `last sync ${ago(snap.sync.lastSyncAt)} (${snap.sync.lastSyncSource || "?"}), found ${snap.sync.lastSyncNewGames}`,
+      `end-of-game id seen: ${snap.sync.lastEogGameId || "none"}`,
       `last UI notify ${ago(snap.sync.lastNotifyAt)}; skipped with no window: ${snap.sync.notifySkippedNoWindow}`,
       `this window received ${eventTrace.gamesUpdated} update event(s), last ${ago(eventTrace.lastAt)}`,
       `uploads: ${snap.upload.uploaded} done, ${snap.upload.pending} pending${snap.upload.lastError ? ` — ${snap.upload.lastError}` : ""}`,
