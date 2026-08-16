@@ -68,7 +68,7 @@ export default function FriendDetail() {
 
   if (!data) {
     return (
-      <div className="max-w-6xl space-y-4">
+      <div className="w-full space-y-4">
         <BackLink />
         <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-lol-text">
           No games found with this player.
@@ -93,7 +93,7 @@ export default function FriendDetail() {
   const aces = matches.filter((m) => m.friend.score_badge === "ACE").length;
 
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="w-full space-y-4">
       <BackLink />
 
       <div className="grid grid-cols-[1fr_22rem] gap-4 items-stretch">
@@ -287,7 +287,7 @@ function PlayerBlock({
           </>
         )}
       </div>
-      <StatBars damage={damage} taken={taken} heal={heal} max={max} className="w-32" />
+      <StatBars damage={damage} taken={taken} heal={heal} max={max} className="w-32 shrink-0" />
     </div>
   );
 }

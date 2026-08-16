@@ -32,8 +32,14 @@ body {
 }
 
 @layer components {
+  /* Selects are sized by their class, never by the option that happens to be
+     chosen — otherwise picking a filter nudges everything beside it. Pick the
+     size that fits the longest option; long values ellipsize instead of
+     widening the control. Any new dropdown must follow this rule. */
   .select {
     appearance: none;
+    width: var(--select-w, 10rem);
+    text-overflow: ellipsis;
     background-color: var(--color-lol-card);
     border: 1px solid var(--color-lol-border);
     border-radius: 0.5rem;
@@ -46,6 +52,20 @@ body {
     background-position: right 0.5rem center;
     background-size: 0.875rem;
     transition: border-color 150ms;
+  }
+
+  .select-sm {
+    --select-w: 7.5rem;
+  }
+
+  .select-lg {
+    --select-w: 12.5rem;
+  }
+
+  /* Reserve the scrollbar's space whether or not it's showing, so content
+     doesn't jump sideways when a list grows past the viewport. */
+  .scroll-stable {
+    scrollbar-gutter: stable;
   }
 
   .input {

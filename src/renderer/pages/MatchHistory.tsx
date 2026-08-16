@@ -63,7 +63,10 @@ const SORT_OPTIONS: { value: MatchSort; label: string }[] = [
   { value: "duration", label: "Duration" },
 ];
 
+// Widths are fixed per dropdown so changing a filter never reflows the row
 const SELECT_CLASS = "select";
+const SELECT_WIDE = "select select-lg";
+const SELECT_SMALL = "select select-sm";
 
 export default function MatchHistory() {
   const [championFilter, setChampionFilter] = useState<number | undefined>(undefined);
@@ -242,7 +245,7 @@ export default function MatchHistory() {
   const losses = dashboard ? dashboard.totalGames - dashboard.wins : 0;
 
   return (
-    <div className="max-w-7xl space-y-4">
+    <div className="w-full space-y-4">
       {/* Stat Cards */}
       {dashboard && (
         <div className="grid grid-cols-3 gap-4">
@@ -329,7 +332,7 @@ export default function MatchHistory() {
             onChange={(e) =>
               setChampionFilter(e.target.value === "" ? undefined : Number(e.target.value))
             }
-            className={SELECT_CLASS}
+            className={SELECT_WIDE}
           >
             <option value="">All Champions</option>
             {championOptions.map(({ id, name }) => (
@@ -356,7 +359,7 @@ export default function MatchHistory() {
               onChange={(e) =>
                 setQueueFilter(e.target.value === "" ? undefined : Number(e.target.value))
               }
-              className={SELECT_CLASS}
+              className={SELECT_WIDE}
             >
               <option value="">All Queues</option>
               {filterOptions.queues.map((q) => (
@@ -373,7 +376,7 @@ export default function MatchHistory() {
                 setSort(e.target.value === "" ? undefined : (e.target.value as MatchSort));
                 setSortDir("desc");
               }}
-              className={SELECT_CLASS}
+              className={SELECT_SMALL}
             >
               <option value="">Sort</option>
               {SORT_OPTIONS.map(({ value, label }) => (
@@ -629,7 +632,7 @@ function GameRow({
             taken: match.game_max_taken,
             heal: match.game_max_heal,
           }}
-          className="w-40"
+          className="w-40 shrink-0 min-[1500px]:w-auto min-[1500px]:shrink min-[1500px]:flex-1 min-[1500px]:max-w-[420px]"
         />
 
         {/* Augments – reserve 3 columns so mixed-queue lists stay aligned */}

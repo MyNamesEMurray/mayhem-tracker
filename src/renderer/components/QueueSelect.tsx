@@ -35,7 +35,7 @@ export default function QueueSelect({
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-      className="select"
+      className="select select-lg"
     >
       <option value="">All Queues</option>
       {queues.map((q) => (

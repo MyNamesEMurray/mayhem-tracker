@@ -20,6 +20,23 @@ export default function Layout() {
   // Always-on tally for the diagnostics panel
   useEffect(() => window.api.onGamesUpdated(recordGamesUpdated), []);
 
+  // Ctrl+Shift+D reveals (or hides) the developer tools in Settings. They
+  // ship with every build but stay invisible to players who never ask.
+  useEffect(() => {
+    const onKey = async (e: KeyboardEvent) => {
+      if (!e.ctrlKey || !e.shiftKey || e.key.toLowerCase() !== "d") return;
+      e.preventDefault();
+      const enabled = (await window.api.getSetting("developer_mode")) === "true";
+      await window.api.setSetting("developer_mode", String(!enabled));
+      setSyncMessage(
+        enabled ? "Developer options hidden" : "Developer options shown in Settings",
+      );
+      window.dispatchEvent(new CustomEvent("mayhem-developer-mode", { detail: !enabled }));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     window.api.getVersion().then(setVersion);
     window.api.checkForUpdate().then(setUpdate);
@@ -98,7 +115,7 @@ export default function Layout() {
           )}
         </div>
       )}
-      <main className="flex-1 overflow-y-auto p-5">
+      <main className="flex-1 overflow-y-auto scroll-stable p-5">
         <Outlet />
       </main>
       {showUpdateDialog && update && (

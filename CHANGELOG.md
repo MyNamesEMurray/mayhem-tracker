@@ -6,6 +6,13 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.9.0 — 2026-08-16
+
+- Maximizing the window now actually uses the space: every stats page fills the width, and match rows stretch their damage bars instead of leaving a gap.
+- Filter dropdowns keep a fixed width, so choosing a champion or patch no longer nudges the controls beside them.
+- The scrollbar no longer shifts the page sideways when it appears or disappears — in the app and on mayhemstats.com.
+- Developer tools are hidden by default now. Press Ctrl+Shift+D to show them in Settings (and again, or the Hide button, to put them away).
+
 ## v2.8.5 — 2026-08-16
 
 - Finished games now appear almost immediately. The app reads your match straight from the end-of-game screen instead of waiting for Riot's match history to catch up, which was taking several minutes.

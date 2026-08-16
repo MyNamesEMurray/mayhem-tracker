@@ -329,7 +329,7 @@ export default function GlobalChampionDetailPage() {
   const avg = (total: number) => (data.games > 0 ? (total / data.games).toFixed(1) : "0.0");
 
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="w-full space-y-4">
       {backLink}
 
       <div className="flex items-center justify-between">

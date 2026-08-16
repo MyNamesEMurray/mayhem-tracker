@@ -14,6 +14,12 @@
   --color-lol-text-bright: #e8ecf4;
 }
 
+html {
+  /* Always reserve the scrollbar's space: a page that fits the viewport must
+     not sit a few pixels wider than one that scrolls */
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--color-lol-dark);
   background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
@@ -25,8 +31,12 @@ body {
 }
 
 @layer components {
+  /* Sized by class, never by the selected option — changing a filter must
+     not shift the layout beside it. Applies to every dropdown on the site. */
   .select {
     appearance: none;
+    width: var(--select-w, 10rem);
+    text-overflow: ellipsis;
     background-color: var(--color-lol-card);
     border: 1px solid var(--color-lol-border);
     border-radius: 0.5rem;
@@ -39,6 +49,14 @@ body {
     background-position: right 0.5rem center;
     background-size: 0.875rem;
     transition: border-color 150ms;
+  }
+
+  .select-sm {
+    --select-w: 7.5rem;
+  }
+
+  .select-lg {
+    --select-w: 12.5rem;
   }
 
   .input {

@@ -157,7 +157,7 @@ export default function Overview() {
         : null);
 
   return (
-    <div className="max-w-7xl flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4">
       {/* Profile row */}
       <div className="flex items-center gap-3.5">
         <SummonerIcon iconId={profile?.icon ?? null} size={52} className="border-2 border-lol-gold/40" />

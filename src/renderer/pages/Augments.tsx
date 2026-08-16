@@ -135,7 +135,7 @@ export default function Augments() {
   );
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="w-full space-y-4">
       <div className="flex items-center gap-4">
         <h1 className="text-xl font-bold text-lol-text-bright">Augments</h1>
         <div className="flex items-center gap-1.5">

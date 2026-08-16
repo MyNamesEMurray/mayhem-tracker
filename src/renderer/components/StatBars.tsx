@@ -9,10 +9,11 @@ interface StatBarsProps {
 
 // Damage dealt / taken / healed, each as a share of the game's best. The
 // inline labels stay short because the strip is narrow; tooltips carry the
-// full names.
+// full names. Sizing (including whether it may shrink or grow) comes from
+// the caller's className.
 export default function StatBars({ damage, taken, heal, max, className = "" }: StatBarsProps) {
   return (
-    <div className={`shrink-0 space-y-0.5 ${className}`}>
+    <div className={`space-y-0.5 ${className}`}>
       <StatBar value={damage} max={max.dmg} color="bg-red-400/50" label="DMG" title="Damage dealt" />
       <StatBar value={taken} max={max.taken} color="bg-sky-400/50" label="TKN" title="Damage taken" />
       <StatBar value={heal} max={max.heal} color="bg-emerald-400/50" label="HEL" title="Healing" />

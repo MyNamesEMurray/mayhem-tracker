@@ -137,6 +137,15 @@ export default function Settings() {
     setLiveDebug(await window.api.setLiveDebugEnabled(!liveDebug.enabled));
   }, [liveDebug]);
 
+  // Developer tools ship in every build but stay hidden until Ctrl+Shift+D
+  const [devMode, setDevMode] = useState(false);
+  useEffect(() => {
+    window.api.getSetting("developer_mode").then((v) => setDevMode(v === "true"));
+    const onToggle = (e: Event) => setDevMode((e as CustomEvent<boolean>).detail);
+    window.addEventListener("mayhem-developer-mode", onToggle);
+    return () => window.removeEventListener("mayhem-developer-mode", onToggle);
+  }, []);
+
   const [diagnostics, setDiagnostics] = useState<string | null>(null);
   const handleDiagnostics = useCallback(async () => {
     const snap = await window.api.getDiagnostics();
@@ -274,7 +283,7 @@ export default function Settings() {
   if (loading) return null;
 
   return (
-    <div className="max-w-5xl grid min-[861px]:grid-cols-2 gap-4 items-start">
+    <div className="max-w-[1400px] grid min-[861px]:grid-cols-2 gap-4 items-start">
       <div className="flex flex-col gap-4">
         <Panel label="General">
           <SettingRow
@@ -396,6 +405,7 @@ export default function Settings() {
         {repairStatus && <p className="text-xs text-lol-text">{repairStatus}</p>}
       </Panel>
 
+      {devMode && (
       <Panel label="Developer">
         <SettingRow
           name="Sync diagnostics"
@@ -447,7 +457,22 @@ export default function Settings() {
             Open folder
           </button>
         </SettingRow>
+        <SettingRow
+          name="Hide developer options"
+          description="Tuck this panel away again — Ctrl+Shift+D brings it back"
+        >
+          <button
+            onClick={async () => {
+              await window.api.setSetting("developer_mode", "false");
+              setDevMode(false);
+            }}
+            className={BUTTON_SECONDARY}
+          >
+            Hide
+          </button>
+        </SettingRow>
       </Panel>
+      )}
     </div>
   );
 }

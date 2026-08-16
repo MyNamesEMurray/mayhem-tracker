@@ -232,7 +232,7 @@ export default function GlobalStats() {
   );
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-lol-text-bright">Global Stats</h1>
         <div className="flex items-center gap-3">

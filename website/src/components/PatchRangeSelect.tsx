@@ -67,7 +67,7 @@ export default function PatchRangeSelect({
 
   return (
     <div className="flex items-center gap-2">
-      <select className="select" value={selection.mode} onChange={(e) => handleMode(e.target.value)}>
+      <select className="select select-lg" value={selection.mode} onChange={(e) => handleMode(e.target.value)}>
         <option value="current">
           {latest ? `Current patch (${formatPatch(latest)})` : "Current patch"}
         </option>
@@ -77,7 +77,7 @@ export default function PatchRangeSelect({
       {selection.mode === "range" && (
         <>
           <select
-            className="select"
+            className="select select-sm"
             value={selection.from}
             onChange={(e) => setRange(e.target.value, selection.to)}
           >
@@ -89,7 +89,7 @@ export default function PatchRangeSelect({
           </select>
           <span className="text-xs text-lol-text">to</span>
           <select
-            className="select"
+            className="select select-sm"
             value={selection.to}
             onChange={(e) => setRange(selection.from, e.target.value)}
           >
