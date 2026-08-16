@@ -11,6 +11,15 @@ import { refreshStartupPath, startedHidden } from "./startup";
 import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
 
+// Electron derives userData from productName, so renaming the product to
+// "MayhemStats Tracker" would silently move every existing install's database
+// out from under it. Pin the folder to the original name instead — the
+// display name is free to change, the data location never does. Must run
+// before anything touches app.getPath("userData") (see paths.ts).
+if (app.isPackaged) {
+  app.setPath("userData", path.join(app.getPath("appData"), "Mayhem Tracker"));
+}
+
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
@@ -105,7 +114,7 @@ function createTray() {
     },
   ]);
 
-  tray.setToolTip("Mayhem Tracker");
+  tray.setToolTip("MayhemStats Tracker");
   tray.setContextMenu(contextMenu);
   tray.on("double-click", () => showWindow());
 }

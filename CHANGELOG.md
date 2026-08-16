@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.10.0 — 2026-08-16
+
+- The app is now called **MayhemStats Tracker**, matching the site it powers. Nothing else changes: your match history, settings, and community contributions all carry over untouched.
+- mayhemstats.com now has a proper [download page](https://mayhemstats.com/download/) — both builds, what to do about the Windows SmartScreen warning, and straight answers on what the app does and doesn't send.
+
 ## v2.9.3 — 2026-08-16
 
 - Match rows now breathe with the window: the spacing between item and augment icons, and between the row's sections, grows smoothly as you widen the app instead of staying pinned at its smallest size.

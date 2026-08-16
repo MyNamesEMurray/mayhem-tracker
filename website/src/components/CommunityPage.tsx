@@ -154,7 +154,7 @@ export default function CommunityPage() {
             <path d="m7 12 5 5 5-5" />
             <path d="M5 21h14" />
           </svg>
-          Download Mayhem Tracker
+          Download MayhemStats Tracker
         </a>
       </div>
     </div>

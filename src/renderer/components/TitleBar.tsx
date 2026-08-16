@@ -17,7 +17,7 @@ export default function TitleBar({ version }: { version: string }) {
       <span className="flex items-center gap-[7px] px-3.5 text-[13px] font-extrabold tracking-[0.03em] text-lol-gold-light">
         <SwordsIcon className="w-[15px] h-[15px] shrink-0 text-lol-gold" strokeWidth={2.4} />
         <span className="leading-none">
-          MAYHEM
+          MAYHEMSTATS
           <span className="text-lol-gold">TRACKER</span>
         </span>
       </span>

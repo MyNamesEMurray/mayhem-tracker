@@ -262,7 +262,7 @@ async function main() {
     <section id="prerender">
       <p><a href="/">← MayhemStats: all champions</a></p>
       <h1><img src="${iconUrl}" alt="" width="40" height="40" loading="lazy" />${esc(name)} — ARAM Mayhem Build &amp; Stats</h1>
-      <p>${esc(name)} wins <strong>${wr}%</strong> of ${agg.games} community games in ARAM Mayhem, with an average KDA of ${kda}. All numbers come from anonymized games contributed by players running the free <a href="https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest">Mayhem Tracker</a> app.</p>
+      <p>${esc(name)} wins <strong>${wr}%</strong> of ${agg.games} community games in ARAM Mayhem, with an average KDA of ${kda}. All numbers come from anonymized games contributed by players running the free <a href="/download/">MayhemStats Tracker</a> app.</p>
       <h2>Core build</h2>
       <ol>
             ${buildList || "<li>Not enough item data yet.</li>"}

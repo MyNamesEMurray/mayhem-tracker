@@ -43,7 +43,7 @@ export default function OnboardingWizard() {
           <div className="text-center">
             <SwordsIcon width={44} height={44} className="mx-auto text-lol-gold" />
             <h2 className="text-[20px] font-extrabold text-lol-gold-light mt-4">
-              Welcome to Mayhem Tracker
+              Welcome to MayhemStats Tracker
             </h2>
             <p className="text-[13px] text-lol-text mt-2 leading-relaxed">
               Your ARAM Mayhem match history, recorded automatically. Keep the tracker running

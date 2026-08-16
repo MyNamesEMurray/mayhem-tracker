@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Same theme tokens as the Mayhem Tracker desktop app */
+/* Same theme tokens as the MayhemStats Tracker desktop app */
 @theme {
   --color-lol-dark: #0b0e14;
   --color-lol-card: #141924;

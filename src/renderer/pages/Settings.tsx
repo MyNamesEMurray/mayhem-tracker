@@ -303,7 +303,7 @@ export default function Settings() {
             description={
               startup?.supported === false
                 ? "Available in the installed and portable builds — not when running from source"
-                : "Launch Mayhem Tracker to the tray when you sign in, so games are recorded without opening it first"
+                : "Launch MayhemStats Tracker to the tray when you sign in, so games are recorded without opening it first"
             }
           >
             <Toggle

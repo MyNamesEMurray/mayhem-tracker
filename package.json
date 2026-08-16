@@ -1,6 +1,6 @@
 {
   "name": "mayhem-tracker",
-  "version": "2.9.3",
+  "version": "2.10.0",
   "description": "ARAM Mayhem match history tracker",
   "author": "MyNamesEMurray",
   "license": "MIT",
@@ -44,7 +44,7 @@
   },
   "build": {
     "appId": "com.mayhem-tracker.app",
-    "productName": "Mayhem Tracker",
+    "productName": "MayhemStats Tracker",
     "directories": {
       "output": "dist"
     },

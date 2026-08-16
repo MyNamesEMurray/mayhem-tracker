@@ -266,7 +266,7 @@ export default function App() {
             />
             <a
               href="/download/"
-              title="Download the Mayhem Tracker desktop app — play, track, and contribute your games"
+              title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
             >
               <svg
@@ -405,7 +405,7 @@ export default function App() {
               Privacy
             </a>
             <a href="/download/" className="hover:text-lol-gold">
-              Download Mayhem Tracker
+              Download MayhemStats Tracker
             </a>
             <a
               href="https://github.com/MyNamesEMurray/mayhem-tracker"
@@ -424,7 +424,7 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
             >
-              Mayhem Tracker
+              MayhemStats Tracker
             </a>{" "}
             players who opted in. Contributions contain champions, augments, items, and combat
             stats only — never summoner names, Riot IDs, or anything that identifies a player.
@@ -432,7 +432,7 @@ export default function App() {
             <span className="text-lol-text">Settings → Community Stats</span>.
           </p>
           <p>
-            Mayhem Tracker isn't endorsed by Riot Games and doesn't reflect the views or opinions
+            MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions
             of Riot Games or anyone officially involved in producing or managing League of
             Legends. League of Legends and Riot Games are trademarks or registered trademarks of
             Riot Games, Inc.

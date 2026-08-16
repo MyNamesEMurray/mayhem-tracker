@@ -290,7 +290,7 @@ export default function ChampionDetail({
           <div className="flex items-baseline gap-2.5 mb-3">
             <h2 className={LABEL}>Typical build path</h2>
             <span className="text-[11px] text-lol-text">
-              purchase order recorded live by Mayhem Tracker players
+              purchase order recorded live by MayhemStats Tracker players
             </span>
           </div>
           <div className="flex flex-wrap items-start gap-x-2 gap-y-3">

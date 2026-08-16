@@ -1,4 +1,4 @@
-# Mayhem Tracker — Community Edition
+# MayhemStats Tracker
 
 Desktop app for tracking ARAM Mayhem match history in League of Legends. Connects to the League Client (LCU) to automatically record matches and display stats — and, if you opt in, contributes your games **anonymously** to the community database behind the public stats site:
 
@@ -35,7 +35,7 @@ Mayhem games — contributed by players, because there is no other source.
 
 Grab `MayhemTracker-Setup.exe` (installer) or `MayhemTracker-Portable.exe` (no install, runs anywhere) from [mayhemstats.com/download](https://mayhemstats.com/download/) or the [latest release](https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest). The app checks for updates automatically.
 
-Mayhem Tracker uses the [SignPath Foundation](https://signpath.org/) for code signing of its Windows releases. Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by SignPath Foundation. *(Certificate pending — releases published before it is issued are unsigned, so Windows SmartScreen will warn on first run.)*
+MayhemStats Tracker uses the [SignPath Foundation](https://signpath.org/) for code signing of its Windows releases. Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by SignPath Foundation. *(Certificate pending — releases published before it is issued are unsigned, so Windows SmartScreen will warn on first run.)*
 
 ## Community stats & privacy
 
@@ -72,4 +72,4 @@ Forked from [Yhprum/mayhem-tracker](https://github.com/Yhprum/mayhem-tracker) �
 
 ## Disclaimer
 
-Mayhem Tracker was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project.
+MayhemStats Tracker was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project.
