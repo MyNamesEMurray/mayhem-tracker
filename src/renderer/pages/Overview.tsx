@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useNow } from "../hooks/useNow";
+import { useOnWindowFocus } from "../hooks/useOnWindowFocus";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useLcuStatus } from "../hooks/useLcuStatus";
 import { useBackfill } from "../hooks/useBackfill";
@@ -73,6 +74,11 @@ export default function Overview() {
     [refetchRecent, refetchDashboard],
   );
 
+  useOnWindowFocus(() => {
+    refetchRecent();
+    refetchDashboard();
+  });
+
   const latestGameId = recent?.matches[0]?.game_id;
 
   useEffect(() => {
@@ -104,10 +110,17 @@ export default function Overview() {
       if ("error" in result) {
         setRefreshMessage(`Error: ${result.error}`);
       } else {
+        // "Up to date" rather than "no new games": the list may still have
+        // moved, since background syncs store games between clicks
         setRefreshMessage(
-          result.newGames > 0 ? `Found ${result.newGames} new game(s)` : "No new games",
+          result.newGames > 0 ? `Found ${result.newGames} new game(s)` : "Up to date",
         );
       }
+      // Always re-read what's stored: a game the background sync already
+      // picked up counts as "no new games" here, and the list would
+      // otherwise keep showing whatever it loaded with
+      refetchRecent();
+      refetchDashboard();
     } catch (err: any) {
       // Strip Electron's IPC wrapper so only the underlying message shows
       const message = String(err?.message ?? err).replace(
@@ -118,7 +131,7 @@ export default function Overview() {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [refetchRecent, refetchDashboard]);
 
   const totalGames = dashboard?.totalGames ?? 0;
   const wins = dashboard?.wins ?? 0;

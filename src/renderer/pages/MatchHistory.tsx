@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMatches } from "../hooks/useMatches";
 import { useStatsFilters } from "../hooks/useStatsFilters";
+import { useOnWindowFocus } from "../hooks/useOnWindowFocus";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useIpc } from "../hooks/useIpc";
 import { useLcuStatus } from "../hooks/useLcuStatus";
@@ -149,9 +150,16 @@ export default function MatchHistory() {
     const unsub = window.api.onGamesUpdated(() => {
       refetchDashboard();
       fetchOptions();
+      reload();
     });
     return unsub;
-  }, [championFilter, patchFilter, queueFilter, refetchDashboard]);
+  }, [championFilter, patchFilter, queueFilter, refetchDashboard, reload]);
+
+  // Catch up on anything recorded while the app sat in the tray
+  useOnWindowFocus(() => {
+    reload();
+    refetchDashboard();
+  });
 
   // Clear a selection if new data leaves it without any matching games
   useEffect(() => {
