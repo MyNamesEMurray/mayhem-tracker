@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, Fragment } from "react";
 import { useIpc } from "../hooks/useIpc";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useStatsFilters } from "../hooks/useStatsFilters";
 import { useChampionData, getChampionName, useAugmentData } from "../hooks/useChampions";
 import type { ChampionStats, AugmentStats, ItemStats, MatchListItem } from "../lib/types";
@@ -161,6 +162,8 @@ function ChampionExpanded({
 
 export default function Champions() {
   const champData = useChampionData();
+  // Wide windows get larger icons; the icon components size in pixels
+  const wide = useMediaQuery("(min-width: 1500px)");
   const { patch, setPatch, queue, setQueue } = useStatsFilters();
   const { data, refetch } = useIpc<ChampionStats[]>(
     () => window.api.getChampionStats(patch, queue),
@@ -303,14 +306,14 @@ export default function Champions() {
                   <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
                   <td className="px-3 py-1.5">
                     <div className="flex items-center gap-2">
-                      <ChampionIcon championId={c.champion_id} size={28} />
+                      <ChampionIcon championId={c.champion_id} size={wide ? 36 : 28} />
                       <span className="text-sm text-lol-text-bright">
                         {getChampionName(champData, c.champion_id)}
                       </span>
                     </div>
                   </td>
                   <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
-                  <td className="px-3 py-1.5 w-32">
+                  <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                     <WinRateBar wins={c.wins} total={c.games} />
                   </td>
                   <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_kills}</td>

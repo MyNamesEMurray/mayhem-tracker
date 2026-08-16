@@ -572,11 +572,15 @@ function GameRow({
       : isWin
         ? "bg-lol-win"
         : "bg-lol-loss";
+  // Flat wash for the row, with the gradient confined to a short fade next
+  // to the accent bar: a 0.12 -> 0.04 gradient stretched across a maximized
+  // window is subtle enough to band on some displays.
+  const wash = isRemake ? "bg-white/[0.015]" : isWin ? "bg-lol-win/[0.05]" : "bg-lol-loss/[0.05]";
   const tint = isRemake
-    ? "from-white/[0.03] to-white/[0.01]"
+    ? "from-white/[0.03]"
     : isWin
-      ? "from-lol-win/12 to-lol-win/[0.04]"
-      : "from-lol-loss/12 to-lol-loss/[0.04]";
+      ? "from-lol-win/[0.09]"
+      : "from-lol-loss/[0.09]";
 
   return (
     <div>
@@ -588,7 +592,10 @@ function GameRow({
         }`}
       >
         <span className={`absolute left-0 inset-y-0 w-[3px] ${accent}`} />
-        <span className={`absolute inset-0 pointer-events-none bg-gradient-to-r ${tint}`} />
+        <span className={`absolute inset-0 pointer-events-none ${wash}`} />
+        <span
+          className={`absolute inset-y-0 left-0 w-[320px] pointer-events-none bg-gradient-to-r to-transparent ${tint}`}
+        />
         <div
           className={`text-xs font-bold shrink-0 ${isRemake ? "text-gray-500 w-8" : isWin ? "text-lol-win w-8" : "text-lol-loss w-8"}`}
         >

@@ -248,7 +248,7 @@ export default function Augments() {
                     </td>
                     <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
                     <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
-                    <td className="px-3 py-1.5 w-32">
+                    <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                       <WinRateBar wins={a.wins} total={a.picks} />
                     </td>
                   </tr>
@@ -269,7 +269,7 @@ export default function Augments() {
                         </td>
                         <td className="px-3 py-1.5 text-xs text-lol-text">{c.picks}</td>
                         <td></td>
-                        <td className="px-3 py-1.5 w-32">
+                        <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                           <WinRateBar wins={c.wins} total={c.picks} />
                         </td>
                       </tr>

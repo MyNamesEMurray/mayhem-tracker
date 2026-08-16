@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.9.2 — 2026-08-16
+
+- Champions, Augments and Global tables now use a maximized window too: win-rate meters grow with the space and champion icons scale up, instead of leaving wide empty columns.
+- Fixed a faint vertical seam that could show across match rows on large displays.
+
 ## v2.9.1 — 2026-08-16
 
 - Match rows now rearrange for wide windows instead of leaving a big empty stripe: bigger champion, item and augment icons, items and augments laid out in a single row, longer damage bars, and gold earned added to the row.
