@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useLcuStatus } from "../hooks/useLcuStatus";
 import { useBackfill } from "../hooks/useBackfill";
 import type { UpdateInfo } from "../lib/types";
+import { eventTrace, recordGamesUpdated } from "../lib/eventTrace";
 import TitleBar from "./TitleBar";
 import TabBar from "./TabBar";
 import UpdateDialog from "./UpdateDialog";
@@ -15,6 +16,9 @@ export default function Layout() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  // Always-on tally for the diagnostics panel
+  useEffect(() => window.api.onGamesUpdated(recordGamesUpdated), []);
 
   useEffect(() => {
     window.api.getVersion().then(setVersion);

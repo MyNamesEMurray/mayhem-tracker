@@ -272,6 +272,22 @@ export function registerIpcHandlers() {
     return upload.deleteContributions(getMainWindow());
   });
 
+  // Sync diagnostics: what the main process has actually done, so a stuck
+  // list can be traced without guessing
+  ipcMain.handle("diag:snapshot", () => {
+    const storage = db.getStorageDiagnostics();
+    return {
+      version: app.getVersion(),
+      lcuStatus: lcu.getStatus(),
+      liveTracking: db.getSetting("live_tracking_enabled") !== "false",
+      hideClassic: db.getSetting("hide_classic_games") === "true",
+      sync: { ...lcu.syncTrace },
+      upload: upload.getUploadStatus(),
+      storage,
+      now: Date.now(),
+    };
+  });
+
   // Launch on login (into the tray)
   ipcMain.handle("startup:status", () => {
     return { supported: startup.isStartupSupported(), enabled: startup.getStartupEnabled() };

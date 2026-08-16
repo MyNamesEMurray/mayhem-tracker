@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useBackfill } from "../hooks/useBackfill";
 import type { LiveDebugStatus, StartupStatus, UploadStatus } from "../lib/types";
+import { eventTrace } from "../lib/eventTrace";
 import Toggle from "../components/Toggle";
 
 // Design-system control styles (radius 8 controls, gold primary, destructive
@@ -135,6 +136,25 @@ export default function Settings() {
     if (!liveDebug) return;
     setLiveDebug(await window.api.setLiveDebugEnabled(!liveDebug.enabled));
   }, [liveDebug]);
+
+  const [diagnostics, setDiagnostics] = useState<string | null>(null);
+  const handleDiagnostics = useCallback(async () => {
+    const snap = await window.api.getDiagnostics();
+    const ago = (t: number) => (t ? `${Math.round((snap.now - t) / 1000)}s ago` : "never");
+    const lines = [
+      `app ${snap.version} · client ${snap.lcuStatus} · live tracking ${snap.liveTracking ? "on" : "off"}${snap.hideClassic ? " · classic hidden" : ""}`,
+      `last sync ${ago(snap.sync.lastSyncAt)} (${snap.sync.lastSyncSource || "?"}), found ${snap.sync.lastSyncNewGames}`,
+      `last UI notify ${ago(snap.sync.lastNotifyAt)}; skipped with no window: ${snap.sync.notifySkippedNoWindow}`,
+      `this window received ${eventTrace.gamesUpdated} update event(s), last ${ago(eventTrace.lastAt)}`,
+      `uploads: ${snap.upload.uploaded} done, ${snap.upload.pending} pending${snap.upload.lastError ? ` — ${snap.upload.lastError}` : ""}`,
+      `stored games: ${snap.storage.totalGames} (owner ${String(snap.storage.ownerPuuid).slice(0, 8)}…)`,
+      ...snap.storage.newest.map(
+        (g: any) =>
+          `  ${g.game_id} q${g.queue_id} ${g.patch} started ${ago(g.created)} · list:${g.inHistory ? "yes" : "NO"} parts:${g.hasParticipants ? "yes" : "NO"} upload:${g.uploaded ?? "pending"}`,
+      ),
+    ];
+    setDiagnostics(lines.join("\n"));
+  }, []);
 
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateCheckStatus, setUpdateCheckStatus] = useState<string | null>(null);
@@ -376,6 +396,27 @@ export default function Settings() {
       </Panel>
 
       <Panel label="Developer">
+        <SettingRow
+          name="Sync diagnostics"
+          description="What the app has actually recorded and announced — useful when games seem to be missing"
+        >
+          <button onClick={handleDiagnostics} className={BUTTON_SECONDARY}>
+            {diagnostics ? "Refresh" : "Show"}
+          </button>
+        </SettingRow>
+        {diagnostics && (
+          <div className="space-y-2">
+            <pre className="max-h-64 overflow-auto rounded-md border border-lol-border/60 bg-lol-dark/60 p-3 text-[11px] leading-relaxed text-lol-text whitespace-pre-wrap">
+              {diagnostics}
+            </pre>
+            <button
+              onClick={() => navigator.clipboard.writeText(diagnostics)}
+              className={BUTTON_SECONDARY}
+            >
+              Copy to clipboard
+            </button>
+          </div>
+        )}
         <SettingRow
           name="Record live game data"
           description="While enabled, polls the League client's live-data API every 2 seconds during games and saves raw snapshots to local files — debug only, nothing is uploaded"

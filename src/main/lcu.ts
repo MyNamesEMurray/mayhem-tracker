@@ -30,6 +30,17 @@ export function getStatus() {
   return status;
 }
 
+// Recorded purely so the diagnostics panel can show whether syncs are
+// running and whether they announced anything to the window
+export const syncTrace = {
+  lastSyncAt: 0,
+  lastSyncSource: "" as string,
+  lastSyncNewGames: 0,
+  lastNotifyAt: 0,
+  notifySkippedNoWindow: 0,
+  lastError: "" as string,
+};
+
 export function friendlyErrorMessage(err: unknown): string {
   if (err instanceof ClientNotFoundError) {
     return "League client is not running";
@@ -145,6 +156,11 @@ function notifyGamesUpdated(_win?: BrowserWindow | null) {
   const w = getMainWindow();
   if (w) {
     w.webContents.send("lcu:games-updated");
+    syncTrace.lastNotifyAt = Date.now();
+  } else {
+    // No window to tell — the renderer catches up when it next mounts or
+    // regains focus
+    syncTrace.notifySkippedNoWindow++;
   }
 }
 
@@ -429,6 +445,9 @@ export async function fetchNewGames(
     void uploadPendingGames(win);
   }
 
+  syncTrace.lastSyncAt = Date.now();
+  syncTrace.lastSyncNewGames = newGamesCount;
+
   const dashboard = db.getDashboardData();
   return { newGames: newGamesCount, totalGames: dashboard.totalGames };
 }
@@ -449,7 +468,8 @@ async function isInGame(): Promise<boolean> {
 // pvp.net service is only touched while an account still needs its first walk.
 // Deferred while a game is in progress so we aren't hammering the client
 // mid-match; a later poll picks it up.
-async function syncGames(win?: BrowserWindow | null) {
+async function syncGames(win?: BrowserWindow | null, source = "poll") {
+  syncTrace.lastSyncSource = source;
   let summoner: any = null;
   try {
     summoner = await fetchCurrentSummoner();

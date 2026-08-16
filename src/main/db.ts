@@ -1095,6 +1095,50 @@ export function getMatchDetail(gameId: number): any {
   };
 }
 
+// Snapshot of what's actually stored, for the diagnostics panel. Reports the
+// newest games with whether each has the rows the different views read, so a
+// game that uploads but never appears (or vice versa) is obvious.
+export function getStorageDiagnostics(): {
+  totalGames: number;
+  ownerPuuid: string | null;
+  newest: {
+    game_id: number;
+    queue_id: number;
+    patch: string | null;
+    created: number;
+    inHistory: boolean;
+    hasParticipants: boolean;
+    uploaded: string | null;
+  }[];
+} {
+  const rows = db
+    .prepare(`
+    SELECT g.game_id, g.queue_id, g.game_version AS patch, g.game_creation AS created,
+           (SELECT COUNT(*) FROM player_stats ps WHERE ps.game_id = g.game_id) AS stats_rows,
+           (SELECT COUNT(*) FROM participants p WHERE p.game_id = g.game_id) AS part_rows,
+           (SELECT status FROM uploaded_games u WHERE u.game_id = g.game_id) AS upload_status
+    FROM games g
+    ORDER BY g.game_creation DESC
+    LIMIT 5
+  `)
+    .all() as any[];
+  const total = db.prepare("SELECT COUNT(*) AS c FROM games").get() as { c: number };
+  const summoner = getSummoner();
+  return {
+    totalGames: total.c,
+    ownerPuuid: summoner?.puuid ?? null,
+    newest: rows.map((r) => ({
+      game_id: r.game_id,
+      queue_id: r.queue_id,
+      patch: r.patch,
+      created: r.created,
+      inHistory: r.stats_rows > 0,
+      hasParticipants: r.part_rows > 0,
+      uploaded: r.upload_status ?? null,
+    })),
+  };
+}
+
 // Build-order events from the live watcher, written once per game when a
 // finished live session is matched to a stored game
 export function storeLiveEvents(

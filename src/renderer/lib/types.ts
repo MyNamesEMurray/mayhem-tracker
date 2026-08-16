@@ -434,6 +434,7 @@ export interface ElectronAPI {
     error?: string;
   }>;
   onUploadChanged: (callback: () => void) => () => void;
+  getDiagnostics: () => Promise<any>;
   getStartupStatus: () => Promise<StartupStatus>;
   setStartupEnabled: (enabled: boolean) => Promise<StartupStatus>;
   getLiveDebugStatus: () => Promise<LiveDebugStatus>;

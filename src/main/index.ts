@@ -146,7 +146,10 @@ app.whenReady().then(async () => {
   // game ends, so chase it briefly instead of waiting for the next poll
   setGameEndedHandler(() => {
     void (async () => {
-      for (const delay of [8000, 20000, 40000]) {
+      // Riot can take a couple of minutes to publish a finished match to the
+      // client, so keep checking across that window rather than giving up
+      // after the first few tries
+      for (const delay of [8000, 12000, 20000, 30000, 45000, 60000]) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         try {
           const result = await fetchNewGames(getMainWindow());

@@ -131,6 +131,8 @@ const api = {
     return () => ipcRenderer.removeListener("upload:changed", handler);
   },
 
+  getDiagnostics: () => ipcRenderer.invoke("diag:snapshot"),
+
   getStartupStatus: () => ipcRenderer.invoke("startup:status"),
 
   setStartupEnabled: (enabled: boolean) => ipcRenderer.invoke("startup:set-enabled", enabled),

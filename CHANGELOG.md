@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.8.4 — 2026-08-16
+
+- The app now keeps watching for a finished match for a couple of minutes after the game ends, instead of giving up after 40 seconds — Riot's client sometimes takes that long to publish it.
+- New **Sync diagnostics** readout (Settings → Developer) showing what was recorded, when the app last checked, and what it told the window — with a copy button, for reporting problems.
+
 ## v2.8.3 — 2026-08-16
 
 - Fixed the game list not showing matches that were already recorded in the background — Refresh now always re-reads your stored games, and the app catches up on its own whenever you bring the window back to the front.
