@@ -148,6 +148,13 @@ function notifyGamesUpdated(_win?: BrowserWindow | null) {
   }
 }
 
+function notifyBackfillDone(payload: unknown) {
+  const w = getMainWindow();
+  if (w) {
+    w.webContents.send("lcu:backfill-done", payload);
+  }
+}
+
 function sgpMatchIdsUrl(host: string, puuid: string, startIndex: number, count: number) {
   return (
     `${host}/match-history-query/v1/products/lol/player/${puuid}` +
@@ -359,14 +366,10 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
       cancelled,
     };
 
-    if (win && !win.isDestroyed()) {
-      win.webContents.send("lcu:backfill-done", result);
-    }
+    notifyBackfillDone(result);
     return result;
   } catch (err) {
-    if (win && !win.isDestroyed()) {
-      win.webContents.send("lcu:backfill-done", { error: friendlyErrorMessage(err) });
-    }
+    notifyBackfillDone({ error: friendlyErrorMessage(err) });
     throw err;
   } finally {
     backfillRunning = false;
@@ -418,10 +421,13 @@ export async function fetchNewGames(
     }
   }
 
-  if (newGamesCount > 0 && win && !win.isDestroyed()) {
-    win.webContents.send("lcu:games-updated");
+  // Resolved at send time, not from the caller: the 60s poll runs without a
+  // window reference (the tray destroys it), so a captured one would leave
+  // background syncs silently unannounced
+  if (newGamesCount > 0) {
+    notifyGamesUpdated();
+    void uploadPendingGames(win);
   }
-  if (newGamesCount > 0) void uploadPendingGames(win);
 
   const dashboard = db.getDashboardData();
   return { newGames: newGamesCount, totalGames: dashboard.totalGames };

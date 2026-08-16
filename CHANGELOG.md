@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.8.1 — 2026-08-15
+
+- Fixed new games not appearing until you clicked Refresh. Finished matches now show up on their own again, and history imports that run in the background report themselves too.
+- Games also land faster: instead of waiting for the next check, the app grabs a match within seconds of the end-of-game screen.
+
 ## v2.8.0 — 2026-08-15
 
 - New **Start with Windows** option (Settings → General). Mayhem Tracker signs in with you and waits in the tray, so games are recorded and synced without opening it first — no window pops up at login.

@@ -22,6 +22,15 @@ let failures = 0;
 let polling = false;
 const pending: LiveGameSession[] = [];
 
+// Called when a game ends, so the LCU sync can pick the match up right away
+// instead of waiting out the 60s poll. Registered from the app entry point
+// to keep this module free of a cycle back into lcu.ts.
+let gameEndedHandler: (() => void) | null = null;
+
+export function setGameEndedHandler(fn: () => void) {
+  gameEndedHandler = fn;
+}
+
 function endSession() {
   if (pollTimer) {
     clearInterval(pollTimer);
@@ -32,6 +41,7 @@ function endSession() {
     if (session.events.length > 0) pending.push(session);
     console.log(`Live watcher: game ended, ${session.events.length} events captured`);
     session = null;
+    gameEndedHandler?.();
   }
   const cutoff = Date.now() - PENDING_TTL;
   while (pending.length > 0 && (pending[0].endedAt ?? 0) < cutoff) pending.shift();

@@ -5,7 +5,7 @@ import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
 import { setMainWindow, getMainWindow } from "./window-ref";
 import { startPolling, stopPolling, getStatus, fetchNewGames } from "./lcu";
 import { refreshLiveDebug } from "./live-debug";
-import { refreshLiveWatcher } from "./live-watcher";
+import { refreshLiveWatcher, setGameEndedHandler } from "./live-watcher";
 import { isUpdating } from "./update-state";
 import { refreshStartupPath, startedHidden } from "./startup";
 import { uploadPendingGames } from "./upload";
@@ -141,6 +141,22 @@ app.whenReady().then(async () => {
 
   // Build-order tracking during games (on by default)
   refreshLiveWatcher();
+
+  // Riot publishes a finished match to the client a few seconds after the
+  // game ends, so chase it briefly instead of waiting for the next poll
+  setGameEndedHandler(() => {
+    void (async () => {
+      for (const delay of [8000, 20000, 40000]) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        try {
+          const result = await fetchNewGames(getMainWindow());
+          if (result && "newGames" in result && result.newGames > 0) return;
+        } catch {
+          // Client closed or busy — the 60s poll is still the backstop
+        }
+      }
+    })();
+  });
 
   // Finish any community upload a previous session left pending
   void uploadPendingGames(getMainWindow());
