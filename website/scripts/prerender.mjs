@@ -156,12 +156,13 @@ async function main() {
     .filter((id) => championNames[id]);
 
   let pages = 0;
+  // Only real, self-canonical URLs belong here. "/?tab=champions" is a tab
+  // state of "/" whose canonical points back at "/", so submitting it just
+  // earned an "Alternate page with proper canonical tag" in Search Console.
   const sitemapUrls = [
     { loc: `${SITE}/`, freq: "daily", pri: "1.0" },
-    { loc: `${SITE}/?tab=champions`, freq: "daily", pri: "0.9" },
     { loc: `${SITE}/download/`, freq: "weekly", pri: "0.8" },
     { loc: `${SITE}/about/`, freq: "monthly", pri: "0.5" },
-    { loc: `${SITE}/community/`, freq: "daily", pri: "0.5" },
     { loc: `${SITE}/privacy/`, freq: "monthly", pri: "0.3" },
   ];
 
@@ -289,6 +290,76 @@ async function main() {
     writeFileSync(path.join(dir, "index.html"), html);
     sitemapUrls.push({ loc: `${SITE}/champion/${slug}/`, freq: "daily", pri: "0.8" });
     pages++;
+  }
+
+  // /community/ is a real route, but with no file on disk Cloudflare served
+  // index.html for it — carrying index.html's canonical, so Google read the
+  // page as a copy of the homepage. Give it its own file and canonical, the
+  // same way champion pages work: real content for crawlers, SPA on top.
+  try {
+    const [totals] = await fetchJson(`${SUPABASE_URL}/rest/v1/community_totals?select=*`, {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    });
+    const hours = Math.round(totals.total_seconds / 3600).toLocaleString();
+    const games = Number(totals.games).toLocaleString();
+    const contributors = Number(totals.contributors).toLocaleString();
+    const cTitle = "Community Impact — ARAM Mayhem Games Contributed | MayhemStats";
+    const cDesc = `${games} ARAM Mayhem games contributed by ${contributors} players, covering ${hours} hours of gameplay across ${totals.patches} patches. Every statistic on MayhemStats comes from these games.`;
+    const communityHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${esc(cTitle)}</title>
+    <meta name="description" content="${esc(cDesc)}" />
+    <link rel="canonical" href="${SITE}/community/" />
+    <meta property="og:title" content="MayhemStats — Community Impact" />
+    <meta property="og:description" content="${esc(cDesc)}" />
+    <meta property="og:url" content="${SITE}/community/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="${SITE}/og.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icon.png" />
+    ${assetTags}
+    <style>
+      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: #94a0b8;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+      #prerender h1, #prerender h2 { color: #e8ecf4; }
+      #prerender h1 { font-size: 1.5rem; } #prerender h2 { font-size: 1.1rem; margin-top: 1.75rem; }
+      #prerender a { color: #c89b3c; text-decoration: none; }
+      body { background: #0b0e14; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <section id="prerender">
+      <p><a href="/">← MayhemStats</a></p>
+      <h1>Community impact</h1>
+      <p>Riot's public API doesn't expose ARAM Mayhem match data, so every number on this site is crowdsourced: players run the free <a href="/download/">MayhemStats Tracker</a>, opt in, and pool their games anonymously.</p>
+      <h2>The running total</h2>
+      <ul>
+        <li><strong>${contributors}</strong> contributors sharing their games</li>
+        <li><strong>${games}</strong> games analyzed — ${(totals.games * 10).toLocaleString()} player performances</li>
+        <li><strong>${hours} hours</strong> of ARAM Mayhem, end to end</li>
+        <li><strong>${totals.patches}</strong> patches covered across the mode's runs</li>
+      </ul>
+      <p>Each contributed game adds all ten players' champions, augments, items, and combat lines to the pool — anonymously, with duplicates counted once. The more players opt in, the sharper the tier lists get, especially early in a patch.</p>
+      <p><em>Updated ${buildDate}.</em></p>
+      <p><a href="/about/">How these stats work</a> · <a href="/download/">Download the tracker</a> · <a href="/privacy/">Privacy</a></p>
+      <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>
+    </section>
+  </body>
+</html>
+`;
+    mkdirSync(path.join(DIST, "community"), { recursive: true });
+    writeFileSync(path.join(DIST, "community", "index.html"), communityHtml);
+    sitemapUrls.push({ loc: `${SITE}/community/`, freq: "daily", pri: "0.6" });
+  } catch (err) {
+    // Fail soft like the rest of this script: without a file the SPA route
+    // still works, it just stays out of the sitemap rather than being
+    // submitted as a duplicate of the homepage.
+    console.warn(`prerender: community page skipped (${err.message})`);
   }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
