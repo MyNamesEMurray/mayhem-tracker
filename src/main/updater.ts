@@ -4,6 +4,8 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { setUpdating } from "./update-state";
+import { buildReleaseNotes } from "./release-notes";
+import { compareVersions } from "../shared/version";
 
 export interface UpdateInfo {
   hasUpdate: boolean;
@@ -18,15 +20,24 @@ export interface UpdateInfo {
 
 export async function checkForUpdate(): Promise<UpdateInfo> {
   try {
+    // The whole list, not just /latest: someone several versions behind should
+    // read everything they're about to install, not only the last entry.
     const res = await fetch(
-      "https://api.github.com/repos/MyNamesEMurray/mayhem-tracker/releases/latest",
+      "https://api.github.com/repos/MyNamesEMurray/mayhem-tracker/releases?per_page=30",
       {
         headers: { "User-Agent": "mayhem-tracker" },
       },
     );
     if (!res.ok) return { hasUpdate: false, error: "No releases found" };
-    const data = (await res.json()) as any;
-    const latest = (data.tag_name as string).replace(/^v/, "");
+    const all = (await res.json()) as any[];
+    const published = (Array.isArray(all) ? all : [])
+      .filter((r) => !r.draft && !r.prerelease && typeof r.tag_name === "string")
+      .map((r) => ({ ...r, version: (r.tag_name as string).replace(/^v/, "") }))
+      .sort((a, b) => compareVersions(b.version, a.version));
+    if (published.length === 0) return { hasUpdate: false, error: "No releases found" };
+
+    const data = published[0];
+    const latest = data.version;
     const current = app.getVersion();
     // Pick the asset matching how this copy runs: the portable build swaps
     // its own exe, the installed build re-runs the installer silently.
@@ -38,13 +49,16 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         assets.find((a) => a.name?.endsWith(".exe") && !a.name.includes("Setup")))
       : assets.find((a) => a.name === "MayhemTracker-Setup.exe");
     return {
-      hasUpdate: latest !== current,
+      hasUpdate: compareVersions(latest, current) > 0,
       latest,
       current,
       url: data.html_url as string,
       assetUrl: asset?.browser_download_url,
       assetSize: asset?.size,
-      notes: typeof data.body === "string" ? data.body : undefined,
+      notes: buildReleaseNotes(
+        published.map((r) => ({ version: r.version, body: typeof r.body === "string" ? r.body : "" })),
+        current,
+      ),
     };
   } catch {
     return { hasUpdate: false, error: "Failed to check for updates" };

@@ -56,7 +56,7 @@ export default function UpdateDialog({
           {update.current}).
         </p>
         {noteLines.length > 0 && (
-          <div className="mt-3 max-h-44 overflow-y-auto rounded-md border border-lol-border/60 bg-lol-dark/50 px-3 py-2 text-[12px] leading-relaxed text-lol-text">
+          <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-lol-border/60 bg-lol-dark/50 px-3 py-2 text-[12px] leading-relaxed text-lol-text">
             {noteLines.map((line, i) =>
               line.startsWith("- ") ? (
                 <div key={i} className="flex gap-1.5">

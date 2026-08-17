@@ -6,14 +6,31 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
-## v2.10.3 — 2026-08-16
+The update window shows every version between what someone is running and
+what they're installing, so a bullet fixing a bug we shipped can reach
+people who never ran the broken build. Mark those with the release that
+introduced the problem:
+
+    - <!--fixes:v2.10.0--> Fixed the app opening as if it were a fresh install.
+
+Anyone upgrading from before v2.10.0 won't be shown it; anyone who ran
+v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
+bugs of our own making need it — a fix for a long-standing bug or something
+on Riot's end is news to everyone, so leave those unmarked.
+
+## v2.11.0 — 2026-08-16
+
+- The update window now shows **everything** you're about to install, not just the newest version's notes. Skipping three releases used to mean seeing one of them; now each version gets its own heading.
+- Notes about bugs from a version you never ran are left out, so you aren't warned about problems that never reached you.
+
+## v2.10.2 – v2.10.3 — 2026-08-16
 
 - Fixed **Backfill history** failing with a "403" error and staying broken. The app remembers which of Riot's regional match-history servers answers for your account; if that changes, or your client's sign-in expires, it now re-checks and retries instead of failing every time from then on. If Riot still refuses, the message now says which of its servers refused, whether your client's sign-in belongs to the account being looked up, and Riot's own reason — so a report is enough to diagnose it.
 
 ## v2.10.1 — 2026-08-16
 
-- **Fixes v2.10.0 opening as if it were a fresh install.** The rename moved where the app looked for your data, so it found nothing and started over. Your match history was never deleted — it was sitting in the old folder the whole time, and this release moves it into place on first launch. Nothing to do but update.
-- If you ran v2.10.0 and recorded games in it, those stay behind in a leftover `Mayhem Tracker` folder in AppData; your original history takes priority. That folder is safe to delete once you've confirmed your games are back.
+- <!--fixes:v2.10.0--> **Fixes v2.10.0 opening as if it were a fresh install.** The rename moved where the app looked for your data, so it found nothing and started over. Your match history was never deleted — it was sitting in the old folder the whole time, and this release moves it into place on first launch. Nothing to do but update.
+- <!--fixes:v2.10.0--> If you ran v2.10.0 and recorded games in it, those stay behind in a leftover `Mayhem Tracker` folder in AppData; your original history takes priority. That folder is safe to delete once you've confirmed your games are back.
 
 ## v2.10.0 — 2026-08-16
 
