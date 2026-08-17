@@ -6,9 +6,9 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
-## v2.10.2 — 2026-08-16
+## v2.10.3 — 2026-08-16
 
-- Fixed **Backfill history** failing with a "403" error and staying broken. The app remembers which of Riot's regional match-history servers answers for your account; if that changes, or your client's sign-in expires, it now re-checks and retries instead of failing every time from then on. If Riot still refuses, the message now tells you what to actually do about it.
+- Fixed **Backfill history** failing with a "403" error and staying broken. The app remembers which of Riot's regional match-history servers answers for your account; if that changes, or your client's sign-in expires, it now re-checks and retries instead of failing every time from then on. If Riot still refuses, the message now says which of its servers refused, whether your client's sign-in belongs to the account being looked up, and Riot's own reason — so a report is enough to diagnose it.
 
 ## v2.10.1 — 2026-08-16
 

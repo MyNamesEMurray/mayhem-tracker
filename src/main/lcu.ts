@@ -236,8 +236,34 @@ function sgpMatchIdsUrl(host: string, puuid: string, startIndex: number, count: 
 // or erroring. Carried as its own type so the caller can re-authenticate and
 // retry rather than surfacing a bare status code.
 class SgpAuthError extends Error {
-  constructor(readonly status: number) {
+  constructor(
+    readonly status: number,
+    readonly detail = "",
+  ) {
     super(`Match history service returned ${status}`);
+  }
+}
+
+// Riot's reason for refusing, trimmed to something that fits in a message.
+async function readDetail(response: Response): Promise<string> {
+  try {
+    return (await response.text()).replace(/\s+/g, " ").trim().slice(0, 200);
+  } catch {
+    return "";
+  }
+}
+
+// The session token is a JWT whose subject is the account it was minted for;
+// SGP only serves a player their own history, so a token/account mismatch is
+// its own flavour of 403. Compares locally — the token itself is never logged
+// or included in any message.
+function tokenMatchesAccount(token: string, puuid: string): boolean | null {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+    const subject = payload?.sub;
+    return typeof subject === "string" ? subject === puuid : null;
+  } catch {
+    return null;
   }
 }
 
@@ -281,9 +307,14 @@ async function resolveSgpHost(
   const candidates = guess ? [guess, ...SGP_HOSTS.filter((h) => h !== guess)] : SGP_HOSTS;
   // Every shard turning us away is a credentials problem, not a routing one —
   // worth saying so, since the fix is restarting the client rather than
-  // waiting for a service to come back.
+  // waiting for a service to come back. Each shard's verdict rides along in
+  // the message: "all four refused" and "none answered" need different fixes,
+  // and neither is distinguishable from a bare status code.
+  const attempts: string[] = [];
   let rejected = false;
+  let detail = "";
   for (const host of candidates) {
+    const label = host.replace("https://", "").split(".")[0];
     try {
       const response = await fetch(sgpMatchIdsUrl(host, puuid, 0, 1), {
         headers: { Authorization: `Bearer ${token}` },
@@ -293,16 +324,28 @@ async function resolveSgpHost(
         db.setSetting("sgp_host", host);
         return host;
       }
-      if (response.status === 401 || response.status === 403) rejected = true;
+      attempts.push(`${label} ${response.status}`);
+      if (response.status === 401 || response.status === 403) {
+        rejected = true;
+        if (!detail) detail = await readDetail(response);
+      }
     } catch {
-      // Try the next shard
+      attempts.push(`${label} unreachable`);
     }
   }
 
+  if (!rejected) {
+    throw new Error(
+      `Could not reach Riot's match history service for your region (${attempts.join(", ")})`,
+    );
+  }
+
+  const match = tokenMatchesAccount(token, puuid);
   throw new Error(
-    rejected
-      ? "Riot rejected the sign-in token. Fully close and reopen the League client, wait for it to finish signing in, then try again."
-      : "Could not reach Riot's match history service for your region",
+    "Riot rejected the sign-in token. Fully close and reopen the League client, wait for it " +
+      "to finish signing in, then try again. " +
+      `[${attempts.join(", ")}; token↔account ${match === null ? "unknown" : match ? "match" : "MISMATCH"}` +
+      `${detail ? `; Riot said: ${detail}` : ""}]`,
   );
 }
 
@@ -319,10 +362,13 @@ async function fetchAllMatchIds(
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) {
+      const detail = await readDetail(response);
       if (response.status === 401 || response.status === 403) {
-        throw new SgpAuthError(response.status);
+        throw new SgpAuthError(response.status, detail);
       }
-      throw new Error(`Match history service returned ${response.status}`);
+      throw new Error(
+        `Match history service returned ${response.status}${detail ? ` — ${detail}` : ""}`,
+      );
     }
 
     const body = await response.json();
@@ -383,8 +429,13 @@ async function fetchMatchIdsWithReauth(
       return await fetchAllMatchIds(freshHost, puuid, freshToken, stopAfterPage);
     } catch (retryErr) {
       if (retryErr instanceof SgpAuthError) {
+        const match = tokenMatchesAccount(freshToken, puuid);
         throw new Error(
-          "Riot rejected the sign-in token. Fully close and reopen the League client, wait for it to finish signing in, then try again.",
+          "Riot rejected the sign-in token even after re-authenticating. Fully close and " +
+            "reopen the League client, wait for it to finish signing in, then try again. " +
+            `[${retryErr.status} on ${freshHost.replace("https://", "").split(".")[0]}; ` +
+            `token↔account ${match === null ? "unknown" : match ? "match" : "MISMATCH"}` +
+            `${retryErr.detail ? `; Riot said: ${retryErr.detail}` : ""}]`,
         );
       }
       throw retryErr;
