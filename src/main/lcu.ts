@@ -232,6 +232,15 @@ function sgpMatchIdsUrl(host: string, puuid: string, startIndex: number, count: 
   );
 }
 
+// Riot rejecting our credentials, as opposed to the service being unreachable
+// or erroring. Carried as its own type so the caller can re-authenticate and
+// retry rather than surfacing a bare status code.
+class SgpAuthError extends Error {
+  constructor(readonly status: number) {
+    super(`Match history service returned ${status}`);
+  }
+}
+
 async function fetchSgpToken(): Promise<string> {
   const token = await lcuRequest("/lol-league-session/v1/league-session-token");
   if (typeof token !== "string" || !token) {
@@ -240,15 +249,25 @@ async function fetchSgpToken(): Promise<string> {
   return token;
 }
 
+function forgetSgpHost(): void {
+  sgpHost = null;
+  db.setSetting("sgp_host", "");
+}
+
 // The service is sharded by geography, not by game region, so the region map is
 // a first guess only. Probe candidates until one answers, then remember it.
-async function resolveSgpHost(puuid: string, token: string): Promise<string> {
-  if (sgpHost) return sgpHost;
-
-  const cached = db.getSetting("sgp_host");
-  if (cached && SGP_HOSTS.includes(cached)) {
-    sgpHost = cached;
-    return cached;
+async function resolveSgpHost(
+  puuid: string,
+  token: string,
+  { ignoreCache = false } = {},
+): Promise<string> {
+  if (!ignoreCache) {
+    if (sgpHost) return sgpHost;
+    const cached = db.getSetting("sgp_host");
+    if (cached && SGP_HOSTS.includes(cached)) {
+      sgpHost = cached;
+      return cached;
+    }
   }
 
   let guess: string | undefined;
@@ -260,6 +279,10 @@ async function resolveSgpHost(puuid: string, token: string): Promise<string> {
   }
 
   const candidates = guess ? [guess, ...SGP_HOSTS.filter((h) => h !== guess)] : SGP_HOSTS;
+  // Every shard turning us away is a credentials problem, not a routing one —
+  // worth saying so, since the fix is restarting the client rather than
+  // waiting for a service to come back.
+  let rejected = false;
   for (const host of candidates) {
     try {
       const response = await fetch(sgpMatchIdsUrl(host, puuid, 0, 1), {
@@ -270,12 +293,17 @@ async function resolveSgpHost(puuid: string, token: string): Promise<string> {
         db.setSetting("sgp_host", host);
         return host;
       }
+      if (response.status === 401 || response.status === 403) rejected = true;
     } catch {
       // Try the next shard
     }
   }
 
-  throw new Error("Could not reach Riot's match history service for your region");
+  throw new Error(
+    rejected
+      ? "Riot rejected the sign-in token. Fully close and reopen the League client, wait for it to finish signing in, then try again."
+      : "Could not reach Riot's match history service for your region",
+  );
 }
 
 async function fetchAllMatchIds(
@@ -291,6 +319,9 @@ async function fetchAllMatchIds(
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new SgpAuthError(response.status);
+      }
       throw new Error(`Match history service returned ${response.status}`);
     }
 
@@ -330,6 +361,37 @@ export type BackfillResult = {
   cancelled: boolean;
 };
 
+// The shard we cached can go stale — accounts change region, Riot re-shards —
+// and the league-session token can expire part-way through a long walk. Both
+// come back as 401/403 on every page, and because the bad shard was cached,
+// every later run failed the same way with no way out but wiping settings.
+// Re-authenticate, re-probe the shards ignoring the cache, and try once more.
+async function fetchMatchIdsWithReauth(
+  puuid: string,
+  stopAfterPage: (pageIds: number[]) => boolean,
+): Promise<{ ids: number[]; truncated: boolean }> {
+  const token = await fetchSgpToken();
+  const host = await resolveSgpHost(puuid, token);
+  try {
+    return await fetchAllMatchIds(host, puuid, token, stopAfterPage);
+  } catch (err) {
+    if (!(err instanceof SgpAuthError)) throw err;
+    forgetSgpHost();
+    const freshToken = await fetchSgpToken();
+    const freshHost = await resolveSgpHost(puuid, freshToken, { ignoreCache: true });
+    try {
+      return await fetchAllMatchIds(freshHost, puuid, freshToken, stopAfterPage);
+    } catch (retryErr) {
+      if (retryErr instanceof SgpAuthError) {
+        throw new Error(
+          "Riot rejected the sign-in token. Fully close and reopen the League client, wait for it to finish signing in, then try again.",
+        );
+      }
+      throw retryErr;
+    }
+  }
+}
+
 export async function backfillHistory(win?: BrowserWindow | null): Promise<BackfillResult> {
   if (backfillRunning) {
     throw new Error("A backfill is already running");
@@ -343,9 +405,6 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
     const summoner = await fetchCurrentSummoner();
     db.upsertSummoner(summoner);
 
-    const token = await fetchSgpToken();
-    const host = await resolveSgpHost(summoner.puuid, token);
-
     const known = db.getKnownGameIds();
 
     // Once an account has been walked all the way back, a later run only needs
@@ -355,10 +414,8 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
     const completedKey = `backfill_complete_${summoner.puuid}`;
     const walkedBefore = db.getSetting(completedKey) === "1";
 
-    const { ids, truncated } = await fetchAllMatchIds(
-      host,
+    const { ids, truncated } = await fetchMatchIdsWithReauth(
       summoner.puuid,
-      token,
       (pageIds) => walkedBefore && pageIds.every((id) => known.has(id)),
     );
 

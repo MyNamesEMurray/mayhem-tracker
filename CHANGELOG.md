@@ -6,6 +6,10 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.10.2 — 2026-08-16
+
+- Fixed **Backfill history** failing with a "403" error and staying broken. The app remembers which of Riot's regional match-history servers answers for your account; if that changes, or your client's sign-in expires, it now re-checks and retries instead of failing every time from then on. If Riot still refuses, the message now tells you what to actually do about it.
+
 ## v2.10.1 — 2026-08-16
 
 - **Fixes v2.10.0 opening as if it were a fresh install.** The rename moved where the app looked for your data, so it found nothing and started over. Your match history was never deleted — it was sitting in the old folder the whole time, and this release moves it into place on first launch. Nothing to do but update.
