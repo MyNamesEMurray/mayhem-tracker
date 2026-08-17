@@ -160,7 +160,10 @@ export default function Overview() {
         ? `Importing ${progress.current}/${progress.total}...`
         : "Importing history..."
       : latest
-        ? `Last game ${formatTimeAgo(latest.game_creation)}`
+        ? // Counts from when the game ended, not when it started: a 28-minute
+          // game that began 34 minutes ago finished 6 minutes ago, and how
+          // long since you last played is what this is answering.
+          `Last game ${formatTimeAgo(latest.game_creation + latest.game_duration * 1000)}`
         : null);
 
   return (
