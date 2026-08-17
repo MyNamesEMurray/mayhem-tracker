@@ -10,14 +10,13 @@ import { isUpdating } from "./update-state";
 import { refreshStartupPath, startedHidden } from "./startup";
 import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
+import { resolveDataHome } from "./user-data";
 
-// Electron derives userData from productName, so renaming the product to
-// "MayhemStats Tracker" would silently move every existing install's database
-// out from under it. Pin the folder to the original name instead — the
-// display name is free to change, the data location never does. Must run
-// before anything touches app.getPath("userData") (see paths.ts).
+// Must run before anything reads userData — including Electron's own
+// single-instance lock file, which lives there. See user-data.ts for why the
+// folder needs resolving at all.
 if (app.isPackaged) {
-  app.setPath("userData", path.join(app.getPath("appData"), "Mayhem Tracker"));
+  app.setPath("userData", resolveDataHome(app.getPath("appData")));
 }
 
 let mainWindow: BrowserWindow | null = null;

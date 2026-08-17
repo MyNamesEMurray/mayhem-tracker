@@ -6,6 +6,11 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+## v2.10.1 — 2026-08-16
+
+- **Fixes v2.10.0 opening as if it were a fresh install.** The rename moved where the app looked for your data, so it found nothing and started over. Your match history was never deleted — it was sitting in the old folder the whole time, and this release moves it into place on first launch. Nothing to do but update.
+- If you ran v2.10.0 and recorded games in it, those stay behind in a leftover `Mayhem Tracker` folder in AppData; your original history takes priority. That folder is safe to delete once you've confirmed your games are back.
+
 ## v2.10.0 — 2026-08-16
 
 - The app is now called **MayhemStats Tracker**, matching the site it powers. Nothing else changes: your match history, settings, and community contributions all carry over untouched.
