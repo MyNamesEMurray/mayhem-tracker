@@ -15,6 +15,7 @@ import {
   formatKDA,
   formatDuration,
   formatTimeAgo,
+  formatDateTime,
   kdaRatio,
   kdaColor,
   scoreRampColor,
@@ -147,7 +148,7 @@ function ChampionExpanded({
                   <span className="text-lol-text ml-auto shrink-0">
                     {formatDuration(m.game_duration)}
                   </span>
-                  <span className="text-lol-text shrink-0">{formatTimeAgo(m.game_creation)}</span>
+                  <span className="text-lol-text shrink-0">{formatDateTime(m.game_creation)}</span>
                 </div>
               ))
             ) : (

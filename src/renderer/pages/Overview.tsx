@@ -13,7 +13,14 @@ import SummonerIcon from "../components/SummonerIcon";
 import MultikillBadge from "../components/MultikillBadge";
 import StatCard from "../components/StatCard";
 import { RefreshIcon } from "../components/icons";
-import { formatTimeAgo, formatKDA, kdaRatio, kdaStringColor, scoreRampColor } from "../lib/format";
+import {
+  formatTimeAgo,
+  formatDateTime,
+  formatKDA,
+  kdaRatio,
+  kdaStringColor,
+  scoreRampColor,
+} from "../lib/format";
 import { queueLabel } from "../components/QueueSelect";
 
 const RECENT_COUNT = 8;
@@ -259,6 +266,9 @@ function RecentMatchRow({
   const isWin = !!m.win;
   const kda = kdaRatio(m.kills, m.deaths, m.assists);
   const edge = isRemake ? "border-l-white/25" : isWin ? "border-l-lol-win" : "border-l-lol-loss";
+  const metaLine = `${queueLabel(m.queue_id)} · ${Math.round(m.game_duration / 60)}m · ${formatDateTime(
+    m.game_creation,
+  )}`;
 
   return (
     <button
@@ -266,13 +276,16 @@ function RecentMatchRow({
       className={`w-full flex items-center gap-3 pl-3 pr-4 py-2.5 border-t border-lol-border/50 border-l-[3px] ${edge} hover:bg-lol-card-hover transition-colors cursor-pointer text-left`}
     >
       <ChampionIcon championId={m.champion_id} size={38} />
-      <div className="w-[130px] shrink-0">
+      {/* 130px cut the line short at every window size, and what it cut was
+          always the end — when the game was played. Sized to fit that line and
+          allowed to grow with the window, with the full text on hover as a
+          backstop for the rare long form (a game from a previous year). */}
+      <div className="w-[clamp(245px,16vw,270px)] shrink-0">
         <div className="text-[13px] font-semibold text-lol-text-bright truncate">
           {getChampionName(champData, m.champion_id)}
         </div>
-        <div className="text-[11px] text-lol-text truncate">
-          {queueLabel(m.queue_id)} · {Math.round(m.game_duration / 60)}m ·{" "}
-          {formatTimeAgo(m.game_creation)}
+        <div className="text-[11px] text-lol-text truncate" title={metaLine}>
+          {metaLine}
         </div>
       </div>
       <div className="w-[110px] shrink-0">

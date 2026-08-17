@@ -18,6 +18,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.11.1 — 2026-08-16
+
+- Match rows now show **when a game was played** — the date and clock time — instead of "3d ago". The old text was also being cut off mid-sentence on the Overview page, so the part that got hidden was exactly the part that told you when.
+- "Last game Xm ago" and the friends list still count in relative time, where that's the useful reading.
+
 ## v2.11.0 — 2026-08-16
 
 - The update window now shows **everything** you're about to install, not just the newest version's notes. Skipping three releases used to mean seeing one of them; now each version gets its own heading.

@@ -30,6 +30,7 @@ import { ArrowDownIcon } from "../components/icons";
 import {
   formatDuration,
   formatTimeAgo,
+  formatDateTime,
   formatKDA,
   kdaRatio,
   kdaStringColor,
@@ -689,9 +690,11 @@ function GameRow({
             </div>
           )}
         </div>
-        <div className="text-xs text-lol-text text-right shrink-0 w-20">
+        {/* Wide enough for a date and clock time now that this shows when the
+            game was played rather than its age, and it grows with the window */}
+        <div className="text-xs text-lol-text text-right shrink-0 w-[clamp(96px,7vw,136px)] whitespace-nowrap">
           <div>{formatDuration(match.game_duration)}</div>
-          <div>{formatTimeAgo(match.game_creation)}</div>
+          <div>{formatDateTime(match.game_creation)}</div>
         </div>
       </button>
 

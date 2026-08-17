@@ -50,6 +50,23 @@ export function formatTimeAgo(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
+// When a specific game was played, as a clock time rather than an age. Used on
+// match rows, where "3d ago" doesn't help you find the session you remember;
+// "how long ago" is still the right thing for last-activity summaries.
+// The year shows only when it isn't the current one, so the common case stays
+// short. Locale-aware, so this reads naturally outside the US too.
+export function formatDateTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  const thisYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(thisYear ? {} : { year: "numeric" }),
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 // Patches are stored year-based ("26.16") since the database migration;
 // mapping here again is a harmless safety net for any stray client-style
 // value ("16.16"), since toYearPatch is idempotent.

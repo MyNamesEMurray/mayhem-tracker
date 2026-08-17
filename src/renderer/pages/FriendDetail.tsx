@@ -16,6 +16,7 @@ import WinRateBar from "../components/WinRateBar";
 import {
   formatDuration,
   formatTimeAgo,
+  formatDateTime,
   formatKDA,
   kdaRatio,
   kdaColor,
@@ -372,7 +373,7 @@ function SharedGameRow({
         <div className="flex-1" />
         <div className="text-xs text-lol-text text-right shrink-0">
           <div>{formatDuration(match.game_duration)}</div>
-          <div>{formatTimeAgo(match.game_creation)}</div>
+          <div>{formatDateTime(match.game_creation)}</div>
         </div>
       </button>
 
