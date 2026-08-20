@@ -184,7 +184,7 @@ export default function App() {
   const navTab = (label: string, active: boolean, onClick: () => void) => (
     <button
       onClick={onClick}
-      className={`flex items-center px-3.5 text-[13px] font-semibold transition-colors ${
+      className={`flex items-center px-3.5 max-[360px]:px-2 text-[13px] font-semibold transition-colors ${
         active
           ? "text-lol-gold-light shadow-[inset_0_-2px_0_#c89b3c]"
           : "text-lol-text hover:text-lol-gold-light"
@@ -198,7 +198,10 @@ export default function App() {
     <div className="min-h-screen">
       {/* Unified chrome: full-width bar, frozen to the top on desktop */}
       <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/60">
-        <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 flex items-center gap-6 flex-wrap min-[841px]:flex-nowrap">
+        {/* Wraps at every width: logo + nav + the whole filter group only fit
+            one row above ~1080px, and forcing nowrap below that pushed the
+            filters off the right edge instead of onto a second line. */}
+        <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 flex items-center gap-6 flex-wrap">
           <a
             href="/"
             onClick={(e) => {
@@ -230,7 +233,10 @@ export default function App() {
               MAYHEM<span className="text-lol-gold">STATS</span>
             </span>
           </a>
-          <nav className="flex gap-1 self-stretch">
+          {/* The nav takes the slack instead of the filter group using ml-auto:
+              that right-aligns the filters while they share the top row, but
+              leaves them left-aligned with everything else once they wrap. */}
+          <nav className="flex gap-1 self-stretch min-[1081px]:flex-1">
             {navTab("Champions", !onCommunityPage && (tab === "champions" || onChampionPage), () => {
               if (onChampionPage || onCommunityPage) navigate("/");
               setParam("tab", null);
@@ -243,7 +249,7 @@ export default function App() {
               if (!onCommunityPage) navigate("/community/");
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-2 py-2 max-[840px]:ml-0 max-[840px]:w-full max-[840px]:pt-0 max-[840px]:pb-2.5 max-[840px]:flex-wrap">
+          <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
             <select
               className="select"
               value={queueParam ?? ""}
