@@ -65,19 +65,31 @@ export default function PatchRangeSelect({
     }
   };
 
+  // Range mode shows three controls, which stop fitting one header row well
+  // before phone widths — so the from/to pair wraps to its own line whenever
+  // it has to. Below the header's own 840px breakpoint the picker also claims
+  // a full row and the two selects split it, instead of running off-screen.
+  const isRange = selection.mode === "range";
+
   return (
-    <div className="flex items-center gap-2">
-      <select className="select select-lg" value={selection.mode} onChange={(e) => handleMode(e.target.value)}>
+    <div
+      className={`flex items-center gap-2 ${isRange ? "flex-wrap max-[840px]:w-full" : ""}`}
+    >
+      <select
+        className={`select select-lg ${isRange ? "max-[840px]:flex-1 max-[840px]:min-w-0" : ""}`}
+        value={selection.mode}
+        onChange={(e) => handleMode(e.target.value)}
+      >
         <option value="current">
           {latest ? `Current patch (${formatPatch(latest)})` : "Current patch"}
         </option>
         <option value="all">All patches</option>
         <option value="range">Patch range…</option>
       </select>
-      {selection.mode === "range" && (
-        <>
+      {isRange && (
+        <div className="flex items-center gap-2 max-[840px]:w-full">
           <select
-            className="select select-sm"
+            className="select select-sm max-[840px]:flex-1 max-[840px]:min-w-0"
             value={selection.from}
             onChange={(e) => setRange(e.target.value, selection.to)}
           >
@@ -87,9 +99,9 @@ export default function PatchRangeSelect({
               </option>
             ))}
           </select>
-          <span className="text-xs text-lol-text">to</span>
+          <span className="text-xs text-lol-text shrink-0">to</span>
           <select
-            className="select select-sm"
+            className="select select-sm max-[840px]:flex-1 max-[840px]:min-w-0"
             value={selection.to}
             onChange={(e) => setRange(selection.from, e.target.value)}
           >
@@ -99,7 +111,7 @@ export default function PatchRangeSelect({
               </option>
             ))}
           </select>
-        </>
+        </div>
       )}
     </div>
   );
