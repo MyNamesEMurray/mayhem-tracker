@@ -67,8 +67,10 @@ export default function PatchRangeSelect({
 
   // Range mode shows three controls, which stop fitting one header row well
   // before phone widths — so the from/to pair wraps to its own line whenever
-  // it has to. Below the header's own 840px breakpoint the picker also claims
-  // a full row and the two selects split it, instead of running off-screen.
+  // it has to. At phone widths (≤840px) the picker also claims a full row and
+  // the two selects split it, instead of running off-screen. Above that the
+  // header still gives the filter row its own line (see App's header), but
+  // there is room for the selects to keep their fixed widths.
   const isRange = selection.mode === "range";
 
   return (
