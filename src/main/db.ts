@@ -6,9 +6,7 @@ import { AUGMENT_SLOTS, MAYHEM_QUEUE_IDS, QUEUE_ID_MAYHEM_CLASSIC } from "../sha
 import { toYearPatch } from "../shared/patch";
 import { getDataDir } from "./paths";
 import { getChampionClasses, getChampionDataVersion } from "./dragon";
-
-// Poro-Snax (base and upgraded) is handed out for free, so it skews item stats
-const EXCLUDED_ITEM_IDS = [2052, 220013];
+import { EXCLUDED_ITEM_IDS } from "../shared/items";
 
 let db: Database.Database;
 
@@ -2168,10 +2166,13 @@ export function getPendingUploadGames(limit: number): PendingUploadGame[] {
     FROM participant_augments WHERE game_id = ? ORDER BY participant_id, slot
   `);
 
+  // Free handouts never belong in the community build paths, so they're
+  // dropped here rather than filtered by every consumer downstream
   const eventStmt = db.prepare(`
     SELECT participant_id, game_time, action, item_id, count
     FROM item_events
     WHERE game_id = ? AND action IN ('add', 'remove')
+      AND item_id NOT IN (${EXCLUDED_ITEM_IDS.join(", ")})
     ORDER BY participant_id, game_time
   `);
 
