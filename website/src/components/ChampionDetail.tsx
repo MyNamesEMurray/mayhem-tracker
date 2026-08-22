@@ -34,6 +34,16 @@ const RARITIES: { key: string; label: string; color: string }[] = [
   { key: "kSilver", label: "Silver", color: "text-gray-300" },
 ];
 
+// Build-path slots read as their purchase position ("1st", "2nd", ...)
+// rather than a clock time — 11th–13th take "th" against the usual rule.
+function ordinal(n: number): string {
+  const suffix =
+    n % 100 >= 11 && n % 100 <= 13
+      ? "th"
+      : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+  return `${n}${suffix}`;
+}
+
 const PANEL = "bg-lol-card rounded-xl border border-lol-border/60";
 const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text";
 
@@ -297,7 +307,6 @@ export default function ChampionDetail({
             {buildPath.map((e, i) => {
               const wr = e.picks > 0 ? ((e.wins / e.picks) * 100).toFixed(0) : "0";
               const low = e.picks < 20;
-              const min = Math.round(e.avgBuyS / 60);
               return (
                 <div key={e.item_id} className="flex items-center gap-x-2">
                   {/* Hidden on narrow screens, where wrapping would leave a
@@ -309,12 +318,12 @@ export default function ChampionDetail({
                   )}
                   <div
                     className="flex flex-col items-center w-[56px]"
-                    title={`${getItemName(itemData, e.item_id)} — bought in ${e.picks} tracked games`}
+                    title={`${getItemName(itemData, e.item_id)} — ${ordinal(i + 1)} item, bought in ${e.picks} tracked games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemData={itemData} itemId={e.item_id} size={40} />
                     </span>
-                    <span className="text-[11px] text-lol-gold mt-1">~{min} min</span>
+                    <span className="text-[11px] text-lol-gold mt-1">{ordinal(i + 1)}</span>
                     <span
                       className={`text-[10px] ${low ? "text-lol-text" : "text-lol-text-bright"}`}
                     >
