@@ -4,6 +4,13 @@
 // build summary) for crawlers and no-JS visitors; the interactive app boots
 // on top and replaces it for everyone else.
 //
+// Two rules keep these pages from reading as auto-generated filler:
+//   * a champion is only indexed (robots + sitemap) once its sample is big
+//     enough to say something — below that the page still exists and still
+//     works, it just tells the truth and stays out of search;
+//   * no line is printed from a sample too small to mean anything, so the
+//     page never claims "100% win rate over 1 pick".
+//
 // Deliberately fails soft: if the data APIs are unreachable at build time,
 // the site still deploys as a plain SPA.
 import { execFileSync } from "child_process";
@@ -18,6 +25,14 @@ const SITE = "https://mayhemstats.com";
 const SUPABASE_URL = "https://lmzenzxbhotszvwsnhlm.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtemVuenhiaG90c3p2d3NuaGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMjU0NDcsImV4cCI6MjEwMTgwMTQ0N30.7FoFD7LFaV5Yin4OnjYjECAYZPa2I9xc6oQa4xPAKpA";
+
+// A champion page is only worth putting in front of search users once the
+// win rate on it carries a readable confidence interval. Twenty games is
+// the same floor the app uses to stop muting win rates (src/lib/stats.ts).
+const INDEX_MIN_GAMES = 20;
+// Nothing gets printed as a recommendation from fewer picks than this.
+const ITEM_MIN_PICKS = 3;
+const AUGMENT_MIN_PICKS = 3;
 
 const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy;
 
@@ -70,15 +85,33 @@ const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const pct = (wins, n) => (n > 0 ? ((wins / n) * 100).toFixed(1) : "0.0");
+const num = (n) => Math.round(n).toLocaleString();
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-// Entries with a workable sample ranked by score, low-sample filler after —
-// mirrors src/lib/stats.ts rankForBuild
+// Half-width of the 95% normal-approximation interval on a win rate, in
+// points. Printed so a reader can see how much of a number is noise.
+const marginOfError = (wins, games) => {
+  const p = wins / games;
+  return 100 * 1.96 * Math.sqrt((p * (1 - p)) / games);
+};
+
+// "18% above" / "in line with" / "12% below", for comparing a champion's
+// per-game averages against the whole database
+function relative(value, base) {
+  if (!base) return "in line with the mode average";
+  const diff = ((value - base) / base) * 100;
+  if (Math.abs(diff) < 8) return "in line with the mode average";
+  return `${Math.round(Math.abs(diff))}% ${diff > 0 ? "above" : "below"} the mode average`;
+}
+
+// Entries with a workable sample, ranked by shrunk win rate. Unlike the app's
+// rankForBuild there is no low-sample filler: a static page that a stranger
+// lands on from search should not present one-pick noise as a recommendation.
 function rankForBuild(list, minPicks, count) {
-  const qualified = list
+  return list
     .filter((x) => x.picks >= minPicks)
-    .sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
-  const filler = list.filter((x) => x.picks < minPicks).sort((a, b) => b.picks - a.picks);
-  return [...qualified, ...filler].slice(0, count);
+    .sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks))
+    .slice(0, count);
 }
 
 function aggregate(rows, keyField, extra = []) {
@@ -96,6 +129,17 @@ function aggregate(rows, keyField, extra = []) {
   }
   return Array.from(map.values());
 }
+
+const PAGE_STYLE = `      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: #94a0b8;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+      #prerender h1, #prerender h2, #prerender h3 { color: #e8ecf4; }
+      #prerender h1 { font-size: 1.5rem; } #prerender h2 { font-size: 1.1rem; margin-top: 1.75rem; }
+      #prerender h3 { font-size: 0.95rem; margin-top: 1rem; }
+      #prerender a { color: #c89b3c; text-decoration: none; }
+      #prerender table { border-collapse: collapse; } #prerender td { padding: 0.2rem 0.9rem 0.2rem 0; }
+      #prerender img { border-radius: 8px; vertical-align: middle; margin-right: 0.5rem; }
+      #prerender .note { border-left: 2px solid #242c3d; padding-left: 0.9rem; font-size: 0.9rem; }
+      body { background: #0b0e14; }`;
 
 async function main() {
   const [championRows, augmentRows, itemRows, versions] = await Promise.all([
@@ -118,10 +162,18 @@ async function main() {
   for (const champ of Object.values(ddragon.data)) championNames[champ.key] = champ.name;
   const augments = {};
   if (Array.isArray(cherry)) {
-    for (const a of cherry) augments[a.id] = { name: a.name || `Augment ${a.id}`, rarity: a.rarity || "" };
+    // CommunityDragon names the field nameTRA; `name` only exists on some
+    // older dumps. Falling straight through to "Augment 1194" (the old bug)
+    // filled every generated page with ids instead of augment names.
+    for (const a of cherry) {
+      augments[a.id] = { name: a.nameTRA || a.name || "", rarity: a.rarity || "" };
+    }
   }
   const itemNames = {};
-  if (Array.isArray(itemsJson)) for (const it of itemsJson) itemNames[it.id] = it.name || `Item ${it.id}`;
+  if (Array.isArray(itemsJson)) for (const it of itemsJson) itemNames[it.id] = it.name || "";
+
+  const augmentName = (id) => augments[id]?.name || "";
+  const itemName = (id) => itemNames[id] || "";
 
   // Reuse the built index.html's asset tags so pages hydrate with the same app
   const indexHtml = readFileSync(path.join(DIST, "index.html"), "utf8");
@@ -138,17 +190,33 @@ async function main() {
   const buildDate = new Date().toISOString().slice(0, 10);
 
   const perChampion = new Map();
+  const STAT_FIELDS = ["kills", "deaths", "assists", "damage", "damage_taken", "heal", "gold"];
   for (const r of championRows) {
     let e = perChampion.get(r.champion_id);
-    if (!e) perChampion.set(r.champion_id, (e = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 }));
+    if (!e) {
+      e = { games: 0, wins: 0 };
+      for (const f of STAT_FIELDS) e[f] = 0;
+      perChampion.set(r.champion_id, e);
+    }
     e.games += r.games;
     e.wins += r.wins;
-    e.kills += r.kills;
-    e.deaths += r.deaths;
-    e.assists += r.assists;
+    for (const f of STAT_FIELDS) e[f] += r[f] ?? 0;
   }
 
-  // Top champions by games, for cross-links
+  // Mode-wide per-game averages, so each champion page can say how that
+  // champion actually differs from the field instead of restating a template
+  const modeTotals = { games: 0 };
+  for (const f of STAT_FIELDS) modeTotals[f] = 0;
+  for (const agg of perChampion.values()) {
+    modeTotals.games += agg.games;
+    for (const f of STAT_FIELDS) modeTotals[f] += agg[f];
+  }
+  const modeAvg = {};
+  for (const f of STAT_FIELDS) modeAvg[f] = modeTotals.games ? modeTotals[f] / modeTotals.games : 0;
+  // Ten champion slots per match
+  const totalMatches = Math.round(modeTotals.games / 10);
+
+  // Champions with enough games to lead cross-links
   const topChamps = [...perChampion.entries()]
     .sort((a, b) => b[1].games - a[1].games)
     .slice(0, 8)
@@ -156,11 +224,13 @@ async function main() {
     .filter((id) => championNames[id]);
 
   let pages = 0;
+  let indexed = 0;
   // Only real, self-canonical URLs belong here. "/?tab=champions" is a tab
   // state of "/" whose canonical points back at "/", so submitting it just
   // earned an "Alternate page with proper canonical tag" in Search Console.
   const sitemapUrls = [
     { loc: `${SITE}/`, freq: "daily", pri: "1.0" },
+    { loc: `${SITE}/guide/`, freq: "monthly", pri: "0.9" },
     { loc: `${SITE}/download/`, freq: "weekly", pri: "0.8" },
     { loc: `${SITE}/about/`, freq: "monthly", pri: "0.5" },
     { loc: `${SITE}/privacy/`, freq: "monthly", pri: "0.3" },
@@ -170,29 +240,41 @@ async function main() {
     const name = championNames[id];
     if (!name || agg.games < 1) continue;
     const slug = championSlug(name);
+    const indexable = agg.games >= INDEX_MIN_GAMES;
 
     const champAugments = aggregate(
       augmentRows.filter((r) => r.champion_id === id),
       "augment_id",
-    );
+    ).filter((a) => augmentName(a.key));
     const champItems = aggregate(
       itemRows.filter((r) => r.champion_id === id),
       "item_id",
-    );
-    const coreBuild = rankForBuild(champItems, 3, 6);
+    ).filter((i) => itemName(i.key));
+    const coreBuild = rankForBuild(champItems, ITEM_MIN_PICKS, 6);
     const byRarity = (rarity) =>
-      rankForBuild(champAugments.filter((a) => augments[a.key]?.rarity === rarity), 2, 4);
+      rankForBuild(
+        champAugments.filter((a) => augments[a.key]?.rarity === rarity),
+        AUGMENT_MIN_PICKS,
+        4,
+      );
 
     const wr = pct(agg.wins, agg.games);
     const kda = ((agg.kills + agg.assists) / Math.max(agg.deaths, 1)).toFixed(2);
+    const moe = marginOfError(agg.wins, agg.games).toFixed(1);
+    const perGame = {};
+    for (const f of STAT_FIELDS) perGame[f] = agg[f] / agg.games;
+    const pickRate = totalMatches ? (agg.games / totalMatches) * 100 : 0;
+
     const title = `${name} Build — ARAM Mayhem Augments, Items & Win Rate | MayhemStats`;
-    const description = `Best ${name} build for ARAM Mayhem: top augments, core items, and win rates from ${agg.games} community games. ${name} wins ${wr}% with a ${kda} KDA.`;
+    const description = indexable
+      ? `Best ${name} build for ARAM Mayhem: top augments, core items, and win rates from ${agg.games} community games. ${name} wins ${wr}% with a ${kda} KDA.`
+      : `${name} in ARAM Mayhem: what ${plural(agg.games, "community game")} show so far — items, augments, and combat averages, with the sample size stated up front.`;
     const iconUrl = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${id}.png`;
 
     const buildList = coreBuild
       .map(
         (i) =>
-          `<li><strong>${esc(itemNames[i.key] ?? `Item ${i.key}`)}</strong> — ${pct(i.wins, i.picks)}% win rate over ${i.picks} game${i.picks === 1 ? "" : "s"}</li>`,
+          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")}</li>`,
       )
       .join("\n            ");
 
@@ -207,7 +289,7 @@ async function main() {
         const lis = best
           .map(
             (a) =>
-              `<li><strong>${esc(augments[a.key]?.name ?? `Augment ${a.key}`)}</strong> — ${pct(a.wins, a.picks)}% over ${a.picks} pick${a.picks === 1 ? "" : "s"}</li>`,
+              `<li><strong>${esc(augmentName(a.key))}</strong> — ${pct(a.wins, a.picks)}% over ${plural(a.picks, "pick")}</li>`,
           )
           .join("\n              ");
         return `<h3>${label}</h3>\n            <ul>\n              ${lis}\n            </ul>`;
@@ -215,12 +297,13 @@ async function main() {
       .filter(Boolean)
       .join("\n            ");
 
-    const itemTable = champItems
+    const itemRowsHtml = champItems
+      .filter((i) => i.picks >= ITEM_MIN_PICKS)
       .sort((a, b) => b.picks - a.picks)
       .slice(0, 10)
       .map(
         (i) =>
-          `<tr><td>${esc(itemNames[i.key] ?? `Item ${i.key}`)}</td><td>${i.picks}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
+          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
       )
       .join("\n              ");
 
@@ -230,6 +313,21 @@ async function main() {
       .map((cid) => `<a href="/champion/${championSlug(championNames[cid])}/">${esc(championNames[cid])}</a>`)
       .join(" · ");
 
+    // What actually separates this champion from the field, in words
+    const readsList = [
+      `deals ${num(perGame.damage)} damage per game (${relative(perGame.damage, modeAvg.damage)})`,
+      `absorbs ${num(perGame.damage_taken)} (${relative(perGame.damage_taken, modeAvg.damage_taken)})`,
+      perGame.heal > 0 ? `heals or shields ${num(perGame.heal)} (${relative(perGame.heal, modeAvg.heal)})` : "",
+      `earns ${num(perGame.gold)} gold (${relative(perGame.gold, modeAvg.gold)})`,
+    ]
+      .filter(Boolean)
+      .map((s) => `<li>${s}</li>`)
+      .join("\n        ");
+
+    const confidence = indexable
+      ? `Over ${plural(agg.games, "game")} that win rate carries a 95% margin of error of roughly ±${moe} points, so read it as a range (${(Number(wr) - Number(moe)).toFixed(1)}–${(Number(wr) + Number(moe)).toFixed(1)}%) rather than a fixed number.`
+      : `That is only ${plural(agg.games, "game")} — far too few to call a win rate. The numbers below are here for completeness, this page is kept out of search until the sample is worth reading, and the fastest way to fix that is more contributors: <a href="/download/">run the tracker</a> and opt in.`;
+
     const html = `<!doctype html>
 <html lang="en">
   <head>
@@ -237,7 +335,7 @@ async function main() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${esc(title)}</title>
     <meta name="description" content="${esc(description)}" />
-    <link rel="canonical" href="${SITE}/champion/${slug}/" />
+${indexable ? "" : '    <meta name="robots" content="noindex, follow" />\n'}    <link rel="canonical" href="${SITE}/champion/${slug}/" />
     <meta property="og:title" content="${esc(`${name} — ARAM Mayhem Build`)}" />
     <meta property="og:description" content="${esc(description)}" />
     <meta property="og:url" content="${SITE}/champion/${slug}/" />
@@ -247,15 +345,7 @@ async function main() {
     <link rel="icon" type="image/png" href="/icon.png" />
     ${assetTags}
     <style>
-      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: #94a0b8;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
-      #prerender h1, #prerender h2, #prerender h3 { color: #e8ecf4; }
-      #prerender h1 { font-size: 1.5rem; } #prerender h2 { font-size: 1.1rem; margin-top: 1.75rem; }
-      #prerender h3 { font-size: 0.95rem; margin-top: 1rem; }
-      #prerender a { color: #c89b3c; text-decoration: none; }
-      #prerender table { border-collapse: collapse; } #prerender td { padding: 0.2rem 0.9rem 0.2rem 0; }
-      #prerender img { border-radius: 8px; vertical-align: middle; margin-right: 0.5rem; }
-      body { background: #0b0e14; }
+${PAGE_STYLE}
     </style>
   </head>
   <body>
@@ -263,22 +353,25 @@ async function main() {
     <section id="prerender">
       <p><a href="/">← MayhemStats: all champions</a></p>
       <h1><img src="${iconUrl}" alt="" width="40" height="40" loading="lazy" />${esc(name)} — ARAM Mayhem Build &amp; Stats</h1>
-      <p>${esc(name)} wins <strong>${wr}%</strong> of ${agg.games} community games in ARAM Mayhem, with an average KDA of ${kda}. All numbers come from anonymized games contributed by players running the free <a href="/download/">MayhemStats Tracker</a> app.</p>
+      <p>${esc(name)} wins <strong>${wr}%</strong> of ${plural(agg.games, "community game")} in ARAM Mayhem, with an average KDA of ${kda}${pickRate >= 1 ? `, appearing in ${pickRate.toFixed(1)}% of tracked matches` : ""}. All numbers come from anonymized games contributed by players running the free <a href="/download/">MayhemStats Tracker</a> app — never from ARAM or Arena stand-ins.</p>
+      <p class="note">${confidence}</p>
+      <h2>How ${esc(name)} plays in Mayhem</h2>
+      <p>Per game, ${esc(name)}:</p>
+      <ul>
+        ${readsList}
+      </ul>
+      <p>Those averages are what the build below is chasing: in a mode where every player is drafting augments and fights start early, an item line that fits the champion's actual damage and durability profile matters more than a generic ARAM build order. <a href="/guide/">The Mayhem guide</a> explains how to read these numbers.</p>
       <h2>Core build</h2>
       <ol>
-            ${buildList || "<li>Not enough item data yet.</li>"}
+            ${buildList || `<li>No item has ${ITEM_MIN_PICKS} or more games on ${esc(name)} yet.</li>`}
       </ol>
       <h2>Best augments</h2>
-            ${raritySection || "<p>Not enough augment data yet.</p>"}
+            ${raritySection || `<p>No augment has reached ${AUGMENT_MIN_PICKS} picks on ${esc(name)} yet, so there is nothing worth recommending here.</p>`}
       <h2>Most-built items</h2>
-      <table>
-        <tbody>
-              ${itemTable}
-        </tbody>
-      </table>
-      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · win rates under 20 games carry low confidence.</em></p>
+      ${itemRowsHtml ? `<table>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
+      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries below ${ITEM_MIN_PICKS} games are not shown at all.</em></p>
       <p>More champions: ${crossLinks}</p>
-      <p><a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
+      <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>
     </section>
   </body>
@@ -288,7 +381,10 @@ async function main() {
     const dir = path.join(DIST, "champion", slug);
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "index.html"), html);
-    sitemapUrls.push({ loc: `${SITE}/champion/${slug}/`, freq: "daily", pri: "0.8" });
+    if (indexable) {
+      sitemapUrls.push({ loc: `${SITE}/champion/${slug}/`, freq: "daily", pri: "0.8" });
+      indexed++;
+    }
     pages++;
   }
 
@@ -323,12 +419,7 @@ async function main() {
     <link rel="icon" type="image/png" href="/icon.png" />
     ${assetTags}
     <style>
-      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: #94a0b8;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
-      #prerender h1, #prerender h2 { color: #e8ecf4; }
-      #prerender h1 { font-size: 1.5rem; } #prerender h2 { font-size: 1.1rem; margin-top: 1.75rem; }
-      #prerender a { color: #c89b3c; text-decoration: none; }
-      body { background: #0b0e14; }
+${PAGE_STYLE}
     </style>
   </head>
   <body>
@@ -344,9 +435,9 @@ async function main() {
         <li><strong>${hours} hours</strong> of ARAM Mayhem, end to end</li>
         <li><strong>${totals.patches}</strong> patches covered across the mode's runs</li>
       </ul>
-      <p>Each contributed game adds all ten players' champions, augments, items, and combat lines to the pool — anonymously, with duplicates counted once. The more players opt in, the sharper the tier lists get, especially early in a patch.</p>
+      <p>Each contributed game adds all ten players' champions, augments, items, and combat lines to the pool — anonymously, with duplicates counted once. The more players opt in, the sharper the tier lists get, especially early in a patch. Champions under ${INDEX_MIN_GAMES} games are deliberately kept out of search results until their sample says something.</p>
       <p><em>Updated ${buildDate}.</em></p>
-      <p><a href="/about/">How these stats work</a> · <a href="/download/">Download the tracker</a> · <a href="/privacy/">Privacy</a></p>
+      <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/download/">Download the tracker</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>
     </section>
   </body>
@@ -378,7 +469,9 @@ ${sitemapUrls
 `;
   writeFileSync(path.join(DIST, "sitemap.xml"), sitemap);
 
-  console.log(`prerender: ${pages} champion pages + sitemap (${sitemapUrls.length} urls)`);
+  console.log(
+    `prerender: ${pages} champion pages (${indexed} indexable, ${pages - indexed} noindex under ${INDEX_MIN_GAMES} games) + sitemap (${sitemapUrls.length} urls)`,
+  );
 }
 
 main().catch((err) => {
