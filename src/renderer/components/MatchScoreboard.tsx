@@ -3,6 +3,7 @@ import type { MatchDetail, ParsedParticipant } from "../lib/types";
 import { parseParticipants, groupByTeam } from "../lib/participants";
 import { getChampionName } from "../hooks/useChampions";
 import { formatKDA, kdaRatio, kdaStringColor, scoreRampColor } from "../lib/format";
+import { EXCLUDED_ITEM_ID_SET } from "../../shared/items";
 import { computeMatchScores, type PlayerScore } from "../../shared/opScore";
 import ChampionIcon from "./ChampionIcon";
 import AugmentIcon from "./AugmentIcon";
@@ -73,9 +74,6 @@ export default function MatchScoreboard({
   );
 }
 
-// Free handouts that would clutter every build path
-const BUILD_ORDER_HIDDEN_ITEMS = new Set([2052, 220013]);
-
 // Timeline of item purchases per player, captured live while the game was
 // played — only present on games recorded by the build-order watcher
 function BuildOrders({
@@ -93,7 +91,7 @@ function BuildOrders({
     const map = new Map<number, typeof events>();
     for (const e of events) {
       if (e.action === "remove") continue;
-      if (e.item_id !== null && BUILD_ORDER_HIDDEN_ITEMS.has(e.item_id)) continue;
+      if (e.item_id !== null && EXCLUDED_ITEM_ID_SET.has(e.item_id)) continue;
       const list = map.get(e.participant_id) ?? [];
       list.push(e);
       map.set(e.participant_id, list);
