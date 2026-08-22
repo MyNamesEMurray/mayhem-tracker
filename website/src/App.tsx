@@ -394,6 +394,9 @@ export default function App() {
         {/* Footer */}
         <footer className="mt-10 pt-6 border-t border-lol-border/50 space-y-3 text-xs text-lol-text/80">
           <nav className="flex flex-wrap gap-x-4 gap-y-1 text-lol-text">
+            <a href="/guide/" className="hover:text-lol-gold">
+              ARAM Mayhem guide
+            </a>
             <a href="/about/" className="hover:text-lol-gold">
               About &amp; methodology
             </a>
