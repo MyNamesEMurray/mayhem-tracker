@@ -183,6 +183,11 @@ export function championItemBreakdown(
   return Array.from(map.values()).sort((a, b) => b.picks - a.picks);
 }
 
+// Poro-Snax (base and upgraded) is handed out for free, so it would show up
+// as an early "purchase" for every champion. The uploaded item_stats view
+// already drops it; the live purchase feed doesn't, so filter it here.
+const EXCLUDED_ITEM_IDS = new Set([2052, 220013]);
+
 // Typical build path: items merged across the filtered patches with a
 // picks-weighted average first-buy time — sorting by that time reads as the
 // order the champion usually builds in.
@@ -194,6 +199,7 @@ export function championBuildPath(
   const map = new Map<number, { item_id: number; picks: number; wins: number; timeSum: number }>();
   for (const r of rows) {
     if (r.champion_id !== championId || !rowMatches(r, f)) continue;
+    if (EXCLUDED_ITEM_IDS.has(r.item_id)) continue;
     let e = map.get(r.item_id);
     if (!e) map.set(r.item_id, (e = { item_id: r.item_id, picks: 0, wins: 0, timeSum: 0 }));
     e.picks += r.picks;
