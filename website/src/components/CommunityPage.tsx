@@ -35,7 +35,9 @@ export default function CommunityPage() {
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  // Bar chart over the last 45 days (gaps filled with zero-game days)
+  // Bar chart over the last 45 days (gaps filled with zero-game days).
+  // community_games_per_day buckets by game_creation, so a game shows on the
+  // day it was played — a backlog uploaded today lands on its own dates.
   const chart = useMemo(() => {
     if (!perDay.length) return [];
     const byDay = new Map(perDay.map((r) => [r.day, r.games]));
@@ -104,7 +106,7 @@ export default function CommunityPage() {
       </div>
 
       <div className={`${PANEL} p-[18px]`}>
-        <p className={`${LABEL} mb-3`}>Games contributed — last 45 days</p>
+        <p className={`${LABEL} mb-3`}>Games played — last 45 days</p>
         {chart.length === 0 ? (
           <p className="text-sm text-lol-text">No data yet.</p>
         ) : (
