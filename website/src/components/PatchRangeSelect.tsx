@@ -73,9 +73,15 @@ export default function PatchRangeSelect({
   const isRange = selection.mode === "range";
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div
+      className={`flex items-center gap-1.5 min-w-0 ${
+        // Three controls don't fit beside the queue select on a phone, so the
+        // picker claims its own row there and the selects share it
+        isRange ? "max-[560px]:w-full" : ""
+      }`}
+    >
       <select
-        className={`select ${isRange ? "select-sm" : "select-lg"}`}
+        className={`select ${isRange ? "select-sm select-flex" : "select-lg"}`}
         value={selection.mode}
         onChange={(e) => handleMode(e.target.value)}
         aria-label="Patch filter mode"
@@ -89,7 +95,7 @@ export default function PatchRangeSelect({
       {isRange && (
         <>
           <select
-            className="select select-sm"
+            className="select select-sm select-flex"
             value={selection.from}
             onChange={(e) => setRange(e.target.value, selection.to)}
             aria-label="Range start patch"
@@ -100,9 +106,9 @@ export default function PatchRangeSelect({
               </option>
             ))}
           </select>
-          <span className="text-xs text-lol-text shrink-0">to</span>
+          <span className="text-[11px] text-lol-text shrink-0">to</span>
           <select
-            className="select select-sm"
+            className="select select-sm select-flex"
             value={selection.to}
             onChange={(e) => setRange(selection.from, e.target.value)}
             aria-label="Range end patch"

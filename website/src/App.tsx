@@ -206,6 +206,15 @@ export default function App() {
     };
   }, [data, patches, selectedChampion, gamesOn]);
 
+  // A champion page's patch selection is scoped to that page: whatever the
+  // board was showing is restored on the way back out. Widening for one thin
+  // champion shouldn't quietly change what the tier list shows afterwards —
+  // and neither should a range the reader picked while looking at that
+  // champion, since they chose it to read one page, not to change the site.
+  const boardPatch = useRef<string | null>(null);
+  const wasOnChampion = useRef(false);
+  const lastChampion = useRef<number | null>(null);
+
   // Applied once per champion (and once for the board), so choosing "current
   // patch" afterwards isn't immediately undone by this
   const widenedFor = useRef<string | null>(null);
@@ -228,6 +237,27 @@ export default function App() {
     setAutoWiden(autoWidenTo);
     setParam("patch", range);
   }, [patchParam, autoWidenTo, selectedChampion, queue, setParam, autoWiden]);
+
+  useEffect(() => {
+    if (onChampionPage && !wasOnChampion.current) {
+      boardPatch.current = patchParam;
+    } else if (onChampionPage && selectedChampion !== lastChampion.current) {
+      // Cross-linked from one champion to another: the range the last one
+      // needed says nothing about this one, so start it over from the board's
+      if (patchParam !== boardPatch.current) setParam("patch", boardPatch.current);
+      widenedFor.current = null;
+      appliedParam.current = null;
+      setAutoWiden(null);
+    } else if (!onChampionPage && wasOnChampion.current) {
+      if (patchParam !== boardPatch.current) setParam("patch", boardPatch.current);
+      // Let the next champion page widen from scratch
+      widenedFor.current = null;
+      appliedParam.current = null;
+      setAutoWiden(null);
+    }
+    wasOnChampion.current = onChampionPage;
+    lastChampion.current = onChampionPage ? selectedChampion : null;
+  }, [onChampionPage, selectedChampion, patchParam, setParam]);
   // Every participant slot under the current filter; the denominator for pick
   // rates and (÷10) the game count
   const totalSlots = useMemo(
@@ -407,21 +437,15 @@ export default function App() {
             </svg>
             <p className="text-[13px] leading-relaxed text-lol-text">
               <span className="text-lol-text-bright">
-                Showing patches {formatPatch(autoWiden.from)}–{formatPatch(autoWiden.to)}.
+                Showing {formatPatch(autoWiden.from)}–{formatPatch(autoWiden.to)}.
               </span>{" "}
-              Patch {formatPatch(autoWiden.to)} alone has{" "}
-              {autoWiden.onLatest === 0 ? "no games" : `only ${autoWiden.onLatest} `}
+              {formatPatch(autoWiden.to)} alone has{" "}
               {autoWiden.onLatest === 0
-                ? ""
-                : autoWiden.onLatest === 1
-                  ? "game"
-                  : "games"}{" "}
-              {selectedChampion != null ? "on this champion" : "recorded"} so far, too few to rank
-              on.{" "}
-              {autoWiden.reached
-                ? `Widening to ${autoWiden.widened.toLocaleString()} games gives the numbers below something to stand on`
-                : `Even across these patches that's ${autoWiden.widened.toLocaleString()} games, so read the numbers below as directional`}{" "}
-              — use the patch filter to change it.
+                ? "no games"
+                : `${autoWiden.onLatest} game${autoWiden.onLatest === 1 ? "" : "s"}`}{" "}
+              {selectedChampion != null ? "on this champion" : "so far"}.
+              {!autoWiden.reached &&
+                ` Still thin at ${autoWiden.widened.toLocaleString()} — read as directional.`}
             </p>
           </div>
         )}
