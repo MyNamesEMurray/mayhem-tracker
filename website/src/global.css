@@ -25,7 +25,7 @@ body {
   background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
   background-attachment: fixed;
   color: var(--color-lol-text);
-  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }

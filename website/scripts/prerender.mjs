@@ -131,7 +131,7 @@ function aggregate(rows, keyField, extra = []) {
 }
 
 const PAGE_STYLE = `      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: #94a0b8;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+        font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; line-height: 1.6; }
       #prerender h1, #prerender h2, #prerender h3 { color: #e8ecf4; }
       #prerender h1 { font-size: 1.5rem; } #prerender h2 { font-size: 1.1rem; margin-top: 1.75rem; }
       #prerender h3 { font-size: 0.95rem; margin-top: 1rem; }
@@ -178,7 +178,9 @@ async function main() {
   // Reuse the built index.html's asset tags so pages hydrate with the same app
   const indexHtml = readFileSync(path.join(DIST, "index.html"), "utf8");
   const assetTags = (indexHtml.match(/<(script type="module"[^>]*><\/script>|link rel="stylesheet"[^>]*>)/g) || [])
-    .map((t) => (t.startsWith("<script") ? t : t))
+    // The font stylesheet is in every template's head already; letting it
+    // through here would emit it twice on each page
+    .filter((tag) => !tag.includes("/fonts/inter.css"))
     .join("\n    ");
 
   const patches = [...new Set(championRows.map((r) => r.patch))];
@@ -341,6 +343,8 @@ ${indexable ? "" : '    <meta name="robots" content="noindex, follow" />\n'}    
     <meta property="og:url" content="${SITE}/champion/${slug}/" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="${iconUrl}" />
+    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts/inter.css" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/icon.png" />
     ${assetTags}
@@ -415,6 +419,8 @@ ${PAGE_STYLE}
     <meta property="og:url" content="${SITE}/community/" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="${SITE}/og.png" />
+    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts/inter.css" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/icon.png" />
     ${assetTags}
