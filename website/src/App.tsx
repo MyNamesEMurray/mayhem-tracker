@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchAugmentStats,
   fetchChampionStats,
@@ -47,6 +47,18 @@ interface LoadedData {
   championData: ChampionData;
   augmentData: AugmentData;
 }
+
+// A fresh patch has almost nothing in it for the first day or two, and the
+// default view is that patch alone — so the tier list a first-time visitor
+// lands on is its emptiest. When the newest patch can't support the view,
+// reach back a patch at a time until it can, then say so and leave the
+// widened range in the filter for the reader to override.
+const AUTO_WIDEN_MIN_GAMES = 50;
+// Champion pages get the site's own confidence floor: below this a win rate
+// renders muted everywhere else, so it shouldn't headline a build page
+const AUTO_WIDEN_MIN_CHAMPION_GAMES = MIN_SAMPLE;
+// Never reach back further than this — old patches are a different mode
+const AUTO_WIDEN_MAX_PATCHES = 3;
 
 export default function App() {
   const [data, setData] = useState<LoadedData | null>(null);
@@ -151,6 +163,65 @@ export default function App() {
     [patchParam, patches],
   );
   const filters: Filters = useMemo(() => ({ patches: patchSet, queue }), [patchSet, queue]);
+
+  // Games available on a set of patches, for the whole board or one champion
+  const gamesOn = useCallback(
+    (included: Set<string>, championId: number | null) => {
+      if (!data) return 0;
+      let slots = 0;
+      for (const r of data.championRows) {
+        if (!included.has(r.patch)) continue;
+        if (queue != null && r.queue_id !== queue) continue;
+        if (championId != null && r.champion_id !== championId) continue;
+        slots += r.games;
+      }
+      // Champion rows are per participant slot; ten of them make a game
+      return championId != null ? slots : Math.round(slots / 10);
+    },
+    [data, queue],
+  );
+
+  // How far back the newest patch has to reach to be worth reading
+  const autoWidenTo = useMemo(() => {
+    if (!data || patches.length < 2) return null;
+    const target =
+      selectedChampion != null ? AUTO_WIDEN_MIN_CHAMPION_GAMES : AUTO_WIDEN_MIN_GAMES;
+    const included = new Set<string>();
+    let count = 0;
+    for (const patch of patches.slice(0, AUTO_WIDEN_MAX_PATCHES)) {
+      included.add(patch);
+      count = gamesOn(included, selectedChampion);
+      if (count >= target) break;
+    }
+    if (included.size < 2) return null;
+    const oldest = patches[included.size - 1];
+    return {
+      from: oldest,
+      to: patches[0],
+      onLatest: gamesOn(new Set([patches[0]]), selectedChampion),
+      widened: count,
+      // False when even the full reach-back fell short — the banner says so
+      // rather than claiming the numbers are now solid
+      reached: count >= target,
+    };
+  }, [data, patches, selectedChampion, gamesOn]);
+
+  // Applied once per champion (and once for the board), so choosing "current
+  // patch" afterwards isn't immediately undone by this
+  const widenedFor = useRef<string | null>(null);
+  const [autoWiden, setAutoWiden] = useState<typeof autoWidenTo>(null);
+  useEffect(() => {
+    const key = `${selectedChampion ?? "board"}:${queue ?? "all"}`;
+    if (patchParam != null) {
+      // An explicit choice wins, and clears any banner from a previous view
+      if (autoWiden) setAutoWiden(null);
+      return;
+    }
+    if (widenedFor.current === key || !autoWidenTo) return;
+    widenedFor.current = key;
+    setAutoWiden(autoWidenTo);
+    setParam("patch", `${autoWidenTo.from}-${autoWidenTo.to}`);
+  }, [patchParam, autoWidenTo, selectedChampion, queue, setParam, autoWiden]);
   // Every participant slot under the current filter; the denominator for pick
   // rates and (÷10) the game count
   const totalSlots = useMemo(
@@ -306,6 +377,43 @@ export default function App() {
             >
               Retry
             </button>
+          </div>
+        )}
+
+        {autoWiden && !onCommunityPage && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-lol-gold/25 bg-lol-gold/[0.06] px-4 py-3">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#c89b3c"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="mt-[3px] shrink-0"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v5M12 8h.01" />
+            </svg>
+            <p className="text-[13px] leading-relaxed text-lol-text">
+              <span className="text-lol-text-bright">
+                Showing patches {formatPatch(autoWiden.from)}–{formatPatch(autoWiden.to)}.
+              </span>{" "}
+              Patch {formatPatch(autoWiden.to)} alone has{" "}
+              {autoWiden.onLatest === 0 ? "no games" : `only ${autoWiden.onLatest} `}
+              {autoWiden.onLatest === 0
+                ? ""
+                : autoWiden.onLatest === 1
+                  ? "game"
+                  : "games"}{" "}
+              {selectedChampion != null ? "on this champion" : "recorded"} so far, too few to rank
+              on.{" "}
+              {autoWiden.reached
+                ? `Widening to ${autoWiden.widened.toLocaleString()} games gives the numbers below something to stand on`
+                : `Even across these patches that's ${autoWiden.widened.toLocaleString()} games, so read the numbers below as directional`}{" "}
+              — use the patch filter to change it.
+            </p>
           </div>
         )}
 
