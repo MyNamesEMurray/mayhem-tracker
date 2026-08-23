@@ -209,18 +209,24 @@ export default function App() {
   // Applied once per champion (and once for the board), so choosing "current
   // patch" afterwards isn't immediately undone by this
   const widenedFor = useRef<string | null>(null);
+  // The range this widened to. Without it the effect below sees the param it
+  // just wrote, reads it as the reader's own choice, and clears the banner on
+  // the very next render — so the range moved with nothing explaining why.
+  const appliedParam = useRef<string | null>(null);
   const [autoWiden, setAutoWiden] = useState<typeof autoWidenTo>(null);
   useEffect(() => {
     const key = `${selectedChampion ?? "board"}:${queue ?? "all"}`;
     if (patchParam != null) {
-      // An explicit choice wins, and clears any banner from a previous view
-      if (autoWiden) setAutoWiden(null);
+      // Anything other than the range we set is the reader overriding it
+      if (patchParam !== appliedParam.current && autoWiden) setAutoWiden(null);
       return;
     }
     if (widenedFor.current === key || !autoWidenTo) return;
+    const range = `${autoWidenTo.from}-${autoWidenTo.to}`;
     widenedFor.current = key;
+    appliedParam.current = range;
     setAutoWiden(autoWidenTo);
-    setParam("patch", `${autoWidenTo.from}-${autoWidenTo.to}`);
+    setParam("patch", range);
   }, [patchParam, autoWidenTo, selectedChampion, queue, setParam, autoWiden]);
   // Every participant slot under the current filter; the denominator for pick
   // rates and (÷10) the game count
@@ -304,6 +310,30 @@ export default function App() {
               MAYHEM<span className="text-lol-gold">STATS</span>
             </span>
           </a>
+          {/* Pinned to the logo row rather than the filter group: there it
+              claimed a whole extra row once the filters wrapped */}
+          <a
+            href="/download/"
+            title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
+            className="ml-auto min-[1081px]:order-last flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M4 21h16" />
+            </svg>
+            <span className="max-[380px]:hidden">Download app</span>
+            <span className="min-[381px]:hidden">App</span>
+          </a>
           {/* The nav takes the slack instead of the filter group using ml-auto:
               that right-aligns the filters while they share the top row, but
               leaves them left-aligned with everything else once they wrap. */}
@@ -341,27 +371,6 @@ export default function App() {
               param={patchParam}
               onChange={(v) => setParam("patch", v)}
             />
-            <a
-              href="/download/"
-              title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 3v12" />
-                <path d="m7 10 5 5 5-5" />
-                <path d="M4 21h16" />
-              </svg>
-              Download app
-            </a>
           </div>
         </div>
       </header>
