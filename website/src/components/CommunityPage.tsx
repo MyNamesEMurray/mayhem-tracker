@@ -2,11 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchCommunityTotals,
   fetchGamesPerDay,
+  fetchPatchSpans,
   type CommunityTotals,
   type GamesPerDayRow,
+  type PatchSpanRow,
 } from "../lib/api";
+import { formatPatch } from "../lib/stats";
 
 const PANEL = "bg-lol-card rounded-xl border border-lol-border/60";
+const CHART_DAYS = 45;
+// A patch label needs this many columns of clear run before the next boundary,
+// or it collides with its neighbour and both become unreadable
+const LABEL_MIN_SPAN = 4;
 const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text";
 
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
@@ -24,13 +31,15 @@ function Tile({ label, value, sub }: { label: string; value: string; sub: string
 export default function CommunityPage() {
   const [totals, setTotals] = useState<CommunityTotals | null>(null);
   const [perDay, setPerDay] = useState<GamesPerDayRow[]>([]);
+  const [spans, setSpans] = useState<PatchSpanRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchCommunityTotals(), fetchGamesPerDay()])
-      .then(([t, d]) => {
+    Promise.all([fetchCommunityTotals(), fetchGamesPerDay(), fetchPatchSpans()])
+      .then(([t, d, p]) => {
         setTotals(t);
         setPerDay(d);
+        setSpans(p);
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
@@ -52,6 +61,35 @@ export default function CommunityPage() {
     return days;
   }, [perDay]);
   const maxGames = Math.max(1, ...chart.map((d) => d.games));
+
+  // Which patch each day belongs to, for the bar tooltips
+  const patchForDay = useMemo(() => {
+    const ordered = [...spans].sort((a, b) => a.first_seen.localeCompare(b.first_seen));
+    return (day: string) => {
+      let current: string | null = null;
+      for (const s of ordered) {
+        if (s.first_seen <= day) current = s.patch;
+        else break;
+      }
+      return current ? formatPatch(current) : null;
+    };
+  }, [spans]);
+
+  // A dashed rule at every patch boundary inside the window. The label is
+  // dropped when the next boundary lands too close to fit it.
+  const markers = useMemo(() => {
+    if (chart.length === 0 || spans.length === 0) return [];
+    const columnOf = new Map(chart.map((d, i) => [d.day, i + 1]));
+    const found = spans
+      .map((s) => ({ patch: formatPatch(s.patch), column: columnOf.get(s.first_seen) }))
+      // Column 1 is the window opening mid-patch, not a boundary to draw
+      .filter((m): m is { patch: string; column: number } => m.column != null && m.column > 1)
+      .sort((a, b) => a.column - b.column);
+    return found.map((m, i) => ({
+      ...m,
+      showLabel: ((found[i + 1]?.column ?? CHART_DAYS + 1) - m.column) >= LABEL_MIN_SPAN,
+    }));
+  }, [chart, spans]);
 
   if (error) {
     return (
@@ -111,15 +149,43 @@ export default function CommunityPage() {
           <p className="text-sm text-lol-text">No data yet.</p>
         ) : (
           <div>
-            <div className="flex items-end gap-[3px] h-28">
-              {chart.map((d) => (
-                <div
-                  key={d.day}
-                  className="flex-1 rounded-t-[3px] bg-lol-gold/70 hover:bg-lol-gold transition-colors min-w-0"
-                  style={{ height: `${Math.max(d.games > 0 ? 6 : 1.5, (d.games / maxGames) * 100)}%` }}
-                  title={`${d.day}: ${d.games} game${d.games === 1 ? "" : "s"}`}
-                />
-              ))}
+            {/* One grid column per day, so the marker overlay can sit on the
+                same track sizing and land exactly on its boundary day */}
+            <div className="relative">
+              <div
+                className="grid items-end gap-[3px] h-28"
+                style={{ gridTemplateColumns: `repeat(${CHART_DAYS}, minmax(0, 1fr))` }}
+              >
+                {chart.map((d) => {
+                  const patch = patchForDay(d.day);
+                  return (
+                    <div
+                      key={d.day}
+                      className="rounded-t-[3px] bg-lol-gold/70 hover:bg-lol-gold transition-colors min-w-0"
+                      style={{ height: `${Math.max(d.games > 0 ? 6 : 1.5, (d.games / maxGames) * 100)}%` }}
+                      title={`${d.day}: ${d.games} game${d.games === 1 ? "" : "s"}${patch ? ` · patch ${patch}` : ""}`}
+                    />
+                  );
+                })}
+              </div>
+              <div
+                className="absolute inset-0 grid gap-[3px] pointer-events-none"
+                style={{ gridTemplateColumns: `repeat(${CHART_DAYS}, minmax(0, 1fr))` }}
+              >
+                {markers.map((m) => (
+                  <div
+                    key={m.patch}
+                    className="relative border-l border-dashed border-lol-gold/45"
+                    style={{ gridColumn: `${m.column} / span 1` }}
+                  >
+                    {m.showLabel && (
+                      <span className="absolute -top-0.5 left-[3px] whitespace-nowrap bg-lol-card px-1 text-[9px] tracking-[.04em] text-lol-gold">
+                        {m.patch}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="flex justify-between mt-1.5 text-[10px] text-lol-text/70">
               <span>{chart[0].day}</span>

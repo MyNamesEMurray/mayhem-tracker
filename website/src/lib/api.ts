@@ -107,6 +107,16 @@ export interface GamesPerDayRow {
   games: number;
 }
 
+// When each patch was first and last seen in a contributed game. Riot
+// publishes no patch-date endpoint, so these are observed boundaries: the
+// first game someone played on a version, which trails the actual deploy.
+export interface PatchSpanRow {
+  patch: string;
+  first_seen: string;
+  last_seen: string;
+  games: number;
+}
+
 export async function fetchCommunityTotals(): Promise<CommunityTotals> {
   const rows = await fetchAll<CommunityTotals>("community_totals");
   return (
@@ -123,4 +133,15 @@ export async function fetchCommunityTotals(): Promise<CommunityTotals> {
 
 export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
   return fetchAll<GamesPerDayRow>("community_games_per_day");
+}
+
+// Patch markers decorate the games chart; the chart is fine without them, so
+// a missing view or any other failure yields no markers rather than taking
+// the whole page down with an error.
+export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
+  try {
+    return await fetchAll<PatchSpanRow>("community_patch_spans");
+  } catch {
+    return [];
+  }
 }
