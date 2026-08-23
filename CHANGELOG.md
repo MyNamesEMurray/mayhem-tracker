@@ -18,6 +18,13 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.0 — 2026-08-23
+
+- The **Champions** tab can now show everyone's games, not just yours. A **My games / Community** switch sits above the table: flip it and the champions, augments, and items all come from the shared database behind [mayhemstats.com](https://mayhemstats.com/), so looking up a build no longer means leaving the app. Expand a champion and you get its best augments and items across every contributed game.
+- Those community numbers are stored on your machine and refresh a few times a day, with a **refresh** link when you want them sooner. If you're offline they keep showing whatever they last had rather than going blank.
+- **"Global" is now "My Lobbies"** — which is all it ever was: everyone who turned up in *your* matches. The old name sounded like it meant everyone's games, so an empty champion row read as "nobody plays this" when it really meant "you haven't played with one".
+- The app now ships with its own font instead of borrowing whichever one your operating system hands it, so it looks the same everywhere — and matches the website.
+
 ## v2.11.3 — 2026-08-22
 
 - Poro-Snax no longer counts as a purchased item in the community build paths on [mayhemstats.com](https://mayhemstats.com/). It's handed out for free, so it was showing up as the first "buy" for every champion and pushing a real item out of the row. The app already hid it from your own match build orders; now it stops being sent up with them too.
