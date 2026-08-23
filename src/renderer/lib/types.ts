@@ -132,6 +132,14 @@ export interface ChampionStats {
   penta_kills: number;
 }
 
+// What the local cache of the shared database currently holds
+export interface CommunityMeta {
+  fetchedAt: number;
+  patches: string[];
+  queues: number[];
+  games: number;
+}
+
 export interface AugmentStats {
   augment_id: number;
   picks: number;
@@ -402,6 +410,14 @@ export interface ElectronAPI {
     patch?: string,
     queue?: number,
   ) => Promise<GlobalChampionDetail>;
+  getCommunityChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
+  getCommunityChampionDetail: (
+    championId: number,
+    patch?: string,
+    queue?: number,
+  ) => Promise<{ augments: AugmentStats[]; items: ItemStats[] }>;
+  getCommunityMeta: () => Promise<CommunityMeta>;
+  refreshCommunity: () => Promise<CommunityMeta>;
   getSummonerPuuid: () => Promise<string | null>;
   getAllSummonerPuuids: () => Promise<string[]>;
   refreshGames: () => Promise<{ newGames: number; totalGames: number } | { error: string }>;

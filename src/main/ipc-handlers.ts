@@ -2,6 +2,7 @@ import { ipcMain, BrowserWindow, dialog, app, shell } from "electron";
 import { getMainWindow } from "./window-ref";
 import fs from "fs";
 import * as db from "./db";
+import * as community from "./community";
 import * as lcu from "./lcu";
 import * as dragon from "./dragon";
 import * as updater from "./updater";
@@ -164,6 +165,26 @@ export function registerIpcHandlers() {
       return db.getGlobalChampionDetail(championId, patch, queue);
     },
   );
+
+  // Community stats: the same aggregates the website reads, cached locally so
+  // a build lookup never needs the browser
+  ipcMain.handle("community:champion-stats", (_event, patch?: string, queue?: number) => {
+    return community.getCommunityChampionStats(patch, queue);
+  });
+
+  ipcMain.handle(
+    "community:champion-detail",
+    (_event, championId: number, patch?: string, queue?: number) => {
+      return community.getCommunityChampionDetail(championId, patch, queue);
+    },
+  );
+
+  ipcMain.handle("community:meta", () => community.getCommunityMeta());
+
+  ipcMain.handle("community:refresh", async () => {
+    await community.loadCommunity({ force: true });
+    return community.getCommunityMeta();
+  });
 
   ipcMain.handle("db:all-summoner-puuids", () => {
     return db.getAllPuuids();

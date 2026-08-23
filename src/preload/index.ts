@@ -91,6 +91,16 @@ const api = {
   getGlobalChampionDetail: (championId: number, patch?: string, queue?: number) =>
     ipcRenderer.invoke("db:global-champion-detail", championId, patch, queue),
 
+  getCommunityChampionStats: (patch?: string, queue?: number) =>
+    ipcRenderer.invoke("community:champion-stats", patch, queue),
+
+  getCommunityChampionDetail: (championId: number, patch?: string, queue?: number) =>
+    ipcRenderer.invoke("community:champion-detail", championId, patch, queue),
+
+  getCommunityMeta: () => ipcRenderer.invoke("community:meta"),
+
+  refreshCommunity: () => ipcRenderer.invoke("community:refresh"),
+
   getSummonerPuuid: () => ipcRenderer.invoke("db:summoner-puuid"),
 
   getAllSummonerPuuids: () => ipcRenderer.invoke("db:all-summoner-puuids"),

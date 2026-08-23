@@ -7,7 +7,10 @@ const tabs: { to: string; label: string }[] = [
   { to: "/champions", label: "Champions" },
   { to: "/augments", label: "Augments" },
   { to: "/friends", label: "Friends" },
-  { to: "/global", label: "Global" },
+  // "Global" read as "everyone's games" when it has only ever meant everyone
+  // in *your* lobbies — the community pool now lives behind the source switch
+  // on Champions
+  { to: "/global", label: "My Lobbies" },
   { to: "/settings", label: "Settings" },
 ];
 

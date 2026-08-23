@@ -10,6 +10,8 @@ import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../components/WinRateBar";
 import MultikillBadge from "../components/MultikillBadge";
 import PatchSelect from "../components/PatchSelect";
+import CommunityGate from "../components/CommunityGate";
+import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import QueueSelect from "../components/QueueSelect";
 import {
   formatKDA,
@@ -37,10 +39,12 @@ function ChampionExpanded({
   championId,
   patch,
   queue,
+  source,
 }: {
   championId: number;
   patch?: string;
   queue?: number;
+  source: "mine" | "community";
 }) {
   const augData = useAugmentData();
   const [augStats, setAugStats] = useState<AugmentStats[] | null>(null);
@@ -48,12 +52,22 @@ function ChampionExpanded({
   const [matches, setMatches] = useState<MatchListItem[] | null>(null);
 
   useEffect(() => {
+    if (source === "community") {
+      // The shared database has no individual matches to list — only the
+      // aggregates — so the recent-games column stays empty for this source
+      setMatches([]);
+      window.api.getCommunityChampionDetail(championId, patch, queue).then((d) => {
+        setAugStats(d.augments);
+        setItemStats(d.items);
+      });
+      return;
+    }
     window.api.getAugmentStats(championId, patch, queue).then(setAugStats);
     window.api.getChampionItemStats(championId, patch, queue).then(setItemStats);
     window.api
       .getChampionMatchHistory(championId, 5, 0, patch, queue)
       .then((r) => setMatches(r.matches));
-  }, [championId, patch, queue]);
+  }, [championId, patch, queue, source]);
 
   if (!augStats || !itemStats || !matches) {
     return (
@@ -166,9 +180,13 @@ export default function Champions() {
   // Wide windows get larger icons; the icon components size in pixels
   const wide = useMediaQuery("(min-width: 1500px)");
   const { patch, setPatch, queue, setQueue } = useStatsFilters();
+  const [source, setSource] = useStatsSource();
   const { data, refetch } = useIpc<ChampionStats[]>(
-    () => window.api.getChampionStats(patch, queue),
-    [patch, queue],
+    () =>
+      source === "community"
+        ? window.api.getCommunityChampionStats(patch, queue)
+        : window.api.getChampionStats(patch, queue),
+    [patch, queue, source],
   );
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("games");
@@ -274,6 +292,8 @@ export default function Champions() {
         </div>
       </div>
 
+      <SourceSwitch source={source} onChange={setSource} />
+
       <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
         <table className="w-full">
           <thead className="bg-lol-dark/50">
@@ -350,7 +370,12 @@ export default function Champions() {
                 </tr>
                 {expandedId === c.champion_id && (
                   <tr className="border-t border-lol-border/30 bg-lol-dark/30">
-                    <ChampionExpanded championId={c.champion_id} patch={patch} queue={queue} />
+                    <ChampionExpanded
+                      championId={c.champion_id}
+                      patch={patch}
+                      queue={queue}
+                      source={source}
+                    />
                   </tr>
                 )}
               </Fragment>
@@ -358,7 +383,11 @@ export default function Champions() {
           </tbody>
         </table>
         {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">No champions found</div>
+          <div className="py-8 text-center text-sm text-lol-text">
+            {source === "community"
+              ? "No champions in the community data for these filters"
+              : "No champions found"}
+          </div>
         )}
       </div>
     </div>
