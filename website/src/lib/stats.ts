@@ -219,6 +219,14 @@ export function championBuildPath(
 // The "ideal build" ranking: entries with a workable sample sorted by score,
 // then low-sample entries by popularity as filler. Keeps a 2-1 item from
 // outranking a proven core item while small datasets still fill the row.
+// A build entry has to earn its place twice: a workable sample, and a record
+// that isn't losing. Ranking is by shrunk win rate, so a confident 58% beats a
+// lucky 100% over three games.
+//
+// This used to pad the list with the most-picked entries when nothing
+// qualified, which meant a champion with thin data got a "core build" made of
+// items that had never won a game — presenting coverage as a recommendation.
+// Falling short of `count` now says so, and the caller shows an empty state.
 export function rankForBuild<T>(
   list: T[],
   getPicks: (t: T) => number,
@@ -226,13 +234,13 @@ export function rankForBuild<T>(
   minPicks: number,
   count: number,
 ): T[] {
-  const qualified = list
-    .filter((x) => getPicks(x) >= minPicks)
-    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)));
-  const filler = list
-    .filter((x) => getPicks(x) < minPicks)
-    .sort((a, b) => getPicks(b) - getPicks(a));
-  return [...qualified, ...filler].slice(0, count);
+  return list
+    .filter((x) => {
+      const picks = getPicks(x);
+      return picks >= minPicks && getWins(x) * 2 >= picks;
+    })
+    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)))
+    .slice(0, count);
 }
 
 // ---- Score & tiers ----

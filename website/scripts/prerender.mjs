@@ -104,12 +104,12 @@ function relative(value, base) {
   return `${Math.round(Math.abs(diff))}% ${diff > 0 ? "above" : "below"} the mode average`;
 }
 
-// Entries with a workable sample, ranked by shrunk win rate. Unlike the app's
-// rankForBuild there is no low-sample filler: a static page that a stranger
-// lands on from search should not present one-pick noise as a recommendation.
+// Mirrors src/lib/stats.ts rankForBuild: a workable sample AND a record that
+// isn't losing, ranked by shrunk win rate. An item that has never won is not a
+// recommendation, however many times it was built.
 function rankForBuild(list, minPicks, count) {
   return list
-    .filter((x) => x.picks >= minPicks)
+    .filter((x) => x.picks >= minPicks && x.wins * 2 >= x.picks)
     .sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks))
     .slice(0, count);
 }
@@ -363,13 +363,13 @@ ${PAGE_STYLE}
       <p>Those averages are what the build below is chasing: in a mode where every player is drafting augments and fights start early, an item line that fits the champion's actual damage and durability profile matters more than a generic ARAM build order. <a href="/guide/">The Mayhem guide</a> explains how to read these numbers.</p>
       <h2>Core build</h2>
       <ol>
-            ${buildList || `<li>No item has ${ITEM_MIN_PICKS} or more games on ${esc(name)} yet.</li>`}
+            ${buildList || `<li>No item has a winning record over ${ITEM_MIN_PICKS}+ games on ${esc(name)} yet.</li>`}
       </ol>
       <h2>Best augments</h2>
-            ${raritySection || `<p>No augment has reached ${AUGMENT_MIN_PICKS} picks on ${esc(name)} yet, so there is nothing worth recommending here.</p>`}
+            ${raritySection || `<p>No augment has a winning record over ${AUGMENT_MIN_PICKS}+ picks on ${esc(name)} yet, so there is nothing worth recommending here.</p>`}
       <h2>Most-built items</h2>
       ${itemRowsHtml ? `<table>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
-      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries below ${ITEM_MIN_PICKS} games are not shown at all.</em></p>
+      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all.</em></p>
       <p>More champions: ${crossLinks}</p>
       <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>

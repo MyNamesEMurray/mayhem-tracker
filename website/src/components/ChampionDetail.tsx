@@ -28,6 +28,11 @@ import RarityFilter, { type Rarity } from "./RarityFilter";
 import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
 
+// A build entry needs this many games behind it before it can be recommended
+// at all — below that a win rate is noise, however good it looks
+const ITEM_MIN_GAMES = 3;
+const AUGMENT_MIN_PICKS = 3;
+
 const RARITIES: { key: string; label: string; color: string }[] = [
   { key: "kPrismatic", label: "Prismatic", color: "text-fuchsia-400" },
   { key: "kGold", label: "Gold", color: "text-yellow-400" },
@@ -142,7 +147,7 @@ export default function ChampionDetail({
         items,
         (i) => i.picks,
         (i) => i.wins,
-        3,
+        ITEM_MIN_GAMES,
         6,
       ),
     [items],
@@ -155,7 +160,7 @@ export default function ChampionDetail({
         augments.filter((a) => augmentData[a.augment_id]?.rarity === r.key),
         (a) => a.picks,
         (a) => a.wins,
-        2,
+        AUGMENT_MIN_PICKS,
         4,
       ),
     }));
@@ -218,7 +223,9 @@ export default function ChampionDetail({
         <div className={`${PANEL} p-5`}>
           <h2 className={`${LABEL} mb-3`}>Core build</h2>
           {coreBuild.length === 0 ? (
-            <p className="text-sm text-lol-text">No item data yet.</p>
+            <p className="text-sm text-lol-text">
+              No item has a winning record over {ITEM_MIN_GAMES}+ games yet.
+            </p>
           ) : (
             <div className="flex flex-wrap gap-3.5">
               {coreBuild.map((i) => {
@@ -257,7 +264,7 @@ export default function ChampionDetail({
                   {r.label}
                 </p>
                 {r.best.length === 0 ? (
-                  <p className="text-xs text-lol-text">No picks yet</p>
+                  <p className="text-xs text-lol-text">Nothing winning yet</p>
                 ) : (
                   <div className="space-y-3">
                     {r.best.map((a) => (
