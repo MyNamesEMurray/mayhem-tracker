@@ -18,6 +18,13 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.1 — 2026-08-23
+
+- Clicking a champion now opens a **full champion page** rather than a strip inside the table row: tier, score, win rate, the core build, and the best augments for each rarity, laid out the way the champion pages on [mayhemstats.com](https://mayhemstats.com/) are. It follows whichever source you're on — your own games, or the community's.
+- The champion table gained **Tier**, **Score** and **Pick rate** columns and sorts by score by default, using the same ranking the website uses. A champion should read the same in both places, and now does.
+- <!--fixes:v2.12.0--> Community kills, deaths and assists are rounded to one decimal again, and damage and gold to whole numbers. They were arriving as raw averages — 10.633333333333333 kills — in the table.
+- <!--fixes:v2.12.0--> Fixed the patch filter clearing itself while you browse community stats for a patch you haven't played yourself.
+
 ## v2.12.0 — 2026-08-23
 
 - The **Champions** tab can now show everyone's games, not just yours. A **My games / Community** switch sits above the table: flip it and the champions, augments, and items all come from the shared database behind [mayhemstats.com](https://mayhemstats.com/), so looking up a build no longer means leaving the app. Expand a champion and you get its best augments and items across every contributed game.
