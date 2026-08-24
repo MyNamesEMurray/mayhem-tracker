@@ -36,6 +36,9 @@ export const LIST_MIN_PICKS = 5;
 
 export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
 
+// Best to worst. Sorting a table by its tier column orders against this.
+export const TIER_ORDER: Tier[] = ["S+", "S", "A", "B", "C", "D"];
+
 // Rank-percentile cutoffs, top to bottom
 const TIER_CUTOFFS: [Tier, number][] = [
   ["S+", 0.05],

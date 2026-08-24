@@ -18,6 +18,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.6 — 2026-08-24
+
+- **Every column sorts.** Click any header on Champions, Augments, Friends or a champion's item and augment tables and the table sorts by it — click again to reverse. Champion and augment names sort A→Z, numbers sort biggest-first, and the columns that never responded to a click before — Tier, Pick Rate, Player, Champion, the per-slot augment win rates, the augment pairs — now do. Headers are keyboard-reachable and announce their sort state to a screen reader.
+
 ## v2.12.5 — 2026-08-24
 
 - **One Score, everywhere.** Champions were ranked one way and items and augments another, both called "Score" — two numbers wearing one name. Everything now uses the confidence score: the win rate the games behind an entry will support, out of 100. Champion tiers shift a little as a result, and the shift is the point — on a fresh patch a champion with fifteen games no longer sits above one with two hundred. Over a full patch range almost nothing moves, because there the evidence is in.

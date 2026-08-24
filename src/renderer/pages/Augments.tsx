@@ -14,10 +14,13 @@ import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
+import SortHeader, { useSort } from "../components/SortHeader";
 
-type SortKey = "picks" | "winRate" | "name";
+type SortKey = "picks" | "winRate" | "name" | "pickRate";
 type SortDir = "asc" | "desc";
 type View = "overview" | "slots" | "pairs";
+type SlotSortKey = "name" | "slot1" | "slot2" | "slot3" | "slot4";
+type PairSortKey = "name" | "picks" | "winRate";
 
 const VIEWS: { key: View; label: string }[] = [
   { key: "overview", label: "Win rates" },
@@ -43,8 +46,8 @@ export default function Augments() {
   );
   const [view, setView] = useState<View>("overview");
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("picks");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const { sort, toggle } = useSort<SortKey>("picks");
+  const { key: sortKey, dir: sortDir } = sort;
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [rarityFilter, setRarityFilter] = useState<Rarity>("all");
 
@@ -63,14 +66,6 @@ export default function Augments() {
     return Math.round(totalPicks / 4);
   }, [data]);
 
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === "desc" ? "asc" : "desc");
-    } else {
-      setSortKey(key);
-      setSortDir(key === "name" ? "asc" : "desc");
-    }
-  };
 
   const toggleExpand = (augmentId: number) => {
     setExpanded((prev) => {
@@ -98,6 +93,10 @@ export default function Augments() {
         const nameB = getAugmentName(augmentData, b.augment_id);
         const cmp = nameA.localeCompare(nameB);
         return sortDir === "asc" ? cmp : -cmp;
+      } else if (sortKey === "pickRate") {
+        // Picks over a fixed total, so this is the picks order
+        av = a.picks;
+        bv = b.picks;
       } else if (sortKey === "winRate") {
         av = a.picks > 0 ? a.wins / a.picks : 0;
         bv = b.picks > 0 ? b.wins / b.picks : 0;
@@ -115,24 +114,7 @@ export default function Augments() {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;
   }
 
-  const SortHeader = ({
-    label,
-    field,
-    className,
-  }: {
-    label: string;
-    field: SortKey;
-    className?: string;
-  }) => (
-    <th
-      onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
-        sortKey === field ? "text-lol-gold" : "text-lol-text"
-      } ${className ?? ""}`}
-    >
-      {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
-    </th>
-  );
+  const sortProps = { sort, onSort: toggle };
 
   return (
     <div className="w-full space-y-4">
@@ -217,12 +199,10 @@ export default function Augments() {
             <thead className="bg-lol-dark/50">
               <tr>
                 <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
-                <SortHeader label="Augment" field="name" />
-                <SortHeader label="Picks" field="picks" />
-                <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
-                  Pick Rate
-                </th>
-                <SortHeader label="Win Rate" field="winRate" className="w-32" />
+                <SortHeader label="Augment" field="name" naturalDir="asc" {...sortProps} />
+                <SortHeader label="Picks" field="picks" {...sortProps} />
+                <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
+                <SortHeader label="Win Rate" field="winRate" className="w-32" {...sortProps} />
               </tr>
             </thead>
             <tbody>
@@ -323,6 +303,32 @@ function SlotsView({
     return list;
   }, [slotData, augmentData, rarityFilter, search]);
 
+  // Each slot column sorts by that slot's win rate. A row with no picks in
+  // the slot has nothing to compare, so it sinks to the bottom either way
+  // rather than pretending to be a 0%.
+  const { sort, toggle } = useSort<SlotSortKey>("name", "asc");
+  const sortedRows = useMemo(() => {
+    const out = [...rows];
+    out.sort((a, b) => {
+      if (sort.key === "name") {
+        const cmp = getAugmentName(augmentData, a.augmentId).localeCompare(
+          getAugmentName(augmentData, b.augmentId),
+        );
+        return sort.dir === "asc" ? cmp : -cmp;
+      }
+      const slot = Number(sort.key.slice(4));
+      const rate = (r: (typeof rows)[number]) => {
+        const st = r.slots.get(slot);
+        return st && st.picks > 0 ? st.wins / st.picks : null;
+      };
+      const ar = rate(a);
+      const br = rate(b);
+      if (ar === null || br === null) return ar === br ? 0 : ar === null ? 1 : -1;
+      return sort.dir === "desc" ? br - ar : ar - br;
+    });
+    return out;
+  }, [rows, sort, augmentData]);
+
   const cell = (s: { picks: number; wins: number } | undefined) => {
     if (!s) return <span className="text-lol-text/40">—</span>;
     const wr = (s.wins / s.picks) * 100;
@@ -349,21 +355,27 @@ function SlotsView({
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
-                Augment
-              </th>
+              <SortHeader
+                label="Augment"
+                field="name"
+                naturalDir="asc"
+                sort={sort}
+                onSort={toggle}
+              />
               {[1, 2, 3, 4].map((n) => (
-                <th
+                <SortHeader
                   key={n}
-                  className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-24 whitespace-nowrap"
-                >
-                  Pick {n}
-                </th>
+                  label={`Pick ${n}`}
+                  field={`slot${n}` as SlotSortKey}
+                  className="w-24"
+                  sort={sort}
+                  onSort={toggle}
+                />
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sortedRows.map((r) => (
               <tr key={r.augmentId} className="border-t border-lol-border/50">
                 <td className="px-3 py-1.5">
                   <AugmentIcon augmentId={r.augmentId} showName />
@@ -401,6 +413,8 @@ function PairsView({
   rarityFilter: Rarity;
   search: string;
 }) {
+  const { sort, toggle } = useSort<PairSortKey>("winRate");
+
   const rows = useMemo(() => {
     let list = pairData;
     if (rarityFilter !== "all") {
@@ -418,8 +432,22 @@ function PairsView({
           getAugmentName(augmentData, p.augmentB).toLowerCase().includes(q),
       );
     }
-    return list.slice(0, 50);
-  }, [pairData, augmentData, rarityFilter, search]);
+    // Sort before the cut, or "top 50" would mean "top 50 by win rate, then
+    // reordered" — which is a different set than the column asks for
+    const out = [...list];
+    out.sort((a, b) => {
+      if (sort.key === "name") {
+        const label = (p: AugmentPairStat) =>
+          `${getAugmentName(augmentData, p.augmentA)} + ${getAugmentName(augmentData, p.augmentB)}`;
+        const cmp = label(a).localeCompare(label(b));
+        return sort.dir === "asc" ? cmp : -cmp;
+      }
+      const value = (p: AugmentPairStat) =>
+        sort.key === "picks" ? p.picks : p.picks > 0 ? p.wins / p.picks : 0;
+      return sort.dir === "desc" ? value(b) - value(a) : value(a) - value(b);
+    });
+    return out.slice(0, 50);
+  }, [pairData, augmentData, rarityFilter, search, sort]);
 
   return (
     <div>
@@ -427,15 +455,21 @@ function PairsView({
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
-                Pair
-              </th>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-20">
-                Picks
-              </th>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-36">
-                Win Rate
-              </th>
+              <SortHeader
+                label="Pair"
+                field="name"
+                naturalDir="asc"
+                sort={sort}
+                onSort={toggle}
+              />
+              <SortHeader label="Picks" field="picks" className="w-20" sort={sort} onSort={toggle} />
+              <SortHeader
+                label="Win Rate"
+                field="winRate"
+                className="w-36"
+                sort={sort}
+                onSort={toggle}
+              />
             </tr>
           </thead>
           <tbody>

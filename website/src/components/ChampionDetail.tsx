@@ -29,6 +29,7 @@ import ItemIcon from "./ItemIcon";
 import RarityFilter, { type Rarity } from "./RarityFilter";
 import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
+import SortHeader, { useSort } from "./SortHeader";
 
 // A build entry needs this many games behind it before it can be recommended
 // at all — below that a win rate is noise, however good it looks
@@ -125,6 +126,9 @@ export default function ChampionDetail({
 
   // The low-sample toggle and the panel search/rarity filters narrow the full
   // tables only; Core build and Best augments already rank by Score
+  const itemSort = useSort<PanelSortKey>("score");
+  const augSort = useSort<PanelSortKey>("score");
+
   const visibleItems = useMemo(() => {
     let list = (showComponents ? items : finishedItems).filter(
       (i) => i.picks >= Math.max(minGames, LIST_MIN_PICKS),
@@ -133,8 +137,8 @@ export default function ChampionDetail({
       const q = itemSearch.toLowerCase();
       list = list.filter((i) => getItemName(itemData, i.item_id).toLowerCase().includes(q));
     }
-    return list;
-  }, [items, finishedItems, showComponents, minGames, itemSearch, itemData]);
+    return sortPanel(list, itemSort.sort, (i) => getItemName(itemData, i.item_id));
+  }, [items, finishedItems, showComponents, minGames, itemSearch, itemData, itemSort.sort]);
 
   const visibleAugments = useMemo(() => {
     let list = augments.filter((a) => a.picks >= Math.max(minGames, LIST_MIN_PICKS));
@@ -147,8 +151,8 @@ export default function ChampionDetail({
         getAugmentName(augmentData, a.augment_id).toLowerCase().includes(q),
       );
     }
-    return list;
-  }, [augments, minGames, augRarity, augSearch, augmentData]);
+    return sortPanel(list, augSort.sort, (a) => getAugmentName(augmentData, a.augment_id));
+  }, [augments, minGames, augRarity, augSearch, augmentData, augSort.sort]);
 
   const coreBuild = useMemo(
     () =>
@@ -368,23 +372,36 @@ export default function ChampionDetail({
           <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
-                <th className={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}>Item</th>
-                <th
-                  className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
-                >
-                  Games
-                </th>
-                <th
-                  className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                <SortHeader
+                  label="Item"
+                  field="name"
+                  naturalDir="asc"
+                  sort={itemSort.sort}
+                  onSort={itemSort.toggle}
+                  thClass={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}
+                />
+                <SortHeader
+                  label="Games"
+                  field="picks"
+                  sort={itemSort.sort}
+                  onSort={itemSort.toggle}
+                  thClass={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                />
+                <SortHeader
+                  label="Score"
+                  field="score"
                   title={SCORE_HINT}
-                >
-                  Score
-                </th>
-                <th
-                  className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
-                >
-                  Win rate
-                </th>
+                  sort={itemSort.sort}
+                  onSort={itemSort.toggle}
+                  thClass={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                />
+                <SortHeader
+                  label="Win rate"
+                  field="winRate"
+                  sort={itemSort.sort}
+                  onSort={itemSort.toggle}
+                  thClass={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                />
               </tr>
             </thead>
             <tbody>
@@ -424,23 +441,36 @@ export default function ChampionDetail({
           <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
-                <th className={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}>Augment</th>
-                <th
-                  className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
-                >
-                  Picks
-                </th>
-                <th
-                  className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                <SortHeader
+                  label="Augment"
+                  field="name"
+                  naturalDir="asc"
+                  sort={augSort.sort}
+                  onSort={augSort.toggle}
+                  thClass={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}
+                />
+                <SortHeader
+                  label="Picks"
+                  field="picks"
+                  sort={augSort.sort}
+                  onSort={augSort.toggle}
+                  thClass={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                />
+                <SortHeader
+                  label="Score"
+                  field="score"
                   title={SCORE_HINT}
-                >
-                  Score
-                </th>
-                <th
-                  className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
-                >
-                  Win rate
-                </th>
+                  sort={augSort.sort}
+                  onSort={augSort.toggle}
+                  thClass={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                />
+                <SortHeader
+                  label="Win rate"
+                  field="winRate"
+                  sort={augSort.sort}
+                  onSort={augSort.toggle}
+                  thClass={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                />
               </tr>
             </thead>
             <tbody>
@@ -491,6 +521,35 @@ export default function ChampionDetail({
 // enough and names came back as "Overlord'..." — so the number columns give
 // up their padding and some width below `sm`, and names wrap to a second line
 // instead of being cut.
+// The two long-tail panels hold the same shape of row — a thing, its picks
+// and its record — so they sort through one comparator. Default is Score,
+// which is the order the panels are meant to be read in.
+type PanelSortKey = "name" | "picks" | "score" | "winRate";
+
+function sortPanel<T extends { picks: number; wins: number }>(
+  list: T[],
+  sort: { key: PanelSortKey; dir: "asc" | "desc" },
+  nameOf: (row: T) => string,
+): T[] {
+  const out = [...list];
+  out.sort((a, b) => {
+    if (sort.key === "name") {
+      const cmp = nameOf(a).localeCompare(nameOf(b));
+      return sort.dir === "asc" ? cmp : -cmp;
+    }
+    const value = (r: T) =>
+      sort.key === "picks"
+        ? r.picks
+        : sort.key === "winRate"
+          ? r.picks > 0
+            ? r.wins / r.picks
+            : 0
+          : score(r.wins, r.picks);
+    return sort.dir === "desc" ? value(b) - value(a) : value(a) - value(b);
+  });
+  return out;
+}
+
 const COL_GAMES = "w-[50px] sm:w-[72px]";
 const COL_SCORE = "w-[44px] sm:w-[64px]";
 const COL_RATE = "w-[84px] sm:w-[140px]";

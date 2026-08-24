@@ -7,37 +7,33 @@ import ChampionIcon from "../components/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import WinRateBar from "../components/WinRateBar";
 import { formatTimeAgo, kdaRatio, kdaColor } from "../lib/format";
+import SortHeader, { useSort } from "../components/SortHeader";
 
-type SortKey = "games" | "winRate" | "kda" | "lastPlayed";
-type SortDir = "asc" | "desc";
+type SortKey = "games" | "winRate" | "kda" | "lastPlayed" | "name";
 
 export default function Friends() {
   const navigate = useNavigate();
   const champData = useChampionData();
   const { data, loading, refetch } = useIpc<TeammateStats[]>(() => window.api.getTeammateStats());
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("games");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const { sort, toggle } = useSort<SortKey>("games");
+  const { key: sortKey, dir: sortDir } = sort;
 
   useEffect(() => {
     const unsub = window.api.onGamesUpdated(() => refetch());
     return unsub;
   }, [refetch]);
 
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === "desc" ? "asc" : "desc");
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
-  };
 
   const sorted = useMemo(() => {
     if (!data) return [];
     let filtered = data.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
 
     filtered.sort((a, b) => {
+      if (sortKey === "name") {
+        const cmp = a.name.localeCompare(b.name);
+        return sortDir === "asc" ? cmp : -cmp;
+      }
       let av: number, bv: number;
       switch (sortKey) {
         case "winRate":
@@ -66,24 +62,7 @@ export default function Friends() {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;
   }
 
-  const SortHeader = ({
-    label,
-    field,
-    className,
-  }: {
-    label: string;
-    field: SortKey;
-    className?: string;
-  }) => (
-    <th
-      onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
-        sortKey === field ? "text-lol-gold" : "text-lol-text"
-      } ${className ?? ""}`}
-    >
-      {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
-    </th>
-  );
+  const sortProps = { sort, onSort: toggle };
 
   return (
     <div className="w-full space-y-4">
@@ -129,16 +108,16 @@ export default function Friends() {
               <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
                 #
               </th>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
-                Player
-              </th>
-              <SortHeader label="Games" field="games" />
-              <SortHeader label="Win Rate" field="winRate" />
-              <SortHeader label="Their KDA" field="kda" />
+              <SortHeader label="Player" field="name" naturalDir="asc" {...sortProps} />
+              <SortHeader label="Games" field="games" {...sortProps} />
+              <SortHeader label="Win Rate" field="winRate" {...sortProps} />
+              <SortHeader label="Their KDA" field="kda" {...sortProps} />
+              {/* A row of champion icons, not a value — there is no order to
+                  put them in */}
               <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Top Champions
               </th>
-              <SortHeader label="Last Played" field="lastPlayed" />
+              <SortHeader label="Last Played" field="lastPlayed" {...sortProps} />
             </tr>
           </thead>
           <tbody>

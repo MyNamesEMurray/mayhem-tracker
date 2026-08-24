@@ -16,9 +16,13 @@ import SearchInput from "./SearchInput";
 import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
 import { championSlug } from "../lib/slug";
+import SortHeader, { useSort } from "./SortHeader";
+import { TIER_ORDER } from "../lib/stats";
 
-type SortKey = "score" | "games" | "winRate" | "kda" | "damage" | "name";
-type SortDir = "asc" | "desc";
+// Every column carries data, so every column sorts. Pick rate is games over a
+// fixed total, so it orders identically to games — it's here because a header
+// that looks clickable and isn't is worse than a redundant one.
+type SortKey = "score" | "games" | "winRate" | "kda" | "damage" | "name" | "tier" | "pickRate";
 
 export default function ChampionsTable({
   rows,
@@ -40,17 +44,8 @@ export default function ChampionsTable({
   onSelectChampion: (championId: number) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("score");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === "desc" ? "asc" : "desc");
-    } else {
-      setSortKey(key);
-      setSortDir(key === "name" ? "asc" : "desc");
-    }
-  };
+  const { sort, toggle } = useSort<SortKey>("score");
+  const { key: sortKey, dir: sortDir } = sort;
 
   // Tiers are ranked across ALL champions under the current filter, before
   // search narrows the list — searching "teemo" must not make Teemo S+
@@ -86,6 +81,18 @@ export default function ChampionsTable({
       if (sortKey === "score") {
         av = score(a.wins, a.games);
         bv = score(b.wins, b.games);
+      } else if (sortKey === "tier") {
+        // S+ first descending. Tiers are wide — a third of the roster is one
+        // letter — so score breaks the ties and the order inside a tier still
+        // means something.
+        const at = TIER_ORDER.indexOf(tiers.get(a.champion_id)!);
+        const bt = TIER_ORDER.indexOf(tiers.get(b.champion_id)!);
+        if (at !== bt) return sortDir === "desc" ? at - bt : bt - at;
+        av = score(a.wins, a.games);
+        bv = score(b.wins, b.games);
+      } else if (sortKey === "pickRate") {
+        av = a.games;
+        bv = b.games;
       } else if (sortKey === "winRate") {
         av = a.games > 0 ? a.wins / a.games : 0;
         bv = b.games > 0 ? b.wins / b.games : 0;
@@ -102,28 +109,11 @@ export default function ChampionsTable({
       return sortDir === "desc" ? bv - av : av - bv;
     });
     return result;
-  }, [list, search, sortKey, sortDir, championData, minGames]);
+  }, [list, tiers, search, sortKey, sortDir, championData, minGames]);
 
   const th =
     "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
-  const SortHeader = ({
-    label,
-    field,
-    className,
-  }: {
-    label: string;
-    field: SortKey;
-    className?: string;
-  }) => (
-    <th
-      onClick={() => handleSort(field)}
-      className={`${th} cursor-pointer whitespace-nowrap ${
-        sortKey === field ? "text-lol-gold" : "text-lol-text hover:text-lol-gold"
-      } ${className ?? ""}`}
-    >
-      {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
-    </th>
-  );
+  const sortProps = { sort, onSort: toggle, thClass: th };
 
   return (
     <div className="space-y-3">
@@ -159,15 +149,17 @@ export default function ChampionsTable({
         <table className="ctbl table-fixed w-full min-w-[1000px] border-collapse">
           <thead className="bg-lol-dark/50">
             <tr>
+              {/* The rank column is the row's position in whatever order is
+                  showing, so there is nothing to sort it by */}
               <th className={`${th} text-lol-text w-10`}>#</th>
-              <SortHeader label="Champion" field="name" />
-              <th className={`${th} text-lol-text w-16`}>Tier</th>
-              <SortHeader label="Score" field="score" className="w-[84px]" />
-              <SortHeader label="Win rate" field="winRate" className="w-[150px]" />
-              <SortHeader label="Games" field="games" className="w-[76px]" />
-              <th className={`${th} text-lol-text w-[84px] whitespace-nowrap`}>Pick rate</th>
-              <SortHeader label="KDA" field="kda" className="w-[170px]" />
-              <SortHeader label="Damage" field="damage" className="w-[84px]" />
+              <SortHeader label="Champion" field="name" naturalDir="asc" {...sortProps} />
+              <SortHeader label="Tier" field="tier" className="w-16" {...sortProps} />
+              <SortHeader label="Score" field="score" className="w-[84px]" {...sortProps} />
+              <SortHeader label="Win rate" field="winRate" className="w-[150px]" {...sortProps} />
+              <SortHeader label="Games" field="games" className="w-[76px]" {...sortProps} />
+              <SortHeader label="Pick rate" field="pickRate" className="w-[84px]" {...sortProps} />
+              <SortHeader label="KDA" field="kda" className="w-[170px]" {...sortProps} />
+              <SortHeader label="Damage" field="damage" className="w-[84px]" {...sortProps} />
             </tr>
           </thead>
           <tbody>

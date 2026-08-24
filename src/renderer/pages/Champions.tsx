@@ -15,7 +15,8 @@ import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import CommunityGate from "../components/CommunityGate";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import TierBadge from "../components/TierBadge";
-import { assignTiers, score } from "../lib/champStats";
+import { assignTiers, score, TIER_ORDER } from "../lib/champStats";
+import SortHeader, { useSort } from "../components/SortHeader";
 import QueueSelect from "../components/QueueSelect";
 import {
   formatAvg,
@@ -40,8 +41,9 @@ type SortKey =
   | "kda"
   | "avg_damage"
   | "avg_gold"
-  | "multikills";
-type SortDir = "asc" | "desc";
+  | "multikills"
+  | "tier"
+  | "pickRate";
 
 export default function Champions() {
   const champData = useChampionData();
@@ -59,8 +61,8 @@ export default function Champions() {
   );
   const [search, setSearch] = useState("");
   // Score-first, like the website: rank is the point of a tier list
-  const [sortKey, setSortKey] = useState<SortKey>("score");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const { sort, toggle } = useSort<SortKey>("score");
+  const { key: sortKey, dir: sortDir } = sort;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,14 +70,6 @@ export default function Champions() {
     return unsub;
   }, [refetch]);
 
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === "desc" ? "asc" : "desc");
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
-  };
 
   // Clicking a champion opens the full page — tier, score, core build, best
   // augments per rarity — rather than a three-column strip inside the row.
@@ -115,7 +109,20 @@ export default function Champions() {
 
     filtered.sort((a, b) => {
       let av: number, bv: number;
-      if (sortKey === "multikills") {
+      if (sortKey === "tier") {
+        // S+ first descending. A tier holds a big slice of the roster, so
+        // score breaks the ties and the order inside a tier still means
+        // something.
+        const at = TIER_ORDER.indexOf(tiers.get(a.champion_id)!);
+        const bt = TIER_ORDER.indexOf(tiers.get(b.champion_id)!);
+        if (at !== bt) return sortDir === "desc" ? at - bt : bt - at;
+        av = score(a.wins, a.games);
+        bv = score(b.wins, b.games);
+      } else if (sortKey === "pickRate") {
+        // Games over a fixed slot total, so this is the games order
+        av = a.games;
+        bv = b.games;
+      } else if (sortKey === "multikills") {
         av = a.double_kills + a.triple_kills + a.quadra_kills + a.penta_kills;
         bv = b.double_kills + b.triple_kills + b.quadra_kills + b.penta_kills;
       } else if (sortKey === "wins") {
@@ -139,22 +146,13 @@ export default function Champions() {
     });
 
     return filtered;
-  }, [data, search, sortKey, sortDir, champData]);
+  }, [data, search, sortKey, sortDir, champData, tiers]);
 
   if (!data) {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;
   }
 
-  const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
-    <th
-      onClick={() => handleSort(field)}
-      className={`px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] cursor-pointer hover:text-lol-gold select-none whitespace-nowrap ${
-        sortKey === field ? "text-lol-gold" : "text-lol-text"
-      }`}
-    >
-      {label} {sortKey === field ? (sortDir === "desc" ? "▼" : "▲") : ""}
-    </th>
-  );
+  const sortProps = { sort, onSort: toggle };
 
   return (
     <div className="w-full space-y-4">
@@ -203,25 +201,19 @@ export default function Champions() {
               <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
                 #
               </th>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
-                Champion
-              </th>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-16">
-                Tier
-              </th>
-              <SortHeader label="Score" field="score" />
-              <SortHeader label="Win Rate" field="wins" />
-              <SortHeader label="Games" field="games" />
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] whitespace-nowrap">
-                Pick Rate
-              </th>
-              <SortHeader label="Kills" field="avg_kills" />
-              <SortHeader label="Deaths" field="avg_deaths" />
-              <SortHeader label="Assists" field="avg_assists" />
-              <SortHeader label="KDA" field="kda" />
-              <SortHeader label="Damage" field="avg_damage" />
-              <SortHeader label="Gold" field="avg_gold" />
-              <SortHeader label="Multikills" field="multikills" />
+              <SortHeader label="Champion" field="name" naturalDir="asc" {...sortProps} />
+              <SortHeader label="Tier" field="tier" className="w-16" {...sortProps} />
+              <SortHeader label="Score" field="score" {...sortProps} />
+              <SortHeader label="Win Rate" field="wins" {...sortProps} />
+              <SortHeader label="Games" field="games" {...sortProps} />
+              <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
+              <SortHeader label="Kills" field="avg_kills" {...sortProps} />
+              <SortHeader label="Deaths" field="avg_deaths" {...sortProps} />
+              <SortHeader label="Assists" field="avg_assists" {...sortProps} />
+              <SortHeader label="KDA" field="kda" {...sortProps} />
+              <SortHeader label="Damage" field="avg_damage" {...sortProps} />
+              <SortHeader label="Gold" field="avg_gold" {...sortProps} />
+              <SortHeader label="Multikills" field="multikills" {...sortProps} />
             </tr>
           </thead>
           <tbody>

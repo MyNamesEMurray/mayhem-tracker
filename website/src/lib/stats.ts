@@ -292,6 +292,9 @@ export function kdaRampClass(ratio: number): string {
   return "text-lol-text";
 }
 
+// Best to worst. Sorting a table by its tier column orders against this.
+export const TIER_ORDER: Tier[] = ["S+", "S", "A", "B", "C", "D"];
+
 // Rank-percentile cutoffs, top to bottom
 const TIER_CUTOFFS: [Tier, number][] = [
   ["S+", 0.05],
