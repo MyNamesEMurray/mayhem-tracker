@@ -28,8 +28,12 @@ grant select on public.item_purchase_stats to anon, authenticated, service_role;
 -- Community stats stay live views over matches/contributions: they read a
 -- couple of hundred milliseconds and contributors watch the game count tick up.
 
+-- A full pass rebuilds all four rollups in about two minutes, so every half
+-- hour keeps the load light while the numbers stay current enough for stats
+-- that are read a patch at a time. A pass that overruns its slot is skipped
+-- rather than stacked, by the advisory lock in stats.refresh_all().
 select cron.schedule(
   'refresh-stats-rollups',
-  '*/15 * * * *',
+  '*/30 * * * *',
   $$select stats.refresh_all()$$
 );
