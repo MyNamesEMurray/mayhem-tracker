@@ -563,8 +563,8 @@ export default function App() {
             </div>
             <p className="text-[13px] mb-4">
               {tab === "champions"
-                ? "Every champion ranked by score — win rate shrunk toward 50% for small samples."
-                : "Augments ranked within their rarity — click a row for the champions it carries hardest."}
+                ? "Every champion ranked by score."
+                : "Augments ranked within their rarity."}
             </p>
 
             <AdSlot slot={AD_SLOTS.top} />

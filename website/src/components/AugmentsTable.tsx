@@ -167,7 +167,9 @@ export default function AugmentsTable({
             20+ games
           </button>
         )}
-        <span className="text-xs self-center ml-1">{sorted.length} augments</span>
+        <span className="text-xs self-center ml-1">
+          {sorted.length} augment{sorted.length === 1 ? "" : "s"}
+        </span>
         <div className="ml-auto">
           <SearchInput
             value={search}

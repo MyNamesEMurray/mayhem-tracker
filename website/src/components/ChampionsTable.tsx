@@ -142,7 +142,9 @@ export default function ChampionsTable({
             20+ games
           </button>
         )}
-        <span className="text-xs">{sorted.length} champions — click one for its ideal build</span>
+        <span className="text-xs">
+          {sorted.length} champion{sorted.length === 1 ? "" : "s"}
+        </span>
         <div className="ml-auto">
           <SearchInput
             value={search}
