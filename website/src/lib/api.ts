@@ -125,8 +125,16 @@ export function fetchChampionStats(): Promise<ChampionStatRow[]> {
   return fetchAll<ChampionStatRow>("champion_stats");
 }
 
-export function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
-  return fetchAll<AugmentTotalRow>("augment_totals");
+export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
+  try {
+    return await fetchAll<AugmentTotalRow>("augment_totals");
+  } catch (err) {
+    // The rollup is one migration behind the client during a deploy. An empty
+    // augment tab is a bad half-hour; taking the champion tier list down with
+    // it — which is what letting this reject would do — is worse.
+    console.warn(`augment_totals unavailable: ${err instanceof Error ? err.message : err}`);
+    return [];
+  }
 }
 
 // Everything below is per-champion or per-augment, fetched when a page that
