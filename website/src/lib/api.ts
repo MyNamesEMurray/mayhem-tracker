@@ -34,6 +34,21 @@ export interface AugmentStatRow {
   damage: number;
 }
 
+// The Augments tab's grain: one row per augment per patch, rolled up across
+// champions. The per-champion rows are 341k and growing — two orders of
+// magnitude more than this — so they are fetched per champion, on demand.
+export interface AugmentTotalRow {
+  patch: string;
+  queue_id: number;
+  augment_id: number;
+  picks: number;
+  wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+}
+
 export interface ItemStatRow {
   patch: string;
   queue_id: number;
@@ -55,45 +70,110 @@ export interface ItemPurchaseRow {
   avg_first_buy_s: number;
 }
 
-// PostgREST caps responses at 1000 rows, so page with Range headers until a
-// short page arrives. Each page is a separate query, so paging is only
-// coherent when the rows come back in a fixed order: `order` has to name a
-// unique key of the view, or pages can repeat and skip rows.
-async function fetchAll<T>(view: string, order?: string): Promise<T[]> {
-  const PAGE = 1000;
-  const out: T[] = [];
-  const query = order ? `select=*&order=${order}` : "select=*";
-  for (let from = 0; ; from += PAGE) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Range: `${from}-${from + PAGE - 1}`,
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to load ${view} (HTTP ${res.status})`);
-    }
-    const rows = (await res.json()) as T[];
-    out.push(...rows);
-    if (rows.length < PAGE) return out;
+// PostgREST caps a response at 1000 rows on this project — verified: asking
+// for 0-9999 comes back "content-range: 0-999/*" with a thousand rows. A
+// larger page size doesn't fetch more, it just makes the walk stop after the
+// first page and silently truncate every view. So pages stay at 1000 and the
+// first request asks for an exact count instead, which lets the rest of them
+// go out together rather than one after another.
+const PAGE = 1000;
+
+async function fetchPage<T>(
+  view: string,
+  query: string,
+  from: number,
+  withCount: boolean,
+): Promise<{ rows: T[]; total: number | null }> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Range: `${from}-${from + PAGE - 1}`,
+      ...(withCount ? { Prefer: "count=exact" } : {}),
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load ${view} (HTTP ${res.status})`);
   }
+  const rows = (await res.json()) as T[];
+  // "0-999/3562" — the total is what lets the rest of the pages be parallel
+  const total = Number(res.headers.get("content-range")?.split("/")[1]);
+  return { rows, total: Number.isFinite(total) ? total : null };
+}
+
+// Every page is its own query and the pages after the first go out together,
+// so a view that hands rows back in whatever order it likes can repeat one
+// page's rows in another and drop the difference. Each caller's query names an
+// order over a unique key of the view, which the rollups are indexed on.
+async function fetchAll<T>(view: string, query = "select=*"): Promise<T[]> {
+  const first = await fetchPage<T>(view, query, 0, true);
+  if (first.rows.length < PAGE) return first.rows;
+
+  if (first.total == null) {
+    // No count header: walk pages until one comes up short
+    const out = [...first.rows];
+    for (let from = PAGE; ; from += PAGE) {
+      const page = await fetchPage<T>(view, query, from, false);
+      out.push(...page.rows);
+      if (page.rows.length < PAGE) return out;
+    }
+  }
+
+  const offsets: number[] = [];
+  for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
+  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, query, from, false)));
+  return [...first.rows, ...rest.flatMap((p) => p.rows)];
 }
 
 export function fetchChampionStats(): Promise<ChampionStatRow[]> {
-  return fetchAll<ChampionStatRow>("champion_stats", "patch,queue_id,champion_id");
+  return fetchAll<ChampionStatRow>("champion_stats", "select=*&order=patch,queue_id,champion_id");
 }
 
-export function fetchAugmentStats(): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>("augment_stats", "patch,queue_id,augment_id,champion_id");
+export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
+  try {
+    return await fetchAll<AugmentTotalRow>(
+      "augment_totals",
+      "select=*&order=patch,queue_id,augment_id",
+    );
+  } catch (err) {
+    // The rollup is one migration behind the client during a deploy. An empty
+    // augment tab is a bad half-hour; taking the champion tier list down with
+    // it — which is what letting this reject would do — is worse.
+    console.warn(`augment_totals unavailable: ${err instanceof Error ? err.message : err}`);
+    return [];
+  }
 }
 
-export function fetchItemStats(): Promise<ItemStatRow[]> {
-  return fetchAll<ItemStatRow>("item_stats", "patch,queue_id,champion_id,item_id");
+// Everything below is per-champion or per-augment, fetched when a page that
+// needs it opens. Filtering server-side keeps a champion page to a couple of
+// thousand rows instead of the half-million the full grain would cost.
+export function fetchChampionAugments(championId: number): Promise<AugmentStatRow[]> {
+  return fetchAll<AugmentStatRow>(
+    "augment_stats",
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,augment_id`,
+  );
 }
 
-export function fetchItemPurchaseStats(): Promise<ItemPurchaseRow[]> {
-  return fetchAll<ItemPurchaseRow>("item_purchase_stats", "patch,queue_id,champion_id,item_id");
+export function fetchChampionItems(championId: number): Promise<ItemStatRow[]> {
+  return fetchAll<ItemStatRow>(
+    "item_stats",
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,item_id`,
+  );
+}
+
+export function fetchChampionPurchases(championId: number): Promise<ItemPurchaseRow[]> {
+  return fetchAll<ItemPurchaseRow>(
+    "item_purchase_stats",
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,item_id`,
+  );
+}
+
+// For an expanded augment row: which champions carry it
+export function fetchAugmentChampions(augmentId: number): Promise<AugmentStatRow[]> {
+  return fetchAll<AugmentStatRow>(
+    "augment_stats",
+    `select=*&augment_id=eq.${augmentId}&order=patch,queue_id,champion_id`,
+  );
 }
 
 export interface CommunityTotals {
@@ -135,7 +215,7 @@ export async function fetchCommunityTotals(): Promise<CommunityTotals> {
 }
 
 export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
-  return fetchAll<GamesPerDayRow>("community_games_per_day", "day");
+  return fetchAll<GamesPerDayRow>("community_games_per_day", "select=*&order=day");
 }
 
 // Patch markers decorate the games chart; the chart is fine without them, so
@@ -143,8 +223,26 @@ export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
 // the whole page down with an error.
 export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
   try {
-    return await fetchAll<PatchSpanRow>("community_patch_spans", "patch");
+    return await fetchAll<PatchSpanRow>("community_patch_spans", "select=*&order=patch");
   } catch {
     return [];
+  }
+}
+
+// How many distinct champion-vs-champion matchups the database has seen, and
+// how many champions have appeared — the denominator (every unordered pair,
+// mirror matchups included) is derived from the second.
+export interface MatchupCoverage {
+  matchups: number;
+  champions: number;
+}
+
+export async function fetchMatchupCoverage(): Promise<MatchupCoverage | null> {
+  try {
+    const rows = await fetchAll<MatchupCoverage>("matchup_coverage");
+    return rows[0] ?? null;
+  } catch {
+    // The tile falls back to a dash rather than taking the page down with it
+    return null;
   }
 }

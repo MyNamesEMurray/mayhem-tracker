@@ -49,18 +49,34 @@ async function fetchJson(url, headers = {}) {
   return res.json();
 }
 
-// Every page is its own query, so `order` has to name a unique key of the
-// view — without one the pages are free to repeat and skip rows.
+// PostgREST caps a page at 1000 rows and the per-champion grains run to a few
+// hundred thousand, so pages go out in batches rather than one at a time. A
+// batch stops the walk as soon as one of its pages comes up short.
+//
+// Batched pages are separate queries, so the view has to hand rows back in a
+// fixed order or one page repeats another's rows and the difference is lost:
+// `order` names a unique key of the view, which the rollups are indexed on.
+const PAGE_BATCH = 8;
+
+function fetchPageRows(view, order, from) {
+  return fetchJson(`${SUPABASE_URL}/rest/v1/${view}?select=*&order=${order}`, {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    Range: `${from}-${from + 999}`,
+  });
+}
+
 async function fetchAllRows(view, order) {
   const out = [];
-  for (let from = 0; ; from += 1000) {
-    const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/${view}?select=*&order=${order}`, {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      Range: `${from}-${from + 999}`,
-    });
-    out.push(...rows);
-    if (rows.length < 1000) return out;
+  for (let from = 0; ; from += 1000 * PAGE_BATCH) {
+    const offsets = Array.from({ length: PAGE_BATCH }, (_, i) => from + i * 1000);
+    const pages = await Promise.all(offsets.map((offset) => fetchPageRows(view, order, offset)));
+    let done = false;
+    for (const rows of pages) {
+      out.push(...rows);
+      if (rows.length < 1000) done = true;
+    }
+    if (done) return out;
   }
 }
 
@@ -431,6 +447,21 @@ ${PAGE_STYLE}
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     });
+    // Matchup coverage is its own view; a missing one just drops the bullet
+    let coverage = null;
+    try {
+      const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/matchup_coverage?select=*`, {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      });
+      coverage = rows[0] ?? null;
+    } catch {
+      coverage = null;
+    }
+    const possibleMatchups = coverage ? (coverage.champions * (coverage.champions + 1)) / 2 : 0;
+    const matchupLine = coverage
+      ? `<li><strong>${Number(coverage.matchups).toLocaleString()}</strong> unique champion matchups seen — ${((coverage.matchups / possibleMatchups) * 100).toFixed(1)}% of the ${possibleMatchups.toLocaleString()} possible</li>`
+      : "";
     const hours = Math.round(totals.total_seconds / 3600).toLocaleString();
     const games = Number(totals.games).toLocaleString();
     const contributors = Number(totals.contributors).toLocaleString();
@@ -469,7 +500,7 @@ ${PAGE_STYLE}
         <li><strong>${contributors}</strong> contributors sharing their games</li>
         <li><strong>${games}</strong> games analyzed — ${(totals.games * 10).toLocaleString()} player performances</li>
         <li><strong>${hours} hours</strong> of ARAM Mayhem, end to end</li>
-        <li><strong>${totals.patches}</strong> patches covered across the mode's runs</li>
+        ${matchupLine}
       </ul>
       <p>Each contributed game adds all ten players' champions, augments, items, and combat lines to the pool — anonymously, with duplicates counted once. The more players opt in, the sharper the tier lists get, especially early in a patch. Champions under ${INDEX_MIN_GAMES} games are deliberately kept out of search results until their sample says something.</p>
       <p><em>Updated ${buildDate}.</em></p>

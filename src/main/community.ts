@@ -58,15 +58,29 @@ export interface CommunityItemRow {
   wins: number;
 }
 
+// Only the champion grain is cached wholesale — 3.5k rows. The augment and
+// item grains are per (patch, queue, champion, thing) and run to well over
+// half a million rows between them, so those are fetched for one champion at
+// a time, when a champion page asks.
 interface Cache {
   fetchedAt: number;
   champions: CommunityChampionRow[];
-  augments: CommunityAugmentRow[];
-  items: CommunityItemRow[];
 }
 
 let memory: Cache | null = null;
 let inFlight: Promise<Cache> | null = null;
+
+interface ChampionDetailCache {
+  fetchedAt: number;
+  augments: CommunityAugmentRow[];
+  items: CommunityItemRow[];
+}
+
+// Champion pages get revisited constantly while comparing builds; holding the
+// last handful in memory makes going back and forth free. Not persisted —
+// it's a session convenience, not the app's data.
+const detailCache = new Map<number, ChampionDetailCache>();
+const DETAIL_LIMIT = 24;
 
 const cacheFile = () => path.join(getDataDir(), "community-cache.json.gz");
 
@@ -96,14 +110,8 @@ function writeCache(cache: Cache): void {
 // ~29k — so paging them one after another was 30 sequential round trips
 // before the Champions tab could draw anything. The first request asks for
 // an exact count, and the rest of the pages then go out at once.
-async function fetchPage<T>(
-  view: string,
-  columns: string,
-  order: string,
-  from: number,
-  withCount: boolean,
-) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=${columns}&order=${order}`, {
+async function fetchPage<T>(view: string, query: string, from: number, withCount: boolean) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
     headers: {
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -118,18 +126,19 @@ async function fetchPage<T>(
   return { rows, total: Number.isFinite(total) ? total : null };
 }
 
-// The pages go out in parallel, so they only stitch back together if the view
-// hands out rows in a fixed order: `order` has to name a unique key of the
-// view, or pages can repeat and skip rows.
-async function fetchView<T>(view: string, columns: string, order: string): Promise<T[]> {
-  const first = await fetchPage<T>(view, columns, order, 0, true);
+// The pages after the first go out together, so they only stitch back into one
+// list if the view hands rows back in a fixed order: every query below names
+// an order over a unique key of the view, which the rollups are indexed on.
+// Without one a page can repeat another's rows and drop the difference.
+async function fetchView<T>(view: string, query: string): Promise<T[]> {
+  const first = await fetchPage<T>(view, query, 0, true);
   if (first.rows.length < PAGE) return first.rows;
 
   if (first.total == null) {
     // No count header: fall back to walking pages until one comes up short
     const out = [...first.rows];
     for (let from = PAGE; ; from += PAGE) {
-      const page = await fetchPage<T>(view, columns, order, from, false);
+      const page = await fetchPage<T>(view, query, from, false);
       out.push(...page.rows);
       if (page.rows.length < PAGE) return out;
     }
@@ -137,16 +146,18 @@ async function fetchView<T>(view: string, columns: string, order: string): Promi
 
   const offsets: number[] = [];
   for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
-  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, columns, order, from, false)));
+  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, query, from, false)));
   return [...first.rows, ...rest.flatMap((p) => p.rows)];
 }
 
-// Only the columns the app actually reads. augment_stats and item_stats carry
-// per-augment combat lines this never touches, and they dominate the payload.
-const CHAMPION_COLUMNS =
-  "patch,queue_id,champion_id,games,wins,kills,deaths,assists,damage,damage_taken,heal,gold,pentas";
-const AUGMENT_COLUMNS = "patch,queue_id,augment_id,champion_id,picks,wins";
-const ITEM_COLUMNS = "patch,queue_id,champion_id,item_id,picks,wins";
+// Only the columns the app actually reads. augment_stats carries per-augment
+// combat lines this never touches, and they dominate its payload.
+const CHAMPION_QUERY =
+  "select=patch,queue_id,champion_id,games,wins,kills,deaths,assists,damage,damage_taken,heal,gold,pentas" +
+  "&order=patch,queue_id,champion_id";
+const AUGMENT_QUERY =
+  "select=patch,queue_id,augment_id,champion_id,picks,wins&order=patch,queue_id,augment_id";
+const ITEM_QUERY = "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
 // stale data if the network is unavailable — an offline client should still
@@ -170,12 +181,9 @@ function refresh(cached: Cache | null = readCache()): Promise<Cache> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
-      const [champions, augments, items] = await Promise.all([
-        fetchView<CommunityChampionRow>("champion_stats", CHAMPION_COLUMNS, "patch,queue_id,champion_id"),
-        fetchView<CommunityAugmentRow>("augment_stats", AUGMENT_COLUMNS, "patch,queue_id,augment_id,champion_id"),
-        fetchView<CommunityItemRow>("item_stats", ITEM_COLUMNS, "patch,queue_id,champion_id,item_id"),
-      ]);
-      const cache: Cache = { fetchedAt: Date.now(), champions, augments, items };
+      const champions = await fetchView<CommunityChampionRow>("champion_stats", CHAMPION_QUERY);
+      const cache: Cache = { fetchedAt: Date.now(), champions };
+      detailCache.clear();
       writeCache(cache);
       return cache;
     } catch (err) {
@@ -272,6 +280,31 @@ export async function getCommunityChampionStats(
   return [...byChampion.values()].sort((a, b) => b.games - a.games);
 }
 
+// One champion's augment and item rows, fetched from the server filtered to
+// that champion. Both views are indexed on champion_id, so this is a couple of
+// thousand rows rather than the half-million the full grain would cost.
+async function loadChampionDetail(championId: number): Promise<ChampionDetailCache> {
+  const hit = detailCache.get(championId);
+  if (hit && Date.now() - hit.fetchedAt < TTL_MS) return hit;
+
+  const [augments, items] = await Promise.all([
+    fetchView<CommunityAugmentRow>(
+      "augment_stats",
+      `${AUGMENT_QUERY}&champion_id=eq.${championId}`,
+    ),
+    fetchView<CommunityItemRow>("item_stats", `${ITEM_QUERY}&champion_id=eq.${championId}`),
+  ]);
+
+  const entry: ChampionDetailCache = { fetchedAt: Date.now(), augments, items };
+  detailCache.set(championId, entry);
+  // Oldest insertion first, so deleting the first key evicts the least
+  // recently fetched champion
+  if (detailCache.size > DETAIL_LIMIT) {
+    detailCache.delete(detailCache.keys().next().value as number);
+  }
+  return entry;
+}
+
 export async function getCommunityChampionDetail(
   championId: number,
   patch?: string,
@@ -280,7 +313,7 @@ export async function getCommunityChampionDetail(
   augments: { augment_id: number; picks: number; wins: number }[];
   items: { item_id: number; picks: number; wins: number }[];
 }> {
-  const { augments, items } = await loadCommunity();
+  const { augments, items } = await loadChampionDetail(championId);
   const augTotals = new Map<number, { augment_id: number; picks: number; wins: number }>();
   for (const r of augments) {
     if (r.champion_id !== championId || !matches(r, patch, queue)) continue;
