@@ -127,7 +127,18 @@ body {
   }
   .ctbl tbody td { padding: 0 !important; }
   .ctbl td:nth-child(1) { grid-area: rank; }
-  .ctbl td:nth-child(2) { grid-area: champ; }
+  .ctbl td:nth-child(2) { grid-area: champ; min-width: 0; }
+  /* A grid item won't shrink below its content unless told to, and the name
+     is nowrap for the desktop table — so "Cassiopeia" ran straight under the
+     tier badge. Let the cell shrink and the name wrap instead of truncating:
+     no width is assumed, so a longer champion than any that exists today
+     still lands correctly, it just takes a second line. */
+  .ctbl td:nth-child(2) > * { min-width: 0; }
+  .ctbl td:nth-child(2) a {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
   .ctbl td:nth-child(3) { grid-area: tier; }
   .ctbl td:nth-child(4) { grid-area: score; }
   .ctbl td:nth-child(5) { grid-area: bar; }
@@ -157,7 +168,15 @@ body {
     padding: 10px 12px;
   }
   .atbl tbody td { padding: 0 !important; }
-  .atbl td:nth-child(1) { grid-area: aug; }
+  /* Same for augment names, which are longer than champion names and would
+     hit this sooner ("Tank It Or Leave It") */
+  .atbl td:nth-child(1) { grid-area: aug; min-width: 0; }
+  .atbl td:nth-child(1) > * { min-width: 0; }
+  .atbl td:nth-child(1) a,
+  .atbl td:nth-child(1) span {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
   .atbl td:nth-child(2) { grid-area: tier; }
   .atbl td:nth-child(3) { grid-area: score; }
   .atbl td:nth-child(4) { grid-area: bar; }
