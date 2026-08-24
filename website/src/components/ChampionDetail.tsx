@@ -361,13 +361,8 @@ export default function ChampionDetail({
                 Components
               </ToggleChip>
             )}
-            <div className="ml-auto">
-              <SearchBox
-                value={itemSearch}
-                onChange={setItemSearch}
-                placeholder="Search item..."
-                width={150}
-              />
+            <div className="flex-1 min-w-[96px] sm:flex-none sm:w-[180px] sm:ml-auto">
+              <SearchBox value={itemSearch} onChange={setItemSearch} placeholder="Search item..." />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
@@ -421,16 +416,9 @@ export default function ChampionDetail({
         <div className={`${PANEL} overflow-hidden`}>
           <div className="flex flex-wrap items-center gap-2 px-4 pt-4 pb-3">
             <h2 className={LABEL}>All augments</h2>
-            <div className="flex items-center gap-1.5 ml-2">
-              <RarityFilter value={augRarity} onChange={setAugRarity} compact />
-            </div>
-            <div className="ml-auto">
-              <SearchBox
-                value={augSearch}
-                onChange={setAugSearch}
-                placeholder="Search..."
-                width={110}
-              />
+            <RarityFilter value={augRarity} onChange={setAugRarity} compact />
+            <div className="flex-1 min-w-[96px] sm:flex-none sm:w-[150px] sm:ml-auto">
+              <SearchBox value={augSearch} onChange={setAugSearch} placeholder="Search..." />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
@@ -554,12 +542,10 @@ function SearchBox({
   value,
   onChange,
   placeholder,
-  width,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
-  width: number;
 }) {
   return (
     <input
@@ -567,8 +553,7 @@ function SearchBox({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="input"
-      style={{ width }}
+      className="input w-full"
     />
   );
 }
