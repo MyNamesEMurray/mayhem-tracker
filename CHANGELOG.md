@@ -18,6 +18,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.10 — 2026-08-24
+
+- <!--fixes:v2.12.9--> **The Augments tab was counting slots, not games.** Its header read "449,551 games" on a patch the Champions tab called 46,408 — it was dividing total augment picks by four, which counts player slots rather than games, and undercounted even those because a player who took three augments contributes three picks. Both tabs now read the same number from the same place. Augment pick rates shift by a tenth or two as a result, and now match the website exactly.
+
 ## v2.12.9 — 2026-08-24
 
 - **The title bar matches the website's logo.** MAYHEM in beige, STATS in gold — the split the site uses — and TRACKER in gold and heavier, which is what marks this as the app rather than the site.

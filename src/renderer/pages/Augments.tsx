@@ -7,7 +7,7 @@ import {
   useAugmentData,
   getAugmentName,
 } from "../hooks/useChampions";
-import type { AugmentStatsDetailed } from "../lib/types";
+import type { AugmentStatsDetailed, ChampionStats } from "../lib/types";
 import AugmentIcon from "../components/AugmentIcon";
 import ChampionIcon from "../components/ChampionIcon";
 import WinRateBar from "../components/WinRateBar";
@@ -41,6 +41,20 @@ export default function Augments() {
         : window.api.getAugmentStatsDetailed(patch, queue),
     [patch, queue, source],
   );
+  // The denominator for both the header count and pick rate. Deriving it from
+  // augment picks (÷4, one per augment slot) looked right and wasn't: it
+  // counts participant slots rather than games, and undercounts even those,
+  // because a player who took three augments contributes three picks. Reading
+  // the champion rows — exactly what the Champions tab sums — makes the two
+  // tabs agree by construction instead of by coincidence.
+  const { data: championRows } = useIpc<ChampionStats[]>(
+    () =>
+      source === "community"
+        ? window.api.getCommunityChampionStats(patch, queue)
+        : window.api.getChampionStats(patch, queue),
+    [patch, queue, source],
+  );
+
   const [search, setSearch] = useState("");
   const { sort, toggle } = useSort<SortKey>("score");
   const { key: sortKey, dir: sortDir } = sort;
@@ -83,11 +97,12 @@ export default function Augments() {
   const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
   const patchLabel = patch ? `Patch ${patch}` : "All patches";
 
-  const totalGames = useMemo(() => {
-    if (!data || data.length === 0) return 0;
-    const totalPicks = data.reduce((sum, a) => sum + a.picks, 0);
-    return Math.round(totalPicks / 4);
-  }, [data]);
+  // Ten champion slots per game
+  const totalSlots = useMemo(
+    () => (championRows ?? []).reduce((sum, c) => sum + c.games, 0),
+    [championRows],
+  );
+  const totalGames = Math.round(totalSlots / 10);
 
   // Per-augment champion rows for the community source, keyed by augment
   const [communityChampions, setCommunityChampions] = useState<
@@ -256,7 +271,7 @@ export default function Augments() {
           <tbody>
             {sorted.map((a) => {
               const isExpanded = expanded.has(a.augment_id);
-              const pickRate = totalGames > 0 ? ((a.picks / totalGames) * 100).toFixed(1) : "0.0";
+              const pickRate = totalSlots > 0 ? ((a.picks / totalSlots) * 100).toFixed(1) : "0.0";
               return (
                 <>
                   <tr
