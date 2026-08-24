@@ -19,7 +19,12 @@ import {
 } from "../lib/champStats";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import { formatAvg, formatPatch, kdaColor } from "../lib/format";
-import { useStatsSource, type StatsSource } from "../components/SourceSwitch";
+import {
+  resolveSource,
+  useSharingEnabled,
+  useStatsSource,
+  type StatsSource,
+} from "../components/SourceSwitch";
 import ChampionIcon from "../components/ChampionIcon";
 import AugmentIcon from "../components/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
@@ -145,9 +150,13 @@ export default function ChampionDetail() {
   // page follows the app-wide switch rather than snapping back to your own
   // games.
   const [appSource] = useStatsSource();
+  const sharing = useSharingEnabled();
   const sourceParam = searchParams.get("source");
-  const source: StatsSource =
+  const requested: StatsSource =
     sourceParam === "community" ? "community" : sourceParam === "mine" ? "mine" : appSource;
+  // The same give-to-get gate the switch enforces: a link asking for the
+  // community pool doesn't get it while sharing is off
+  const source: StatsSource = resolveSource(requested, sharing);
   const { patch, setPatch, queue, setQueue } = useUrlStatsFilters();
   const communityPatches = useCommunityPatches(source);
 

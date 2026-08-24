@@ -23,6 +23,7 @@ on Riot's end is news to everyone, so leave those unmarked.
 - **The Augments tab can show the community's games.** The source switch that Champions has now sits on Augments too, so you can flip between your own augment picks and everyone's without leaving the tab. Expanding an augment loads which champions carry it across the whole pool. The tab now mirrors the website: one ranked list, no separate views.
 - **The source switch is app-wide.** Turn on Community on Champions and the Augments tab is already showing community numbers when you get there, and the other way round. It sticks between launches, and a champion page opened without an explicit link follows it too.
 - **"My games" is now "My performance"**, which is what it actually means — how these have gone for *you*, not a different set of games.
+- **Community stats stay give-to-get.** The Community switch on Champions and Augments is only usable while you're sharing your games. Off, it sits there greyed out and tells you where to turn it on — or where to read the same numbers on the website without doing so. Turning it on in Settings unlocks it straight away, no restart.
 - **Removed: My Lobbies, and the augment pick-slot and best-pairs views.** My Lobbies showed everyone in your own games, which was worth having before there was a community pool and is thin next to 137,000 games now. The two augment views went the same way — the app's Augments tab is the website's, plus the community switch. If you miss any of them, say so and they can come back.
 
 ## v2.12.6 — 2026-08-24

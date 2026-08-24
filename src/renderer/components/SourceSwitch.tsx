@@ -50,6 +50,64 @@ export function useStatsSource(): [StatsSource, (s: StatsSource) => void] {
   return [source, setSource];
 }
 
+// Give-to-get: the community pool is readable in the app while you are
+// contributing to it. Off, the switch stays visible but inert and says where
+// to turn it on — and where to read the same numbers without doing so.
+const SHARING_KEY = "sharing-enabled";
+
+// Asking the main process is a round trip, and until it answers the switch
+// would be unlocked — long enough to fire one community fetch for someone who
+// isn't contributing. Remembering the last answer makes the first render right
+// in every case except the very first launch, and the real value still
+// overwrites it a moment later.
+function lastKnownSharing(): boolean | null {
+  try {
+    const v = localStorage.getItem(SHARING_KEY);
+    return v === null ? null : v === "true";
+  } catch {
+    return null;
+  }
+}
+
+// The gate rule in one place: the community pool is only served while sharing
+// is known to be on. Unknown (first launch, before the main process answers)
+// reads as allowed, so a contributor doesn't get bounced to their own games
+// for a frame; the cached value above makes that window rare.
+export function resolveSource(requested: StatsSource, sharing: boolean | null): StatsSource {
+  return sharing === false ? "mine" : requested;
+}
+
+export function useSharingEnabled(): boolean | null {
+  const [enabled, setEnabled] = useState<boolean | null>(lastKnownSharing);
+
+  useEffect(() => {
+    let alive = true;
+    const read = () => {
+      window.api
+        .getUploadStatus()
+        .then((s) => {
+          if (!alive) return;
+          setEnabled(s.enabled);
+          try {
+            localStorage.setItem(SHARING_KEY, String(s.enabled));
+          } catch {
+            // Not being able to remember it costs one render next launch
+          }
+        })
+        .catch(() => alive && setEnabled(false));
+    };
+    read();
+    // Flipping the toggle in Settings takes effect here without a restart
+    const unsub = window.api.onUploadChanged(read);
+    return () => {
+      alive = false;
+      unsub();
+    };
+  }, []);
+
+  return enabled;
+}
+
 function freshness(fetchedAt: number): string {
   const mins = Math.round((Date.now() - fetchedAt) / 60000);
   if (mins < 2) return "just now";
@@ -68,6 +126,16 @@ export default function SourceSwitch({
 }) {
   const [meta, setMeta] = useState<CommunityMeta | null>(null);
   const [busy, setBusy] = useState(false);
+  const sharing = useSharingEnabled();
+  const locked = sharing === false;
+
+  // Sharing can be turned off while the community source is selected — from
+  // Settings, or on a machine where it was never on and the choice came from
+  // a previous install's stored preference
+  useEffect(() => {
+    const allowed = resolveSource(source, sharing);
+    if (allowed !== source) onChange(allowed);
+  }, [sharing, source, onChange]);
 
   useEffect(() => {
     if (source !== "community") return;
@@ -90,15 +158,20 @@ export default function SourceSwitch({
       .finally(() => setBusy(false));
   };
 
-  const option = (value: StatsSource, label: string, title: string) => (
+  const option = (value: StatsSource, label: string, title: string, disabled = false) => (
     <button
       key={value}
-      onClick={() => onChange(value)}
+      onClick={() => !disabled && onChange(value)}
+      disabled={disabled}
       title={title}
-      className={`px-2.5 py-1 text-[12px] font-semibold rounded-md transition-colors cursor-pointer ${
-        source === value
-          ? "bg-lol-gold/20 text-lol-gold-light"
-          : "text-lol-text hover:text-lol-gold-light"
+      className={`px-2.5 py-1 text-[12px] font-semibold rounded-md transition-colors ${
+        disabled
+          ? "text-lol-text/40 cursor-default"
+          : `cursor-pointer ${
+              source === value
+                ? "bg-lol-gold/20 text-lol-gold-light"
+                : "text-lol-text hover:text-lol-gold-light"
+            }`
       }`}
     >
       {label}
@@ -112,9 +185,23 @@ export default function SourceSwitch({
         {option(
           "community",
           "Community",
-          "Every contributed game in the shared database — the same numbers as mayhemstats.com",
+          locked
+            ? "Enable data sharing in Settings, or view on MayhemStats.com"
+            : "Every contributed game in the shared database — the same numbers as mayhemstats.com",
+          locked,
         )}
       </div>
+      {locked && (
+        <span className="text-[11px] text-lol-text">
+          Community stats unlock while you're contributing —{" "}
+          <button
+            onClick={() => window.api.openUrl("https://mayhemstats.com/")}
+            className="text-lol-gold hover:text-lol-gold-light cursor-pointer"
+          >
+            or read them on MayhemStats.com
+          </button>
+        </span>
+      )}
       {source === "community" && (
         <span className="text-[11px] text-lol-text">
           {meta
