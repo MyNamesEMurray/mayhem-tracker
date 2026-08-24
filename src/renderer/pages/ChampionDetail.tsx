@@ -565,15 +565,22 @@ function StatTable({
   return (
     <div className={`${PANEL} p-5`}>
       <div className="flex items-center gap-2 flex-wrap mb-3">
-        <h2 className={LABEL}>{title}</h2>
-        <div className="ml-auto flex items-center gap-2 flex-wrap">
-          {filter}
+        <h2 className={`${LABEL} mr-auto`}>{title}</h2>
+        {filter}
+        {/* The search takes the row's leftover rather than a fixed width it
+            cannot give back. A fixed width wraps the moment the panel is
+            narrower than it wants and lands on a row of its own; growing
+            keeps it up here while 96px remain, and fills the row when it does
+            drop. The slack goes to the title's margin, not the search's, so
+            the search sits flush right when the cap bites on a wide panel
+            instead of leaving a hole beside it on a wrapped one. */}
+        <div className="flex-1 min-w-[96px] max-w-[280px]">
           <input
             type="text"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={placeholder}
-            className="input w-40"
+            className="input w-full"
           />
         </div>
       </div>
