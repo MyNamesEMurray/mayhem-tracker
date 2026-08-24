@@ -56,12 +56,15 @@ export interface ItemPurchaseRow {
 }
 
 // PostgREST caps responses at 1000 rows, so page with Range headers until a
-// short page arrives.
-async function fetchAll<T>(view: string): Promise<T[]> {
+// short page arrives. Each page is a separate query, so paging is only
+// coherent when the rows come back in a fixed order: `order` has to name a
+// unique key of the view, or pages can repeat and skip rows.
+async function fetchAll<T>(view: string, order?: string): Promise<T[]> {
   const PAGE = 1000;
   const out: T[] = [];
+  const query = order ? `select=*&order=${order}` : "select=*";
   for (let from = 0; ; from += PAGE) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=*`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -78,19 +81,19 @@ async function fetchAll<T>(view: string): Promise<T[]> {
 }
 
 export function fetchChampionStats(): Promise<ChampionStatRow[]> {
-  return fetchAll<ChampionStatRow>("champion_stats");
+  return fetchAll<ChampionStatRow>("champion_stats", "patch,queue_id,champion_id");
 }
 
 export function fetchAugmentStats(): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>("augment_stats");
+  return fetchAll<AugmentStatRow>("augment_stats", "patch,queue_id,augment_id,champion_id");
 }
 
 export function fetchItemStats(): Promise<ItemStatRow[]> {
-  return fetchAll<ItemStatRow>("item_stats");
+  return fetchAll<ItemStatRow>("item_stats", "patch,queue_id,champion_id,item_id");
 }
 
 export function fetchItemPurchaseStats(): Promise<ItemPurchaseRow[]> {
-  return fetchAll<ItemPurchaseRow>("item_purchase_stats");
+  return fetchAll<ItemPurchaseRow>("item_purchase_stats", "patch,queue_id,champion_id,item_id");
 }
 
 export interface CommunityTotals {
@@ -132,7 +135,7 @@ export async function fetchCommunityTotals(): Promise<CommunityTotals> {
 }
 
 export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
-  return fetchAll<GamesPerDayRow>("community_games_per_day");
+  return fetchAll<GamesPerDayRow>("community_games_per_day", "day");
 }
 
 // Patch markers decorate the games chart; the chart is fine without them, so
@@ -140,7 +143,7 @@ export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
 // the whole page down with an error.
 export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
   try {
-    return await fetchAll<PatchSpanRow>("community_patch_spans");
+    return await fetchAll<PatchSpanRow>("community_patch_spans", "patch");
   } catch {
     return [];
   }

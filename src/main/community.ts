@@ -96,8 +96,14 @@ function writeCache(cache: Cache): void {
 // ~29k — so paging them one after another was 30 sequential round trips
 // before the Champions tab could draw anything. The first request asks for
 // an exact count, and the rest of the pages then go out at once.
-async function fetchPage<T>(view: string, columns: string, from: number, withCount: boolean) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=${columns}`, {
+async function fetchPage<T>(
+  view: string,
+  columns: string,
+  order: string,
+  from: number,
+  withCount: boolean,
+) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=${columns}&order=${order}`, {
     headers: {
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -112,15 +118,18 @@ async function fetchPage<T>(view: string, columns: string, from: number, withCou
   return { rows, total: Number.isFinite(total) ? total : null };
 }
 
-async function fetchView<T>(view: string, columns: string): Promise<T[]> {
-  const first = await fetchPage<T>(view, columns, 0, true);
+// The pages go out in parallel, so they only stitch back together if the view
+// hands out rows in a fixed order: `order` has to name a unique key of the
+// view, or pages can repeat and skip rows.
+async function fetchView<T>(view: string, columns: string, order: string): Promise<T[]> {
+  const first = await fetchPage<T>(view, columns, order, 0, true);
   if (first.rows.length < PAGE) return first.rows;
 
   if (first.total == null) {
     // No count header: fall back to walking pages until one comes up short
     const out = [...first.rows];
     for (let from = PAGE; ; from += PAGE) {
-      const page = await fetchPage<T>(view, columns, from, false);
+      const page = await fetchPage<T>(view, columns, order, from, false);
       out.push(...page.rows);
       if (page.rows.length < PAGE) return out;
     }
@@ -128,7 +137,7 @@ async function fetchView<T>(view: string, columns: string): Promise<T[]> {
 
   const offsets: number[] = [];
   for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
-  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, columns, from, false)));
+  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, columns, order, from, false)));
   return [...first.rows, ...rest.flatMap((p) => p.rows)];
 }
 
@@ -162,9 +171,9 @@ function refresh(cached: Cache | null = readCache()): Promise<Cache> {
   inFlight = (async () => {
     try {
       const [champions, augments, items] = await Promise.all([
-        fetchView<CommunityChampionRow>("champion_stats", CHAMPION_COLUMNS),
-        fetchView<CommunityAugmentRow>("augment_stats", AUGMENT_COLUMNS),
-        fetchView<CommunityItemRow>("item_stats", ITEM_COLUMNS),
+        fetchView<CommunityChampionRow>("champion_stats", CHAMPION_COLUMNS, "patch,queue_id,champion_id"),
+        fetchView<CommunityAugmentRow>("augment_stats", AUGMENT_COLUMNS, "patch,queue_id,augment_id,champion_id"),
+        fetchView<CommunityItemRow>("item_stats", ITEM_COLUMNS, "patch,queue_id,champion_id,item_id"),
       ]);
       const cache: Cache = { fetchedAt: Date.now(), champions, augments, items };
       writeCache(cache);

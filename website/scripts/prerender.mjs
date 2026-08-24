@@ -49,10 +49,12 @@ async function fetchJson(url, headers = {}) {
   return res.json();
 }
 
-async function fetchAllRows(view) {
+// Every page is its own query, so `order` has to name a unique key of the
+// view — without one the pages are free to repeat and skip rows.
+async function fetchAllRows(view, order) {
   const out = [];
   for (let from = 0; ; from += 1000) {
-    const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/${view}?select=*`, {
+    const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/${view}?select=*&order=${order}`, {
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       Range: `${from}-${from + 999}`,
@@ -143,9 +145,9 @@ const PAGE_STYLE = `      #prerender { max-width: 780px; margin: 0 auto; padding
 
 async function main() {
   const [championRows, augmentRows, itemRows, versions] = await Promise.all([
-    fetchAllRows("champion_stats"),
-    fetchAllRows("augment_stats"),
-    fetchAllRows("item_stats"),
+    fetchAllRows("champion_stats", "patch,queue_id,champion_id"),
+    fetchAllRows("augment_stats", "patch,queue_id,augment_id,champion_id"),
+    fetchAllRows("item_stats", "patch,queue_id,champion_id,item_id"),
     fetchJson("https://ddragon.leagueoflegends.com/api/versions.json"),
   ]);
   const [ddragon, cherry, itemsJson] = await Promise.all([
