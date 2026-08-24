@@ -9,7 +9,6 @@ import ChampionIcon from "../components/ChampionIcon";
 import AugmentIcon from "../components/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../components/WinRateBar";
-import MultikillBadge from "../components/MultikillBadge";
 import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
@@ -40,7 +39,6 @@ type SortKey =
   | "kda"
   | "avg_damage"
   | "avg_gold"
-  | "multikills"
   | "tier"
   | "pickRate";
 
@@ -51,7 +49,7 @@ export default function Champions() {
   const { patch, setPatch, queue, setQueue } = useStatsFilters();
   const [source, setSource] = useStatsSource();
   const communityPatches = useCommunityPatches(source);
-  const { data, refetch } = useIpc<ChampionStats[]>(
+  const { data, error, refetch } = useIpc<ChampionStats[]>(
     () =>
       source === "community"
         ? window.api.getCommunityChampionStats(patch, queue)
@@ -121,9 +119,6 @@ export default function Champions() {
         // Games over a fixed slot total, so this is the games order
         av = a.games;
         bv = b.games;
-      } else if (sortKey === "multikills") {
-        av = a.double_kills + a.triple_kills + a.quadra_kills + a.penta_kills;
-        bv = b.double_kills + b.triple_kills + b.quadra_kills + b.penta_kills;
       } else if (sortKey === "wins") {
         av = a.games > 0 ? a.wins / a.games : 0;
         bv = b.games > 0 ? b.wins / b.games : 0;
@@ -147,11 +142,34 @@ export default function Champions() {
     return filtered;
   }, [data, search, sortKey, sortDir, champData, tiers]);
 
+  // A rejected fetch used to leave "Loading..." on screen forever, which is
+  // indistinguishable from a slow one. Say what happened and offer a retry.
+  if (error) {
+    return (
+      <div className="text-center mt-20 space-y-3">
+        <p className="text-lol-loss text-sm">Couldn't load champion stats: {error}</p>
+        <button
+          onClick={() => refetch()}
+          className="px-3 py-1 text-xs font-medium rounded-lg border border-lol-border bg-lol-card text-lol-text hover:border-lol-gold/40 hover:text-lol-gold cursor-pointer"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (!data) {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;
   }
 
-  const sortProps = { sort, onSort: toggle };
+  // This table carries twelve columns where the others carry five, so its
+  // headers take the same wider gutter its cells now use rather than the
+  // shared default — otherwise the header and the value under it don't line up
+  const sortProps = {
+    sort,
+    onSort: toggle,
+    thClass: "px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] select-none",
+  };
 
   return (
     <div className="w-full space-y-4">
@@ -197,7 +215,7 @@ export default function Champions() {
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
+              <th className="px-4 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
                 #
               </th>
               <SortHeader label="Champion" field="name" naturalDir="asc" {...sortProps} />
@@ -212,7 +230,6 @@ export default function Champions() {
               <SortHeader label="KDA" field="kda" {...sortProps} />
               <SortHeader label="Damage" field="avg_damage" {...sortProps} />
               <SortHeader label="Gold" field="avg_gold" {...sortProps} />
-              <SortHeader label="Multikills" field="multikills" {...sortProps} />
             </tr>
           </thead>
           <tbody>
@@ -222,8 +239,8 @@ export default function Champions() {
                 onClick={() => openChampion(c.champion_id)}
                 className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
               >
-                <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
-                <td className="px-3 py-1.5">
+                <td className="px-4 py-1.5 text-xs text-lol-text">{i + 1}</td>
+                <td className="px-4 py-1.5">
                   <div className="flex items-center gap-2">
                     <ChampionIcon championId={c.champion_id} size={wide ? 36 : 28} />
                     <span className="text-sm text-lol-text-bright">
@@ -231,48 +248,32 @@ export default function Champions() {
                     </span>
                   </div>
                 </td>
-                <td className="px-3 py-1.5">
+                <td className="px-4 py-1.5">
                   {tiers.get(c.champion_id) && (
                     <TierBadge tier={tiers.get(c.champion_id)!} games={c.games} />
                   )}
                 </td>
-                <td className="px-3 py-1.5 text-sm font-semibold text-lol-text-bright">
+                <td className="px-4 py-1.5 text-sm font-semibold text-lol-text-bright">
                   {score(c.wins, c.games).toFixed(1)}
                 </td>
-                <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                <td className="px-4 py-1.5 w-32 min-[1500px]:w-72">
                   <WinRateBar wins={c.wins} total={c.games} />
                 </td>
-                <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
-                <td className="px-3 py-1.5 text-sm text-lol-text">
+                <td className="px-4 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                <td className="px-4 py-1.5 text-sm text-lol-text">
                   {totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}%
                 </td>
-                <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
-                <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
-                <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_assists)}</td>
+                <td className="px-4 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
+                <td className="px-4 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
+                <td className="px-4 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_assists)}</td>
                 <td
-                  className={`px-3 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
+                  className={`px-4 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
                 >
                   {kdaRatio(c.kills, c.deaths, c.assists)}
                 </td>
-                <td className="px-3 py-1.5 text-sm text-lol-text">{formatWhole(c.avg_damage)}</td>
-                <td className="px-3 py-1.5 text-sm text-lol-text-bright">
+                <td className="px-4 py-1.5 text-sm text-lol-text">{formatWhole(c.avg_damage)}</td>
+                <td className="px-4 py-1.5 text-sm text-lol-text-bright">
                   {formatWhole(c.avg_gold)}
-                </td>
-                <td className="px-3 py-1.5">
-                  <div className="grid grid-cols-4 gap-1 text-[10px]">
-                    <span className={c.double_kills > 0 ? "text-sky-400" : "text-transparent"}>
-                      D{c.double_kills}
-                    </span>
-                    <span className={c.triple_kills > 0 ? "text-amber-400" : "text-transparent"}>
-                      T{c.triple_kills}
-                    </span>
-                    <span className={c.quadra_kills > 0 ? "text-purple-400" : "text-transparent"}>
-                      Q{c.quadra_kills}
-                    </span>
-                    <span className={c.penta_kills > 0 ? "text-red-400" : "text-transparent"}>
-                      P{c.penta_kills}
-                    </span>
-                  </div>
                 </td>
               </tr>
             ))}

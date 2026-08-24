@@ -73,7 +73,15 @@ export interface CommunityItemRow {
 // item grains are per (patch, queue, champion, thing) and run to well over
 // half a million rows between them, so those are fetched for one champion at
 // a time, when a champion page asks.
+// Bump when the cached shape changes. Without this, a cache written by an
+// older build is read back as the current shape and whatever it lacks reads
+// as undefined — v2.12.7 added augmentTotals, and a v2.12.6 cache that was
+// still inside its six hours left the augment list waiting forever on a
+// promise that had already rejected.
+const CACHE_VERSION = 2;
+
 interface Cache {
+  version?: number;
   fetchedAt: number;
   champions: CommunityChampionRow[];
   augmentTotals: CommunityAugmentTotalRow[];
@@ -100,7 +108,10 @@ function readCache(): Cache | null {
   if (memory) return memory;
   try {
     const raw = gunzipSync(fs.readFileSync(cacheFile())).toString("utf8");
-    memory = JSON.parse(raw) as Cache;
+    const parsed = JSON.parse(raw) as Cache;
+    // An older shape is not stale data, it is the wrong data — refetch
+    if (parsed.version !== CACHE_VERSION) return null;
+    memory = parsed;
     return memory;
   } catch {
     // No cache yet, or an unreadable one — refetch rather than fail
@@ -200,7 +211,12 @@ function refresh(cached: Cache | null = readCache()): Promise<Cache> {
         fetchView<CommunityChampionRow>("champion_stats", CHAMPION_QUERY),
         fetchView<CommunityAugmentTotalRow>("augment_totals", AUGMENT_TOTALS_QUERY),
       ]);
-      const cache: Cache = { fetchedAt: Date.now(), champions, augmentTotals };
+      const cache: Cache = {
+        version: CACHE_VERSION,
+        fetchedAt: Date.now(),
+        champions,
+        augmentTotals,
+      };
       detailCache.clear();
       augmentChampionCache.clear();
       writeCache(cache);
@@ -362,7 +378,7 @@ export async function getCommunityAugmentStats(
 ): Promise<{ augment_id: number; picks: number; wins: number }[]> {
   const { augmentTotals } = await loadCommunity();
   const byAugment = new Map<number, { augment_id: number; picks: number; wins: number }>();
-  for (const r of augmentTotals) {
+  for (const r of augmentTotals ?? []) {
     if (!matches(r, patch, queue)) continue;
     const e = byAugment.get(r.augment_id) ?? { augment_id: r.augment_id, picks: 0, wins: 0 };
     e.picks += r.picks;
@@ -415,7 +431,7 @@ export async function getCommunityMeta(): Promise<{
   games: number;
 }> {
   const { champions, fetchedAt } = await loadCommunity();
-  const patches = [...new Set(champions.map((r) => r.patch))].sort((a, b) => {
+  const patches = [...new Set((champions ?? []).map((r) => r.patch))].sort((a, b) => {
     const [am, an] = a.split(".").map(Number);
     const [bm, bn] = b.split(".").map(Number);
     return bm - am || bn - an;

@@ -28,7 +28,7 @@ export default function Augments() {
   const communityPatches = useCommunityPatches(source);
   // The community pool has no per-augment champion breakdown up front — that
   // grain is 341k rows — so those rows arrive per augment, on expand.
-  const { data, refetch } = useIpc<AugmentStatsDetailed[]>(
+  const { data, error, refetch } = useIpc<AugmentStatsDetailed[]>(
     () =>
       source === "community"
         ? window.api
@@ -112,6 +112,22 @@ export default function Augments() {
 
     return filtered;
   }, [data, search, sortKey, sortDir, augmentData, rarityFilter]);
+
+  // A rejected fetch used to leave "Loading..." on screen forever, which is
+  // indistinguishable from a slow one. Say what happened and offer a retry.
+  if (error) {
+    return (
+      <div className="text-center mt-20 space-y-3">
+        <p className="text-lol-loss text-sm">Couldn't load augment stats: {error}</p>
+        <button
+          onClick={() => refetch()}
+          className="px-3 py-1 text-xs font-medium rounded-lg border border-lol-border bg-lol-card text-lol-text hover:border-lol-gold/40 hover:text-lol-gold cursor-pointer"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (!data) {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;

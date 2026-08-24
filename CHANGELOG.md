@@ -18,6 +18,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.8 — 2026-08-24
+
+- <!--fixes:v2.12.7--> **Fixed the Augments tab sitting on "Loading..." forever.** Upgrading to v2.12.7 left a community cache from the previous version on disk, written before the augment rollup existed. Anything inside its six-hour window was read back as if it had one, and the augment list waited on a request that had already failed. The cache now records which version wrote it and is refetched when that doesn't match, so this can't recur the next time the shape changes. A failed load also says what went wrong and offers a retry, instead of showing "Loading..." indefinitely.
+- **Dropped the Multikills column from Champions.** Across 137,000 games a per-champion multikill total says more about how often a champion is picked than how it plays, and it was clipping the edge of the window. The remaining columns get the space back.
+
 ## v2.12.7 — 2026-08-24
 
 - **The Augments tab can show the community's games.** The source switch that Champions has now sits on Augments too, so you can flip between your own augment picks and everyone's without leaving the tab. Expanding an augment loads which champions carry it across the whole pool. The tab now mirrors the website: one ranked list, no separate views.
