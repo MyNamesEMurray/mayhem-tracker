@@ -1,6 +1,11 @@
 -- Large raw match tables should never be re-aggregated on every public page load.
 -- The production database now exposes precomputed, indexed aggregate surfaces.
 
+DROP MATERIALIZED VIEW IF EXISTS public.champion_stats_mv;
+DROP MATERIALIZED VIEW IF EXISTS public.augment_stats_mv;
+DROP MATERIALIZED VIEW IF EXISTS public.item_stats_mv;
+DROP MATERIALIZED VIEW IF EXISTS public.item_purchase_stats_mv;
+
 create materialized view public.champion_stats_mv as
 select m.game_version as patch, m.queue_id, p.champion_id,
        count(*) as games,
