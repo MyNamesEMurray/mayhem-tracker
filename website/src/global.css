@@ -212,10 +212,14 @@ body {
   }
   .atbl tbody tr {
     display: grid !important;
-    grid-template-columns: 1fr auto auto;
+    /* Four columns, like .ctbl: the named areas span them, and the four stat
+       cells below then flow four-up. At three columns the stat cells wrapped
+       after KDA and left Damage alone on a row of its own, which is what made
+       every augment card a screen-and-a-half tall. */
+    grid-template-columns: auto 1fr auto auto;
     grid-template-areas:
-      "aug  aug score"
-      "tier bar bar";
+      "aug  aug aug score"
+      "tier bar bar bar";
     align-items: center;
     gap: 6px 10px;
     padding: 10px 12px;
