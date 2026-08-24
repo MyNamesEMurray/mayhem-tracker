@@ -12,7 +12,6 @@ import WinRateBar from "../components/WinRateBar";
 import MultikillBadge from "../components/MultikillBadge";
 import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
-import CommunityGate from "../components/CommunityGate";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import TierBadge from "../components/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../lib/champStats";

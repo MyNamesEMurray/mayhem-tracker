@@ -18,6 +18,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.7 — 2026-08-24
+
+- **The Augments tab can show the community's games.** The source switch that Champions has now sits on Augments too, so you can flip between your own augment picks and everyone's without leaving the tab. Expanding an augment loads which champions carry it across the whole pool. Best pairs and the pick-slot breakdown stay on your own games — those need to know which pick a slot was taken at, and which two an augment were taken together, and the community aggregates don't record either.
+- **"My Lobbies" says what it is.** The tab was renamed from "Global" a while back but the page heading still read "Global Stats", which made it sound like the community pool. It's your lobbies: every champion and augment played by anyone in your games, all ten players rather than just your picks. The page now says so.
+
 ## v2.12.6 — 2026-08-24
 
 - **Every column sorts.** Click any header on Champions, Augments, Friends or a champion's item and augment tables and the table sorts by it — click again to reverse. Champion and augment names sort A→Z, numbers sort biggest-first, and the columns that never responded to a click before — Tier, Pick Rate, Player, Champion, the per-slot augment win rates, the augment pairs — now do. Headers are keyboard-reachable and announce their sort state to a screen reader.

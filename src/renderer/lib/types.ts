@@ -419,6 +419,12 @@ export interface ElectronAPI {
     patch?: string,
     queue?: number,
   ) => Promise<{ augments: AugmentStats[]; items: ItemStats[] }>;
+  getCommunityAugmentStats: (patch?: string, queue?: number) => Promise<AugmentStats[]>;
+  getCommunityAugmentChampions: (
+    augmentId: number,
+    patch?: string,
+    queue?: number,
+  ) => Promise<{ champion_id: number; picks: number; wins: number }[]>;
   getCommunityMeta: () => Promise<CommunityMeta>;
   refreshCommunity: () => Promise<CommunityMeta>;
   getSummonerPuuid: () => Promise<string | null>;

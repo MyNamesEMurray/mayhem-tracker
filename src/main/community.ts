@@ -49,6 +49,17 @@ export interface CommunityAugmentRow {
   wins: number;
 }
 
+// One row per augment per patch, rolled up across champions — the grain the
+// augment list reads. The per-champion grain behind it is 341k rows and is
+// fetched for one augment at a time, when a row is expanded.
+export interface CommunityAugmentTotalRow {
+  patch: string;
+  queue_id: number;
+  augment_id: number;
+  picks: number;
+  wins: number;
+}
+
 export interface CommunityItemRow {
   patch: string;
   queue_id: number;
@@ -65,6 +76,7 @@ export interface CommunityItemRow {
 interface Cache {
   fetchedAt: number;
   champions: CommunityChampionRow[];
+  augmentTotals: CommunityAugmentTotalRow[];
 }
 
 let memory: Cache | null = null;
@@ -157,6 +169,8 @@ const CHAMPION_QUERY =
   "&order=patch,queue_id,champion_id";
 const AUGMENT_QUERY =
   "select=patch,queue_id,augment_id,champion_id,picks,wins&order=patch,queue_id,augment_id";
+const AUGMENT_TOTALS_QUERY =
+  "select=patch,queue_id,augment_id,picks,wins&order=patch,queue_id,augment_id";
 const ITEM_QUERY =
   "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 
@@ -182,9 +196,13 @@ function refresh(cached: Cache | null = readCache()): Promise<Cache> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
-      const champions = await fetchView<CommunityChampionRow>("champion_stats", CHAMPION_QUERY);
-      const cache: Cache = { fetchedAt: Date.now(), champions };
+      const [champions, augmentTotals] = await Promise.all([
+        fetchView<CommunityChampionRow>("champion_stats", CHAMPION_QUERY),
+        fetchView<CommunityAugmentTotalRow>("augment_totals", AUGMENT_TOTALS_QUERY),
+      ]);
+      const cache: Cache = { fetchedAt: Date.now(), champions, augmentTotals };
       detailCache.clear();
+      augmentChampionCache.clear();
       writeCache(cache);
       return cache;
     } catch (err) {
@@ -335,6 +353,56 @@ export async function getCommunityChampionDetail(
     augments: [...augTotals.values()].sort((a, b) => b.picks - a.picks),
     items: [...itemTotals.values()].sort((a, b) => b.picks - a.picks),
   };
+}
+
+// The augment list, in the shape the app's local getAugmentStats returns.
+export async function getCommunityAugmentStats(
+  patch?: string,
+  queue?: number,
+): Promise<{ augment_id: number; picks: number; wins: number }[]> {
+  const { augmentTotals } = await loadCommunity();
+  const byAugment = new Map<number, { augment_id: number; picks: number; wins: number }>();
+  for (const r of augmentTotals) {
+    if (!matches(r, patch, queue)) continue;
+    const e = byAugment.get(r.augment_id) ?? { augment_id: r.augment_id, picks: 0, wins: 0 };
+    e.picks += r.picks;
+    e.wins += r.wins;
+    byAugment.set(r.augment_id, e);
+  }
+  return [...byAugment.values()].sort((a, b) => b.picks - a.picks);
+}
+
+// Which champions carry one augment, for an expanded row. Filtered server-side
+// on an indexed column, so this is a couple of thousand rows rather than the
+// whole 341k grain.
+const augmentChampionCache = new Map<number, { fetchedAt: number; rows: CommunityAugmentRow[] }>();
+
+export async function getCommunityAugmentChampions(
+  augmentId: number,
+  patch?: string,
+  queue?: number,
+): Promise<{ champion_id: number; picks: number; wins: number }[]> {
+  let hit = augmentChampionCache.get(augmentId);
+  if (!hit || Date.now() - hit.fetchedAt >= TTL_MS) {
+    const rows = await fetchView<CommunityAugmentRow>(
+      "augment_stats",
+      `${AUGMENT_QUERY}&augment_id=eq.${augmentId}`,
+    );
+    hit = { fetchedAt: Date.now(), rows };
+    augmentChampionCache.set(augmentId, hit);
+    if (augmentChampionCache.size > DETAIL_LIMIT) {
+      augmentChampionCache.delete(augmentChampionCache.keys().next().value as number);
+    }
+  }
+  const byChampion = new Map<number, { champion_id: number; picks: number; wins: number }>();
+  for (const r of hit.rows) {
+    if (!matches(r, patch, queue)) continue;
+    const e = byChampion.get(r.champion_id) ?? { champion_id: r.champion_id, picks: 0, wins: 0 };
+    e.picks += r.picks;
+    e.wins += r.wins;
+    byChampion.set(r.champion_id, e);
+  }
+  return [...byChampion.values()].sort((a, b) => b.picks - a.picks);
 }
 
 // Patches present in the community data, newest first — the app's patch

@@ -179,6 +179,17 @@ export function registerIpcHandlers() {
     },
   );
 
+  ipcMain.handle(
+    "community:augment-stats",
+    (_e, patch?: string, queue?: number) => community.getCommunityAugmentStats(patch, queue),
+  );
+
+  ipcMain.handle(
+    "community:augment-champions",
+    (_e, augmentId: number, patch?: string, queue?: number) =>
+      community.getCommunityAugmentChampions(augmentId, patch, queue),
+  );
+
   ipcMain.handle("community:meta", () => community.getCommunityMeta());
 
   ipcMain.handle("community:refresh", async () => {

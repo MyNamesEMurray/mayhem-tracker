@@ -15,6 +15,8 @@ import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import SortHeader, { useSort } from "../components/SortHeader";
+import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
+import { useCommunityPatches } from "../hooks/useCommunityPatches";
 
 type SortKey = "picks" | "winRate" | "name" | "pickRate";
 type SortDir = "asc" | "desc";
@@ -32,10 +34,22 @@ export default function Augments() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
   const { patch, setPatch, queue, setQueue } = useStatsFilters();
+  const [source, setSource] = useStatsSource();
+  const communityPatches = useCommunityPatches(source);
+  // The community pool has no per-augment champion breakdown up front — that
+  // grain is 341k rows — so those rows arrive per augment, on expand.
   const { data, refetch } = useIpc<AugmentStatsDetailed[]>(
-    () => window.api.getAugmentStatsDetailed(patch, queue),
-    [patch, queue],
+    () =>
+      source === "community"
+        ? window.api
+            .getCommunityAugmentStats(patch, queue)
+            .then((rows) => rows.map((r) => ({ ...r, champions: [] })))
+        : window.api.getAugmentStatsDetailed(patch, queue),
+    [patch, queue, source],
   );
+  // Slot and pair breakdowns come from the raw local rows; the community
+  // aggregates don't carry which pick a slot was taken at, or which two an
+  // player took together, so those views stay on your own games.
   const { data: slotData, refetch: refetchSlots } = useIpc<AugmentSlotStat[]>(
     () => window.api.getAugmentSlotStats(patch, queue),
     [patch, queue],
@@ -67,6 +81,22 @@ export default function Augments() {
   }, [data]);
 
 
+  // Per-augment champion rows for the community source, keyed by augment
+  const [communityChampions, setCommunityChampions] = useState<
+    Record<number, { champion_id: number; picks: number; wins: number }[]>
+  >({});
+
+  // A change of patch, queue or source invalidates anything already fetched
+  useEffect(() => {
+    setCommunityChampions({});
+  }, [patch, queue, source]);
+
+  // Switching to the community pool while on a local-only view would leave
+  // your own games on screen under a switch that says otherwise
+  useEffect(() => {
+    if (source === "community") setView("overview");
+  }, [source]);
+
   const toggleExpand = (augmentId: number) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -74,6 +104,12 @@ export default function Augments() {
       else next.add(augmentId);
       return next;
     });
+    if (source === "community" && communityChampions[augmentId] === undefined) {
+      window.api
+        .getCommunityAugmentChampions(augmentId, patch, queue)
+        .then((rows) => setCommunityChampions((prev) => ({ ...prev, [augmentId]: rows })))
+        .catch(() => setCommunityChampions((prev) => ({ ...prev, [augmentId]: [] })));
+    }
   };
 
   const sorted = useMemo(() => {
@@ -121,19 +157,28 @@ export default function Augments() {
       <div className="flex items-center gap-4">
         <h1 className="text-xl font-bold text-lol-text-bright">Augments</h1>
         <div className="flex items-center gap-1.5">
-          {VIEWS.map((v) => (
-            <button
-              key={v.key}
-              onClick={() => setView(v.key)}
-              className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                view === v.key
-                  ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
-                  : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
+          {VIEWS.map((v) => {
+            const localOnly = v.key !== "overview" && source === "community";
+            return (
+              <button
+                key={v.key}
+                onClick={() => setView(v.key)}
+                disabled={localOnly}
+                title={
+                  localOnly
+                    ? "Your own games only — the community aggregates don't record which pick a slot was taken at"
+                    : undefined
+                }
+                className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                  view === v.key
+                    ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
+                    : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
+                } ${localOnly ? "opacity-40 cursor-default hover:border-lol-border" : ""}`}
+              >
+                {v.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -143,7 +188,7 @@ export default function Augments() {
         <span className="text-xs text-lol-text self-center ml-2">{sorted.length} augments</span>
         <div className="ml-auto flex items-center gap-2">
           <QueueSelect value={queue} onChange={setQueue} />
-          <PatchSelect value={patch} onChange={setPatch} />
+          <PatchSelect value={patch} onChange={setPatch} options={communityPatches} />
         </div>
         <div className="relative">
           <input
@@ -174,6 +219,8 @@ export default function Augments() {
           )}
         </div>
       </div>
+
+      <SourceSwitch source={source} onChange={setSource} />
 
       {view === "slots" && (
         <SlotsView
@@ -233,7 +280,10 @@ export default function Augments() {
                       </td>
                     </tr>
                     {isExpanded &&
-                      a.champions.map((c) => (
+                      (source === "community"
+                        ? (communityChampions[a.augment_id] ?? []).slice(0, 12)
+                        : a.champions
+                      ).map((c) => (
                         <tr
                           key={`${a.augment_id}-${c.champion_id}`}
                           className="border-t border-lol-border/30 bg-lol-dark/30"

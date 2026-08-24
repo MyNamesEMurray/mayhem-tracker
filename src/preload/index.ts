@@ -97,6 +97,10 @@ const api = {
   getCommunityChampionDetail: (championId: number, patch?: string, queue?: number) =>
     ipcRenderer.invoke("community:champion-detail", championId, patch, queue),
 
+  getCommunityAugmentStats: (patch?: string, queue?: number) =>
+    ipcRenderer.invoke("community:augment-stats", patch, queue),
+  getCommunityAugmentChampions: (augmentId: number, patch?: string, queue?: number) =>
+    ipcRenderer.invoke("community:augment-champions", augmentId, patch, queue),
   getCommunityMeta: () => ipcRenderer.invoke("community:meta"),
 
   refreshCommunity: () => ipcRenderer.invoke("community:refresh"),

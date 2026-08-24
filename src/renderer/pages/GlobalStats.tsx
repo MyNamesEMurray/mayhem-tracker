@@ -184,7 +184,17 @@ export default function GlobalStats() {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-lol-text-bright">Global Stats</h1>
+        {/* The tab has said "My Lobbies" since the community pool arrived;
+            the heading still said "Global Stats", which is the exact
+            confusion the rename was meant to end */}
+        <div>
+          <h1 className="text-xl font-bold text-lol-text-bright">My Lobbies</h1>
+          <p className="text-xs text-lol-text mt-0.5">
+            Every champion and augment played by anyone in your games — all ten players, not just
+            your picks. For the whole community's games, use the Community source on Champions or
+            Augments.
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-lol-text">
             {totalGames} games &middot; {data.champions.length} champions &middot;{" "}
