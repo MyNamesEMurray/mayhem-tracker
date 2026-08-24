@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<title>Review queue — MayhemStats</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/png" href="/icon.png" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: #0b0e14; color: #e2e8f0; min-height: 100vh; padding: 24px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .brand { font-size: 20px; font-weight: 700; margin-bottom: 18px; letter-spacing: -0.01em; }
+  .brand .gold { color: #c89b3c; }
+  .card {
+    background: #12161f; border: 1px solid #2a2e3a; border-radius: 12px;
+    padding: 20px; margin-bottom: 14px;
+  }
+  h1 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  h2 { font-size: 13px; font-weight: 600; color: #94a0b8; text-transform: uppercase;
+       letter-spacing: .08em; margin-bottom: 10px; }
+  p { font-size: 13px; color: #94a0b8; line-height: 1.6; }
+  .big { font-size: 30px; font-weight: 700; color: #e2e8f0; line-height: 1.2; }
+  .mono { font-family: Consolas, monospace; font-size: 12px; }
+  button {
+    font: inherit; font-size: 14px; font-weight: 600; color: #fff; border: 0;
+    border-radius: 8px; padding: 10px 20px; cursor: pointer; margin: 4px 6px 4px 0;
+  }
+  button:disabled { opacity: .45; cursor: default; }
+  .approve { background: #16a34a; }
+  .deny { background: #dc2626; }
+  .ghost { background: #2a2e3a; }
+  .ok { color: #4ade80; }
+  .err { color: #f87171; }
+  .warn { color: #fbbf24; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 6px 8px; font-size: 12px; border-top: 1px solid #2a2e3a; }
+  th { color: #94a0b8; font-weight: 600; border-top: 0; }
+  .bar { height: 8px; background: #2a2e3a; border-radius: 999px; overflow: hidden; margin: 12px 0 6px; }
+  .bar > div { height: 100%; background: #16a34a; width: 0; transition: width .2s; }
+  .log { max-height: 220px; overflow-y: auto; font-family: Consolas, monospace;
+         font-size: 12px; color: #94a0b8; line-height: 1.7; margin-top: 10px; }
+  .rowlist { max-height: 340px; overflow-y: auto; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="gold">MAYHEM</span>STATS review queue</div>
+  <div id="content"><div class="card"><p>Loading…</p></div></div>
+</div>
+<script>
+  // Bulk review for the quarantine backlog. The digest email handles games one
+  // at a time, which is right for a trickle and hopeless for a bulk ingest that
+  // trips the plausibility limits eight hundred times in an hour.
+  //
+  // The credential lives in the URL fragment, so it is never sent to a server,
+  // never lands in an access log, and never leaks through a Referer header. It
+  // authorizes the queue endpoint until the exp it was minted with.
+  var SUPABASE_URL = "https://lmzenzxbhotszvwsnhlm.supabase.co";
+  var ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtemVuenhiaG90c3p2d3NuaGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMjU0NDcsImV4cCI6MjEwMTgwMTQ0N30.7FoFD7LFaV5Yin4OnjYjECAYZPa2I9xc6oQa4xPAKpA";
+  var BATCH = 20;
+
+  var frag = new URLSearchParams(location.hash.replace(/^#/, ""));
+  var exp = Number(frag.get("exp") || 0);
+  var key = frag.get("key") || "";
+  var content = document.getElementById("content");
+  var items = [];
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = String(s); return d.innerHTML; }
+
+  function call(payload) {
+    return fetch(SUPABASE_URL + "/functions/v1/review", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: ANON_KEY,
+        Authorization: "Bearer " + ANON_KEY,
+      },
+      body: JSON.stringify(Object.assign({ exp: exp, key: key }, payload)),
+    }).then(function (res) {
+      return res.json().then(function (d) {
+        if (!res.ok || d.error) throw new Error(d.error || "HTTP " + res.status);
+        return d;
+      });
+    });
+  }
+
+  // "381k damage taken in 1365s" — the number is per game, so group by the
+  // limit that tripped rather than by the exact reason string
+  function category(reason) {
+    if (reason.indexOf("damage taken") >= 0) return "damage taken";
+    if (reason.indexOf("damage dealt") >= 0) return "damage dealt";
+    if (reason.indexOf("healing") >= 0) return "healing";
+    if (reason.indexOf("gold") >= 0) return "gold";
+    if (reason.indexOf("kills") >= 0) return "kills";
+    return "other";
+  }
+
+  function fail(title, detail) {
+    content.innerHTML =
+      '<div class="card"><h1 class="err">' + esc(title) + "</h1><p>" + esc(detail) + "</p></div>";
+  }
+
+  function loadQueue() {
+    var all = [];
+    function page(offset) {
+      return call({ action: "queue", limit: 500, offset: offset }).then(function (d) {
+        all = all.concat(d.items || []);
+        if (all.length < d.pending && (d.items || []).length > 0) return page(all.length);
+        return { pending: d.pending, items: all };
+      });
+    }
+    return page(0);
+  }
+
+  function render() {
+    if (items.length === 0) {
+      content.innerHTML =
+        '<div class="card"><h1 class="ok">Queue is empty</h1>' +
+        "<p>Nothing is waiting for review. Games quarantined from here on will show up in the next digest email.</p></div>";
+      return;
+    }
+
+    var byCat = {};
+    var games = {};
+    items.forEach(function (it) {
+      (it.reasons || []).forEach(function (r) {
+        var c = category(r);
+        byCat[c] = (byCat[c] || 0) + 1;
+        (games[c] = games[c] || {})[it.id] = 1;
+      });
+    });
+    var catRows = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; })
+      .map(function (c) {
+        return "<tr><td>" + esc(c) + "</td><td>" + Object.keys(games[c]).length +
+               "</td><td>" + byCat[c] + "</td></tr>";
+      }).join("");
+
+    var oldest = items[0] && items[0].created_at ? items[0].created_at.slice(0, 16).replace("T", " ") : "?";
+    var patches = {};
+    items.forEach(function (it) { if (it.patch) patches[it.patch] = 1; });
+
+    content.innerHTML =
+      '<div class="card">' +
+        '<h1>Pending review</h1>' +
+        '<p class="big">' + items.length + "</p>" +
+        "<p>games held out of the community stats · oldest " + esc(oldest) + " UTC · " +
+        Object.keys(patches).length + " patch(es)</p>" +
+        '<div style="margin-top:16px">' +
+          '<button class="approve" id="approveAll">Approve all ' + items.length + "</button>" +
+          '<button class="deny" id="denyAll">Deny all ' + items.length + "</button>" +
+          '<button class="ghost" id="reload">Reload</button>' +
+        "</div>" +
+        '<div id="progress"></div>' +
+      "</div>" +
+      '<div class="card"><h2>Why they were flagged</h2>' +
+        "<table><tr><th>Limit tripped</th><th>Games</th><th>Flags</th></tr>" + catRows + "</table>" +
+        '<p style="margin-top:10px">A flag is one player exceeding one plausibility limit. Mayhem augments push damage, healing and tanking far past what the limits were tuned for, so a large batch tripping the same limit is expected rather than suspicious.</p>' +
+      "</div>" +
+      '<div class="card"><h2>The queue</h2><div class="rowlist"><table id="rows">' +
+        "<tr><th>Game</th><th>Patch</th><th>Flagged for</th><th></th></tr>" +
+      "</table></div></div>";
+
+    var rows = document.getElementById("rows");
+    items.forEach(function (it) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="mono">' + esc(it.platform) + " · " + esc(it.game_id) + "</td>" +
+        "<td>" + esc(it.patch || "?") + "</td>" +
+        '<td class="warn">' + esc((it.reasons || []).map(category).filter(function (v, i, a) {
+          return a.indexOf(v) === i;
+        }).join(", ")) + "</td>";
+      var td = document.createElement("td");
+      var a = document.createElement("button");
+      a.className = "approve"; a.textContent = "Approve";
+      a.style.padding = "4px 10px"; a.style.fontSize = "12px";
+      a.addEventListener("click", function () { runBatches([it], "approve"); });
+      var d = document.createElement("button");
+      d.className = "deny"; d.textContent = "Deny";
+      d.style.padding = "4px 10px"; d.style.fontSize = "12px";
+      d.addEventListener("click", function () { runBatches([it], "deny"); });
+      td.appendChild(a); td.appendChild(d);
+      tr.appendChild(td);
+      rows.appendChild(tr);
+    });
+
+    document.getElementById("reload").addEventListener("click", boot);
+    document.getElementById("approveAll").addEventListener("click", function () {
+      runBatches(items.slice(), "approve");
+    });
+    document.getElementById("denyAll").addEventListener("click", function () {
+      // Denying in bulk throws the games away for good, so make it deliberate
+      if (prompt('Deny all ' + items.length + ' games? They stay out of the stats permanently. Type DENY to confirm.') !== "DENY") return;
+      runBatches(items.slice(), "deny");
+    });
+  }
+
+  function runBatches(list, decision) {
+    var progress = document.getElementById("progress");
+    var buttons = document.querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+
+    var total = list.length;
+    var done = 0, okCount = 0, failures = [];
+    progress.innerHTML =
+      '<div class="bar"><div id="fill"></div></div>' +
+      '<p id="ptext">Starting…</p><div class="log" id="plog"></div>';
+    var fill = document.getElementById("fill");
+    var ptext = document.getElementById("ptext");
+    var plog = document.getElementById("plog");
+    var started = Date.now();
+
+    function log(msg, cls) {
+      var line = document.createElement("div");
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      plog.appendChild(line);
+      plog.scrollTop = plog.scrollHeight;
+    }
+
+    function step() {
+      if (list.length === 0) {
+        ptext.innerHTML = failures.length === 0
+          ? '<span class="ok">Done — ' + okCount + " " + decision + "d.</span>"
+          : '<span class="warn">Done — ' + okCount + " " + decision + "d, " + failures.length + " failed.</span>";
+        log("Reloading the queue…");
+        setTimeout(boot, 800);
+        return;
+      }
+      var batch = list.splice(0, BATCH);
+      call({ action: "bulk", decision: decision, ids: batch.map(function (b) { return b.id; }) })
+        .then(function (d) {
+          okCount += (d.ok || []).length;
+          (d.failed || []).forEach(function (f) {
+            failures.push(f);
+            log("failed " + f.id.slice(0, 8) + "… — " + f.error, "err");
+          });
+          if ((d.skipped || []).length > 0) {
+            log((d.skipped).length + " already handled, skipped");
+          }
+        })
+        .catch(function (err) {
+          batch.forEach(function (b) { failures.push({ id: b.id, error: err.message }); });
+          log("batch failed — " + err.message, "err");
+        })
+        .then(function () {
+          done += batch.length;
+          var pct = Math.round((done / total) * 100);
+          fill.style.width = pct + "%";
+          var elapsed = (Date.now() - started) / 1000;
+          var eta = done > 0 ? Math.round((elapsed / done) * (total - done)) : 0;
+          ptext.textContent = done + " / " + total + " (" + pct + "%)" +
+            (total - done > 0 ? " · about " + eta + "s left" : "");
+          step();
+        });
+    }
+    step();
+  }
+
+  function boot() {
+    content.innerHTML = '<div class="card"><p>Loading the queue…</p></div>';
+    loadQueue()
+      .then(function (d) { items = d.items; render(); })
+      .catch(function (err) {
+        if (/expired/i.test(err.message)) {
+          fail("Link expired", "Mint a fresh review link and try again.");
+        } else if (/invalid key/i.test(err.message)) {
+          fail("Invalid link", "This link isn't valid for the review queue. Mint a fresh one.");
+        } else {
+          fail("Could not load the queue", err.message);
+        }
+      });
+  }
+
+  if (!Number.isInteger(exp) || exp <= 0 || !/^[0-9a-f]{64}$/i.test(key)) {
+    fail("Invalid link", "This page needs a review link with an expiry and key in its fragment.");
+  } else if (exp * 1000 <= Date.now()) {
+    fail("Link expired", "Mint a fresh review link and try again.");
+  } else {
+    boot();
+  }
+</script>
+</body>
+</html>
