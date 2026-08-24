@@ -382,6 +382,14 @@ export interface ElectronAPI {
     patch?: string,
     queue?: number,
   ) => Promise<{ champion_id: number; picks: number; wins: number }[]>;
+  getContributorId: () => Promise<string | null>;
+  setContributorId: (token: string) => Promise<{ success: boolean; error?: string }>;
+  rotateContributorId: () => Promise<{
+    success: boolean;
+    newId?: string;
+    removedMatches?: number;
+    error?: string;
+  }>;
   getCommunityMeta: () => Promise<CommunityMeta>;
   refreshCommunity: () => Promise<CommunityMeta>;
   getSummonerPuuid: () => Promise<string | null>;

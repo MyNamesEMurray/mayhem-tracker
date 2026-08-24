@@ -20,8 +20,10 @@ export function isUploadEnabled(): boolean {
   return db.getSetting("upload_enabled") === "true";
 }
 
-// Random id the server rate-limits and deletes by. Generated locally, never
-// shown, and not derived from any account or player data.
+// Random id the server rate-limits and deletes by. Generated locally and not
+// derived from any account or player data — it is the only handle a
+// contributor has on what they've shared, which is why it can be read,
+// carried to another machine, and replaced.
 function getContributorToken(): string {
   let token = db.getSetting("contributor_token");
   if (!token) {
@@ -29,6 +31,69 @@ function getContributorToken(): string {
     db.setSetting("contributor_token", token);
   }
   return token;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Read-only view for Settings. Creating one here would mint an id for someone
+// who has never contributed, so an install that hasn't uploaded reports none.
+export function getContributorId(): string | null {
+  return db.getSetting("contributor_token") ?? null;
+}
+
+// Carry an existing id onto this machine. The upload marks go with it: this
+// install's games are re-sent under the recovered id, and the server dedupes
+// on (token, platform, game_id), so nothing is contributed twice.
+export function setContributorId(
+  token: string,
+  win?: BrowserWindow | null,
+): { success: boolean; error?: string } {
+  const trimmed = token.trim().toLowerCase();
+  if (!UUID_RE.test(trimmed)) {
+    return { success: false, error: "That doesn't look like a contributor ID." };
+  }
+  if (trimmed === db.getSetting("contributor_token")) {
+    return { success: true };
+  }
+  db.setSetting("contributor_token", trimmed);
+  db.clearUploadMarks();
+  notifyChanged(win);
+  return { success: true };
+}
+
+// Replace a leaked id. Order matters: the games have to be withdrawn while the
+// old id can still prove it owns them, because the server only lets a token
+// delete what that token contributed. If the withdrawal fails, nothing is
+// changed — a new id here would strand the old contributions permanently.
+export async function rotateContributorId(
+  win?: BrowserWindow | null,
+): Promise<{ success: boolean; newId?: string; removedMatches?: number; error?: string }> {
+  const current = db.getSetting("contributor_token");
+  if (!current) {
+    // Nothing has been contributed, so there is nothing to withdraw
+    const fresh = randomUUID();
+    db.setSetting("contributor_token", fresh);
+    notifyChanged(win);
+    return { success: true, newId: fresh, removedMatches: 0 };
+  }
+
+  const wasEnabled = isUploadEnabled();
+  const removal = await deleteContributions(win);
+  if (!removal.success) {
+    return { success: false, error: removal.error ?? "Could not withdraw the old contributions." };
+  }
+
+  const fresh = randomUUID();
+  db.setSetting("contributor_token", fresh);
+  // deleteContributions turns contributing off and forgets the upload marks;
+  // a rotation is not an opt-out, so put it back and let the uploader re-send
+  // this install's games under the new id.
+  if (wasEnabled) {
+    db.setSetting("upload_enabled", "true");
+    void uploadPendingGames(win).catch(() => {});
+  }
+  notifyChanged(win);
+  return { success: true, newId: fresh, removedMatches: removal.removedMatches ?? 0 };
 }
 
 let uploadRunning = false;

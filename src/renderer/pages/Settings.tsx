@@ -42,6 +42,147 @@ function SettingRow({
   );
 }
 
+// Contributor ID: the only handle a person has on what they've shared.
+//
+// It is a bearer credential — whoever holds it can withdraw those games or
+// contribute under them — so it's masked until asked for, revealed for a
+// short while, and copyable without ever being shown. A streamer shouldn't
+// have to think about it.
+function ContributorId() {
+  const [id, setId] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [entry, setEntry] = useState("");
+  const [showEntry, setShowEntry] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(() => {
+    window.api.getContributorId().then(setId);
+  }, []);
+  useEffect(refresh, [refresh]);
+
+  // Re-masks itself rather than staying open behind whatever you do next
+  useEffect(() => {
+    if (!revealed) return;
+    const t = setTimeout(() => setRevealed(false), 30_000);
+    return () => clearTimeout(t);
+  }, [revealed]);
+
+  // Enough of the tail to tell two ids apart, never enough to use one
+  const masked = id ? `${"•".repeat(28)}${id.slice(-4)}` : "";
+
+  const handleCopy = () => {
+    if (!id) return;
+    void navigator.clipboard.writeText(id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
+
+  const handleRecover = async () => {
+    setBusy(true);
+    const res = await window.api.setContributorId(entry);
+    setBusy(false);
+    if (!res.success) {
+      setStatus(res.error ?? "Could not use that ID.");
+      return;
+    }
+    setEntry("");
+    setShowEntry(false);
+    setStatus("ID restored — this install's games will re-upload under it.");
+    refresh();
+  };
+
+  const handleRotate = async () => {
+    const ok = window.confirm(
+      "Generate a new contributor ID?\n\n" +
+        "Everything you've contributed will be withdrawn from the community " +
+        "database first, then re-uploaded under the new ID. The old ID stops " +
+        "working — anyone holding it can no longer touch your games.\n\n" +
+        "This can take a few minutes if you've contributed a lot.",
+    );
+    if (!ok) return;
+    setBusy(true);
+    setStatus("Withdrawing contributions…");
+    const res = await window.api.rotateContributorId();
+    setBusy(false);
+    if (!res.success) {
+      setStatus(`${res.error ?? "Could not rotate the ID."} Nothing was changed.`);
+      return;
+    }
+    setRevealed(false);
+    setStatus(
+      `New ID in place. ${res.removedMatches ?? 0} game(s) withdrawn and now re-uploading under it.`,
+    );
+    refresh();
+  };
+
+  if (!id) {
+    return (
+      <SettingRow
+        name="Contributor ID"
+        description="Assigned the first time you contribute a game. It's what lets you withdraw your games later, so keep a copy once you have one."
+      >
+        <span className="text-[13px] text-lol-text">None yet</span>
+      </SettingRow>
+    );
+  }
+
+  return (
+    <>
+      <SettingRow
+        name="Contributor ID"
+        description="Your only handle on the games you've shared — save it somewhere. Entering it on another machine carries your contributions across; without it, a new install counts as a new contributor and your old games can't be withdrawn."
+      >
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setRevealed((v) => !v)}
+            title={revealed ? "Hide" : "Click to reveal — treat it like a password"}
+            className="font-mono text-[12px] px-2.5 py-1.5 rounded-lg border border-lol-border bg-lol-dark text-lol-text-bright hover:border-lol-gold/40 cursor-pointer min-w-[290px] text-left"
+          >
+            {revealed ? id : masked}
+          </button>
+          <button onClick={handleCopy} className={BUTTON_SECONDARY}>
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </SettingRow>
+
+      <SettingRow
+        name="Move or replace this ID"
+        description="Paste an ID from another machine to take over its contributions, or generate a new one if this ID has been shared with anyone."
+      >
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowEntry((v) => !v)} className={BUTTON_SECONDARY}>
+            {showEntry ? "Cancel" : "Use existing ID"}
+          </button>
+          <button onClick={handleRotate} disabled={busy} className={BUTTON_DESTRUCTIVE}>
+            Generate new ID
+          </button>
+        </div>
+      </SettingRow>
+
+      {showEntry && (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={entry}
+            onChange={(e) => setEntry(e.target.value)}
+            placeholder="00000000-0000-0000-0000-000000000000"
+            spellCheck={false}
+            className="input font-mono text-[12px] flex-1"
+          />
+          <button onClick={handleRecover} disabled={busy || !entry.trim()} className={BUTTON_PRIMARY}>
+            Use this ID
+          </button>
+        </div>
+      )}
+
+      {status && <p className="text-xs text-lol-text">{status}</p>}
+    </>
+  );
+}
+
 export default function Settings() {
   // Shared so a backfill started automatically on first connect shows here too
   const { running: backfilling, progress } = useBackfill();
@@ -363,6 +504,7 @@ export default function Settings() {
             </button>
           </SettingRow>
           {deleteStatus && <p className="text-xs text-lol-text">{deleteStatus}</p>}
+          <ContributorId />
         </Panel>
       </div>
 

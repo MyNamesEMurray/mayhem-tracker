@@ -93,6 +93,9 @@ const api = {
     ipcRenderer.invoke("community:augment-stats", patch, queue),
   getCommunityAugmentChampions: (augmentId: number, patch?: string, queue?: number) =>
     ipcRenderer.invoke("community:augment-champions", augmentId, patch, queue),
+  getContributorId: () => ipcRenderer.invoke("contributor:get"),
+  setContributorId: (token: string) => ipcRenderer.invoke("contributor:set", token),
+  rotateContributorId: () => ipcRenderer.invoke("contributor:rotate"),
   getCommunityMeta: () => ipcRenderer.invoke("community:meta"),
 
   refreshCommunity: () => ipcRenderer.invoke("community:refresh"),

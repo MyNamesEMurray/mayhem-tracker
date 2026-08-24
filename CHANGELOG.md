@@ -18,6 +18,12 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.13.0 — 2026-08-24
+
+- **Your contributor ID is yours to keep.** Settings → Community stats now shows it, masked, with a copy button. It's the only handle you have on the games you've shared: enter it on a new machine and your contributions come with you. Without it, a fresh install counted as a new contributor and the old games could never be withdrawn — including if your PC died.
+- **Treated like a password.** The ID stays masked until you click it, re-hides itself after 30 seconds, and copies without ever appearing on screen — so it can't end up on a stream by accident.
+- **Generate a new ID if yours gets out.** Anyone holding your ID can withdraw your games or contribute under them, so there's now a way to revoke one. It withdraws everything the old ID contributed, issues a new one, and re-uploads your games under it. If the withdrawal fails nothing changes, because a new ID issued first would strand the old contributions permanently.
+
 ## v2.12.10 — 2026-08-24
 
 - <!--fixes:v2.12.9--> **The Augments tab was counting slots, not games.** Its header read "449,551 games" on a patch the Champions tab called 46,408 — it was dividing total augment picks by four, which counts player slots rather than games, and undercounted even those because a player who took three augments contributes three picks. Both tabs now read the same number from the same place. Augment pick rates shift by a tenth or two as a result, and now match the website exactly.

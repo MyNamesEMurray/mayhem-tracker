@@ -171,6 +171,16 @@ export function registerIpcHandlers() {
       community.getCommunityAugmentChampions(augmentId, patch, queue),
   );
 
+  ipcMain.handle("contributor:get", () => upload.getContributorId());
+
+  ipcMain.handle("contributor:set", (event, token: string) =>
+    upload.setContributorId(token, BrowserWindow.fromWebContents(event.sender)),
+  );
+
+  ipcMain.handle("contributor:rotate", (event) =>
+    upload.rotateContributorId(BrowserWindow.fromWebContents(event.sender)),
+  );
+
   ipcMain.handle("community:meta", () => community.getCommunityMeta());
 
   ipcMain.handle("community:refresh", async () => {
@@ -193,6 +203,12 @@ export function registerIpcHandlers() {
   });
 
   ipcMain.handle("settings:set", (_event, key: string, value: string) => {
+    // The contributor id has its own handlers: replacing it has to clear the
+    // upload marks, and rotating it has to withdraw the old contributions
+    // first. A bare write here would skip both.
+    if (key === "contributor_token") {
+      throw new Error("use contributor:set or contributor:rotate");
+    }
     db.setSetting(key, value);
     // The build-order watcher runs off this setting; react immediately
     if (key === "live_tracking_enabled") liveWatcher.refreshLiveWatcher();
