@@ -325,8 +325,17 @@ function SlotsView({
     const wr = (s.wins / s.picks) * 100;
     const low = s.picks < 5;
     return (
-      <span className={low ? "text-lol-text" : wr >= 50 ? "text-lol-win" : "text-lol-loss"}>
-        {wr.toFixed(0)}%{low ? "*" : ""} <span className="text-lol-text text-[11px]">({s.picks})</span>
+      <span
+        className={`inline-flex items-baseline ${
+          low ? "text-lol-text" : wr >= 50 ? "text-lol-win" : "text-lol-loss"
+        }`}
+      >
+        <span className="tabular-nums">{wr.toFixed(0)}%</span>
+        {/* The asterisk keeps its slot whether or not it's shown, so the
+            percentages — and the pick counts after them — stay in line down
+            the column */}
+        <span className="w-2 text-left">{low ? "*" : ""}</span>
+        <span className="text-lol-text text-[11px] tabular-nums ml-1">({s.picks})</span>
       </span>
     );
   };

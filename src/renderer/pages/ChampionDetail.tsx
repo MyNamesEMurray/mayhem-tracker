@@ -441,9 +441,13 @@ export default function ChampionDetail() {
                         <span className="text-xs text-lol-text-bright truncate min-w-0">
                           {getAugmentName(augData, a.augment_id)}
                         </span>
-                        <span className="text-[11px] text-lol-text ml-auto shrink-0">
-                          {winRate(a.wins, a.picks).toFixed(0)}%
-                          {a.picks < MIN_SAMPLE ? "*" : ""}
+                        <span className="text-[11px] text-lol-text ml-auto shrink-0 inline-flex justify-end">
+                          <span className="tabular-nums">
+                            {winRate(a.wins, a.picks).toFixed(0)}%
+                          </span>
+                          <span className="w-2 text-left">
+                            {a.picks < MIN_SAMPLE ? "*" : ""}
+                          </span>
                         </span>
                       </div>
                     ))}
