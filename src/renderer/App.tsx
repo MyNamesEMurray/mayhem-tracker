@@ -4,6 +4,7 @@ import CommunityGate from "./components/CommunityGate";
 import Overview from "./pages/Overview";
 import MatchHistory from "./pages/MatchHistory";
 import Champions from "./pages/Champions";
+import ChampionDetail from "./pages/ChampionDetail";
 import Augments from "./pages/Augments";
 import Friends from "./pages/Friends";
 import FriendDetail from "./pages/FriendDetail";
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/" element={<Overview />} />
           <Route path="/matches" element={<MatchHistory />} />
           <Route path="/champions" element={<Champions />} />
+          <Route path="/champions/:championId" element={<ChampionDetail />} />
           <Route path="/augments" element={<Augments />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/:key" element={<FriendDetail />} />

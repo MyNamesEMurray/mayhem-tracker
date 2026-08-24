@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useStatsFilters } from "../hooks/useStatsFilters";
@@ -10,8 +11,11 @@ import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../components/WinRateBar";
 import MultikillBadge from "../components/MultikillBadge";
 import PatchSelect from "../components/PatchSelect";
+import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import CommunityGate from "../components/CommunityGate";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
+import TierBadge from "../components/TierBadge";
+import { assignTiers, score } from "../lib/champStats";
 import QueueSelect from "../components/QueueSelect";
 import {
   formatAvg,
@@ -26,6 +30,8 @@ import {
 } from "../lib/format";
 
 type SortKey =
+  | "score"
+  | "name"
   | "games"
   | "wins"
   | "avg_kills"
@@ -37,152 +43,13 @@ type SortKey =
   | "multikills";
 type SortDir = "asc" | "desc";
 
-function ChampionExpanded({
-  championId,
-  patch,
-  queue,
-  source,
-}: {
-  championId: number;
-  patch?: string;
-  queue?: number;
-  source: "mine" | "community";
-}) {
-  const augData = useAugmentData();
-  const [augStats, setAugStats] = useState<AugmentStats[] | null>(null);
-  const [itemStats, setItemStats] = useState<ItemStats[] | null>(null);
-  const [matches, setMatches] = useState<MatchListItem[] | null>(null);
-
-  useEffect(() => {
-    if (source === "community") {
-      // The shared database has no individual matches to list — only the
-      // aggregates — so the recent-games column stays empty for this source
-      setMatches([]);
-      window.api.getCommunityChampionDetail(championId, patch, queue).then((d) => {
-        setAugStats(d.augments);
-        setItemStats(d.items);
-      });
-      return;
-    }
-    window.api.getAugmentStats(championId, patch, queue).then(setAugStats);
-    window.api.getChampionItemStats(championId, patch, queue).then(setItemStats);
-    window.api
-      .getChampionMatchHistory(championId, 5, 0, patch, queue)
-      .then((r) => setMatches(r.matches));
-  }, [championId, patch, queue, source]);
-
-  if (!augStats || !itemStats || !matches) {
-    return (
-      <td colSpan={11} className="px-4 py-4">
-        <div className="text-sm text-lol-text text-center">Loading...</div>
-      </td>
-    );
-  }
-
-  const topAugments = augStats.slice(0, 6);
-  const topItems = itemStats.slice(0, 6);
-
-  return (
-    <td colSpan={11} className="px-4 py-4">
-      <div className="grid grid-cols-3 gap-6">
-        {/* Augments */}
-        <div className="min-w-0">
-          <h3 className="text-xs text-lol-text uppercase tracking-wider mb-2">Top Augments</h3>
-          <div className="space-y-1">
-            {topAugments.length > 0 ? (
-              topAugments.map((a) => (
-                <div key={a.augment_id} className="flex items-center gap-2 h-7">
-                  <div className="shrink-0">
-                    <AugmentIcon augmentId={a.augment_id} />
-                  </div>
-                  <span className="text-xs text-lol-text-bright truncate min-w-0">
-                    {augData[a.augment_id]?.name ?? `Augment ${a.augment_id}`}
-                  </span>
-                  <span className="text-[11px] text-lol-text shrink-0 ml-auto">{a.picks}x</span>
-                  <div className="shrink-0">
-                    <WinRateBar wins={a.wins} total={a.picks} />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <span className="text-xs text-lol-text">No data</span>
-            )}
-          </div>
-        </div>
-
-        {/* Items */}
-        <div className="min-w-0">
-          <h3 className="text-xs text-lol-text uppercase tracking-wider mb-2">Top Items</h3>
-          <div className="space-y-1">
-            {topItems.length > 0 ? (
-              topItems.map((item) => (
-                <div key={item.item_id} className="flex items-center gap-2 h-7">
-                  <div className="shrink-0">
-                    <ItemIcon itemId={item.item_id} size={24} patch={patch} />
-                  </div>
-                  <span className="text-[11px] text-lol-text shrink-0 ml-auto">{item.picks}x</span>
-                  <div className="shrink-0">
-                    <WinRateBar wins={item.wins} total={item.picks} />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <span className="text-xs text-lol-text">No data</span>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Games */}
-        <div className="min-w-0">
-          <h3 className="text-xs text-lol-text uppercase tracking-wider mb-2">Recent Games</h3>
-          <div className="space-y-1">
-            {matches.length > 0 ? (
-              matches.map((m) => (
-                <div
-                  key={m.game_id}
-                  className={`flex items-center gap-2 px-2 h-7 rounded text-xs ${
-                    m.is_remake
-                      ? "bg-white/[0.03]"
-                      : m.win
-                        ? "bg-lol-win/[0.07]"
-                        : "bg-lol-loss/[0.07]"
-                  }`}
-                >
-                  <span
-                    className={`font-bold shrink-0 w-4 text-center ${m.is_remake ? "text-gray-500" : m.win ? "text-lol-win" : "text-lol-loss"}`}
-                  >
-                    {m.is_remake ? "-" : m.win ? "W" : "L"}
-                  </span>
-                  <span className="text-lol-text-bright shrink-0">
-                    {formatKDA(m.kills, m.deaths, m.assists)}
-                  </span>
-                  {m.score != null && !m.is_remake && (
-                    <span className={`font-semibold shrink-0 ${scoreRampColor(m.score)}`}>
-                      {m.score.toFixed(1)}
-                    </span>
-                  )}
-                  <span className="text-lol-text ml-auto shrink-0">
-                    {formatDuration(m.game_duration)}
-                  </span>
-                  <span className="text-lol-text shrink-0">{formatDateTime(m.game_creation)}</span>
-                </div>
-              ))
-            ) : (
-              <span className="text-xs text-lol-text">No games</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </td>
-  );
-}
-
 export default function Champions() {
   const champData = useChampionData();
   // Wide windows get larger icons; the icon components size in pixels
   const wide = useMediaQuery("(min-width: 1500px)");
   const { patch, setPatch, queue, setQueue } = useStatsFilters();
   const [source, setSource] = useStatsSource();
+  const communityPatches = useCommunityPatches(source);
   const { data, refetch } = useIpc<ChampionStats[]>(
     () =>
       source === "community"
@@ -191,9 +58,10 @@ export default function Champions() {
     [patch, queue, source],
   );
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("games");
+  // Score-first, like the website: rank is the point of a tier list
+  const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = window.api.onGamesUpdated(() => refetch());
@@ -209,9 +77,37 @@ export default function Champions() {
     }
   };
 
-  const toggleExpand = (championId: number) => {
-    setExpandedId((prev) => (prev === championId ? null : championId));
+  // Clicking a champion opens the full page — tier, score, core build, best
+  // augments per rarity — rather than a three-column strip inside the row.
+  // The filters ride along so the page opens on what you were looking at.
+  const openChampion = (championId: number) => {
+    const params = new URLSearchParams();
+    if (source === "community") params.set("source", "community");
+    params.set("patch", patch ?? "all");
+    params.set("queue", queue == null ? "all" : String(queue));
+    navigate(`/champions/${championId}?${params}`);
   };
+
+  // Tier is a rank within everything under the current filters, so it is
+  // computed before the search narrows the list — searching for one champion
+  // must not make it S+ by default.
+  const tiers = useMemo(
+    () =>
+      data
+        ? assignTiers(
+            data,
+            (c) => score(c.wins, c.games),
+            (c) => c.champion_id,
+          )
+        : new Map(),
+    [data],
+  );
+  // Champion slots under these filters; a champion's share of them is its
+  // pick rate, the same denominator the website uses
+  const totalSlots = useMemo(
+    () => (data ? data.reduce((sum, c) => sum + c.games, 0) : 0),
+    [data],
+  );
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -228,6 +124,13 @@ export default function Champions() {
       } else if (sortKey === "wins") {
         av = a.games > 0 ? a.wins / a.games : 0;
         bv = b.games > 0 ? b.wins / b.games : 0;
+      } else if (sortKey === "score") {
+        av = score(a.wins, a.games);
+        bv = score(b.wins, b.games);
+      } else if (sortKey === "name") {
+        const an = getChampionName(champData, a.champion_id);
+        const bn = getChampionName(champData, b.champion_id);
+        return sortDir === "desc" ? bn.localeCompare(an) : an.localeCompare(bn);
       } else if (sortKey === "kda") {
         av = a.deaths > 0 ? (a.kills + a.assists) / a.deaths : Infinity;
         bv = b.deaths > 0 ? (b.kills + b.assists) / b.deaths : Infinity;
@@ -262,7 +165,7 @@ export default function Champions() {
         <h1 className="text-xl font-bold text-lol-text-bright">Champions</h1>
         <div className="flex items-center gap-2">
           <QueueSelect value={queue} onChange={setQueue} />
-          <PatchSelect value={patch} onChange={setPatch} />
+          <PatchSelect value={patch} onChange={setPatch} options={communityPatches} />
           <div className="relative">
             <input
               type="text"
@@ -306,8 +209,15 @@ export default function Champions() {
               <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Champion
               </th>
-              <SortHeader label="Games" field="games" />
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-16">
+                Tier
+              </th>
+              <SortHeader label="Score" field="score" />
               <SortHeader label="Win Rate" field="wins" />
+              <SortHeader label="Games" field="games" />
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] whitespace-nowrap">
+                Pick Rate
+              </th>
               <SortHeader label="Kills" field="avg_kills" />
               <SortHeader label="Deaths" field="avg_deaths" />
               <SortHeader label="Assists" field="avg_assists" />
@@ -319,13 +229,11 @@ export default function Champions() {
           </thead>
           <tbody>
             {sorted.map((c, i) => (
-              <Fragment key={c.champion_id}>
-                <tr
-                  onClick={() => toggleExpand(c.champion_id)}
-                  className={`border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors ${
-                    expandedId === c.champion_id ? "bg-lol-card-hover" : ""
-                  }`}
-                >
+              <tr
+                key={c.champion_id}
+                onClick={() => openChampion(c.champion_id)}
+                className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
+              >
                   <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
                   <td className="px-3 py-1.5">
                     <div className="flex items-center gap-2">
@@ -335,9 +243,20 @@ export default function Champions() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                  <td className="px-3 py-1.5">
+                    {tiers.get(c.champion_id) && (
+                      <TierBadge tier={tiers.get(c.champion_id)!} games={c.games} />
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5 text-sm font-semibold text-lol-text-bright">
+                    {score(c.wins, c.games).toFixed(1)}
+                  </td>
                   <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                     <WinRateBar wins={c.wins} total={c.games} />
+                  </td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">
+                    {totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}%
                   </td>
                   <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
                   <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
@@ -369,18 +288,7 @@ export default function Champions() {
                       </span>
                     </div>
                   </td>
-                </tr>
-                {expandedId === c.champion_id && (
-                  <tr className="border-t border-lol-border/30 bg-lol-dark/30">
-                    <ChampionExpanded
-                      championId={c.champion_id}
-                      patch={patch}
-                      queue={queue}
-                      source={source}
-                    />
-                  </tr>
-                )}
-              </Fragment>
+              </tr>
             ))}
           </tbody>
         </table>
