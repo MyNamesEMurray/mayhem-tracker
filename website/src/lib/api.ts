@@ -70,9 +70,12 @@ export interface ItemPurchaseRow {
   avg_first_buy_s: number;
 }
 
-// PostgREST caps a response at 1000 rows. The first request asks for an exact
-// count so the remaining pages can go out together instead of one after
-// another — the difference between a tab that opens and a tab that hangs.
+// PostgREST caps a response at 1000 rows on this project — verified: asking
+// for 0-9999 comes back "content-range: 0-999/*" with a thousand rows. A
+// larger page size doesn't fetch more, it just makes the walk stop after the
+// first page and silently truncate every view. So pages stay at 1000 and the
+// first request asks for an exact count instead, which lets the rest of them
+// go out together rather than one after another.
 const PAGE = 1000;
 
 async function fetchPage<T>(
