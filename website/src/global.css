@@ -65,6 +65,19 @@ body {
     --select-w: 12.5rem;
   }
 
+  /* The card-layout sort control: only meaningful once the header row is
+     gone, so it shows exactly where the header stops being clickable. Kept in
+     step with the 700px breakpoint below. */
+  .sort-mobile {
+    display: none;
+  }
+
+  @media (max-width: 700px) {
+    .sort-mobile {
+      display: flex;
+    }
+  }
+
   /* Fixed-width selects overflow a phone once three sit in a row (the patch
      range picker); this lets them share whatever width the row has. */
   .select-flex {

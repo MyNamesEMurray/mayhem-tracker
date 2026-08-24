@@ -378,6 +378,7 @@ export default function ChampionDetail({
                   naturalDir="asc"
                   sort={itemSort.sort}
                   onSort={itemSort.toggle}
+                  compact
                   thClass={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}
                 />
                 <SortHeader
@@ -385,6 +386,7 @@ export default function ChampionDetail({
                   field="picks"
                   sort={itemSort.sort}
                   onSort={itemSort.toggle}
+                  compact
                   thClass={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
                 />
                 <SortHeader
@@ -393,6 +395,7 @@ export default function ChampionDetail({
                   title={SCORE_HINT}
                   sort={itemSort.sort}
                   onSort={itemSort.toggle}
+                  compact
                   thClass={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
                 />
                 <SortHeader
@@ -400,6 +403,7 @@ export default function ChampionDetail({
                   field="winRate"
                   sort={itemSort.sort}
                   onSort={itemSort.toggle}
+                  compact
                   thClass={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
                 />
               </tr>
@@ -447,6 +451,7 @@ export default function ChampionDetail({
                   naturalDir="asc"
                   sort={augSort.sort}
                   onSort={augSort.toggle}
+                  compact
                   thClass={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}
                 />
                 <SortHeader
@@ -454,6 +459,7 @@ export default function ChampionDetail({
                   field="picks"
                   sort={augSort.sort}
                   onSort={augSort.toggle}
+                  compact
                   thClass={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
                 />
                 <SortHeader
@@ -462,6 +468,7 @@ export default function ChampionDetail({
                   title={SCORE_HINT}
                   sort={augSort.sort}
                   onSort={augSort.toggle}
+                  compact
                   thClass={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
                 />
                 <SortHeader
@@ -469,6 +476,7 @@ export default function ChampionDetail({
                   field="winRate"
                   sort={augSort.sort}
                   onSort={augSort.toggle}
+                  compact
                   thClass={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
                 />
               </tr>
@@ -550,8 +558,8 @@ function sortPanel<T extends { picks: number; wins: number }>(
   return out;
 }
 
-const COL_GAMES = "w-[50px] sm:w-[72px]";
-const COL_SCORE = "w-[44px] sm:w-[64px]";
+const COL_GAMES = "w-[58px] sm:w-[76px]";
+const COL_SCORE = "w-[54px] sm:w-[68px]";
 const COL_RATE = "w-[84px] sm:w-[140px]";
 
 const SCORE_HINT =

@@ -31,6 +31,7 @@ export default function SortHeader<K extends string>({
   className,
   title,
   thClass = TH_BASE,
+  compact = false,
 }: {
   label: string;
   field: K;
@@ -44,6 +45,10 @@ export default function SortHeader<K extends string>({
   // Tables with their own header metrics (the champion page's narrow panels)
   // pass their own base classes
   thClass?: string;
+  // For columns too narrow to hold a reserved arrow slot. The champion page's
+  // panels give Score 44px on a phone, and holding space for an arrow there
+  // pushed the neighbouring headers out of their cells.
+  compact?: boolean;
 }) {
   const active = sort.key === field;
   return (
@@ -58,14 +63,26 @@ export default function SortHeader<K extends string>({
       <button
         type="button"
         onClick={() => onSort(field, naturalDir)}
-        className={`flex items-center gap-1 w-full text-left uppercase tracking-[.08em] cursor-pointer whitespace-nowrap ${
-          active ? "text-lol-gold" : "hover:text-lol-gold"
-        }`}
+        className={`flex items-center gap-1 w-full text-left uppercase tracking-[.08em] cursor-pointer ${
+          compact ? "min-w-0 overflow-hidden" : "whitespace-nowrap"
+        } ${active ? "text-lol-gold" : "hover:text-lol-gold"}`}
       >
-        {label}
-        <span aria-hidden="true" className={active ? "" : "opacity-0"}>
-          {active && sort.dir === "asc" ? "▲" : "▼"}
-        </span>
+        <span className={compact ? "truncate" : ""}>{label}</span>
+        {/* Wide columns hold the arrow's space whether or not it shows, so a
+            header doesn't jump sideways as you click along the row. Narrow
+            ones can't afford it and only draw the arrow when it means
+            something. */}
+        {compact ? (
+          active && (
+            <span aria-hidden="true" className="text-[9px] shrink-0">
+              {sort.dir === "asc" ? "▲" : "▼"}
+            </span>
+          )
+        ) : (
+          <span aria-hidden="true" className={active ? "" : "opacity-0"}>
+            {active && sort.dir === "asc" ? "▲" : "▼"}
+          </span>
+        )}
       </button>
     </th>
   );

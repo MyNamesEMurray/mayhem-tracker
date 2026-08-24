@@ -17,6 +17,7 @@ import TierBadge from "./TierBadge";
 import WinRateBar from "./WinRateBar";
 import { championSlug } from "../lib/slug";
 import SortHeader, { useSort } from "./SortHeader";
+import SortControl, { type SortOption } from "./SortControl";
 import { TIER_ORDER } from "../lib/stats";
 
 // Every column carries data, so every column sorts. Pick rate is games over a
@@ -115,6 +116,18 @@ export default function ChampionsTable({
     "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
   const sortProps = { sort, onSort: toggle, thClass: th };
 
+  // Same columns as the header row, for the card layout that has no header row
+  const sortOptions: SortOption<SortKey>[] = [
+    { key: "score", label: "Score" },
+    { key: "name", label: "Champion", naturalDir: "asc" },
+    { key: "tier", label: "Tier" },
+    { key: "winRate", label: "Win rate" },
+    { key: "games", label: "Games" },
+    { key: "pickRate", label: "Pick rate" },
+    { key: "kda", label: "KDA" },
+    { key: "damage", label: "Damage" },
+  ];
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -135,6 +148,7 @@ export default function ChampionsTable({
         <span className="text-xs">
           {sorted.length} champion{sorted.length === 1 ? "" : "s"}
         </span>
+        <SortControl options={sortOptions} sort={sort} onSort={toggle} />
         <div className="ml-auto">
           <SearchInput
             value={search}
