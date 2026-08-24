@@ -18,6 +18,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.4 — 2026-08-23
+
+- Win rates line up in a column again. The `*` marking a small sample sat inside the number, so a starred row pushed its percentage a character to the left and the column zig-zagged; the asterisk now keeps its own space whether or not it's shown, and the digits are set in tabular figures so they stay in step too. Fixed on the champion table, the champion page's augment lists, and the augment slot table.
+
 ## v2.12.3 — 2026-08-23
 
 - The item and augment lists on a champion page no longer show entries with fewer than five picks. Ranking blends the win rate with how much data stands behind it, but at two or three picks a perfect record could still edge out a solid one over thirty games — so the rows too thin to rank are simply left out rather than competing. The lists say so underneath.
