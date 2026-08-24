@@ -380,6 +380,11 @@ export default function App() {
               if (!onCommunityPage) navigate("/community/");
             })}
           </nav>
+          {/* The Community page reads its own totals and its own per-day
+              series — neither takes a patch or a queue — so the filters sat
+              there doing nothing. Hidden rather than disabled: a control that
+              can't change anything shouldn't ask to be tried. */}
+          {!onCommunityPage && (
           <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
             <select
               className="select"
@@ -402,6 +407,7 @@ export default function App() {
               onChange={(v) => setParam("patch", v)}
             />
           </div>
+          )}
         </div>
       </header>
 
