@@ -23,11 +23,18 @@ export default function WinRateBar({ wins, total }: { wins: number; total: numbe
         />
       </div>
       <span
-        className={`text-xs font-medium w-11 shrink-0 text-right whitespace-nowrap ${
+        className={`text-xs font-medium w-[3.25rem] shrink-0 inline-flex justify-end whitespace-nowrap ${
           lowSample ? "text-lol-text" : winning ? "text-lol-win" : "text-lol-loss"
         }`}
       >
-        {rate.toFixed(1)}%{lowSample ? "*" : ""}
+        {/* The asterisk gets a slot of its own, occupied or not, so the %
+            signs line up down the column instead of every starred row
+            shunting its number a character to the left. Tabular figures keep
+            the digits in step too. */}
+        <span className="tabular-nums">{rate.toFixed(1)}%</span>
+        <span className="w-2 text-left" aria-hidden={!lowSample}>
+          {lowSample ? "*" : ""}
+        </span>
       </span>
     </div>
   );

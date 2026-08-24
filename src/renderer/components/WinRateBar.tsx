@@ -24,11 +24,17 @@ export default function WinRateBar({ wins, total, showPercent = true }: WinRateB
       </div>
       {showPercent && (
         <span
-          className={`text-xs font-medium min-w-10 text-right ${
+          className={`text-xs font-medium min-w-[3.25rem] inline-flex justify-end ${
             lowSample ? "text-lol-text" : rate >= 50 ? "text-lol-win" : "text-lol-loss"
           }`}
         >
-          {rate.toFixed(1)}%{lowSample ? "*" : ""}
+          {/* The asterisk gets a slot of its own, occupied or not, so the %
+              signs line up down the column rather than every starred row
+              shunting its number a character left. Same as the website. */}
+          <span className="tabular-nums">{rate.toFixed(1)}%</span>
+          <span className="w-2 text-left" aria-hidden={!lowSample}>
+            {lowSample ? "*" : ""}
+          </span>
         </span>
       )}
     </div>
