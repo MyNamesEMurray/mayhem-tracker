@@ -20,6 +20,8 @@ on Riot's end is news to everyone, so leave those unmarked.
 
 ## v2.12.9 — 2026-08-24
 
+- **The title bar matches the website's logo.** MAYHEM in beige, STATS in gold — the split the site uses — and TRACKER in gold and heavier, which is what marks this as the app rather than the site.
+- **Bold text is finally bold.** The bundled font carries weights from 100 to 900, but was declared as 400–700, so every "extra bold" heading in the app and on the website quietly rendered one step lighter than intended. Headings now land where they were meant to — about 1% wider, nothing moves.
 - **The Augments tab has the columns the website has.** Tier, Score, Win Rate, Picks, Pick Rate, KDA and Damage, in that order, on both sources. Tiers rank each augment against its own rarity, the same way the site does it — a Prismatic and a Silver are never ranked against each other.
 - **Both tier lists say what they're showing.** The heading now reads "ARAM Mayhem Champions Tier List" and follows the queue you've picked, with the patch and game count underneath. The count was always the games in that patch and queue; the old heading just didn't say so, which made it look like the whole database had shrunk.
 - **Numbers carry a thousands separator everywhere.** The website was showing damage as "50.6k" and game counts as "4139" while the app showed "50,580" and "4,139". Both now read 50,580 and 4,139.

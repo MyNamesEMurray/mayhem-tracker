@@ -2,10 +2,13 @@
  * needs no network. Two variable subsets covering weights 400-700; anything
  * outside them (Cyrillic or CJK in a Riot ID) falls back to the system stack.
  * Inter is licensed under the SIL Open Font License 1.1. */
+  /* The variable file carries 100–900. Declaring 400–700 clamped everything
+     heavier: font-extrabold (800) rendered identically to 700 everywhere on
+     both surfaces, including every page heading and the app's title bar. */
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
   src: url("./fonts/inter-latin-ext.woff2") format("woff2");
   unicode-range:
@@ -16,7 +19,7 @@
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
   src: url("./fonts/inter-latin.woff2") format("woff2");
   unicode-range:
