@@ -20,7 +20,13 @@ on Riot's end is news to everyone, so leave those unmarked.
 
 ## v2.12.5 — 2026-08-24
 
+- **One Score, everywhere.** Champions were ranked one way and items and augments another, both called "Score" — two numbers wearing one name. Everything now uses the confidence score: the win rate the games behind an entry will support, out of 100. Champion tiers shift a little as a result, and the shift is the point — on a fresh patch a champion with fifteen games no longer sits above one with two hundred. Over a full patch range almost nothing moves, because there the evidence is in.
+
 - The community stats load again, and load fast. With 136,000 games in the database the app was downloading every augment and item row in existence — more than half a million of them — before it could draw a champion page, and the server started refusing the request outright. It now pulls the champion table up front and fetches a champion's augments and items when you open that champion, keeping the last two dozen you looked at in memory so flipping between them is instant. <!--fixes:v2.12.0-->
+- <!--fixes:v2.12.2--> **Items and augments are ranked by the record behind them, not just the record.** A 5-game item at 100% was landing above Warmog's Armor at 60.1% over 2,635 games — the old ranking all but tied them, which is the wrong answer at 500 times the evidence. Every list now shows a **Score out of 100**: the win rate the games actually support, so a perfect handful of games starts low and climbs as it proves itself, instead of arriving at the top and sliding down. The five-game item scores 56.6; Warmog's scores 58.2.
+- **Components are out of the build lists.** Ruby Crystal, Giant's Belt and Recurve Bow were showing up with win rates earned by sitting in someone's inventory at the final whistle, not by being anyone's plan. Items that only _look_ like components stay: Manamune and Archangel's Staff transform rather than build into anything, so they read as the finished items they are. A **Components** button in the list header brings the parts back if you want them.
+- Tier-2 boots are back in the build lists and build paths. Ionian Boots of Lucidity, Berserker's Greaves and four others were being treated as parts because they cost under 1000g — a boot counts because it's built from the boots everyone starts with, not because of its price.
+- Long item names are no longer cut off on a phone. "Overlord'..." now reads as Overlord's Bloodmail: the number columns give up some width, the win-rate meter steps aside for its percentage, and a name that needs two lines gets them.
 
 ## v2.12.4 — 2026-08-23
 
@@ -48,7 +54,7 @@ on Riot's end is news to everyone, so leave those unmarked.
 
 - The **Champions** tab can now show everyone's games, not just yours. A **My games / Community** switch sits above the table: flip it and the champions, augments, and items all come from the shared database behind [mayhemstats.com](https://mayhemstats.com/), so looking up a build no longer means leaving the app. Expand a champion and you get its best augments and items across every contributed game.
 - Those community numbers are stored on your machine and refresh a few times a day, with a **refresh** link when you want them sooner. If you're offline they keep showing whatever they last had rather than going blank.
-- **"Global" is now "My Lobbies"** — which is all it ever was: everyone who turned up in *your* matches. The old name sounded like it meant everyone's games, so an empty champion row read as "nobody plays this" when it really meant "you haven't played with one".
+- **"Global" is now "My Lobbies"** — which is all it ever was: everyone who turned up in _your_ matches. The old name sounded like it meant everyone's games, so an empty champion row read as "nobody plays this" when it really meant "you haven't played with one".
 - The app now ships with its own font instead of borrowing whichever one your operating system hands it, so it looks the same everywhere — and matches the website.
 
 ## v2.11.3 — 2026-08-22

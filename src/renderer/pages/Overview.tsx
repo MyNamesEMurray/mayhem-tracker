@@ -170,7 +170,11 @@ export default function Overview() {
     <div className="w-full flex flex-col gap-4">
       {/* Profile row */}
       <div className="flex items-center gap-3.5">
-        <SummonerIcon iconId={profile?.icon ?? null} size={52} className="border-2 border-lol-gold/40" />
+        <SummonerIcon
+          iconId={profile?.icon ?? null}
+          size={52}
+          className="border-2 border-lol-gold/40"
+        />
         <div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-[17px] font-bold text-lol-gold">

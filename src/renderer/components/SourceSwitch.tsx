@@ -97,7 +97,9 @@ export default function SourceSwitch({
       </div>
       {source === "community" && (
         <span className="text-[11px] text-lol-text">
-          {meta ? `${meta.games.toLocaleString()} games · updated ${freshness(meta.fetchedAt)}` : "loading…"}
+          {meta
+            ? `${meta.games.toLocaleString()} games · updated ${freshness(meta.fetchedAt)}`
+            : "loading…"}
           <button
             onClick={refresh}
             disabled={busy}

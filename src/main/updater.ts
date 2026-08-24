@@ -56,7 +56,10 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
       assetUrl: asset?.browser_download_url,
       assetSize: asset?.size,
       notes: buildReleaseNotes(
-        published.map((r) => ({ version: r.version, body: typeof r.body === "string" ? r.body : "" })),
+        published.map((r) => ({
+          version: r.version,
+          body: typeof r.body === "string" ? r.body : "",
+        })),
         current,
       ),
     };

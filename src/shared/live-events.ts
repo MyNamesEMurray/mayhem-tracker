@@ -67,13 +67,27 @@ export class LiveGameSession {
       for (const [id, n] of current) {
         const before = track.items.get(id) ?? 0;
         if (n > before) {
-          this.events.push({ gameTime, riotId, action: "add", itemId: id, count: n - before, detail: null });
+          this.events.push({
+            gameTime,
+            riotId,
+            action: "add",
+            itemId: id,
+            count: n - before,
+            detail: null,
+          });
         }
       }
       for (const [id, n] of track.items) {
         const now = current.get(id) ?? 0;
         if (now < n) {
-          this.events.push({ gameTime, riotId, action: "remove", itemId: id, count: n - now, detail: null });
+          this.events.push({
+            gameTime,
+            riotId,
+            action: "remove",
+            itemId: id,
+            count: n - now,
+            detail: null,
+          });
         }
       }
       track.items = current;
@@ -81,7 +95,14 @@ export class LiveGameSession {
       for (const name of spellNames) {
         if (name !== "" && !track.knownSpells.has(name)) {
           track.knownSpells.add(name);
-          this.events.push({ gameTime, riotId, action: "augment", itemId: null, count: 1, detail: name });
+          this.events.push({
+            gameTime,
+            riotId,
+            action: "augment",
+            itemId: null,
+            count: 1,
+            detail: name,
+          });
         }
       }
     }

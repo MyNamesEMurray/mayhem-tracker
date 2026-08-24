@@ -54,6 +54,9 @@ const SORT_LABELS: Record<SortBy, string> = {
   picks: "Games",
 };
 
+const SCORE_HINT =
+  "The win rate this record supports, out of 100 — the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";
+
 function sortRows<T extends { picks: number; wins: number }>(rows: T[], by: SortBy): T[] {
   const value = (r: T) =>
     by === "picks" ? r.picks : by === "winRate" ? winRate(r.wins, r.picks) : score(r.wins, r.picks);
@@ -236,9 +239,27 @@ export default function ChampionDetail() {
     return tiers.get(championId) ?? null;
   }, [champions, championId]);
 
+  // Components sit out of the build lists: they are what a finished item was
+  // on the way to, not something anyone set out to build. An id the item data
+  // doesn't know is treated as finished, so a gap in what loaded never hides
+  // real data — and the lists fill in rather than flashing empty.
+  const finishedItems = useMemo(
+    () => (items ?? []).filter((i) => itemData[i.item_id]?.completed !== false),
+    [items, itemData],
+  );
+  const hasComponents = (items ?? []).length !== finishedItems.length;
+  const [showComponents, setShowComponents] = useState(false);
+
   const coreBuild = useMemo(
-    () => rankForBuild(items ?? [], (i) => i.picks, (i) => i.wins, ITEM_MIN_GAMES, 6),
-    [items],
+    () =>
+      rankForBuild(
+        finishedItems,
+        (i) => i.picks,
+        (i) => i.wins,
+        ITEM_MIN_GAMES,
+        6,
+      ),
+    [finishedItems],
   );
 
   const augmentsByRarity = useMemo(
@@ -266,13 +287,13 @@ export default function ChampionDetail() {
 
   const visibleItems = useMemo(() => {
     const q = itemSearch.trim().toLowerCase();
-    const list = (items ?? []).filter(
+    const list = (showComponents ? (items ?? []) : finishedItems).filter(
       (i) =>
         i.picks >= LIST_MIN_PICKS &&
         (q ? (itemData[i.item_id]?.name ?? "").toLowerCase().includes(q) : true),
     );
     return sortRows(list, itemSort);
-  }, [items, itemSearch, itemData, itemSort]);
+  }, [items, finishedItems, showComponents, itemSearch, itemData, itemSort]);
 
   const visibleAugments = useMemo(() => {
     const q = augSearch.trim().toLowerCase();
@@ -372,8 +393,7 @@ export default function ChampionDetail() {
               {champ.games} games · KDA{" "}
               <span className={`font-semibold ${kdaColor(kda)}`}>{kda.toFixed(2)}</span> (
               {formatAvg(perGame(champ.kills))} / {formatAvg(perGame(champ.deaths))} /{" "}
-              {formatAvg(perGame(champ.assists))})
-              {source === "community" && " · community games"}
+              {formatAvg(perGame(champ.assists))}){source === "community" && " · community games"}
             </p>
           </div>
           <div className="w-full min-[701px]:w-[200px] min-[701px]:ml-auto">
@@ -445,9 +465,7 @@ export default function ChampionDetail() {
                           <span className="tabular-nums">
                             {winRate(a.wins, a.picks).toFixed(0)}%
                           </span>
-                          <span className="w-2 text-left">
-                            {a.picks < MIN_SAMPLE ? "*" : ""}
-                          </span>
+                          <span className="w-2 text-left">{a.picks < MIN_SAMPLE ? "*" : ""}</span>
                         </span>
                       </div>
                     ))}
@@ -468,6 +486,23 @@ export default function ChampionDetail() {
           placeholder="Search item…"
           sort={itemSort}
           onSort={setItemSort}
+          filter={
+            hasComponents ? (
+              <button
+                type="button"
+                onClick={() => setShowComponents((v) => !v)}
+                aria-pressed={showComponents}
+                title="Components — Ruby Crystal, Boots, Recurve Bow — carry a win rate from sitting in an inventory, not from being built on purpose"
+                className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors cursor-pointer ${
+                  showComponents
+                    ? "bg-lol-gold/20 text-lol-gold-light"
+                    : "text-lol-text hover:text-lol-gold-light"
+                }`}
+              >
+                Components
+              </button>
+            ) : undefined
+          }
           rows={visibleItems.map((i) => ({
             key: i.item_id,
             icon: <ItemIcon itemId={i.item_id} size={24} patch={patch} />,
@@ -495,10 +530,11 @@ export default function ChampionDetail() {
       </div>
 
       <p className="text-[11px] text-lol-text">
-        Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked *
-        fall under {MIN_SAMPLE} games. Score blends the win rate with a 50% prior
-        worth 20 games, so a confident record outranks a lucky one — the same method as
-        mayhemstats.com.
+        Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked * fall
+        under {MIN_SAMPLE} games. Score is the win rate the record supports, out of 100: the floor
+        of a 95% confidence interval, so 100% over 5 games scores below 60% over 2,600. Champions,
+        items and augments all rank by it. Components are left out of the build lists — items that
+        transform, like Manamune, are not components — and the same method runs on mayhemstats.com.
       </p>
     </div>
   );
@@ -529,15 +565,22 @@ function StatTable({
   return (
     <div className={`${PANEL} p-5`}>
       <div className="flex items-center gap-2 flex-wrap mb-3">
-        <h2 className={LABEL}>{title}</h2>
-        <div className="ml-auto flex items-center gap-2 flex-wrap">
-          {filter}
+        <h2 className={`${LABEL} mr-auto`}>{title}</h2>
+        {filter}
+        {/* The search takes the row's leftover rather than a fixed width it
+            cannot give back. A fixed width wraps the moment the panel is
+            narrower than it wants and lands on a row of its own; growing
+            keeps it up here while 96px remain, and fills the row when it does
+            drop. The slack goes to the title's margin, not the search's, so
+            the search sits flush right when the cap bites on a wide panel
+            instead of leaving a hole beside it on a wrapped one. */}
+        <div className="flex-1 min-w-[96px] max-w-[280px]">
           <input
             type="text"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={placeholder}
-            className="input w-40"
+            className="input w-full"
           />
         </div>
       </div>
@@ -565,8 +608,16 @@ function StatTable({
             {visible.map((r) => (
               <div key={r.key} className="flex items-center gap-2.5 h-7">
                 <span className="shrink-0 leading-none">{r.icon}</span>
-                <span className="text-xs text-lol-text-bright truncate min-w-0">{r.name}</span>
+                <span className="text-xs text-lol-text-bright truncate min-w-0" title={r.name}>
+                  {r.name}
+                </span>
                 <span className="text-[11px] text-lol-text ml-auto shrink-0">{r.picks}x</span>
+                <span
+                  className="text-[11px] font-medium tabular-nums text-lol-text-bright shrink-0 w-8 text-right"
+                  title={SCORE_HINT}
+                >
+                  {score(r.wins, r.picks).toFixed(1)}
+                </span>
                 <span className="shrink-0">
                   <WinRateBar wins={r.wins} total={r.picks} />
                 </span>

@@ -167,9 +167,16 @@ export default function AugmentsTable({
             20+ games
           </button>
         )}
-        <span className="text-xs self-center ml-1">{sorted.length} augments</span>
+        <span className="text-xs self-center ml-1">
+          {sorted.length} augment{sorted.length === 1 ? "" : "s"}
+        </span>
         <div className="ml-auto">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search augment..." width={190} />
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search augment..."
+            width={190}
+          />
         </div>
       </div>
 
@@ -219,8 +226,9 @@ export default function AugmentsTable({
         )}
       </div>
       <p className="text-xs text-lol-text/70">
-        Score is the win rate adjusted toward 50% for small samples; tiers rank each augment
-        against others of its rarity. * fewer than 20 games — treat with caution.
+        Score is the win rate the record supports, out of 100 — the floor of a 95% confidence
+        interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
+        each augment against others of its rarity. * fewer than 20 games — treat with caution.
       </p>
     </div>
   );
@@ -272,7 +280,8 @@ function AugmentRow({
   }, [expanded, rows, aug.augment_id]);
 
   const breakdown = useMemo(
-    () => (expanded && rows ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 9) : []),
+    () =>
+      expanded && rows ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 9) : [],
     [expanded, rows, filters, aug.augment_id],
   );
 

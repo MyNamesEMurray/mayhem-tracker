@@ -1,141 +1,219 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="robots" content="noindex, nofollow" />
-<title>Review — MayhemStats</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" type="image/png" href="/icon.png" />
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    background: #0b0e14;
-    color: #e2e8f0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  .card {
-    background: #12161f;
-    border: 1px solid #2a2e3a;
-    border-radius: 12px;
-    padding: 32px;
-    max-width: 460px;
-    width: 100%;
-    text-align: center;
-  }
-  .brand { font-size: 20px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.01em; }
-  .brand .gold { color: #c89b3c; }
-  h1 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-  p { font-size: 13px; color: #94a0b8; line-height: 1.6; margin-bottom: 20px; }
-  .mono { font-family: Consolas, monospace; font-size: 12px; color: #e2e8f0; }
-  button {
-    font: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    border: 0;
-    border-radius: 8px;
-    padding: 10px 24px;
-    cursor: pointer;
-  }
-  button:disabled { opacity: 0.5; cursor: default; }
-  .approve { background: #16a34a; }
-  .deny { background: #dc2626; }
-  .result { font-size: 14px; line-height: 1.6; }
-  .ok { color: #4ade80; }
-  .err { color: #f87171; }
-  .reasons { text-align: left; font-size: 12px; color: #94a0b8; margin: 12px 0 0; padding-left: 18px; }
-  .reasons li { margin: 3px 0; }
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="brand"><span class="gold">MAYHEM</span>STATS</div>
-  <div id="content"><p>Loading…</p></div>
-</div>
-<script>
-  // Confirms a quarantine decision from a digest-email link. The extra click
-  // exists so email scanners that prefetch URLs can't act on a game; the
-  // decision only happens on the POST below.
-  var SUPABASE_URL = "https://lmzenzxbhotszvwsnhlm.supabase.co";
-  var ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtemVuenhiaG90c3p2d3NuaGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMjU0NDcsImV4cCI6MjEwMTgwMTQ0N30.7FoFD7LFaV5Yin4OnjYjECAYZPa2I9xc6oQa4xPAKpA";
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Review — MayhemStats</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0b0e14;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        background: #12161f;
+        border: 1px solid #2a2e3a;
+        border-radius: 12px;
+        padding: 32px;
+        max-width: 460px;
+        width: 100%;
+        text-align: center;
+      }
+      .brand {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        letter-spacing: -0.01em;
+      }
+      .brand .gold {
+        color: #c89b3c;
+      }
+      h1 {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      p {
+        font-size: 13px;
+        color: #94a0b8;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+      .mono {
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        color: #e2e8f0;
+      }
+      button {
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 24px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .approve {
+        background: #16a34a;
+      }
+      .deny {
+        background: #dc2626;
+      }
+      .result {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .ok {
+        color: #4ade80;
+      }
+      .err {
+        color: #f87171;
+      }
+      .reasons {
+        text-align: left;
+        font-size: 12px;
+        color: #94a0b8;
+        margin: 12px 0 0;
+        padding-left: 18px;
+      }
+      .reasons li {
+        margin: 3px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="brand"><span class="gold">MAYHEM</span>STATS</div>
+      <div id="content"><p>Loading…</p></div>
+    </div>
+    <script>
+      // Confirms a quarantine decision from a digest-email link. The extra click
+      // exists so email scanners that prefetch URLs can't act on a game; the
+      // decision only happens on the POST below.
+      var SUPABASE_URL = "https://lmzenzxbhotszvwsnhlm.supabase.co";
+      var ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtemVuenhiaG90c3p2d3NuaGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMjU0NDcsImV4cCI6MjEwMTgwMTQ0N30.7FoFD7LFaV5Yin4OnjYjECAYZPa2I9xc6oQa4xPAKpA";
 
-  var params = new URLSearchParams(location.search);
-  var id = params.get("id") || "";
-  var action = params.get("action") || "";
-  var key = params.get("key") || "";
-  var content = document.getElementById("content");
+      var params = new URLSearchParams(location.search);
+      var id = params.get("id") || "";
+      var action = params.get("action") || "";
+      var key = params.get("key") || "";
+      var content = document.getElementById("content");
 
-  function esc(s) {
-    var d = document.createElement("div");
-    d.textContent = String(s);
-    return d.innerHTML;
-  }
+      function esc(s) {
+        var d = document.createElement("div");
+        d.textContent = String(s);
+        return d.innerHTML;
+      }
 
-  if (!/^[0-9a-f-]{36}$/i.test(id) || (action !== "approve" && action !== "deny") || !/^[0-9a-f]{64}$/i.test(key)) {
-    content.innerHTML =
-      '<h1>Invalid link</h1><p>This page only works from a MayhemStats review email link.</p>';
-  } else {
-    var verb = action === "approve" ? "Approve" : "Deny";
-    content.innerHTML =
-      "<h1>" + verb + " this game?</h1>" +
-      '<p>Quarantined game <span class="mono">' + esc(id.slice(0, 8)) + "…</span><br/>" +
-      (action === "approve"
-        ? "It will be added to the community stats."
-        : "It will stay excluded from the community stats.") +
-      "</p>" +
-      '<button class="' + action + '" id="go">' + verb + "</button>";
-    document.getElementById("go").addEventListener("click", function () {
-      var btn = document.getElementById("go");
-      btn.disabled = true;
-      btn.textContent = "Working…";
-      fetch(SUPABASE_URL + "/functions/v1/review", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: ANON_KEY,
-          Authorization: "Bearer " + ANON_KEY,
-        },
-        body: JSON.stringify({ id: id, action: action, key: key }),
-      })
-        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, d: d }; }); })
-        .then(function (r) {
-          if (!r.ok || r.d.error) {
-            content.innerHTML =
-              '<h1 class="err">That didn’t work</h1><p class="result err">' +
-              esc(r.d && r.d.error ? r.d.error : "Request failed") + "</p>";
-            return;
-          }
-          var head = r.d.already
-            ? "Already " + esc(r.d.status)
-            : (r.d.status === "approved" ? "Approved" : "Denied");
-          var reasons = (r.d.reasons || [])
-            .map(function (x) { return "<li>" + esc(x) + "</li>"; })
-            .join("");
-          content.innerHTML =
-            '<h1 class="' + (r.d.status === "approved" ? "ok" : "err") + '">' + head + "</h1>" +
-            '<p class="result">' +
-            esc(r.d.platform || "") + " &middot; game " + esc(r.d.gameId || "") +
-            (r.d.patch ? " &middot; patch " + esc(r.d.patch) : "") +
-            (r.d.already ? "<br/>This link was already used — nothing changed." :
-              (r.d.status === "approved"
-                ? "<br/>The game now counts toward the community stats."
-                : "<br/>The game stays excluded from the community stats.")) +
-            "</p>" +
-            (reasons ? '<ul class="reasons">' + reasons + "</ul>" : "");
-        })
-        .catch(function () {
-          content.innerHTML =
-            '<h1 class="err">Network error</h1><p>Could not reach the review service. Try again in a minute.</p>';
-          });
-    });
-  }
-</script>
-</body>
+      if (
+        !/^[0-9a-f-]{36}$/i.test(id) ||
+        (action !== "approve" && action !== "deny") ||
+        !/^[0-9a-f]{64}$/i.test(key)
+      ) {
+        content.innerHTML =
+          "<h1>Invalid link</h1><p>This page only works from a MayhemStats review email link.</p>";
+      } else {
+        var verb = action === "approve" ? "Approve" : "Deny";
+        content.innerHTML =
+          "<h1>" +
+          verb +
+          " this game?</h1>" +
+          '<p>Quarantined game <span class="mono">' +
+          esc(id.slice(0, 8)) +
+          "…</span><br/>" +
+          (action === "approve"
+            ? "It will be added to the community stats."
+            : "It will stay excluded from the community stats.") +
+          "</p>" +
+          '<button class="' +
+          action +
+          '" id="go">' +
+          verb +
+          "</button>";
+        document.getElementById("go").addEventListener("click", function () {
+          var btn = document.getElementById("go");
+          btn.disabled = true;
+          btn.textContent = "Working…";
+          fetch(SUPABASE_URL + "/functions/v1/review", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: ANON_KEY,
+              Authorization: "Bearer " + ANON_KEY,
+            },
+            body: JSON.stringify({ id: id, action: action, key: key }),
+          })
+            .then(function (res) {
+              return res.json().then(function (d) {
+                return { ok: res.ok, d: d };
+              });
+            })
+            .then(function (r) {
+              if (!r.ok || r.d.error) {
+                content.innerHTML =
+                  '<h1 class="err">That didn’t work</h1><p class="result err">' +
+                  esc(r.d && r.d.error ? r.d.error : "Request failed") +
+                  "</p>";
+                return;
+              }
+              var head = r.d.already
+                ? "Already " + esc(r.d.status)
+                : r.d.status === "approved"
+                  ? "Approved"
+                  : "Denied";
+              var reasons = (r.d.reasons || [])
+                .map(function (x) {
+                  return "<li>" + esc(x) + "</li>";
+                })
+                .join("");
+              content.innerHTML =
+                '<h1 class="' +
+                (r.d.status === "approved" ? "ok" : "err") +
+                '">' +
+                head +
+                "</h1>" +
+                '<p class="result">' +
+                esc(r.d.platform || "") +
+                " &middot; game " +
+                esc(r.d.gameId || "") +
+                (r.d.patch ? " &middot; patch " + esc(r.d.patch) : "") +
+                (r.d.already
+                  ? "<br/>This link was already used — nothing changed."
+                  : r.d.status === "approved"
+                    ? "<br/>The game now counts toward the community stats."
+                    : "<br/>The game stays excluded from the community stats.") +
+                "</p>" +
+                (reasons ? '<ul class="reasons">' + reasons + "</ul>" : "");
+            })
+            .catch(function () {
+              content.innerHTML =
+                '<h1 class="err">Network error</h1><p>Could not reach the review service. Try again in a minute.</p>';
+            });
+        });
+      }
+    </script>
+  </body>
 </html>

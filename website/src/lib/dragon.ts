@@ -129,7 +129,7 @@ let itemPromise: Promise<ItemData> | null = null;
 export function loadItemData(): Promise<ItemData> {
   if (itemPromise) return itemPromise;
   itemPromise = (async () => {
-    const cached = readCache<ItemData>("item-data-v3");
+    const cached = readCache<ItemData>("item-data-v4");
     if (cached) return cached;
 
     const data = await (
@@ -147,10 +147,16 @@ export function loadItemData(): Promise<ItemData> {
         // Mode-specific prismatics (six-digit ids) count regardless of price.
         // Tier-2 boots upgrade into tier-3, so they build into something while
         // still being a real build step — include them by price instead.
+        const builtFrom = Array.isArray(item.from) ? item.from.length : 0;
+        // Tier-2 boots upgrade into tier-3, so they build into something while
+        // still being a real purchase. What separates them from the 300g
+        // Boots everyone starts with is that they are built *from* it —
+        // price alone dropped Ionian Boots of Lucidity, at 900g, off the list.
         const completed =
-          (buildsInto === 0 && !categories.includes("Consumable") &&
+          (buildsInto === 0 &&
+            !categories.includes("Consumable") &&
             (price >= 500 || item.id >= 100000)) ||
-          (categories.includes("Boots") && price >= 1000);
+          (categories.includes("Boots") && builtFrom > 0);
         out[item.id] = {
           name: item.name || `Item ${item.id}`,
           iconPath: item.iconPath || "",
@@ -158,7 +164,7 @@ export function loadItemData(): Promise<ItemData> {
         };
       }
     }
-    writeCache("item-data-v3", out);
+    writeCache("item-data-v4", out);
     return out;
   })();
   itemPromise.catch(() => {
@@ -169,4 +175,22 @@ export function loadItemData(): Promise<ItemData> {
 
 export function getItemName(data: ItemData, id: number): string {
   return data[id]?.name || `Item ${id}`;
+}
+
+// Whether an item belongs in a build list. Components — Recurve Bow, Giant's
+// Belt, Ruby Crystal — carry a win rate because they sat in someone's
+// inventory at the final whistle, not because anyone set out to build them,
+// and they crowd out the items that were the plan.
+//
+// The test is `completed`, which asks whether an item builds into anything,
+// so it keeps the items that only look like components: Manamune and
+// Archangel's Staff *transform* into Muramana and Seraph's Embrace, which the
+// item data models as separate items rather than a recipe, leaving both
+// halves finished. Tier-2 boots are the one real recipe kept, by price.
+//
+// An id the item data doesn't know is treated as finished: a missing entry is
+// a gap in what we loaded, and hiding real data over it is the worse mistake.
+export function isFinishedItem(data: ItemData, id: number): boolean {
+  const item = data[id];
+  return item ? item.completed === true : true;
 }

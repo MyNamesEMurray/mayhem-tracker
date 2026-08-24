@@ -25,7 +25,13 @@ body {
   background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
   background-attachment: fixed;
   color: var(--color-lol-text);
-  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-family:
+    "Inter",
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    sans-serif;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
@@ -114,9 +120,16 @@ body {
    thead hidden, each row a labeled grid. Column indices are load-bearing —
    keep them in sync with ChampionsTable (.ctbl) and AugmentsTable (.atbl). */
 @media (max-width: 700px) {
-  .ctbl { min-width: 0 !important; display: block; }
-  .ctbl thead { display: none; }
-  .ctbl tbody { display: block; }
+  .ctbl {
+    min-width: 0 !important;
+    display: block;
+  }
+  .ctbl thead {
+    display: none;
+  }
+  .ctbl tbody {
+    display: block;
+  }
   .ctbl tbody tr {
     display: grid !important;
     /* The name gets a line to itself apart from rank and score. Sharing it
@@ -132,23 +145,40 @@ body {
     gap: 6px 10px;
     padding: 10px 12px;
   }
-  .ctbl tbody td { padding: 0 !important; }
-  .ctbl td:nth-child(1) { grid-area: rank; }
-  .ctbl td:nth-child(2) { grid-area: champ; min-width: 0; }
+  .ctbl tbody td {
+    padding: 0 !important;
+  }
+  .ctbl td:nth-child(1) {
+    grid-area: rank;
+  }
+  .ctbl td:nth-child(2) {
+    grid-area: champ;
+    min-width: 0;
+  }
   /* The name shares its line with nothing that can crowd it, so it stays on
      one line at any length. A grid item still won't shrink below its content
      without this, and the ellipsis is a last resort for a name longer than
      the row can hold — it is not reached by any champion today. */
-  .ctbl td:nth-child(2) > * { min-width: 0; }
+  .ctbl td:nth-child(2) > * {
+    min-width: 0;
+  }
   .ctbl td:nth-child(2) a {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .ctbl td:nth-child(3) { grid-area: tier; }
-  .ctbl td:nth-child(4) { grid-area: score; }
-  .ctbl td:nth-child(5) { grid-area: bar; }
-  .ctbl td:nth-child(8) { white-space: normal !important; }
+  .ctbl td:nth-child(3) {
+    grid-area: tier;
+  }
+  .ctbl td:nth-child(4) {
+    grid-area: score;
+  }
+  .ctbl td:nth-child(5) {
+    grid-area: bar;
+  }
+  .ctbl td:nth-child(8) {
+    white-space: normal !important;
+  }
   .ctbl td:nth-child(n + 6)::before {
     display: block;
     font-size: 9px;
@@ -157,14 +187,29 @@ body {
     color: var(--color-lol-text);
     font-weight: 500;
   }
-  .ctbl td:nth-child(6)::before { content: "Games"; }
-  .ctbl td:nth-child(7)::before { content: "Pick rate"; }
-  .ctbl td:nth-child(8)::before { content: "KDA"; }
-  .ctbl td:nth-child(9)::before { content: "Damage"; }
+  .ctbl td:nth-child(6)::before {
+    content: "Games";
+  }
+  .ctbl td:nth-child(7)::before {
+    content: "Pick rate";
+  }
+  .ctbl td:nth-child(8)::before {
+    content: "KDA";
+  }
+  .ctbl td:nth-child(9)::before {
+    content: "Damage";
+  }
 
-  .atbl { min-width: 0 !important; display: block; }
-  .atbl thead { display: none; }
-  .atbl tbody { display: block; }
+  .atbl {
+    min-width: 0 !important;
+    display: block;
+  }
+  .atbl thead {
+    display: none;
+  }
+  .atbl tbody {
+    display: block;
+  }
   .atbl tbody tr {
     display: grid !important;
     grid-template-columns: 1fr auto auto;
@@ -175,19 +220,32 @@ body {
     gap: 6px 10px;
     padding: 10px 12px;
   }
-  .atbl tbody td { padding: 0 !important; }
+  .atbl tbody td {
+    padding: 0 !important;
+  }
   /* Same for augment names, which are longer than champion names and would
      hit this sooner ("Tank It Or Leave It") */
-  .atbl td:nth-child(1) { grid-area: aug; min-width: 0; }
-  .atbl td:nth-child(1) > * { min-width: 0; }
+  .atbl td:nth-child(1) {
+    grid-area: aug;
+    min-width: 0;
+  }
+  .atbl td:nth-child(1) > * {
+    min-width: 0;
+  }
   .atbl td:nth-child(1) a,
   .atbl td:nth-child(1) span {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .atbl td:nth-child(2) { grid-area: tier; }
-  .atbl td:nth-child(3) { grid-area: score; }
-  .atbl td:nth-child(4) { grid-area: bar; }
+  .atbl td:nth-child(2) {
+    grid-area: tier;
+  }
+  .atbl td:nth-child(3) {
+    grid-area: score;
+  }
+  .atbl td:nth-child(4) {
+    grid-area: bar;
+  }
   .atbl td:nth-child(n + 5)::before {
     display: block;
     font-size: 9px;
@@ -196,10 +254,22 @@ body {
     color: var(--color-lol-text);
     font-weight: 500;
   }
-  .atbl td:nth-child(5)::before { content: "Picks"; }
-  .atbl td:nth-child(6)::before { content: "Pick rate"; }
-  .atbl td:nth-child(7)::before { content: "KDA"; }
-  .atbl td:nth-child(8)::before { content: "Damage"; }
-  .atbl tr.xrow { display: block !important; }
-  .atbl tr.xrow td { padding: 12px !important; }
+  .atbl td:nth-child(5)::before {
+    content: "Picks";
+  }
+  .atbl td:nth-child(6)::before {
+    content: "Pick rate";
+  }
+  .atbl td:nth-child(7)::before {
+    content: "KDA";
+  }
+  .atbl td:nth-child(8)::before {
+    content: "Damage";
+  }
+  .atbl tr.xrow {
+    display: block !important;
+  }
+  .atbl tr.xrow td {
+    padding: 12px !important;
+  }
 }

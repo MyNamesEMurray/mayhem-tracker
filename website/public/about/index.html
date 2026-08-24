@@ -22,23 +22,59 @@
         --text: #94a0b8;
         --bright: #e8ecf4;
       }
-      * { box-sizing: border-box; margin: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
       body {
         background-color: var(--dark);
         background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
         color: var(--text);
-        font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        font-family:
+          "Inter",
+          "Segoe UI",
+          -apple-system,
+          BlinkMacSystemFont,
+          Roboto,
+          sans-serif;
         line-height: 1.65;
         -webkit-font-smoothing: antialiased;
       }
-      main { max-width: 780px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
-      h1 { color: var(--bright); font-size: 1.75rem; margin-bottom: 0.5rem; }
-      h2 { color: var(--bright); font-size: 1.15rem; margin: 2.25rem 0 0.75rem; }
-      p, li { margin-bottom: 0.85rem; font-size: 0.95rem; }
-      ul { padding-left: 1.25rem; }
-      a { color: var(--gold); text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .back { display: inline-block; margin-bottom: 2rem; font-size: 0.9rem; }
+      main {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 3rem 1.25rem 4rem;
+      }
+      h1 {
+        color: var(--bright);
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+      h2 {
+        color: var(--bright);
+        font-size: 1.15rem;
+        margin: 2.25rem 0 0.75rem;
+      }
+      p,
+      li {
+        margin-bottom: 0.85rem;
+        font-size: 0.95rem;
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      a {
+        color: var(--gold);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+      }
       .card {
         background: var(--card);
         border: 1px solid var(--border);
@@ -46,7 +82,12 @@
         padding: 1rem 1.25rem;
         margin: 1rem 0;
       }
-      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.8rem; }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+      }
     </style>
   </head>
   <body>
@@ -65,62 +106,72 @@
 
       <h2>Why this exists</h2>
       <p>
-        Riot's public API doesn't expose ARAM Mayhem's match data — augment picks in particular
-        are simply absent from the match API. The major stats sites bridge the gap with proxy
-        data: item stats borrowed from regular ARAM and augment stats borrowed from Arena. Those
-        are different modes with different balance, pacing, and augment pools, so none of those
-        numbers actually come from Mayhem games. The one place real Mayhem data exists is the
-        League client itself, which keeps the full post-game breakdown of your own matches.
+        Riot's public API doesn't expose ARAM Mayhem's match data — augment picks in particular are
+        simply absent from the match API. The major stats sites bridge the gap with proxy data: item
+        stats borrowed from regular ARAM and augment stats borrowed from Arena. Those are different
+        modes with different balance, pacing, and augment pools, so none of those numbers actually
+        come from Mayhem games. The one place real Mayhem data exists is the League client itself,
+        which keeps the full post-game breakdown of your own matches.
       </p>
       <p>
-        MayhemStats is the community's answer: crowdsource the real thing. The tracker reads
-        matches from each player's own client, and everyone who opts in pools anonymized games
-        into a shared database. Every number on this site comes from actual ARAM Mayhem games
-        contributed by players — there is no other source, which is also why
-        <a href="/download/">running the
-        tracker</a> and opting in directly makes the stats better for everyone.
+        MayhemStats is the community's answer: crowdsource the real thing. The tracker reads matches
+        from each player's own client, and everyone who opts in pools anonymized games into a shared
+        database. Every number on this site comes from actual ARAM Mayhem games contributed by
+        players — there is no other source, which is also why
+        <a href="/download/">running the tracker</a> and opting in directly makes the stats better
+        for everyone.
       </p>
 
       <h2>Where the data comes from</h2>
       <p>
         MayhemStats Tracker records your matches locally by connecting to your own League client. If
-        you opt in to community stats (it is off by default), the app uploads an anonymous record
-        of each game: the champions, augments, items, and combat stat lines of all ten players,
-        plus the match's queue, patch, duration, and region. Nothing that identifies a player —
-        no summoner names, Riot IDs, or account identifiers — is ever uploaded, and the server's
-        database has no columns to store identity even if it were sent. Games are deduplicated,
-        so two friends contributing the same match count it once.
+        you opt in to community stats (it is off by default), the app uploads an anonymous record of
+        each game: the champions, augments, items, and combat stat lines of all ten players, plus
+        the match's queue, patch, duration, and region. Nothing that identifies a player — no
+        summoner names, Riot IDs, or account identifiers — is ever uploaded, and the server's
+        database has no columns to store identity even if it were sent. Games are deduplicated, so
+        two friends contributing the same match count it once.
       </p>
 
       <h2>How Score is calculated</h2>
       <p>
-        Raw win rates are misleading at small sample sizes — an augment that went 3–0 is not
-        better than one that went 120–80. Score corrects for this with Bayesian shrinkage:
+        Raw win rates are misleading at small sample sizes — an augment that went 3–0 is not better
+        than one that went 120–80. Score answers a different question: not what the win rate was,
+        but how much of it the games behind it will support. It is the lower bound of the
+        <a
+          href="https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval"
+          >Wilson score interval</a
+        >
+        at 95% confidence, on a 0–100 scale:
       </p>
       <div class="card">
-        <p><strong>Score = 100 × (wins + 10) / (games + 20)</strong></p>
         <p>
-          Every entry is blended with a 50% prior worth twenty games. A 75% win rate over 4 games
-          scores 54.2; a 60% win rate over 200 games scores 59.5. Confidence, not luck, rises to
-          the top.
+          <strong>Score = the win rate, minus however much the sample size leaves in doubt</strong>
+        </p>
+        <p>
+          Read it as "the true win rate is at least this". A 75% win rate over 4 games scores 30.1,
+          because four games cannot rule out a coin flip. A 60% win rate over 200 games scores 53.1,
+          and the same 60% over 2,000 games scores 57.8 — the identical rate scoring higher purely
+          because more games stand behind it. Nothing arrives at the top of a list and slides down;
+          it climbs as it earns the place.
         </p>
       </div>
       <p>
-        Win rates shown alongside Score are the raw, unadjusted values; entries with fewer than
-        20 games are marked with an asterisk and muted colors so small samples are never dressed
-        up as certainty.
+        Win rates shown alongside Score are the raw, unadjusted values; entries with fewer than 20
+        games are marked with an asterisk and muted colors so small samples are never dressed up as
+        certainty.
       </p>
 
       <h2>How tiers work</h2>
       <p>
-        Tiers (S+ through D) rank entries by Score within the currently filtered data — the top
-        5% earn S+, the next 10% S, and so on. Two details worth knowing:
+        Tiers (S+ through D) rank entries by Score within the currently filtered data — the top 5%
+        earn S+, the next 10% S, and so on. Two details worth knowing:
       </p>
       <ul>
         <li>
           <strong>Augments are tiered within their rarity.</strong> Prismatic augments are
-          intentionally stronger than Silvers, so a global ranking would just restate rarity. An
-          S+ Silver augment means "the best thing you can take when the game offers you Silvers."
+          intentionally stronger than Silvers, so a global ranking would just restate rarity. An S+
+          Silver augment means "the best thing you can take when the game offers you Silvers."
         </li>
         <li>
           <strong>Tiers are relative.</strong> The current data always has an S+ and a D; a tier
@@ -131,43 +182,57 @@
 
       <h2>Ideal builds</h2>
       <p>
-        Each champion's page ranks items and augments by the same shrunk win rate, requiring a
-        minimum sample (3 games for items, 2 for augments) before an entry can lead the build;
-        below that, popularity fills in. The free starting item Poro-Snax is excluded — everyone
-        gets it, so it carries no information.
+        Each champion's page ranks items and augments by the same Score, requiring a minimum sample
+        — 3 games — and a record that is not losing before an entry can lead the build. Nothing
+        fills the gap when too little qualifies: a list that falls short says so, because an item
+        that has never won is not a recommendation however often it was built.
+      </p>
+      <p>
+        Components are left out of the build lists. Ruby Crystal and Recurve Bow carry win rates
+        because they sat in an inventory at the final whistle, not because they were anyone's plan;
+        the test is whether an item builds into something, which keeps the ones that only look like
+        components, since Manamune and Archangel's Staff transform into Muramana and Seraph's
+        Embrace rather than building into them. The free starting item Poro-Snax is excluded too —
+        everyone gets it, so it carries no information.
       </p>
 
       <h2>Frequently asked questions</h2>
-      <p><strong>How do I add my games?</strong> Install
-        <a href="/download/">MayhemStats Tracker</a>,
-        play Mayhem, and flip on Settings → Community Stats. Your match history uploads once, and
-        new games flow in automatically after each session.
+      <p>
+        <strong>How do I add my games?</strong> Install
+        <a href="/download/">MayhemStats Tracker</a>, play Mayhem, and flip on Settings → Community
+        Stats. Your match history uploads once, and new games flow in automatically after each
+        session.
       </p>
-      <p><strong>Can anyone see my games or name?</strong> No. Contributions carry no identity,
-        and the public site can only read aggregate counts — never individual matches. See the
+      <p>
+        <strong>Can anyone see my games or name?</strong> No. Contributions carry no identity, and
+        the public site can only read aggregate counts — never individual matches. See the
         <a href="/privacy/">privacy policy</a> for the full details.
       </p>
-      <p><strong>Can I remove my data?</strong> Yes — Settings → Community Stats → Delete my
+      <p>
+        <strong>Can I remove my data?</strong> Yes — Settings → Community Stats → Delete my
         contributions removes everything your install has shared. Matches nobody else contributed
         are deleted entirely.
       </p>
-      <p><strong>Why do some entries have so few games?</strong> The community is growing. Every
+      <p>
+        <strong>Why do some entries have so few games?</strong> The community is growing. Every
         contributor makes the numbers sharper — that's the whole idea.
       </p>
-      <p><strong>Is this affiliated with Riot Games?</strong> No. MayhemStats is a fan project
-        under Riot's "Legal Jibber Jabber" policy. Riot Games does not endorse or sponsor it.
+      <p>
+        <strong>Is this affiliated with Riot Games?</strong> No. MayhemStats is a fan project under
+        Riot's "Legal Jibber Jabber" policy. Riot Games does not endorse or sponsor it.
       </p>
 
       <footer>
         <p>
-          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
-          Riot Games or anyone officially involved in producing or managing League of Legends.
-          League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
-          Inc.
+          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
+          Games or anyone officially involved in producing or managing League of Legends. League of
+          Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.
         </p>
-        <p><a href="/">Stats</a> · <a href="/guide/">ARAM Mayhem guide</a> · <a href="/download/">Download</a> ·
-          <a href="/privacy/">Privacy</a> ·
-          <a href="https://github.com/MyNamesEMurray/mayhem-tracker">GitHub</a></p>
+        <p>
+          <a href="/">Stats</a> · <a href="/guide/">ARAM Mayhem guide</a> ·
+          <a href="/download/">Download</a> · <a href="/privacy/">Privacy</a> ·
+          <a href="https://github.com/MyNamesEMurray/mayhem-tracker">GitHub</a>
+        </p>
       </footer>
     </main>
   </body>

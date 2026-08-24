@@ -406,72 +406,69 @@ export default function Settings() {
       </Panel>
 
       {devMode && (
-      <Panel label="Developer">
-        <SettingRow
-          name="Sync diagnostics"
-          description="What the app has actually recorded and announced — useful when games seem to be missing"
-        >
-          <button onClick={handleDiagnostics} className={BUTTON_SECONDARY}>
-            {diagnostics ? "Refresh" : "Show"}
-          </button>
-        </SettingRow>
-        {diagnostics && (
-          <div className="space-y-2">
-            <pre className="max-h-64 overflow-auto rounded-md border border-lol-border/60 bg-lol-dark/60 p-3 text-[11px] leading-relaxed text-lol-text whitespace-pre-wrap">
-              {diagnostics}
-            </pre>
+        <Panel label="Developer">
+          <SettingRow
+            name="Sync diagnostics"
+            description="What the app has actually recorded and announced — useful when games seem to be missing"
+          >
+            <button onClick={handleDiagnostics} className={BUTTON_SECONDARY}>
+              {diagnostics ? "Refresh" : "Show"}
+            </button>
+          </SettingRow>
+          {diagnostics && (
+            <div className="space-y-2">
+              <pre className="max-h-64 overflow-auto rounded-md border border-lol-border/60 bg-lol-dark/60 p-3 text-[11px] leading-relaxed text-lol-text whitespace-pre-wrap">
+                {diagnostics}
+              </pre>
+              <button
+                onClick={() => navigator.clipboard.writeText(diagnostics)}
+                className={BUTTON_SECONDARY}
+              >
+                Copy to clipboard
+              </button>
+            </div>
+          )}
+          <SettingRow
+            name="Record live game data"
+            description="While enabled, polls the League client's live-data API every 2 seconds during games and saves raw snapshots to local files — debug only, nothing is uploaded"
+          >
+            <Toggle
+              checked={liveDebug?.enabled ?? false}
+              onChange={handleLiveDebugToggle}
+              disabled={!liveDebug}
+            />
+          </SettingRow>
+          {liveDebug?.recording && (
+            <p className="text-xs text-emerald-400">● Recording live game data…</p>
+          )}
+          {liveDebug?.lastFile && !liveDebug.recording && (
+            <p className="text-xs text-lol-text">
+              Last recording: {liveDebug.lastFile.split(/[\\/]/).pop()}
+            </p>
+          )}
+          <SettingRow
+            name="Recordings folder"
+            description="Open the folder holding recorded live-game files"
+          >
+            <button onClick={() => window.api.openLiveDebugFolder()} className={BUTTON_SECONDARY}>
+              Open folder
+            </button>
+          </SettingRow>
+          <SettingRow
+            name="Hide developer options"
+            description="Tuck this panel away again — Ctrl+Shift+D brings it back"
+          >
             <button
-              onClick={() => navigator.clipboard.writeText(diagnostics)}
+              onClick={async () => {
+                await window.api.setSetting("developer_mode", "false");
+                setDevMode(false);
+              }}
               className={BUTTON_SECONDARY}
             >
-              Copy to clipboard
+              Hide
             </button>
-          </div>
-        )}
-        <SettingRow
-          name="Record live game data"
-          description="While enabled, polls the League client's live-data API every 2 seconds during games and saves raw snapshots to local files — debug only, nothing is uploaded"
-        >
-          <Toggle
-            checked={liveDebug?.enabled ?? false}
-            onChange={handleLiveDebugToggle}
-            disabled={!liveDebug}
-          />
-        </SettingRow>
-        {liveDebug?.recording && (
-          <p className="text-xs text-emerald-400">● Recording live game data…</p>
-        )}
-        {liveDebug?.lastFile && !liveDebug.recording && (
-          <p className="text-xs text-lol-text">
-            Last recording: {liveDebug.lastFile.split(/[\\/]/).pop()}
-          </p>
-        )}
-        <SettingRow
-          name="Recordings folder"
-          description="Open the folder holding recorded live-game files"
-        >
-          <button
-            onClick={() => window.api.openLiveDebugFolder()}
-            className={BUTTON_SECONDARY}
-          >
-            Open folder
-          </button>
-        </SettingRow>
-        <SettingRow
-          name="Hide developer options"
-          description="Tuck this panel away again — Ctrl+Shift+D brings it back"
-        >
-          <button
-            onClick={async () => {
-              await window.api.setSetting("developer_mode", "false");
-              setDevMode(false);
-            }}
-            className={BUTTON_SECONDARY}
-          >
-            Hide
-          </button>
-        </SettingRow>
-      </Panel>
+          </SettingRow>
+        </Panel>
       )}
     </div>
   );

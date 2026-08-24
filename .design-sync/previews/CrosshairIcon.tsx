@@ -15,7 +15,9 @@ export function Sizes() {
         width: "fit-content",
       }}
     >
-      <span style={{ color: "var(--color-lol-text)", display: "flex", gap: 16, alignItems: "center" }}>
+      <span
+        style={{ color: "var(--color-lol-text)", display: "flex", gap: 16, alignItems: "center" }}
+      >
         <CrosshairIcon width={16} height={16} />
         <CrosshairIcon width={24} height={24} />
         <CrosshairIcon width={40} height={40} />

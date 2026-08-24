@@ -126,6 +126,10 @@ async function fetchPage<T>(view: string, query: string, from: number, withCount
   return { rows, total: Number.isFinite(total) ? total : null };
 }
 
+// The pages after the first go out together, so they only stitch back into one
+// list if the view hands rows back in a fixed order: every query below names
+// an order over a unique key of the view, which the rollups are indexed on.
+// Without one a page can repeat another's rows and drop the difference.
 async function fetchView<T>(view: string, query: string): Promise<T[]> {
   const first = await fetchPage<T>(view, query, 0, true);
   if (first.rows.length < PAGE) return first.rows;
@@ -149,9 +153,12 @@ async function fetchView<T>(view: string, query: string): Promise<T[]> {
 // Only the columns the app actually reads. augment_stats carries per-augment
 // combat lines this never touches, and they dominate its payload.
 const CHAMPION_QUERY =
-  "select=patch,queue_id,champion_id,games,wins,kills,deaths,assists,damage,damage_taken,heal,gold,pentas";
-const AUGMENT_QUERY = "select=patch,queue_id,augment_id,champion_id,picks,wins";
-const ITEM_QUERY = "select=patch,queue_id,champion_id,item_id,picks,wins";
+  "select=patch,queue_id,champion_id,games,wins,kills,deaths,assists,damage,damage_taken,heal,gold,pentas" +
+  "&order=patch,queue_id,champion_id";
+const AUGMENT_QUERY =
+  "select=patch,queue_id,augment_id,champion_id,picks,wins&order=patch,queue_id,augment_id";
+const ITEM_QUERY =
+  "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
 // stale data if the network is unavailable — an offline client should still

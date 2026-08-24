@@ -52,21 +52,25 @@ async function fetchJson(url, headers = {}) {
 // PostgREST caps a page at 1000 rows and the per-champion grains run to a few
 // hundred thousand, so pages go out in batches rather than one at a time. A
 // batch stops the walk as soon as one of its pages comes up short.
+//
+// Batched pages are separate queries, so the view has to hand rows back in a
+// fixed order or one page repeats another's rows and the difference is lost:
+// `order` names a unique key of the view, which the rollups are indexed on.
 const PAGE_BATCH = 8;
 
-function fetchPageRows(view, from) {
-  return fetchJson(`${SUPABASE_URL}/rest/v1/${view}?select=*`, {
+function fetchPageRows(view, order, from) {
+  return fetchJson(`${SUPABASE_URL}/rest/v1/${view}?select=*&order=${order}`, {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     Range: `${from}-${from + 999}`,
   });
 }
 
-async function fetchAllRows(view) {
+async function fetchAllRows(view, order) {
   const out = [];
   for (let from = 0; ; from += 1000 * PAGE_BATCH) {
     const offsets = Array.from({ length: PAGE_BATCH }, (_, i) => from + i * 1000);
-    const pages = await Promise.all(offsets.map((offset) => fetchPageRows(view, offset)));
+    const pages = await Promise.all(offsets.map((offset) => fetchPageRows(view, order, offset)));
     let done = false;
     for (const rows of pages) {
       out.push(...rows);
@@ -83,8 +87,18 @@ const championSlug = (name) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-// Mirrors src/lib/stats.ts score()
-const score = (wins, games) => (100 * (wins + 10)) / (games + 20);
+// Mirrors src/lib/stats.ts score(): the win rate a record supports, out of
+// 100 — the floor of a 95% Wilson interval. Everything ranks by it, so a 5-0
+// item lands below a 60% one with hundreds of games.
+const score = (wins, games) => {
+  if (games <= 0) return 0;
+  const p = wins / games;
+  const z = 1.96;
+  const z2 = z * z;
+  const centre = p + z2 / (2 * games);
+  const margin = z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
+  return (100 * (centre - margin)) / (1 + z2 / games);
+};
 
 // Mirrors src/lib/stats.ts formatPatch(): stored patches are year-based
 // ("26.16"); shifting stray client-style values ("16.16") is idempotent
@@ -96,7 +110,11 @@ const formatPatch = (patch) => {
 };
 
 const esc = (s) =>
-  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
 const pct = (wins, n) => (n > 0 ? ((wins / n) * 100).toFixed(1) : "0.0");
 const num = (n) => Math.round(n).toLocaleString();
@@ -119,7 +137,7 @@ function relative(value, base) {
 }
 
 // Mirrors src/lib/stats.ts rankForBuild: a workable sample AND a record that
-// isn't losing, ranked by shrunk win rate. An item that has never won is not a
+// isn't losing, ranked by confidence score. An item that has never won is not a
 // recommendation, however many times it was built.
 function rankForBuild(list, minPicks, count) {
   return list
@@ -157,9 +175,9 @@ const PAGE_STYLE = `      #prerender { max-width: 780px; margin: 0 auto; padding
 
 async function main() {
   const [championRows, augmentRows, itemRows, versions] = await Promise.all([
-    fetchAllRows("champion_stats"),
-    fetchAllRows("augment_stats"),
-    fetchAllRows("item_stats"),
+    fetchAllRows("champion_stats", "patch,queue_id,champion_id"),
+    fetchAllRows("augment_stats", "patch,queue_id,augment_id,champion_id"),
+    fetchAllRows("item_stats", "patch,queue_id,champion_id,item_id"),
     fetchJson("https://ddragon.leagueoflegends.com/api/versions.json"),
   ]);
   const [ddragon, cherry, itemsJson] = await Promise.all([
@@ -184,14 +202,32 @@ async function main() {
     }
   }
   const itemNames = {};
-  if (Array.isArray(itemsJson)) for (const it of itemsJson) itemNames[it.id] = it.name || "";
+  // Mirrors src/lib/dragon.ts: components are what a finished item was on the
+  // way to, so they stay out of the build lists. Manamune and Archangel's
+  // Staff transform rather than build into anything, so they stay in.
+  const itemFinished = {};
+  if (Array.isArray(itemsJson))
+    for (const it of itemsJson) {
+      itemNames[it.id] = it.name || "";
+      const buildsInto = Array.isArray(it.to) ? it.to.length : 0;
+      const builtFrom = Array.isArray(it.from) ? it.from.length : 0;
+      const categories = Array.isArray(it.categories) ? it.categories : [];
+      const price = it.priceTotal ?? 0;
+      itemFinished[it.id] =
+        (buildsInto === 0 &&
+          !categories.includes("Consumable") &&
+          (price >= 500 || it.id >= 100000)) ||
+        (categories.includes("Boots") && builtFrom > 0);
+    }
 
   const augmentName = (id) => augments[id]?.name || "";
   const itemName = (id) => itemNames[id] || "";
 
   // Reuse the built index.html's asset tags so pages hydrate with the same app
   const indexHtml = readFileSync(path.join(DIST, "index.html"), "utf8");
-  const assetTags = (indexHtml.match(/<(script type="module"[^>]*><\/script>|link rel="stylesheet"[^>]*>)/g) || [])
+  const assetTags = (
+    indexHtml.match(/<(script type="module"[^>]*><\/script>|link rel="stylesheet"[^>]*>)/g) || []
+  )
     // The font stylesheet is in every template's head already; letting it
     // through here would emit it twice on each page
     .filter((tag) => !tag.includes("/fonts/inter.css"))
@@ -265,7 +301,7 @@ async function main() {
     const champItems = aggregate(
       itemRows.filter((r) => r.champion_id === id),
       "item_id",
-    ).filter((i) => itemName(i.key));
+    ).filter((i) => itemName(i.key) && itemFinished[i.key]);
     const coreBuild = rankForBuild(champItems, ITEM_MIN_PICKS, 6);
     const byRarity = (rarity) =>
       rankForBuild(
@@ -290,7 +326,7 @@ async function main() {
     const buildList = coreBuild
       .map(
         (i) =>
-          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")}</li>`,
+          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")} (score ${score(i.wins, i.picks).toFixed(1)})</li>`,
       )
       .join("\n            ");
 
@@ -319,21 +355,26 @@ async function main() {
       .slice(0, 10)
       .map(
         (i) =>
-          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
+          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${score(i.wins, i.picks).toFixed(1)}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
       )
       .join("\n              ");
 
     const crossLinks = topChamps
       .filter((cid) => cid !== id)
       .slice(0, 6)
-      .map((cid) => `<a href="/champion/${championSlug(championNames[cid])}/">${esc(championNames[cid])}</a>`)
+      .map(
+        (cid) =>
+          `<a href="/champion/${championSlug(championNames[cid])}/">${esc(championNames[cid])}</a>`,
+      )
       .join(" · ");
 
     // What actually separates this champion from the field, in words
     const readsList = [
       `deals ${num(perGame.damage)} damage per game (${relative(perGame.damage, modeAvg.damage)})`,
       `absorbs ${num(perGame.damage_taken)} (${relative(perGame.damage_taken, modeAvg.damage_taken)})`,
-      perGame.heal > 0 ? `heals or shields ${num(perGame.heal)} (${relative(perGame.heal, modeAvg.heal)})` : "",
+      perGame.heal > 0
+        ? `heals or shields ${num(perGame.heal)} (${relative(perGame.heal, modeAvg.heal)})`
+        : "",
       `earns ${num(perGame.gold)} gold (${relative(perGame.gold, modeAvg.gold)})`,
     ]
       .filter(Boolean)
@@ -386,8 +427,8 @@ ${PAGE_STYLE}
       <h2>Best augments</h2>
             ${raritySection || `<p>No augment has a winning record over ${AUGMENT_MIN_PICKS}+ picks on ${esc(name)} yet, so there is nothing worth recommending here.</p>`}
       <h2>Most-built items</h2>
-      ${itemRowsHtml ? `<table>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
-      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all.</em></p>
+      ${itemRowsHtml ? `<table>\n        <thead><tr><th>Item</th><th>Games</th><th>Score</th><th>Win rate</th></tr></thead>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
+      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all. Score is the win rate the record supports out of 100 — the floor of a 95% confidence interval — so a perfect record over a handful of games ranks below a solid one over hundreds. Components are left out; items that transform, like Manamune, are not components.</em></p>
       <p>More champions: ${crossLinks}</p>
       <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>

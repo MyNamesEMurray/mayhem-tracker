@@ -138,12 +138,7 @@ export default function App() {
   useEffect(() => {
     let active = true;
     setError(null);
-    Promise.all([
-      fetchChampionStats(),
-      fetchAugmentTotals(),
-      loadChampionData(),
-      loadAugmentData(),
-    ])
+    Promise.all([fetchChampionStats(), fetchAugmentTotals(), loadChampionData(), loadAugmentData()])
       .then(([championRows, augmentRows, championData, augmentData]) => {
         if (active) setData({ championRows, augmentRows, championData, augmentData });
       })
@@ -230,8 +225,7 @@ export default function App() {
   // How far back the newest patch has to reach to be worth reading
   const autoWidenTo = useMemo(() => {
     if (!data || patches.length < 2) return null;
-    const target =
-      selectedChampion != null ? AUTO_WIDEN_MIN_CHAMPION_GAMES : AUTO_WIDEN_MIN_GAMES;
+    const target = selectedChampion != null ? AUTO_WIDEN_MIN_CHAMPION_GAMES : AUTO_WIDEN_MIN_GAMES;
     const included = new Set<string>();
     let count = 0;
     for (const patch of patches.slice(0, AUTO_WIDEN_MAX_PATCHES)) {
@@ -414,10 +408,14 @@ export default function App() {
               that right-aligns the filters while they share the top row, but
               leaves them left-aligned with everything else once they wrap. */}
           <nav className="flex gap-1 self-stretch min-[1081px]:flex-1">
-            {navTab("Champions", !onCommunityPage && (tab === "champions" || onChampionPage), () => {
-              if (onChampionPage || onCommunityPage) navigate("/");
-              setParam("tab", null);
-            })}
+            {navTab(
+              "Champions",
+              !onCommunityPage && (tab === "champions" || onChampionPage),
+              () => {
+                if (onChampionPage || onCommunityPage) navigate("/");
+                setParam("tab", null);
+              },
+            )}
             {navTab("Augments", !onCommunityPage && tab === "augments" && !onChampionPage, () => {
               if (onChampionPage || onCommunityPage) navigate("/");
               setParam("tab", "augments");
@@ -431,34 +429,33 @@ export default function App() {
               there doing nothing. Hidden rather than disabled: a control that
               can't change anything shouldn't ask to be tried. */}
           {!onCommunityPage && (
-          <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
-            <select
-              className="select"
-              value={queueParam ?? ""}
-              onChange={(e) => setParam("queue", e.target.value || null)}
-            >
-              <option value="">{QUEUE_LABELS[2400]}</option>
-              {queues
-                .filter((q) => q !== 2400)
-                .map((q) => (
-                  <option key={q} value={q}>
-                    {QUEUE_LABELS[q] ?? `Queue ${q}`}
-                  </option>
-                ))}
-              <option value="all">All queues</option>
-            </select>
-            <PatchRangeSelect
-              patches={patches}
-              param={patchParam}
-              onChange={(v) => setParam("patch", v)}
-            />
-          </div>
+            <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
+              <select
+                className="select"
+                value={queueParam ?? ""}
+                onChange={(e) => setParam("queue", e.target.value || null)}
+              >
+                <option value="">{QUEUE_LABELS[2400]}</option>
+                {queues
+                  .filter((q) => q !== 2400)
+                  .map((q) => (
+                    <option key={q} value={q}>
+                      {QUEUE_LABELS[q] ?? `Queue ${q}`}
+                    </option>
+                  ))}
+                <option value="all">All queues</option>
+              </select>
+              <PatchRangeSelect
+                patches={patches}
+                param={patchParam}
+                onChange={(v) => setParam("patch", v)}
+              />
+            </div>
           )}
         </div>
       </header>
 
       <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 pt-7 pb-14">
-
         {error && (
           <div className="bg-lol-card border border-lol-loss/40 rounded-xl p-5 text-sm">
             <p className="text-lol-loss mb-2">Couldn't load community stats: {error}</p>
@@ -537,21 +534,21 @@ export default function App() {
           onChampionPage &&
           selectedChampion != null &&
           championRows?.championId === selectedChampion && (
-          <>
-            <ChampionDetail
-              championId={selectedChampion}
-              championRows={data.championRows}
-              augmentRows={championRows.augmentRows}
-              itemRows={championRows.itemRows}
-              purchaseRows={championRows.purchaseRows}
-              filters={filters}
-              minGames={minGames}
-              championData={data.championData}
-              augmentData={data.augmentData}
-              onBack={() => navigate("/")}
-            />
-          </>
-        )}
+            <>
+              <ChampionDetail
+                championId={selectedChampion}
+                championRows={data.championRows}
+                augmentRows={championRows.augmentRows}
+                itemRows={championRows.itemRows}
+                purchaseRows={championRows.purchaseRows}
+                filters={filters}
+                minGames={minGames}
+                championData={data.championData}
+                augmentData={data.augmentData}
+                onBack={() => navigate("/")}
+              />
+            </>
+          )}
 
         {data && !onChampionPage && !onCommunityPage && (
           <>
@@ -566,8 +563,8 @@ export default function App() {
             </div>
             <p className="text-[13px] mb-4">
               {tab === "champions"
-                ? "Every champion ranked by score — win rate shrunk toward 50% for small samples."
-                : "Augments ranked within their rarity — click a row for the champions it carries hardest."}
+                ? "Every champion ranked by score."
+                : "Augments ranked within their rarity."}
             </p>
 
             <AdSlot slot={AD_SLOTS.top} />
@@ -645,16 +642,16 @@ export default function App() {
             >
               MayhemStats Tracker
             </a>{" "}
-            players who opted in. Contributions contain champions, augments, items, and combat
-            stats only — never summoner names, Riot IDs, or anything that identifies a player.
-            Want your games counted? Install the tracker and flip on{" "}
+            players who opted in. Contributions contain champions, augments, items, and combat stats
+            only — never summoner names, Riot IDs, or anything that identifies a player. Want your
+            games counted? Install the tracker and flip on{" "}
             <span className="text-lol-text">Settings → Community Stats</span>.
           </p>
           <p>
-            MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions
-            of Riot Games or anyone officially involved in producing or managing League of
-            Legends. League of Legends and Riot Games are trademarks or registered trademarks of
-            Riot Games, Inc.
+            MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
+            Riot Games or anyone officially involved in producing or managing League of Legends.
+            League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
+            Inc.
           </p>
         </footer>
       </div>

@@ -28,9 +28,7 @@ export default function Layout() {
       e.preventDefault();
       const enabled = (await window.api.getSetting("developer_mode")) === "true";
       await window.api.setSetting("developer_mode", String(!enabled));
-      setSyncMessage(
-        enabled ? "Developer options hidden" : "Developer options shown in Settings",
-      );
+      setSyncMessage(enabled ? "Developer options hidden" : "Developer options shown in Settings");
       window.dispatchEvent(new CustomEvent("mayhem-developer-mode", { detail: !enabled }));
     };
     window.addEventListener("keydown", onKey);
@@ -41,10 +39,7 @@ export default function Layout() {
     window.api.getVersion().then(setVersion);
     window.api.checkForUpdate().then(setUpdate);
     // The window can stay open for days; keep the tab-bar pill honest
-    const recheck = setInterval(
-      () => window.api.checkForUpdate().then(setUpdate),
-      6 * 3600_000,
-    );
+    const recheck = setInterval(() => window.api.checkForUpdate().then(setUpdate), 6 * 3600_000);
     return () => clearInterval(recheck);
   }, []);
 

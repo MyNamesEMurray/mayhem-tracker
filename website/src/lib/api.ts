@@ -101,6 +101,10 @@ async function fetchPage<T>(
   return { rows, total: Number.isFinite(total) ? total : null };
 }
 
+// Every page is its own query and the pages after the first go out together,
+// so a view that hands rows back in whatever order it likes can repeat one
+// page's rows in another and drop the difference. Each caller's query names an
+// order over a unique key of the view, which the rollups are indexed on.
 async function fetchAll<T>(view: string, query = "select=*"): Promise<T[]> {
   const first = await fetchPage<T>(view, query, 0, true);
   if (first.rows.length < PAGE) return first.rows;
@@ -122,12 +126,15 @@ async function fetchAll<T>(view: string, query = "select=*"): Promise<T[]> {
 }
 
 export function fetchChampionStats(): Promise<ChampionStatRow[]> {
-  return fetchAll<ChampionStatRow>("champion_stats");
+  return fetchAll<ChampionStatRow>("champion_stats", "select=*&order=patch,queue_id,champion_id");
 }
 
 export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
   try {
-    return await fetchAll<AugmentTotalRow>("augment_totals");
+    return await fetchAll<AugmentTotalRow>(
+      "augment_totals",
+      "select=*&order=patch,queue_id,augment_id",
+    );
   } catch (err) {
     // The rollup is one migration behind the client during a deploy. An empty
     // augment tab is a bad half-hour; taking the champion tier list down with
@@ -141,23 +148,32 @@ export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
 // needs it opens. Filtering server-side keeps a champion page to a couple of
 // thousand rows instead of the half-million the full grain would cost.
 export function fetchChampionAugments(championId: number): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>("augment_stats", `select=*&champion_id=eq.${championId}`);
+  return fetchAll<AugmentStatRow>(
+    "augment_stats",
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,augment_id`,
+  );
 }
 
 export function fetchChampionItems(championId: number): Promise<ItemStatRow[]> {
-  return fetchAll<ItemStatRow>("item_stats", `select=*&champion_id=eq.${championId}`);
+  return fetchAll<ItemStatRow>(
+    "item_stats",
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,item_id`,
+  );
 }
 
 export function fetchChampionPurchases(championId: number): Promise<ItemPurchaseRow[]> {
   return fetchAll<ItemPurchaseRow>(
     "item_purchase_stats",
-    `select=*&champion_id=eq.${championId}`,
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,item_id`,
   );
 }
 
 // For an expanded augment row: which champions carry it
 export function fetchAugmentChampions(augmentId: number): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>("augment_stats", `select=*&augment_id=eq.${augmentId}`);
+  return fetchAll<AugmentStatRow>(
+    "augment_stats",
+    `select=*&augment_id=eq.${augmentId}&order=patch,queue_id,champion_id`,
+  );
 }
 
 export interface CommunityTotals {
@@ -199,7 +215,7 @@ export async function fetchCommunityTotals(): Promise<CommunityTotals> {
 }
 
 export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
-  return fetchAll<GamesPerDayRow>("community_games_per_day");
+  return fetchAll<GamesPerDayRow>("community_games_per_day", "select=*&order=day");
 }
 
 // Patch markers decorate the games chart; the chart is fine without them, so
@@ -207,7 +223,7 @@ export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
 // the whole page down with an error.
 export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
   try {
-    return await fetchAll<PatchSpanRow>("community_patch_spans");
+    return await fetchAll<PatchSpanRow>("community_patch_spans", "select=*&order=patch");
   } catch {
     return [];
   }

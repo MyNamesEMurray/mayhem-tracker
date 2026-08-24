@@ -47,12 +47,7 @@ export function EarlySurrender() {
     <div style={{ ...canvas, display: "flex", gap: 28 }}>
       <div style={{ width: 190 }}>
         <div style={label}>Remake at 6:21</div>
-        <StatBars
-          damage={4310}
-          taken={860}
-          heal={0}
-          max={{ dmg: 6200, taken: 5100, heal: 1800 }}
-        />
+        <StatBars damage={4310} taken={860} heal={0} max={{ dmg: 6200, taken: 5100, heal: 1800 }} />
       </div>
     </div>
   );

@@ -79,8 +79,8 @@ export default function CommunityGate({ children }: { children: ReactNode }) {
       </h1>
       <p className="text-[13px] text-lol-text leading-relaxed mb-6">
         This tab aggregates every player from every contributed game — win rates, augments, and
-        builds far beyond what one match history can show. It unlocks for players who add their
-        own games to the pool.
+        builds far beyond what one match history can show. It unlocks for players who add their own
+        games to the pool.
       </p>
 
       {totals && (

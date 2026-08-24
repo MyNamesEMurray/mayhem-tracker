@@ -212,6 +212,9 @@ export interface ItemData {
     name: string;
     iconPath: string;
     branch: string;
+    // A purchase in its own right rather than a part on the way to one; see
+    // isCompleted() in src/main/dragon.ts
+    completed: boolean;
   };
 }
 

@@ -46,9 +46,9 @@ export default function OnboardingWizard() {
               Welcome to MayhemStats Tracker
             </h2>
             <p className="text-[13px] text-lol-text mt-2 leading-relaxed">
-              Your ARAM Mayhem match history, recorded automatically. Keep the tracker running
-              while you play — every game, augment pick, and build is saved the moment the match
-              ends. No account, no setup.
+              Your ARAM Mayhem match history, recorded automatically. Keep the tracker running while
+              you play — every game, augment pick, and build is saved the moment the match ends. No
+              account, no setup.
             </p>
           </div>
         )}
@@ -66,8 +66,8 @@ export default function OnboardingWizard() {
                 imports every ARAM Mayhem game the client still remembers.
               </Row>
               <Row icon={<UsersIcon width={18} height={18} />}>
-                Explore your stats in the tabs above — matches, champions, augments, the friends
-                you queue with, and community-wide rankings.
+                Explore your stats in the tabs above — matches, champions, augments, the friends you
+                queue with, and community-wide rankings.
               </Row>
             </div>
           </div>
@@ -79,10 +79,10 @@ export default function OnboardingWizard() {
               Count your games in the community stats
             </h2>
             <p className="text-[13px] text-lol-text leading-relaxed">
-              Riot's API doesn't expose Mayhem match data, so other sites substitute ARAM item
-              stats and Arena augment stats. The tier lists on mayhemstats.com come from real
-              Mayhem games instead — powered entirely by players who share theirs. Contributions
-              are anonymous — champions, augments, items, and combat stats only.{" "}
+              Riot's API doesn't expose Mayhem match data, so other sites substitute ARAM item stats
+              and Arena augment stats. The tier lists on mayhemstats.com come from real Mayhem games
+              instead — powered entirely by players who share theirs. Contributions are anonymous —
+              champions, augments, items, and combat stats only.{" "}
               <b className="text-lol-text-bright">
                 Never summoner names, Riot IDs, or anything that identifies you.
               </b>{" "}
@@ -108,8 +108,8 @@ export default function OnboardingWizard() {
             <h2 className="text-[20px] font-extrabold text-lol-gold-light mt-4">You're all set</h2>
             <p className="text-[13px] text-lol-text mt-2 leading-relaxed">
               Games record automatically from here on. And when you want the big picture — tier
-              lists, win rates, and the best builds from every contributed game — the community
-              site has it all.
+              lists, win rates, and the best builds from every contributed game — the community site
+              has it all.
             </p>
             <button
               onClick={() => window.api.openUrl("https://mayhemstats.com")}

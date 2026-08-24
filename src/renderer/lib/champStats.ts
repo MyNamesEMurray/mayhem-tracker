@@ -1,25 +1,37 @@
-// Champion ranking, ported from the website's src/lib/stats.ts so the app's
-// champion view reads the same as mayhemstats.com. Keep the two in sync: the
-// score formula and tier cutoffs are the site's published methodology, and a
-// number that differs between the two surfaces is worse than no number.
+// Champion, item and augment ranking, ported from the website's
+// src/lib/stats.ts so the app reads the same as mayhemstats.com. Keep the two
+// in sync: the score formula and tier cutoffs are the site's published
+// methodology, and a number that differs between the two surfaces is worse
+// than no number.
 
-// Bayesian shrinkage: blend the observed win rate with a 50% prior worth this
-// many games, so a 3-0 entry lands mid-pack instead of topping the list while
-// a 60% entry over 200 games keeps most of its edge.
-const PRIOR_GAMES = 20;
+// Score: the one number every ranking here and on the site is built from, out
+// of 100. It is the lower bound of the Wilson interval at 95% — read it as
+// "the win rate this record supports".
+//
+// A perfect 5-0 scores 56.6, because five games cannot rule out a coin flip;
+// 60.1% over 2,635 games scores 58.2, because that many games can. Sample size
+// moves the number on its own, so an entry climbs as it proves itself rather
+// than arriving at the top and sliding down.
+const WILSON_Z = 1.96;
 
 export function score(wins: number, games: number): number {
-  return (100 * (wins + PRIOR_GAMES * 0.5)) / (games + PRIOR_GAMES);
+  if (games <= 0) return 0;
+  const p = wins / games;
+  const z2 = WILSON_Z * WILSON_Z;
+  const denominator = 1 + z2 / games;
+  const centre = p + z2 / (2 * games);
+  const margin = WILSON_Z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
+  return (100 * (centre - margin)) / denominator;
 }
 
 // Win rates below this many games render muted; tier badges dim below 10
 export const MIN_SAMPLE = 20;
 export const TIER_MIN_SAMPLE = 10;
 
-// The long-tail lists hide anything under this many picks. Ranking is by
-// shrunk win rate, and at two or three picks a perfect record still edges out
-// a solid one over thirty games — so rows too thin to rank don't compete,
-// rather than re-tuning the prior behind every score on the site.
+// The long-tail lists hide anything under this many picks. The confidence
+// score already sinks a two-pick record to the bottom rather than the top, so
+// this is about noise rather than ranking: a row reading 100% over two games
+// is a distraction whatever it sorts as.
 export const LIST_MIN_PICKS = 5;
 
 export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
@@ -52,9 +64,9 @@ export function assignTiers<T>(
 }
 
 // A build entry has to earn its place twice: a workable sample, and a record
-// that isn't losing. Ranked by shrunk win rate, so a confident 58% beats a
-// lucky 100% over three games. No popularity filler — an item that has never
-// won is not a recommendation, however many times it was built.
+// that isn't losing. Ranked by confidence score, so a solid 58% over hundreds
+// of games beats a lucky 100% over five. No popularity filler — an item that
+// has never won is not a recommendation, however many times it was built.
 export function rankForBuild<T>(
   list: T[],
   getPicks: (t: T) => number,

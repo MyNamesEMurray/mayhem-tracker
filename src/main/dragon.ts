@@ -133,7 +133,35 @@ export function loadAugmentData() {
   return augmentReady;
 }
 
-export type ItemInfo = { name: string; iconPath: string; branch: string };
+export type ItemInfo = {
+  name: string;
+  iconPath: string;
+  branch: string;
+  // Whether the item is a purchase in its own right rather than a part on the
+  // way to one. Build lists show finished items only: a component carries a
+  // win rate because it sat in someone's inventory at the final whistle, not
+  // because anyone set out to build it. Mirrors website/src/lib/dragon.ts.
+  completed: boolean;
+};
+
+// An item is finished when it builds into nothing and costs enough to be a
+// real purchase — which keeps the ones that only look like components, since
+// Manamune and Archangel's Staff transform into Muramana and Seraph's
+// Embrace, modelled as separate items rather than a recipe. Mode-specific
+// prismatics (six-digit ids) count whatever they cost. Tier-2 boots do build
+// into tier-3, so they are kept by being built *from* the 300g starter pair.
+function isCompleted(item: any): boolean {
+  const buildsInto = Array.isArray(item.to) ? item.to.length : 0;
+  const builtFrom = Array.isArray(item.from) ? item.from.length : 0;
+  const categories: string[] = Array.isArray(item.categories) ? item.categories : [];
+  const price: number = item.priceTotal ?? 0;
+  return (
+    (buildsInto === 0 &&
+      !categories.includes("Consumable") &&
+      (price >= 500 || item.id >= 100000)) ||
+    (categories.includes("Boots") && builtFrom > 0)
+  );
+}
 
 const itemCache = new Map<string, Record<number, ItemInfo>>();
 const itemPromises = new Map<string, Promise<Record<number, ItemInfo>>>();
@@ -190,7 +218,12 @@ export function loadItemData(patch?: string): Promise<Record<number, ItemInfo>> 
       const items: Record<number, ItemInfo> = {};
       if (Array.isArray(data)) {
         for (const item of data) {
-          items[item.id] = { name: item.name || "", iconPath: item.iconPath || "", branch };
+          items[item.id] = {
+            name: item.name || "",
+            iconPath: item.iconPath || "",
+            branch,
+            completed: isCompleted(item),
+          };
         }
       }
       itemCache.set(key, items);

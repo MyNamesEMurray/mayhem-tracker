@@ -539,7 +539,11 @@ function AugmentGrid({ augmentIds, wide }: { augmentIds: number[]; wide: boolean
   // Classic can grant bonus augments; spill past 4 into a third column so the
   // grid stays two rows tall and rows keep a uniform height. Wide windows
   // have room to lay them out in a single row at a larger size.
-  const cols = wide ? "grid-flow-col auto-cols-max" : augmentIds.length > 4 ? "grid-cols-3" : "grid-cols-2";
+  const cols = wide
+    ? "grid-flow-col auto-cols-max"
+    : augmentIds.length > 4
+      ? "grid-cols-3"
+      : "grid-cols-2";
   return (
     <div className={`grid ${cols} gap-[clamp(2px,0.32vw,9px)] w-fit`}>
       {augmentIds.map((id, i) => (

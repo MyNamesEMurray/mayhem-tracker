@@ -187,7 +187,9 @@ export default function Friends() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatTimeAgo(t.lastPlayed)}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">
+                    {formatTimeAgo(t.lastPlayed)}
+                  </td>
                 </tr>
               );
             })}

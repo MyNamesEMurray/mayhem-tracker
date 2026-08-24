@@ -4,6 +4,7 @@ import {
   getAugmentName,
   getChampionName,
   getItemName,
+  isFinishedItem,
   loadItemData,
   type AugmentData,
   type ChampionData,
@@ -43,10 +44,7 @@ const RARITIES: { key: string; label: string; color: string }[] = [
 // Build-path slots read as their purchase position ("1st", "2nd", ...)
 // rather than a clock time — 11th–13th take "th" against the usual rule.
 function ordinal(n: number): string {
-  const suffix =
-    n % 100 >= 11 && n % 100 <= 13
-      ? "th"
-      : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
   return `${n}${suffix}`;
 }
 
@@ -78,6 +76,7 @@ export default function ChampionDetail({
 }) {
   const [itemData, setItemData] = useState<ItemData>({});
   const [itemSearch, setItemSearch] = useState("");
+  const [showComponents, setShowComponents] = useState(false);
   const [augSearch, setAugSearch] = useState("");
   const [augRarity, setAugRarity] = useState<Rarity>("all");
   useEffect(() => {
@@ -102,6 +101,15 @@ export default function ChampionDetail({
     () => championItemBreakdown(itemRows, filters, championId),
     [itemRows, filters, championId],
   );
+  // Components sit out of the build lists by default — they are what a
+  // finished item was on the way to, not something anyone set out to build.
+  // Until the item data arrives every id looks finished, so the lists fill in
+  // rather than flashing empty.
+  const finishedItems = useMemo(
+    () => items.filter((i) => isFinishedItem(itemData, i.item_id)),
+    [items, itemData],
+  );
+  const hasComponents = finishedItems.length !== items.length;
   const augments = useMemo(
     () => championAugmentBreakdown(augmentRows, filters, championId),
     [augmentRows, filters, championId],
@@ -112,21 +120,21 @@ export default function ChampionDetail({
   // build-order watcher feed this, so it can be empty
   const buildPath = useMemo(() => {
     const all = championBuildPath(purchaseRows, filters, championId);
-    return all
-      .filter((e) => itemData[e.item_id]?.completed && e.picks >= 2)
-      .slice(0, 7);
+    return all.filter((e) => itemData[e.item_id]?.completed && e.picks >= 2).slice(0, 7);
   }, [purchaseRows, filters, championId, itemData]);
 
   // The low-sample toggle and the panel search/rarity filters narrow the full
-  // tables only; Core build and Best augments already rank with shrinkage
+  // tables only; Core build and Best augments already rank by Score
   const visibleItems = useMemo(() => {
-    let list = items.filter((i) => i.picks >= Math.max(minGames, LIST_MIN_PICKS));
+    let list = (showComponents ? items : finishedItems).filter(
+      (i) => i.picks >= Math.max(minGames, LIST_MIN_PICKS),
+    );
     if (itemSearch) {
       const q = itemSearch.toLowerCase();
       list = list.filter((i) => getItemName(itemData, i.item_id).toLowerCase().includes(q));
     }
     return list;
-  }, [items, minGames, itemSearch, itemData]);
+  }, [items, finishedItems, showComponents, minGames, itemSearch, itemData]);
 
   const visibleAugments = useMemo(() => {
     let list = augments.filter((a) => a.picks >= Math.max(minGames, LIST_MIN_PICKS));
@@ -145,13 +153,13 @@ export default function ChampionDetail({
   const coreBuild = useMemo(
     () =>
       rankForBuild(
-        items,
+        finishedItems,
         (i) => i.picks,
         (i) => i.wins,
         ITEM_MIN_GAMES,
         6,
       ),
-    [items],
+    [finishedItems],
   );
 
   const augmentsByRarity = useMemo(() => {
@@ -242,9 +250,7 @@ export default function ChampionDetail({
                       <ItemIcon itemData={itemData} itemId={i.item_id} size={44} />
                     </span>
                     <span
-                      className={`text-xs mt-1 ${
-                        low ? "text-lol-text" : "text-lol-text-bright"
-                      }`}
+                      className={`text-xs mt-1 ${low ? "text-lol-text" : "text-lol-text-bright"}`}
                     >
                       {wr}%{low ? "*" : ""}
                     </span>
@@ -270,11 +276,7 @@ export default function ChampionDetail({
                   <div className="space-y-3">
                     {r.best.map((a) => (
                       <div key={a.augment_id} className="flex items-center gap-2.5">
-                        <AugmentIcon
-                          augmentData={augmentData}
-                          augmentId={a.augment_id}
-                          size={30}
-                        />
+                        <AugmentIcon augmentData={augmentData} augmentId={a.augment_id} size={30} />
                         <div className="flex-1 min-w-0">
                           <p
                             className={`text-[13px] truncate leading-tight ${r.color}`}
@@ -348,29 +350,57 @@ export default function ChampionDetail({
       {/* Full tables */}
       <div className="grid grid-cols-1 min-[981px]:grid-cols-2 gap-4">
         <div className={`${PANEL} overflow-hidden`}>
-          <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-4 pb-3">
             <h2 className={LABEL}>All items</h2>
-            <div className="ml-auto">
-              <SearchBox value={itemSearch} onChange={setItemSearch} placeholder="Search item..." width={150} />
+            {hasComponents && (
+              <ToggleChip
+                active={showComponents}
+                onClick={() => setShowComponents((v) => !v)}
+                title="Components — Ruby Crystal, Boots, Recurve Bow — carry a win rate from sitting in an inventory, not from being built on purpose"
+              >
+                Components
+              </ToggleChip>
+            )}
+            <div className="flex-1 min-w-[96px] sm:flex-none sm:w-[180px] sm:ml-auto">
+              <SearchBox value={itemSearch} onChange={setItemSearch} placeholder="Search item..." />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
-                <th className={`px-3 py-1.5 text-left ${LABEL}`}>Item</th>
-                <th className={`w-[72px] px-3 py-1.5 text-left ${LABEL}`}>Games</th>
-                <th className={`w-[140px] px-3 py-1.5 text-left ${LABEL}`}>Win rate</th>
+                <th className={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}>Item</th>
+                <th
+                  className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Games
+                </th>
+                <th
+                  className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                  title={SCORE_HINT}
+                >
+                  Score
+                </th>
+                <th
+                  className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Win rate
+                </th>
               </tr>
             </thead>
             <tbody>
               {visibleItems.map((i) => (
                 <tr key={i.item_id} className="border-t border-lol-border/50">
-                  <td className="px-3 py-1.5">
-                    <ItemIcon itemData={itemData} itemId={i.item_id} size={24} showName />
+                  <td className="px-2 sm:px-3 py-1.5">
+                    <ItemIcon itemData={itemData} itemId={i.item_id} size={24} showName wrap />
                   </td>
-                  <td className="px-3 py-1.5 text-[13px] text-lol-text-bright">{i.picks}</td>
-                  <td className="px-3 py-1.5">
-                    <WinRateBar wins={i.wins} total={i.picks} />
+                  <td className="px-1 sm:px-3 py-1.5 text-[13px] text-lol-text-bright tabular-nums">
+                    {i.picks}
+                  </td>
+                  <td className="px-1 sm:px-3 py-1.5">
+                    <ScoreCell wins={i.wins} total={i.picks} />
+                  </td>
+                  <td className="px-2 sm:px-3 py-1.5">
+                    <WinRateBar wins={i.wins} total={i.picks} meterFrom="sm" />
                   </td>
                 </tr>
               ))}
@@ -386,25 +416,37 @@ export default function ChampionDetail({
         <div className={`${PANEL} overflow-hidden`}>
           <div className="flex flex-wrap items-center gap-2 px-4 pt-4 pb-3">
             <h2 className={LABEL}>All augments</h2>
-            <div className="flex items-center gap-1.5 ml-2">
-              <RarityFilter value={augRarity} onChange={setAugRarity} compact />
-            </div>
-            <div className="ml-auto">
-              <SearchBox value={augSearch} onChange={setAugSearch} placeholder="Search..." width={110} />
+            <RarityFilter value={augRarity} onChange={setAugRarity} compact />
+            <div className="flex-1 min-w-[96px] sm:flex-none sm:w-[150px] sm:ml-auto">
+              <SearchBox value={augSearch} onChange={setAugSearch} placeholder="Search..." />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
-                <th className={`px-3 py-1.5 text-left ${LABEL}`}>Augment</th>
-                <th className={`w-[72px] px-3 py-1.5 text-left ${LABEL}`}>Picks</th>
-                <th className={`w-[140px] px-3 py-1.5 text-left ${LABEL}`}>Win rate</th>
+                <th className={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}>Augment</th>
+                <th
+                  className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Picks
+                </th>
+                <th
+                  className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                  title={SCORE_HINT}
+                >
+                  Score
+                </th>
+                <th
+                  className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Win rate
+                </th>
               </tr>
             </thead>
             <tbody>
               {visibleAugments.map((a) => (
                 <tr key={a.augment_id} className="border-t border-lol-border/50">
-                  <td className="px-3 py-1.5">
+                  <td className="px-2 sm:px-3 py-1.5">
                     <AugmentIcon
                       augmentData={augmentData}
                       augmentId={a.augment_id}
@@ -413,9 +455,14 @@ export default function ChampionDetail({
                       wrap
                     />
                   </td>
-                  <td className="px-3 py-1.5 text-[13px] text-lol-text-bright">{a.picks}</td>
-                  <td className="px-3 py-1.5">
-                    <WinRateBar wins={a.wins} total={a.picks} />
+                  <td className="px-1 sm:px-3 py-1.5 text-[13px] text-lol-text-bright tabular-nums">
+                    {a.picks}
+                  </td>
+                  <td className="px-1 sm:px-3 py-1.5">
+                    <ScoreCell wins={a.wins} total={a.picks} />
+                  </td>
+                  <td className="px-2 sm:px-3 py-1.5">
+                    <WinRateBar wins={a.wins} total={a.picks} meterFrom="sm" />
                   </td>
                 </tr>
               ))}
@@ -430,10 +477,62 @@ export default function ChampionDetail({
       </div>
 
       <p className="text-xs text-lol-text/70">
-        Core build and best augments rank by win rate adjusted toward 50% for small samples.
-        * fewer than 20 games — treat with caution.
+        Score is the win rate the record supports, out of 100: the floor of a 95% confidence
+        interval, so 100% over 5 games scores below 60% over 2,600. Everything on the site ranks by
+        it. Components are left out of the build lists — Manamune and Archangel's Staff stay, since
+        they transform rather than build into anything. * fewer than 20 games — treat with caution.
       </p>
     </div>
+  );
+}
+
+// Table columns are fixed-width so the numbers line up down the page, which
+// leaves the name column whatever is left over. On a phone that was not
+// enough and names came back as "Overlord'..." — so the number columns give
+// up their padding and some width below `sm`, and names wrap to a second line
+// instead of being cut.
+const COL_GAMES = "w-[50px] sm:w-[72px]";
+const COL_SCORE = "w-[44px] sm:w-[64px]";
+const COL_RATE = "w-[84px] sm:w-[140px]";
+
+const SCORE_HINT =
+  "The win rate this record supports, out of 100 — the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";
+
+// The score carries no win/loss color: it is a confidence-adjusted number, and
+// coloring it green at 50 would say something the win rate already says.
+function ScoreCell({ wins, total }: { wins: number; total: number }) {
+  return (
+    <span className="text-[13px] font-medium tabular-nums text-lol-text-bright" title={SCORE_HINT}>
+      {score(wins, total).toFixed(1)}
+    </span>
+  );
+}
+
+function ToggleChip({
+  active,
+  onClick,
+  title,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-pressed={active}
+      className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+        active
+          ? "border-lol-gold/50 bg-lol-gold/10 text-lol-text-bright"
+          : "border-lol-border text-lol-text hover:text-lol-text-bright"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -443,12 +542,10 @@ function SearchBox({
   value,
   onChange,
   placeholder,
-  width,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
-  width: number;
 }) {
   return (
     <input
@@ -456,8 +553,7 @@ function SearchBox({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="input"
-      style={{ width }}
+      className="input w-full"
     />
   );
 }
