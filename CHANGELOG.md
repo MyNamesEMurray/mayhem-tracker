@@ -18,6 +18,13 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.5 — 2026-08-24
+
+- <!--fixes:v2.12.2--> **Items and augments are ranked by the record behind them, not just the record.** A 5-game item at 100% was landing above Warmog's Armor at 60.1% over 2,635 games — the old ranking all but tied them, which is the wrong answer at 500 times the evidence. Every list now shows a **Score out of 100**: the win rate the games actually support, so a perfect handful of games starts low and climbs as it proves itself, instead of arriving at the top and sliding down. The five-game item scores 56.6; Warmog's scores 58.2.
+- **Components are out of the build lists.** Ruby Crystal, Giant's Belt and Recurve Bow were showing up with win rates earned by sitting in someone's inventory at the final whistle, not by being anyone's plan. Items that only *look* like components stay: Manamune and Archangel's Staff transform rather than build into anything, so they read as the finished items they are. A **Components** button in the list header brings the parts back if you want them.
+- Tier-2 boots are back in the build lists and build paths. Ionian Boots of Lucidity, Berserker's Greaves and four others were being treated as parts because they cost under 1000g — a boot counts because it's built from the boots everyone starts with, not because of its price.
+- Long item names are no longer cut off on a phone. "Overlord'..." now reads as Overlord's Bloodmail: the number columns give up some width, the win-rate meter steps aside for its percentage, and a name that needs two lines gets them.
+
 ## v2.12.4 — 2026-08-23
 
 - Win rates line up in a column again. The `*` marking a small sample sat inside the number, so a starred row pushed its percentage a character to the left and the column zig-zagged; the asterisk now keeps its own space whether or not it's shown, and the digits are set in tabular figures so they stay in step too. Fixed on the champion table, the champion page's augment lists, and the augment slot table.

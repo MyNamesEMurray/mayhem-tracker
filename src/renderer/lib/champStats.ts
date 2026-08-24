@@ -12,14 +12,34 @@ export function score(wins: number, games: number): number {
   return (100 * (wins + PRIOR_GAMES * 0.5)) / (games + PRIOR_GAMES);
 }
 
+// The 0-100 number the item and augment lists rank and display, ported from
+// the website's confidenceScore(): the win rate the record supports, being the
+// lower bound of the Wilson interval at 95%.
+//
+// A perfect 5-0 scores 57, because five games cannot rule out a coin flip;
+// 60.1% over 2,635 games scores 58, because that many games can. Shrinkage
+// toward 50% (the `score` above, still what champions rank by) very nearly
+// ties those two, which is how a five-game item came to outrank a proven one.
+const WILSON_Z = 1.96;
+
+export function confidenceScore(wins: number, games: number): number {
+  if (games <= 0) return 0;
+  const p = wins / games;
+  const z2 = WILSON_Z * WILSON_Z;
+  const denominator = 1 + z2 / games;
+  const centre = p + z2 / (2 * games);
+  const margin = WILSON_Z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
+  return (100 * (centre - margin)) / denominator;
+}
+
 // Win rates below this many games render muted; tier badges dim below 10
 export const MIN_SAMPLE = 20;
 export const TIER_MIN_SAMPLE = 10;
 
-// The long-tail lists hide anything under this many picks. Ranking is by
-// shrunk win rate, and at two or three picks a perfect record still edges out
-// a solid one over thirty games — so rows too thin to rank don't compete,
-// rather than re-tuning the prior behind every score on the site.
+// The long-tail lists hide anything under this many picks. The confidence
+// score already sinks a two-pick record to the bottom rather than the top, so
+// this is about noise rather than ranking: a row reading 100% over two games
+// is a distraction whatever it sorts as.
 export const LIST_MIN_PICKS = 5;
 
 export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
@@ -52,9 +72,9 @@ export function assignTiers<T>(
 }
 
 // A build entry has to earn its place twice: a workable sample, and a record
-// that isn't losing. Ranked by shrunk win rate, so a confident 58% beats a
-// lucky 100% over three games. No popularity filler — an item that has never
-// won is not a recommendation, however many times it was built.
+// that isn't losing. Ranked by confidence score, so a solid 58% over hundreds
+// of games beats a lucky 100% over five. No popularity filler — an item that
+// has never won is not a recommendation, however many times it was built.
 export function rankForBuild<T>(
   list: T[],
   getPicks: (t: T) => number,
@@ -67,7 +87,9 @@ export function rankForBuild<T>(
       const picks = getPicks(x);
       return picks >= minPicks && getWins(x) * 2 >= picks;
     })
-    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)))
+    .sort(
+      (a, b) => confidenceScore(getWins(b), getPicks(b)) - confidenceScore(getWins(a), getPicks(a)),
+    )
     .slice(0, count);
 }
 
