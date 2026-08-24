@@ -160,7 +160,7 @@ export default function Friends() {
                         <div key={c.champion_id} className="relative group">
                           <ChampionIcon championId={c.champion_id} size={24} />
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-lol-dark border border-lol-border rounded px-2 py-1 text-[10px] text-lol-text-bright whitespace-nowrap z-10">
-                            {getChampionName(champData, c.champion_id)} ({c.games})
+                            {getChampionName(champData, c.champion_id)} ({c.games.toLocaleString()})
                           </div>
                         </div>
                       ))}

@@ -156,6 +156,12 @@ export interface AugmentStatsDetailed {
   augment_id: number;
   picks: number;
   wins: number;
+  // Combat sums across every pick of the augment, for the KDA and damage
+  // columns — the same ones the website's augment table shows
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
   champions: { champion_id: number; picks: number; wins: number }[];
 }
 
@@ -367,7 +373,10 @@ export interface ElectronAPI {
     patch?: string,
     queue?: number,
   ) => Promise<{ augments: AugmentStats[]; items: ItemStats[] }>;
-  getCommunityAugmentStats: (patch?: string, queue?: number) => Promise<AugmentStats[]>;
+  getCommunityAugmentStats: (
+    patch?: string,
+    queue?: number,
+  ) => Promise<Omit<AugmentStatsDetailed, "champions">[]>;
   getCommunityAugmentChampions: (
     augmentId: number,
     patch?: string,

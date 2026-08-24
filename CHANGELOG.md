@@ -18,6 +18,13 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.9 — 2026-08-24
+
+- **The Augments tab has the columns the website has.** Tier, Score, Win Rate, Picks, Pick Rate, KDA and Damage, in that order, on both sources. Tiers rank each augment against its own rarity, the same way the site does it — a Prismatic and a Silver are never ranked against each other.
+- **Both tier lists say what they're showing.** The heading now reads "ARAM Mayhem Champions Tier List" and follows the queue you've picked, with the patch and game count underneath. The count was always the games in that patch and queue; the old heading just didn't say so, which made it look like the whole database had shrunk.
+- **Numbers carry a thousands separator everywhere.** The website was showing damage as "50.6k" and game counts as "4139" while the app showed "50,580" and "4,139". Both now read 50,580 and 4,139.
+- **Removed the "20+ games" toggle.** With tens of thousands of games in a patch nearly everything clears that bar, and a thin row is already marked with a `*`. Champion pages still hold their build lists to the same floor, where a handful of picks genuinely can mislead.
+
 ## v2.12.8 — 2026-08-24
 
 - <!--fixes:v2.12.7--> **Fixed the Augments tab sitting on "Loading..." forever.** Upgrading to v2.12.7 left a community cache from the previous version on disk, written before the augment rollup existed. Anything inside its six-hour window was read back as if it had one, and the augment list waited on a request that had already failed. The cache now records which version wrote it and is refetched when that doesn't match, so this can't recur the next time the shape changes. A failed load also says what went wrong and offers a retry, instead of showing "Loading..." indefinitely.

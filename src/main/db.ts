@@ -1213,7 +1213,9 @@ export function getAugmentStatsAll(championId?: number, patch?: string, queue?: 
   applyQueueFilter(where, params, queue);
   return db
     .prepare(`
-    SELECT ga.augment_id, COUNT(*) as picks, SUM(ps.win) as wins
+    SELECT ga.augment_id, COUNT(*) as picks, SUM(ps.win) as wins,
+           SUM(ps.kills) as kills, SUM(ps.deaths) as deaths, SUM(ps.assists) as assists,
+           SUM(ps.total_damage_dealt) as damage
     FROM game_augments ga
     JOIN player_stats ps ON ga.game_id = ps.game_id
     JOIN games g ON ga.game_id = g.game_id
@@ -1326,6 +1328,10 @@ export function getAugmentStatsWithChampions(
   augment_id: number;
   picks: number;
   wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
   champions: { champion_id: number; picks: number; wins: number }[];
 }[] {
   const where = ["g.is_remake = 0"];
@@ -1345,7 +1351,15 @@ export function getAugmentStatsWithChampions(
     GROUP BY ga.augment_id
     ORDER BY picks DESC
   `)
-    .all(...params) as { augment_id: number; picks: number; wins: number }[];
+    .all(...params) as {
+      augment_id: number;
+      picks: number;
+      wins: number;
+      kills: number;
+      deaths: number;
+      assists: number;
+      damage: number;
+    }[];
 
   const champBreakdown = db
     .prepare(`

@@ -13,12 +13,16 @@ import ChampionIcon from "../components/ChampionIcon";
 import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
+import { QUEUE_LABELS } from "../../shared/queues";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import SortHeader, { useSort } from "../components/SortHeader";
+import TierBadge from "../components/TierBadge";
+import { assignTiers, score, TIER_ORDER } from "../lib/champStats";
+import { formatWhole, kdaColor, kdaRatio } from "../lib/format";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
 
-type SortKey = "picks" | "winRate" | "name" | "pickRate";
+type SortKey = "picks" | "winRate" | "name" | "pickRate" | "score" | "tier" | "kda" | "damage";
 
 export default function Augments() {
   const champData = useChampionData();
@@ -38,7 +42,7 @@ export default function Augments() {
     [patch, queue, source],
   );
   const [search, setSearch] = useState("");
-  const { sort, toggle } = useSort<SortKey>("picks");
+  const { sort, toggle } = useSort<SortKey>("score");
   const { key: sortKey, dir: sortDir } = sort;
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [rarityFilter, setRarityFilter] = useState<Rarity>("all");
@@ -47,6 +51,37 @@ export default function Augments() {
     const unsub = window.api.onGamesUpdated(() => refetch());
     return unsub;
   }, [refetch]);
+
+  // Tiers rank each augment against its own rarity — Prismatics are strictly
+  // stronger than Silvers, so one global ranking would just sort by rarity.
+  // Assigned over the unfiltered list so searching never reshuffles a badge.
+  const tiers = useMemo(() => {
+    if (!data) return new Map<number, ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never>();
+    const byRarity = new Map<string, typeof data>();
+    for (const a of data) {
+      const r = augmentData[a.augment_id]?.rarity ?? "unknown";
+      const group = byRarity.get(r) ?? [];
+      group.push(a);
+      byRarity.set(r, group);
+    }
+    const all = new Map<number, ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never>();
+    for (const group of byRarity.values()) {
+      for (const [id, tier] of assignTiers(
+        group,
+        (a) => score(a.wins, a.picks),
+        (a) => a.augment_id,
+      )) {
+        all.set(id, tier);
+      }
+    }
+    return all;
+  }, [data, augmentData]);
+
+  // The app's queue dropdown treats an empty selection as every queue, and
+  // hides itself entirely while only one queue has data — in which case that
+  // one queue is what's on screen
+  const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
+  const patchLabel = patch ? `Patch ${patch}` : "All patches";
 
   const totalGames = useMemo(() => {
     if (!data || data.length === 0) return 0;
@@ -96,6 +131,21 @@ export default function Augments() {
         const nameB = getAugmentName(augmentData, b.augment_id);
         const cmp = nameA.localeCompare(nameB);
         return sortDir === "asc" ? cmp : -cmp;
+      } else if (sortKey === "score") {
+        av = score(a.wins, a.picks);
+        bv = score(b.wins, b.picks);
+      } else if (sortKey === "tier") {
+        const at = TIER_ORDER.indexOf(tiers.get(a.augment_id)!);
+        const bt = TIER_ORDER.indexOf(tiers.get(b.augment_id)!);
+        if (at !== bt) return sortDir === "desc" ? at - bt : bt - at;
+        av = score(a.wins, a.picks);
+        bv = score(b.wins, b.picks);
+      } else if (sortKey === "kda") {
+        av = (a.kills + a.assists) / Math.max(a.deaths, 1);
+        bv = (b.kills + b.assists) / Math.max(b.deaths, 1);
+      } else if (sortKey === "damage") {
+        av = a.picks > 0 ? a.damage / a.picks : 0;
+        bv = b.picks > 0 ? b.damage / b.picks : 0;
       } else if (sortKey === "pickRate") {
         // Picks over a fixed total, so this is the picks order
         av = a.picks;
@@ -111,7 +161,7 @@ export default function Augments() {
     });
 
     return filtered;
-  }, [data, search, sortKey, sortDir, augmentData, rarityFilter]);
+  }, [data, tiers, search, sortKey, sortDir, augmentData, rarityFilter]);
 
   // A rejected fetch used to leave "Loading..." on screen forever, which is
   // indistinguishable from a slow one. Say what happened and offer a retry.
@@ -138,7 +188,14 @@ export default function Augments() {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold text-lol-text-bright">Augments</h1>
+        <div>
+          <h1 className="text-xl font-bold text-lol-text-bright">
+            {queueLabel} Augments Tier List
+          </h1>
+          <p className="text-xs text-lol-text mt-0.5">
+            {patchLabel} · {totalGames.toLocaleString()} games
+          </p>
+        </div>
       </div>
 
       {/* Rarity Filter + Search */}
@@ -187,9 +244,13 @@ export default function Augments() {
             <tr>
               <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
               <SortHeader label="Augment" field="name" naturalDir="asc" {...sortProps} />
+              <SortHeader label="Tier" field="tier" className="w-16" {...sortProps} />
+              <SortHeader label="Score" field="score" {...sortProps} />
+              <SortHeader label="Win Rate" field="winRate" className="w-32" {...sortProps} />
               <SortHeader label="Picks" field="picks" {...sortProps} />
               <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
-              <SortHeader label="Win Rate" field="winRate" className="w-32" {...sortProps} />
+              <SortHeader label="KDA" field="kda" {...sortProps} />
+              <SortHeader label="Damage" field="damage" {...sortProps} />
             </tr>
           </thead>
           <tbody>
@@ -213,10 +274,30 @@ export default function Augments() {
                     <td className="px-3 py-1.5">
                       <AugmentIcon augmentId={a.augment_id} showName />
                     </td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                    <td className="px-3 py-1.5">
+                      {tiers.get(a.augment_id) && (
+                        <TierBadge tier={tiers.get(a.augment_id)!} games={a.picks} />
+                      )}
+                    </td>
+                    <td className="px-3 py-1.5 text-sm font-semibold text-lol-text-bright">
+                      {score(a.wins, a.picks).toFixed(1)}
+                    </td>
                     <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                       <WinRateBar wins={a.wins} total={a.picks} />
+                    </td>
+                    <td className="px-3 py-1.5 text-sm text-lol-text-bright">
+                      {formatWhole(a.picks)}
+                    </td>
+                    <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                    <td
+                      className={`px-3 py-1.5 text-sm ${kdaColor(
+                        (a.kills + a.assists) / Math.max(a.deaths, 1),
+                      )}`}
+                    >
+                      {kdaRatio(a.kills, a.deaths, a.assists)}
+                    </td>
+                    <td className="px-3 py-1.5 text-sm text-lol-text">
+                      {formatWhole(a.picks > 0 ? a.damage / a.picks : 0)}
                     </td>
                   </tr>
                   {isExpanded &&
@@ -237,11 +318,22 @@ export default function Augments() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-3 py-1.5 text-xs text-lol-text">{c.picks}</td>
                         <td></td>
+                        <td className="px-3 py-1.5 text-sm text-lol-text">
+                          {score(c.wins, c.picks).toFixed(1)}
+                        </td>
                         <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                           <WinRateBar wins={c.wins} total={c.picks} />
                         </td>
+                        <td className="px-3 py-1.5 text-xs text-lol-text">
+                          {formatWhole(c.picks)}
+                        </td>
+                        {/* Pick rate, KDA and damage aren't broken out per
+                            champion — the columns stay empty rather than
+                            repeating the augment's own numbers */}
+                        <td></td>
+                        <td></td>
+                        <td></td>
                       </tr>
                     ))}
                 </>

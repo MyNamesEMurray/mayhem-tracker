@@ -16,6 +16,7 @@ import TierBadge from "../components/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../lib/champStats";
 import SortHeader, { useSort } from "../components/SortHeader";
 import QueueSelect from "../components/QueueSelect";
+import { QUEUE_LABELS } from "../../shared/queues";
 import {
   formatAvg,
   formatWhole,
@@ -96,6 +97,13 @@ export default function Champions() {
   // Champion slots under these filters; a champion's share of them is its
   // pick rate, the same denominator the website uses
   const totalSlots = useMemo(() => (data ? data.reduce((sum, c) => sum + c.games, 0) : 0), [data]);
+  // Ten champion slots per game
+  const totalGames = Math.round(totalSlots / 10);
+  // The app's queue dropdown treats an empty selection as every queue, and
+  // hides itself entirely while only one queue has data — in which case that
+  // one queue is what's on screen
+  const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
+  const patchLabel = patch ? `Patch ${patch}` : "All patches";
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -174,7 +182,17 @@ export default function Champions() {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-lol-text-bright">Champions</h1>
+        {/* Named the same way the website names it: the queue, the list, then
+            the slice the numbers cover — so a game count reads as this patch
+            of this queue rather than the size of the whole database */}
+        <div>
+          <h1 className="text-xl font-bold text-lol-text-bright">
+            {queueLabel} Champions Tier List
+          </h1>
+          <p className="text-xs text-lol-text mt-0.5">
+            {patchLabel} · {totalGames.toLocaleString()} games
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <QueueSelect value={queue} onChange={setQueue} />
           <PatchSelect value={patch} onChange={setPatch} options={communityPatches} />
@@ -259,7 +277,7 @@ export default function Champions() {
                 <td className="px-4 py-1.5 w-32 min-[1500px]:w-72">
                   <WinRateBar wins={c.wins} total={c.games} />
                 </td>
-                <td className="px-4 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                <td className="px-4 py-1.5 text-sm text-lol-text-bright">{formatWhole(c.games)}</td>
                 <td className="px-4 py-1.5 text-sm text-lol-text">
                   {totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}%
                 </td>

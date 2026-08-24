@@ -58,6 +58,10 @@ export interface CommunityAugmentTotalRow {
   augment_id: number;
   picks: number;
   wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
 }
 
 export interface CommunityItemRow {
@@ -78,7 +82,7 @@ export interface CommunityItemRow {
 // as undefined — v2.12.7 added augmentTotals, and a v2.12.6 cache that was
 // still inside its six hours left the augment list waiting forever on a
 // promise that had already rejected.
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 interface Cache {
   version?: number;
@@ -181,7 +185,8 @@ const CHAMPION_QUERY =
 const AUGMENT_QUERY =
   "select=patch,queue_id,augment_id,champion_id,picks,wins&order=patch,queue_id,augment_id";
 const AUGMENT_TOTALS_QUERY =
-  "select=patch,queue_id,augment_id,picks,wins&order=patch,queue_id,augment_id";
+  "select=patch,queue_id,augment_id,picks,wins,kills,deaths,assists,damage" +
+  "&order=patch,queue_id,augment_id";
 const ITEM_QUERY =
   "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 
@@ -372,18 +377,43 @@ export async function getCommunityChampionDetail(
 }
 
 // The augment list, in the shape the app's local getAugmentStats returns.
+export interface CommunityAugmentStats {
+  augment_id: number;
+  picks: number;
+  wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+}
+
 export async function getCommunityAugmentStats(
   patch?: string,
   queue?: number,
-): Promise<{ augment_id: number; picks: number; wins: number }[]> {
+): Promise<CommunityAugmentStats[]> {
   const { augmentTotals } = await loadCommunity();
-  const byAugment = new Map<number, { augment_id: number; picks: number; wins: number }>();
+  const byAugment = new Map<number, CommunityAugmentStats>();
   for (const r of augmentTotals ?? []) {
     if (!matches(r, patch, queue)) continue;
-    const e = byAugment.get(r.augment_id) ?? { augment_id: r.augment_id, picks: 0, wins: 0 };
+    let e = byAugment.get(r.augment_id);
+    if (!e) {
+      e = {
+        augment_id: r.augment_id,
+        picks: 0,
+        wins: 0,
+        kills: 0,
+        deaths: 0,
+        assists: 0,
+        damage: 0,
+      };
+      byAugment.set(r.augment_id, e);
+    }
     e.picks += r.picks;
     e.wins += r.wins;
-    byAugment.set(r.augment_id, e);
+    e.kills += r.kills ?? 0;
+    e.deaths += r.deaths ?? 0;
+    e.assists += r.assists ?? 0;
+    e.damage += r.damage ?? 0;
   }
   return [...byAugment.values()].sort((a, b) => b.picks - a.picks);
 }

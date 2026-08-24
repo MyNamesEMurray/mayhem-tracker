@@ -326,7 +326,9 @@ export function kdaRatio(kills: number, deaths: number, assists: number): number
   return (kills + assists) / Math.max(deaths, 1);
 }
 
-export function formatCompact(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(Math.round(n));
+// Whole numbers carry a thousands separator, everywhere, on both surfaces.
+// This used to render "50.6k", which is shorter and reads as an estimate —
+// and disagreed with the desktop app, which has always shown 50,580.
+export function formatWhole(n: number | null | undefined): string {
+  return Math.round(n ?? 0).toLocaleString();
 }

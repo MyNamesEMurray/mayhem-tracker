@@ -197,6 +197,17 @@ export default function App() {
           ? DEFAULT_QUEUE
           : undefined;
 
+  // The heading names the queue being shown, so "46,408 games" reads as this
+  // patch of this queue rather than the size of the whole database
+  // queue is undefined both for "all queues" and for a default that has no
+  // data, so the label reads the parameter rather than the resolved value
+  const queueLabel =
+    queueParam === "all"
+      ? "All Queues"
+      : queue == null
+        ? QUEUE_LABELS[DEFAULT_QUEUE]
+        : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
+
   // Default view is the current patch; ?patch= also supports "all", a single
   // patch, or an inclusive "A-B" range
   const patchSet = useMemo(
@@ -309,13 +320,10 @@ export default function App() {
   );
   const totalGames = Math.round(totalSlots / 10);
 
-  // Hide entries below the low-sample threshold (the *-marked ones)
-  const confidentOnly = params.get("min") === "20";
-  const minGames = confidentOnly ? MIN_SAMPLE : 0;
-  const toggleConfident = useCallback(
-    () => setParam("min", confidentOnly ? null : "20"),
-    [setParam, confidentOnly],
-  );
+  // The low-sample floor used to be a toggle. With tens of thousands of games
+  // a patch, nearly everything clears it, and the * on a thin row already says
+  // what the toggle said. Champion pages still pass MIN_SAMPLE to their build
+  // lists, where a handful of picks genuinely can mislead.
 
   // Human label for the current patch selection, shown in page titles
   const patchLabel = !patchParam
@@ -542,7 +550,6 @@ export default function App() {
                 itemRows={championRows.itemRows}
                 purchaseRows={championRows.purchaseRows}
                 filters={filters}
-                minGames={minGames}
                 championData={data.championData}
                 augmentData={data.augmentData}
                 onBack={() => navigate("/")}
@@ -555,7 +562,7 @@ export default function App() {
             {/* Page title */}
             <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
               <h1 className="text-[22px] font-extrabold text-lol-gold-light m-0">
-                {tab === "champions" ? "ARAM Mayhem tier list" : "Augment tier list"}
+                {queueLabel} {tab === "champions" ? "Champions" : "Augments"} Tier List
               </h1>
               <span className="text-xs">
                 {patchLabel} · {totalGames.toLocaleString()} games
@@ -574,9 +581,6 @@ export default function App() {
                 rows={data.augmentRows}
                 filters={filters}
                 totalSlots={totalSlots}
-                minGames={minGames}
-                confidentOnly={confidentOnly}
-                onToggleConfident={toggleConfident}
                 augmentData={data.augmentData}
                 championData={data.championData}
                 onSelectChampion={openChampion}
@@ -586,9 +590,6 @@ export default function App() {
                 rows={data.championRows}
                 filters={filters}
                 totalSlots={totalSlots}
-                minGames={minGames}
-                confidentOnly={confidentOnly}
-                onToggleConfident={toggleConfident}
                 championData={data.championData}
                 onSelectChampion={openChampion}
               />

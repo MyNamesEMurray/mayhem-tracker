@@ -6,7 +6,7 @@ import {
   aggregateAugments,
   assignTiers,
   augmentChampionBreakdown,
-  formatCompact,
+  formatWhole,
   kdaRampClass,
   kdaRatio,
   score,
@@ -33,9 +33,6 @@ export default function AugmentsTable({
   rows,
   filters,
   totalSlots,
-  minGames = 0,
-  confidentOnly = false,
-  onToggleConfident,
   augmentData,
   championData,
   onSelectChampion,
@@ -43,9 +40,6 @@ export default function AugmentsTable({
   rows: AugmentTotalRow[];
   filters: Filters;
   totalSlots: number;
-  minGames?: number;
-  confidentOnly?: boolean;
-  onToggleConfident?: () => void;
   augmentData: AugmentData;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
@@ -84,7 +78,7 @@ export default function AugmentsTable({
   const sorted = useMemo(() => {
     // Tier assignment above still sees the full cohort — hiding low-sample
     // rows must not promote what remains
-    let filtered = minGames > 0 ? list.filter((a) => a.picks >= minGames) : list;
+    let filtered = list;
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter((a) =>
@@ -134,7 +128,7 @@ export default function AugmentsTable({
       return sortDir === "desc" ? bv - av : av - bv;
     });
     return result;
-  }, [list, tiers, search, rarity, sortKey, sortDir, augmentData, minGames]);
+  }, [list, tiers, search, rarity, sortKey, sortDir, augmentData]);
 
   const th =
     "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
@@ -156,20 +150,6 @@ export default function AugmentsTable({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <RarityFilter value={rarity} onChange={setRarity} />
-        {onToggleConfident && (
-          <button
-            onClick={onToggleConfident}
-            aria-pressed={confidentOnly}
-            title="Hide results with fewer than 20 picks (the ones marked with *)"
-            className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-              confidentOnly
-                ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
-                : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
-            }`}
-          >
-            20+ games
-          </button>
-        )}
         <span className="text-xs self-center ml-1">
           {sorted.length} augment{sorted.length === 1 ? "" : "s"}
         </span>
@@ -223,9 +203,7 @@ export default function AugmentsTable({
         </table>
         {sorted.length === 0 && (
           <div className="py-8 text-center text-sm text-lol-text">
-            {minGames > 0 && list.length > 0
-              ? "No augments with 20+ picks under these filters — try a wider patch range or turn off the 20+ filter"
-              : "No augments found"}
+            "No augments found"
           </div>
         )}
       </div>
@@ -307,12 +285,14 @@ function AugmentRow({
         <td className="px-3 py-[9px]">
           <WinRateBar wins={aug.wins} total={aug.picks} />
         </td>
-        <td className="px-3 py-[9px] text-[13px] text-lol-text-bright">{aug.picks}</td>
+        <td className="px-3 py-[9px] text-[13px] text-lol-text-bright">
+          {formatWhole(aug.picks)}
+        </td>
         <td className="px-3 py-[9px] text-[13px] text-lol-text">{pickRate}%</td>
         <td className={`px-3 py-[9px] text-[13px] font-semibold ${kdaRampClass(kda)}`}>
           {kda.toFixed(2)}
         </td>
-        <td className="px-3 py-[9px] text-[13px] text-lol-text">{formatCompact(avgDamage)}</td>
+        <td className="px-3 py-[9px] text-[13px] text-lol-text">{formatWhole(avgDamage)}</td>
       </tr>
       {expanded && (
         <tr className="xrow border-t border-lol-border/30 bg-lol-dark/40">
@@ -338,7 +318,7 @@ function AugmentRow({
                       {getChampionName(championData, c.champion_id)}
                     </span>
                   </a>
-                  <span className="text-xs text-lol-text w-14 shrink-0">{c.picks} picks</span>
+                  <span className="text-xs text-lol-text w-14 shrink-0">{formatWhole(c.picks)} picks</span>
                   <div className="flex-1 min-w-16">
                     <WinRateBar wins={c.wins} total={c.picks} />
                   </div>

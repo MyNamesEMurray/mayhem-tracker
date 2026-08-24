@@ -5,7 +5,7 @@ import { getChampionName } from "../lib/dragon";
 import {
   aggregateChampions,
   assignTiers,
-  formatCompact,
+  formatWhole,
   kdaRampClass,
   kdaRatio,
   score,
@@ -29,18 +29,12 @@ export default function ChampionsTable({
   rows,
   filters,
   totalSlots,
-  minGames = 0,
-  confidentOnly = false,
-  onToggleConfident,
   championData,
   onSelectChampion,
 }: {
   rows: ChampionStatRow[];
   filters: Filters;
   totalSlots: number;
-  minGames?: number;
-  confidentOnly?: boolean;
-  onToggleConfident?: () => void;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
 }) {
@@ -63,7 +57,7 @@ export default function ChampionsTable({
   const sorted = useMemo(() => {
     // Tier assignment above still sees the full cohort — hiding low-sample
     // rows must not promote what remains
-    let filtered = minGames > 0 ? list.filter((c) => c.games >= minGames) : list;
+    let filtered = list;
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter((c) =>
@@ -110,7 +104,7 @@ export default function ChampionsTable({
       return sortDir === "desc" ? bv - av : av - bv;
     });
     return result;
-  }, [list, tiers, search, sortKey, sortDir, championData, minGames]);
+  }, [list, tiers, search, sortKey, sortDir, championData]);
 
   const th =
     "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
@@ -131,20 +125,6 @@ export default function ChampionsTable({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        {onToggleConfident && (
-          <button
-            onClick={onToggleConfident}
-            aria-pressed={confidentOnly}
-            title="Hide results with fewer than 20 games (the ones marked with *)"
-            className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-              confidentOnly
-                ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
-                : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
-            }`}
-          >
-            20+ games
-          </button>
-        )}
         <span className="text-xs">
           {sorted.length} champion{sorted.length === 1 ? "" : "s"}
         </span>
@@ -220,7 +200,7 @@ export default function ChampionsTable({
                     className="px-3 py-[9px] text-[13px] text-lol-text-bright"
                     title={`${pickRate}% of participant slots`}
                   >
-                    {c.games}
+                    {formatWhole(c.games)}
                   </td>
                   <td className="px-3 py-[9px] text-[13px] text-lol-text">{pickRate}%</td>
                   <td className="px-3 py-[9px] whitespace-nowrap">
@@ -232,7 +212,7 @@ export default function ChampionsTable({
                     </span>
                   </td>
                   <td className="px-3 py-[9px] text-[13px] text-lol-text">
-                    {formatCompact(games > 0 ? c.damage / games : 0)}
+                    {formatWhole(games > 0 ? c.damage / games : 0)}
                   </td>
                 </tr>
               );
@@ -241,9 +221,7 @@ export default function ChampionsTable({
         </table>
         {sorted.length === 0 && (
           <div className="py-8 text-center text-sm text-lol-text">
-            {minGames > 0 && list.length > 0
-              ? "No champions with 20+ games under these filters — try a wider patch range or turn off the 20+ filter"
-              : "No champions found"}
+            "No champions found"
           </div>
         )}
       </div>

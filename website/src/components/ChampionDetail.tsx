@@ -18,6 +18,7 @@ import {
   championItemBreakdown,
   kdaRampClass,
   kdaRatio,
+  formatWhole,
   rankForBuild,
   score,
   type Filters,
@@ -248,7 +249,7 @@ export default function ChampionDetail({
                   <div
                     key={i.item_id}
                     className="flex flex-col items-center w-[52px]"
-                    title={`${getItemName(itemData, i.item_id)} — ${i.picks} games`}
+                    title={`${getItemName(itemData, i.item_id)} — ${formatWhole(i.picks)} games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemData={itemData} itemId={i.item_id} size={44} />
@@ -258,7 +259,7 @@ export default function ChampionDetail({
                     >
                       {wr}%{low ? "*" : ""}
                     </span>
-                    <span className="text-[10px] text-lol-text">{i.picks} g</span>
+                    <span className="text-[10px] text-lol-text">{formatWhole(i.picks)} g</span>
                   </div>
                 );
               })}
@@ -293,7 +294,7 @@ export default function ChampionDetail({
                               <WinRateBar wins={a.wins} total={a.picks} />
                             </div>
                             <span className="text-[11px] text-lol-text shrink-0 w-12">
-                              {a.picks} g
+                              {formatWhole(a.picks)} g
                             </span>
                           </div>
                         </div>
@@ -332,7 +333,7 @@ export default function ChampionDetail({
                   )}
                   <div
                     className="flex flex-col items-center w-[56px]"
-                    title={`${getItemName(itemData, e.item_id)} — ${ordinal(i + 1)} item, bought in ${e.picks} tracked games`}
+                    title={`${getItemName(itemData, e.item_id)} — ${ordinal(i + 1)} item, bought in ${formatWhole(e.picks)} tracked games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemData={itemData} itemId={e.item_id} size={40} />
@@ -341,7 +342,7 @@ export default function ChampionDetail({
                     <span
                       className={`text-[10px] ${low ? "text-lol-text" : "text-lol-text-bright"}`}
                     >
-                      {wr}%{low ? "*" : ""} · {e.picks} g
+                      {wr}%{low ? "*" : ""} · {formatWhole(e.picks)} g
                     </span>
                   </div>
                 </div>
@@ -415,7 +416,7 @@ export default function ChampionDetail({
                     <ItemIcon itemData={itemData} itemId={i.item_id} size={24} showName wrap />
                   </td>
                   <td className="px-1 sm:px-3 py-1.5 text-[13px] text-lol-text-bright tabular-nums">
-                    {i.picks}
+                    {formatWhole(i.picks)}
                   </td>
                   <td className="px-1 sm:px-3 py-1.5">
                     <ScoreCell wins={i.wins} total={i.picks} />
@@ -494,7 +495,7 @@ export default function ChampionDetail({
                     />
                   </td>
                   <td className="px-1 sm:px-3 py-1.5 text-[13px] text-lol-text-bright tabular-nums">
-                    {a.picks}
+                    {formatWhole(a.picks)}
                   </td>
                   <td className="px-1 sm:px-3 py-1.5">
                     <ScoreCell wins={a.wins} total={a.picks} />
