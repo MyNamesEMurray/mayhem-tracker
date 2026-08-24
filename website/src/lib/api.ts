@@ -55,10 +55,11 @@ export interface ItemPurchaseRow {
   avg_first_buy_s: number;
 }
 
-// PostgREST caps responses at 1000 rows, so page with Range headers until a
-// short page arrives.
+// PostgREST historically defaults to 1000 rows. The stats are now backed by
+// indexed materialized aggregates, so use larger pages to avoid hundreds of
+// sequential HTTP requests for the augment/item long tail.
 async function fetchAll<T>(view: string): Promise<T[]> {
-  const PAGE = 1000;
+  const PAGE = 10_000;
   const out: T[] = [];
   for (let from = 0; ; from += PAGE) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=*`, {
