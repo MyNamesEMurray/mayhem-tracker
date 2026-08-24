@@ -119,8 +119,15 @@ body {
   .ctbl tbody { display: block; }
   .ctbl tbody tr {
     display: grid !important;
+    /* The name gets a line to itself apart from rank and score. Sharing it
+       with the tier badge meant a longer champion pushed into the badge —
+       and wrapping the name to fix that looked worse than the overlap. */
+    /* Four columns so the stat cells below still flow four-up; the named
+       areas span them. */
     grid-template-columns: auto 1fr auto auto;
-    grid-template-areas: "rank champ tier score" "bar bar bar bar";
+    grid-template-areas:
+      "rank champ champ score"
+      "tier bar   bar   bar";
     align-items: center;
     gap: 6px 10px;
     padding: 10px 12px;
@@ -128,16 +135,15 @@ body {
   .ctbl tbody td { padding: 0 !important; }
   .ctbl td:nth-child(1) { grid-area: rank; }
   .ctbl td:nth-child(2) { grid-area: champ; min-width: 0; }
-  /* A grid item won't shrink below its content unless told to, and the name
-     is nowrap for the desktop table — so "Cassiopeia" ran straight under the
-     tier badge. Let the cell shrink and the name wrap instead of truncating:
-     no width is assumed, so a longer champion than any that exists today
-     still lands correctly, it just takes a second line. */
+  /* The name shares its line with nothing that can crowd it, so it stays on
+     one line at any length. A grid item still won't shrink below its content
+     without this, and the ellipsis is a last resort for a name longer than
+     the row can hold — it is not reached by any champion today. */
   .ctbl td:nth-child(2) > * { min-width: 0; }
   .ctbl td:nth-child(2) a {
-    white-space: normal !important;
-    overflow-wrap: anywhere;
-    line-height: 1.25;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .ctbl td:nth-child(3) { grid-area: tier; }
   .ctbl td:nth-child(4) { grid-area: score; }
@@ -162,7 +168,9 @@ body {
   .atbl tbody tr {
     display: grid !important;
     grid-template-columns: 1fr auto auto;
-    grid-template-areas: "aug tier score" "bar bar bar";
+    grid-template-areas:
+      "aug  aug score"
+      "tier bar bar";
     align-items: center;
     gap: 6px 10px;
     padding: 10px 12px;
@@ -174,8 +182,8 @@ body {
   .atbl td:nth-child(1) > * { min-width: 0; }
   .atbl td:nth-child(1) a,
   .atbl td:nth-child(1) span {
-    white-space: normal !important;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .atbl td:nth-child(2) { grid-area: tier; }
   .atbl td:nth-child(3) { grid-area: score; }
