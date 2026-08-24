@@ -113,7 +113,11 @@ const formatPatch = (patch) => {
 };
 
 const esc = (s) =>
-  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
 const pct = (wins, n) => (n > 0 ? ((wins / n) * 100).toFixed(1) : "0.0");
 const num = (n) => Math.round(n).toLocaleString();
@@ -213,7 +217,8 @@ async function main() {
       const categories = Array.isArray(it.categories) ? it.categories : [];
       const price = it.priceTotal ?? 0;
       itemFinished[it.id] =
-        (buildsInto === 0 && !categories.includes("Consumable") &&
+        (buildsInto === 0 &&
+          !categories.includes("Consumable") &&
           (price >= 500 || it.id >= 100000)) ||
         (categories.includes("Boots") && builtFrom > 0);
     }
@@ -223,7 +228,9 @@ async function main() {
 
   // Reuse the built index.html's asset tags so pages hydrate with the same app
   const indexHtml = readFileSync(path.join(DIST, "index.html"), "utf8");
-  const assetTags = (indexHtml.match(/<(script type="module"[^>]*><\/script>|link rel="stylesheet"[^>]*>)/g) || [])
+  const assetTags = (
+    indexHtml.match(/<(script type="module"[^>]*><\/script>|link rel="stylesheet"[^>]*>)/g) || []
+  )
     // The font stylesheet is in every template's head already; letting it
     // through here would emit it twice on each page
     .filter((tag) => !tag.includes("/fonts/inter.css"))
@@ -358,14 +365,19 @@ async function main() {
     const crossLinks = topChamps
       .filter((cid) => cid !== id)
       .slice(0, 6)
-      .map((cid) => `<a href="/champion/${championSlug(championNames[cid])}/">${esc(championNames[cid])}</a>`)
+      .map(
+        (cid) =>
+          `<a href="/champion/${championSlug(championNames[cid])}/">${esc(championNames[cid])}</a>`,
+      )
       .join(" · ");
 
     // What actually separates this champion from the field, in words
     const readsList = [
       `deals ${num(perGame.damage)} damage per game (${relative(perGame.damage, modeAvg.damage)})`,
       `absorbs ${num(perGame.damage_taken)} (${relative(perGame.damage_taken, modeAvg.damage_taken)})`,
-      perGame.heal > 0 ? `heals or shields ${num(perGame.heal)} (${relative(perGame.heal, modeAvg.heal)})` : "",
+      perGame.heal > 0
+        ? `heals or shields ${num(perGame.heal)} (${relative(perGame.heal, modeAvg.heal)})`
+        : "",
       `earns ${num(perGame.gold)} gold (${relative(perGame.gold, modeAvg.gold)})`,
     ]
       .filter(Boolean)

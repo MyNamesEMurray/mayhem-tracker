@@ -18,9 +18,7 @@ import StatCard from "../components/StatCard";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
-import { kdaRatio,
-  formatWhole,
-} from "../lib/format";
+import { kdaRatio, formatWhole } from "../lib/format";
 
 type SortKey = "picks" | "winRate" | "name";
 type SortDir = "asc" | "desc";

@@ -15,7 +15,9 @@ export function Sizes() {
         width: "fit-content",
       }}
     >
-      <span style={{ color: "var(--color-lol-text)", display: "flex", gap: 16, alignItems: "center" }}>
+      <span
+        style={{ color: "var(--color-lol-text)", display: "flex", gap: 16, alignItems: "center" }}
+      >
         <GlobeIcon width={16} height={16} />
         <GlobeIcon width={24} height={24} />
         <GlobeIcon width={40} height={40} />

@@ -254,8 +254,7 @@ export function rankForBuild<T>(
       return picks >= minPicks && getWins(x) * 2 >= picks;
     })
     .sort(
-      (a, b) =>
-        confidenceScore(getWins(b), getPicks(b)) - confidenceScore(getWins(a), getPicks(a)),
+      (a, b) => confidenceScore(getWins(b), getPicks(b)) - confidenceScore(getWins(a), getPicks(a)),
     )
     .slice(0, count);
 }

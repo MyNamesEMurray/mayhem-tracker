@@ -360,9 +360,7 @@ function createTables() {
   // VACUUM to actually hand the space back to the filesystem.
   if (getSetting("raw_json_compressed") !== "1") {
     const ids = db
-      .prepare(
-        "SELECT game_id FROM games WHERE raw_json IS NOT NULL AND typeof(raw_json) = 'text'",
-      )
+      .prepare("SELECT game_id FROM games WHERE raw_json IS NOT NULL AND typeof(raw_json) = 'text'")
       .all() as { game_id: number }[];
     if (ids.length > 0) {
       const get = db.prepare("SELECT raw_json FROM games WHERE game_id = ?");

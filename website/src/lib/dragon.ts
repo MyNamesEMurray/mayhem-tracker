@@ -153,7 +153,8 @@ export function loadItemData(): Promise<ItemData> {
         // Boots everyone starts with is that they are built *from* it —
         // price alone dropped Ionian Boots of Lucidity, at 900g, off the list.
         const completed =
-          (buildsInto === 0 && !categories.includes("Consumable") &&
+          (buildsInto === 0 &&
+            !categories.includes("Consumable") &&
             (price >= 500 || item.id >= 100000)) ||
           (categories.includes("Boots") && builtFrom > 0);
         out[item.id] = {

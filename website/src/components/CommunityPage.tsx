@@ -96,7 +96,7 @@ export default function CommunityPage() {
       .sort((a, b) => a.column - b.column);
     return found.map((m, i) => ({
       ...m,
-      showLabel: ((found[i + 1]?.column ?? CHART_DAYS + 1) - m.column) >= LABEL_MIN_SPAN,
+      showLabel: (found[i + 1]?.column ?? CHART_DAYS + 1) - m.column >= LABEL_MIN_SPAN,
     }));
   }, [chart, spans]);
 
@@ -133,8 +133,8 @@ export default function CommunityPage() {
       </div>
       <p className="text-[13px] mb-4 max-w-[64ch]">
         Riot's API doesn't expose ARAM Mayhem match data, so every number on this site is
-        crowdsourced: players run the tracker, opt in, and pool their games anonymously. This
-        page is the running total of what that adds up to.
+        crowdsourced: players run the tracker, opt in, and pool their games anonymously. This page
+        is the running total of what that adds up to.
       </p>
 
       <div className="grid grid-cols-2 min-[881px]:grid-cols-4 gap-4">
@@ -150,7 +150,11 @@ export default function CommunityPage() {
         />
         <Tile
           label="Gameplay analyzed"
-          value={totals ? `${hours >= 100 ? Math.round(hours).toLocaleString() : hours.toFixed(1)} h` : "—"}
+          value={
+            totals
+              ? `${hours >= 100 ? Math.round(hours).toLocaleString() : hours.toFixed(1)} h`
+              : "—"
+          }
           sub="of ARAM Mayhem, end to end"
         />
         <Tile
@@ -183,7 +187,9 @@ export default function CommunityPage() {
                     <div
                       key={d.day}
                       className="rounded-t-[3px] bg-lol-gold/70 hover:bg-lol-gold transition-colors min-w-0"
-                      style={{ height: `${Math.max(d.games > 0 ? 6 : 1.5, (d.games / maxGames) * 100)}%` }}
+                      style={{
+                        height: `${Math.max(d.games > 0 ? 6 : 1.5, (d.games / maxGames) * 100)}%`,
+                      }}
                       title={`${d.day}: ${d.games} game${d.games === 1 ? "" : "s"}${patch ? ` · patch ${patch}` : ""}`}
                     />
                   );
@@ -224,10 +230,10 @@ export default function CommunityPage() {
         <div className="min-w-0">
           <p className={`${LABEL} mb-2`}>Every game counts</p>
           <p className="text-[13px] text-lol-text leading-relaxed max-w-[80ch]">
-            Each contributed game adds all ten players' champions, augments, items, and combat
-            lines to the pool — anonymously, with duplicates counted once. The more players opt
-            in, the sharper the tier lists get, especially early in a patch. Install the tracker
-            and flip on Community Stats in Settings to be part of it, or read{" "}
+            Each contributed game adds all ten players' champions, augments, items, and combat lines
+            to the pool — anonymously, with duplicates counted once. The more players opt in, the
+            sharper the tier lists get, especially early in a patch. Install the tracker and flip on
+            Community Stats in Settings to be part of it, or read{" "}
             <a href="/about/" className="text-lol-gold hover:text-lol-gold-light">
               how the stats work
             </a>
@@ -238,7 +244,17 @@ export default function CommunityPage() {
           href="/download/"
           className="shrink-0 min-[861px]:ml-auto inline-flex items-center justify-center gap-2 rounded-lg border border-lol-gold/30 bg-lol-gold/10 px-4 py-2.5 text-[13px] font-semibold text-lol-gold hover:bg-lol-gold/20 transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M12 3v12" />
             <path d="m7 12 5 5 5-5" />
             <path d="M5 21h14" />

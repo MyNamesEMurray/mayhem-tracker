@@ -31,25 +31,69 @@
         --text: #94a0b8;
         --bright: #e8ecf4;
       }
-      * { box-sizing: border-box; margin: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
       body {
         background-color: var(--dark);
         background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
         color: var(--text);
-        font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        font-family:
+          "Inter",
+          "Segoe UI",
+          -apple-system,
+          BlinkMacSystemFont,
+          Roboto,
+          sans-serif;
         line-height: 1.65;
         -webkit-font-smoothing: antialiased;
       }
-      main { max-width: 780px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
-      h1 { color: var(--bright); font-size: 1.75rem; margin-bottom: 0.5rem; }
-      h2 { color: var(--bright); font-size: 1.15rem; margin: 2.25rem 0 0.75rem; }
-      h3 { color: var(--bright); font-size: 1rem; margin: 1.5rem 0 0.5rem; }
-      p, li { margin-bottom: 0.85rem; font-size: 0.95rem; }
-      ul, ol { padding-left: 1.25rem; }
-      a { color: var(--gold); text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .back { display: inline-block; margin-bottom: 2rem; font-size: 0.9rem; }
-      .lede { font-size: 1.02rem; color: #b6c1d6; }
+      main {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 3rem 1.25rem 4rem;
+      }
+      h1 {
+        color: var(--bright);
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+      h2 {
+        color: var(--bright);
+        font-size: 1.15rem;
+        margin: 2.25rem 0 0.75rem;
+      }
+      h3 {
+        color: var(--bright);
+        font-size: 1rem;
+        margin: 1.5rem 0 0.5rem;
+      }
+      p,
+      li {
+        margin-bottom: 0.85rem;
+        font-size: 0.95rem;
+      }
+      ul,
+      ol {
+        padding-left: 1.25rem;
+      }
+      a {
+        color: var(--gold);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+      }
+      .lede {
+        font-size: 1.02rem;
+        color: #b6c1d6;
+      }
       .card {
         background: var(--card);
         border: 1px solid var(--border);
@@ -57,11 +101,31 @@
         padding: 1rem 1.25rem;
         margin: 1rem 0;
       }
-      .card p:last-child { margin-bottom: 0; }
-      table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
-      th, td { text-align: left; padding: 0.45rem 0.75rem 0.45rem 0; border-bottom: 1px solid var(--border); }
-      th { color: var(--bright); font-weight: 600; }
-      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.8rem; }
+      .card p:last-child {
+        margin-bottom: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.45rem 0.75rem 0.45rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        color: var(--bright);
+        font-weight: 600;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+      }
     </style>
   </head>
   <body>
@@ -70,10 +134,9 @@
       <h1>The ARAM Mayhem guide</h1>
       <p class="lede">
         Mayhem is the ARAM variant where augments do the balancing. That single change breaks most
-        of the intuition you brought from regular ARAM, and it breaks most of the stats you can
-        find about it. This page is about the second problem: how to read augment and champion
-        numbers — ours or anyone's — without talking yourself into a build that a coin flip
-        produced.
+        of the intuition you brought from regular ARAM, and it breaks most of the stats you can find
+        about it. This page is about the second problem: how to read augment and champion numbers —
+        ours or anyone's — without talking yourself into a build that a coin flip produced.
       </p>
 
       <h2>What makes Mayhem a different game</h2>
@@ -87,8 +150,8 @@
       <ul>
         <li>
           <strong>Champion strength is downstream of augments.</strong> A champion's win rate is
-          partly a statement about which augments in the pool happen to fit it. Balance patches
-          that touch nothing but augments can move champion win rates several points.
+          partly a statement about which augments in the pool happen to fit it. Balance patches that
+          touch nothing but augments can move champion win rates several points.
         </li>
         <li>
           <strong>Choices are constrained, so "best augment" is the wrong question.</strong> The
@@ -97,30 +160,30 @@
         </li>
         <li>
           <strong>Games are short and snowbally.</strong> Item lines that assume a full-length
-          Summoner's Rift or even a standard ARAM curve routinely never get finished, so the
-          items that show up in winning games are not always the ones a build guide would name.
+          Summoner's Rift or even a standard ARAM curve routinely never get finished, so the items
+          that show up in winning games are not always the ones a build guide would name.
         </li>
       </ul>
 
       <h2>Why ARAM and Arena numbers don't transfer</h2>
       <p>
-        Riot's public match API does not expose Mayhem's augment data. That gap is why almost
-        every site showing "Mayhem" stats is really showing something else: item and champion
-        stats borrowed from regular ARAM, and augment stats borrowed from Arena. Both
-        substitutions are wrong in ways you can predict:
+        Riot's public match API does not expose Mayhem's augment data. That gap is why almost every
+        site showing "Mayhem" stats is really showing something else: item and champion stats
+        borrowed from regular ARAM, and augment stats borrowed from Arena. Both substitutions are
+        wrong in ways you can predict:
       </p>
       <ul>
         <li>
-          <strong>Arena is 2v2v2v2.</strong> Augments that shine in a small skirmish arena with
-          no minions, no towers, and round-based resets behave differently in a five-versus-five
-          lane fight with waves, poke, and a single continuous game state. Sustain, wave clear,
-          and long-range poke are worth very different amounts in the two modes.
+          <strong>Arena is 2v2v2v2.</strong> Augments that shine in a small skirmish arena with no
+          minions, no towers, and round-based resets behave differently in a five-versus-five lane
+          fight with waves, poke, and a single continuous game state. Sustain, wave clear, and
+          long-range poke are worth very different amounts in the two modes.
         </li>
         <li>
-          <strong>ARAM item stats assume no augments.</strong> In Mayhem, a chunk of every
-          player's power comes from outside the shop. Items that exist to cover a champion's
-          weakness are less necessary when an augment already covered it, and items that scale
-          with a stat an augment multiplied are worth more than their ARAM numbers suggest.
+          <strong>ARAM item stats assume no augments.</strong> In Mayhem, a chunk of every player's
+          power comes from outside the shop. Items that exist to cover a champion's weakness are
+          less necessary when an augment already covered it, and items that scale with a stat an
+          augment multiplied are worth more than their ARAM numbers suggest.
         </li>
         <li>
           <strong>The augment pools are not the same.</strong> An augment list from Arena will
@@ -128,62 +191,86 @@
         </li>
       </ul>
       <p>
-        MayhemStats exists to close that gap with real games instead of proxies: every number on
-        the site comes from actual Mayhem matches, contributed anonymously by players running the
-        free <a href="/download/">MayhemStats Tracker</a>. The tradeoff is honest and worth
-        stating plainly — a crowdsourced database is smaller than a scraped one. Which brings us
-        to the part of this guide that actually matters.
+        MayhemStats exists to close that gap with real games instead of proxies: every number on the
+        site comes from actual Mayhem matches, contributed anonymously by players running the free
+        <a href="/download/">MayhemStats Tracker</a>. The tradeoff is honest and worth stating
+        plainly — a crowdsourced database is smaller than a scraped one. Which brings us to the part
+        of this guide that actually matters.
       </p>
 
       <h2>Sample size is the whole skill</h2>
       <p>
         Most people reading a tier list have never been burned by a number; they have only been
         burned by a build. The two are closer than they look. A 100% win rate over three picks is
-        not evidence — flipping a fair coin three times gives you all heads one time in eight. A
-        60% win rate over 300 picks is a fact you can build around.
+        not evidence — flipping a fair coin three times gives you all heads one time in eight. A 60%
+        win rate over 300 picks is a fact you can build around.
       </p>
       <p>
-        The useful mental tool is the <strong>margin of error</strong>: how far a measured win
-        rate can sit from the truth by luck alone. Roughly, at 95% confidence:
+        The useful mental tool is the <strong>margin of error</strong>: how far a measured win rate
+        can sit from the truth by luck alone. Roughly, at 95% confidence:
       </p>
       <table>
         <thead>
-          <tr><th>Games</th><th>Win rate is accurate to about</th><th>What that means</th></tr>
+          <tr>
+            <th>Games</th>
+            <th>Win rate is accurate to about</th>
+            <th>What that means</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>5</td><td>±44 points</td><td>Noise. Nothing is knowable.</td></tr>
-          <tr><td>20</td><td>±22 points</td><td>A 60% entry could truly be 38% or 82%.</td></tr>
-          <tr><td>100</td><td>±10 points</td><td>Big effects are visible; small ones aren't.</td></tr>
-          <tr><td>500</td><td>±4.4 points</td><td>Now a 55% pick is meaningfully above average.</td></tr>
-          <tr><td>2,000</td><td>±2.2 points</td><td>Fine distinctions become real.</td></tr>
+          <tr>
+            <td>5</td>
+            <td>±44 points</td>
+            <td>Noise. Nothing is knowable.</td>
+          </tr>
+          <tr>
+            <td>20</td>
+            <td>±22 points</td>
+            <td>A 60% entry could truly be 38% or 82%.</td>
+          </tr>
+          <tr>
+            <td>100</td>
+            <td>±10 points</td>
+            <td>Big effects are visible; small ones aren't.</td>
+          </tr>
+          <tr>
+            <td>500</td>
+            <td>±4.4 points</td>
+            <td>Now a 55% pick is meaningfully above average.</td>
+          </tr>
+          <tr>
+            <td>2,000</td>
+            <td>±2.2 points</td>
+            <td>Fine distinctions become real.</td>
+          </tr>
         </tbody>
       </table>
       <p>
         Look at that table next to any tier list on the internet, including this one, and you can
-        see how much of a ranking is signal. This is also why our champion pages print the
-        interval next to the win rate, and why a champion with fewer than 20 games is deliberately
-        kept out of search results instead of being dressed up as a build guide.
+        see how much of a ranking is signal. This is also why our champion pages print the interval
+        next to the win rate, and why a champion with fewer than 20 games is deliberately kept out
+        of search results instead of being dressed up as a build guide.
       </p>
 
       <h3>What we do about it</h3>
       <p>
         Sorting by raw win rate hands the top of every list to whatever went 3–0 last week. So
-        MayhemStats sorts by <strong>Score</strong>, a win rate pulled toward 50% by an amount
-        that depends on how little data supports it:
+        MayhemStats sorts by <strong>Score</strong>, a win rate pulled toward 50% by an amount that
+        depends on how little data supports it:
       </p>
       <div class="card">
         <p><strong>Score = 100 × (wins + 10) / (games + 20)</strong></p>
         <p>
           Every entry is blended with a 50% prior worth twenty games. A 75% win rate over 4 games
-          scores 54.2. A 60% win rate over 200 games scores 59.5. The confident number wins,
-          which is the correct outcome and the opposite of what a raw sort would do.
+          scores 54.2. A 60% win rate over 200 games scores 59.5. The confident number wins, which
+          is the correct outcome and the opposite of what a raw sort would do.
         </p>
       </div>
       <p>
-        Raw win rates are still shown next to Score, because you should be able to see both —
-        but entries under 20 games are muted, tier badges dim under 10, and champion pages simply
-        omit any item or augment with fewer than three games rather than printing a number that
-        cannot mean anything.
+        Raw win rates are still shown next to Score, because you should be able to see both — but
+        entries under 20 games are muted, tier badges dim under 10, and champion pages simply omit
+        any item or augment with fewer than three games rather than printing a number that cannot
+        mean anything.
       </p>
 
       <h2>Reading a Mayhem tier list properly</h2>
@@ -195,8 +282,8 @@
         <li>
           <strong>Read augments within their rarity.</strong> Prismatics are meant to be stronger
           than Silvers, so a global augment ranking mostly re-states rarity and tells you nothing
-          you can act on. An S+ Silver means "take this when the game offers you Silvers" — which
-          is the actual decision in front of you.
+          you can act on. An S+ Silver means "take this when the game offers you Silvers" — which is
+          the actual decision in front of you.
         </li>
         <li>
           <strong>Treat tiers as relative.</strong> Any dataset has a top 5%, so an S+ exists
@@ -217,31 +304,28 @@
       </ol>
 
       <h2>Turning stats into picks</h2>
-      <p>
-        Numbers are a prior, not a plan. A few habits convert them into better games:
-      </p>
+      <p>Numbers are a prior, not a plan. A few habits convert them into better games:</p>
       <ul>
         <li>
           <strong>Match augments to your damage profile, not to a list.</strong> Our champion pages
           print each champion's per-game damage, damage taken, healing, and gold against the mode
-          average. A champion that already takes far more damage than average gets less from
-          another survivability augment than the raw ranking implies, and more from something that
-          converts that frontline time into damage.
+          average. A champion that already takes far more damage than average gets less from another
+          survivability augment than the raw ranking implies, and more from something that converts
+          that frontline time into damage.
         </li>
         <li>
           <strong>Let the offer decide, not the tier list.</strong> You are choosing between three
-          specific options. The right question is which of <em>those</em> has the best case on
-          your champion in this game state — a strong-on-paper augment you cannot use is worth
-          nothing.
+          specific options. The right question is which of <em>those</em> has the best case on your
+          champion in this game state — a strong-on-paper augment you cannot use is worth nothing.
         </li>
         <li>
-          <strong>Trust popularity when win rate is thin.</strong> If nothing has a real sample,
-          the most-built item on a champion is at least the accumulated opinion of a lot of
-          players, which beats a 100%-over-two-games entry.
+          <strong>Trust popularity when win rate is thin.</strong> If nothing has a real sample, the
+          most-built item on a champion is at least the accumulated opinion of a lot of players,
+          which beats a 100%-over-two-games entry.
         </li>
         <li>
-          <strong>Re-check after a patch.</strong> Because augments carry the balance, Mayhem
-          shifts faster than ARAM does. Yesterday's core item can quietly stop being one.
+          <strong>Re-check after a patch.</strong> Because augments carry the balance, Mayhem shifts
+          faster than ARAM does. Yesterday's core item can quietly stop being one.
         </li>
       </ul>
 
@@ -250,25 +334,24 @@
         Every game in the database was contributed by a player running
         <a href="/download/">MayhemStats Tracker</a> who turned on community stats — it is off by
         default. The app reads your own matches from your own League client, strips everything
-        identifying, and uploads the champions, augments, items, and combat lines of the ten
-        players in the game, plus queue, patch, and duration. No summoner names, no Riot IDs, no
-        account identifiers; the database has no columns for them. Duplicate games contributed by
-        two players in the same match are counted once. The full detail is in the
+        identifying, and uploads the champions, augments, items, and combat lines of the ten players
+        in the game, plus queue, patch, and duration. No summoner names, no Riot IDs, no account
+        identifiers; the database has no columns for them. Duplicate games contributed by two
+        players in the same match are counted once. The full detail is in the
         <a href="/about/">methodology page</a> and the <a href="/privacy/">privacy policy</a>.
       </p>
       <p>
-        This is also the honest answer to "why are some samples so small": there is no scrape
-        behind this site, only contributors. Every install that opts in tightens every interval on
-        every page — including the champion pages currently held back from search for being too
-        thin to trust.
+        This is also the honest answer to "why are some samples so small": there is no scrape behind
+        this site, only contributors. Every install that opts in tightens every interval on every
+        page — including the champion pages currently held back from search for being too thin to
+        trust.
       </p>
 
       <footer>
         <p>
-          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
-          Riot Games or anyone officially involved in producing or managing League of Legends.
-          League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
-          Inc.
+          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
+          Games or anyone officially involved in producing or managing League of Legends. League of
+          Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.
         </p>
         <p>
           <a href="/">Stats</a> · <a href="/about/">About &amp; methodology</a> ·

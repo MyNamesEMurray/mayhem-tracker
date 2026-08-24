@@ -104,10 +104,7 @@ export default function Champions() {
   );
   // Champion slots under these filters; a champion's share of them is its
   // pick rate, the same denominator the website uses
-  const totalSlots = useMemo(
-    () => (data ? data.reduce((sum, c) => sum + c.games, 0) : 0),
-    [data],
-  );
+  const totalSlots = useMemo(() => (data ? data.reduce((sum, c) => sum + c.games, 0) : 0), [data]);
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -234,60 +231,58 @@ export default function Champions() {
                 onClick={() => openChampion(c.champion_id)}
                 className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
               >
-                  <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
-                  <td className="px-3 py-1.5">
-                    <div className="flex items-center gap-2">
-                      <ChampionIcon championId={c.champion_id} size={wide ? 36 : 28} />
-                      <span className="text-sm text-lol-text-bright">
-                        {getChampionName(champData, c.champion_id)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-1.5">
-                    {tiers.get(c.champion_id) && (
-                      <TierBadge tier={tiers.get(c.champion_id)!} games={c.games} />
-                    )}
-                  </td>
-                  <td className="px-3 py-1.5 text-sm font-semibold text-lol-text-bright">
-                    {score(c.wins, c.games).toFixed(1)}
-                  </td>
-                  <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
-                    <WinRateBar wins={c.wins} total={c.games} />
-                  </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">
-                    {totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}%
-                  </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_assists)}</td>
-                  <td
-                    className={`px-3 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
-                  >
-                    {kdaRatio(c.kills, c.deaths, c.assists)}
-                  </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">
-                    {formatWhole(c.avg_damage)}
-                  </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text-bright">
-                    {formatWhole(c.avg_gold)}
-                  </td>
-                  <td className="px-3 py-1.5">
-                    <div className="grid grid-cols-4 gap-1 text-[10px]">
-                      <span className={c.double_kills > 0 ? "text-sky-400" : "text-transparent"}>
-                        D{c.double_kills}
-                      </span>
-                      <span className={c.triple_kills > 0 ? "text-amber-400" : "text-transparent"}>
-                        T{c.triple_kills}
-                      </span>
-                      <span className={c.quadra_kills > 0 ? "text-purple-400" : "text-transparent"}>
-                        Q{c.quadra_kills}
-                      </span>
-                      <span className={c.penta_kills > 0 ? "text-red-400" : "text-transparent"}>
-                        P{c.penta_kills}
-                      </span>
-                    </div>
-                  </td>
+                <td className="px-3 py-1.5 text-xs text-lol-text">{i + 1}</td>
+                <td className="px-3 py-1.5">
+                  <div className="flex items-center gap-2">
+                    <ChampionIcon championId={c.champion_id} size={wide ? 36 : 28} />
+                    <span className="text-sm text-lol-text-bright">
+                      {getChampionName(champData, c.champion_id)}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-3 py-1.5">
+                  {tiers.get(c.champion_id) && (
+                    <TierBadge tier={tiers.get(c.champion_id)!} games={c.games} />
+                  )}
+                </td>
+                <td className="px-3 py-1.5 text-sm font-semibold text-lol-text-bright">
+                  {score(c.wins, c.games).toFixed(1)}
+                </td>
+                <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                  <WinRateBar wins={c.wins} total={c.games} />
+                </td>
+                <td className="px-3 py-1.5 text-sm text-lol-text-bright">{c.games}</td>
+                <td className="px-3 py-1.5 text-sm text-lol-text">
+                  {totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}%
+                </td>
+                <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
+                <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
+                <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_assists)}</td>
+                <td
+                  className={`px-3 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
+                >
+                  {kdaRatio(c.kills, c.deaths, c.assists)}
+                </td>
+                <td className="px-3 py-1.5 text-sm text-lol-text">{formatWhole(c.avg_damage)}</td>
+                <td className="px-3 py-1.5 text-sm text-lol-text-bright">
+                  {formatWhole(c.avg_gold)}
+                </td>
+                <td className="px-3 py-1.5">
+                  <div className="grid grid-cols-4 gap-1 text-[10px]">
+                    <span className={c.double_kills > 0 ? "text-sky-400" : "text-transparent"}>
+                      D{c.double_kills}
+                    </span>
+                    <span className={c.triple_kills > 0 ? "text-amber-400" : "text-transparent"}>
+                      T{c.triple_kills}
+                    </span>
+                    <span className={c.quadra_kills > 0 ? "text-purple-400" : "text-transparent"}>
+                      Q{c.quadra_kills}
+                    </span>
+                    <span className={c.penta_kills > 0 ? "text-red-400" : "text-transparent"}>
+                      P{c.penta_kills}
+                    </span>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

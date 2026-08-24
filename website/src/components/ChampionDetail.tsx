@@ -45,10 +45,7 @@ const RARITIES: { key: string; label: string; color: string }[] = [
 // Build-path slots read as their purchase position ("1st", "2nd", ...)
 // rather than a clock time — 11th–13th take "th" against the usual rule.
 function ordinal(n: number): string {
-  const suffix =
-    n % 100 >= 11 && n % 100 <= 13
-      ? "th"
-      : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
   return `${n}${suffix}`;
 }
 
@@ -124,9 +121,7 @@ export default function ChampionDetail({
   // build-order watcher feed this, so it can be empty
   const buildPath = useMemo(() => {
     const all = championBuildPath(purchaseRows, filters, championId);
-    return all
-      .filter((e) => itemData[e.item_id]?.completed && e.picks >= 2)
-      .slice(0, 7);
+    return all.filter((e) => itemData[e.item_id]?.completed && e.picks >= 2).slice(0, 7);
   }, [purchaseRows, filters, championId, itemData]);
 
   // The low-sample toggle and the panel search/rarity filters narrow the full
@@ -256,9 +251,7 @@ export default function ChampionDetail({
                       <ItemIcon itemData={itemData} itemId={i.item_id} size={44} />
                     </span>
                     <span
-                      className={`text-xs mt-1 ${
-                        low ? "text-lol-text" : "text-lol-text-bright"
-                      }`}
+                      className={`text-xs mt-1 ${low ? "text-lol-text" : "text-lol-text-bright"}`}
                     >
                       {wr}%{low ? "*" : ""}
                     </span>
@@ -284,11 +277,7 @@ export default function ChampionDetail({
                   <div className="space-y-3">
                     {r.best.map((a) => (
                       <div key={a.augment_id} className="flex items-center gap-2.5">
-                        <AugmentIcon
-                          augmentData={augmentData}
-                          augmentId={a.augment_id}
-                          size={30}
-                        />
+                        <AugmentIcon augmentData={augmentData} augmentId={a.augment_id} size={30} />
                         <div className="flex-1 min-w-0">
                           <p
                             className={`text-[13px] truncate leading-tight ${r.color}`}
@@ -374,18 +363,34 @@ export default function ChampionDetail({
               </ToggleChip>
             )}
             <div className="ml-auto">
-              <SearchBox value={itemSearch} onChange={setItemSearch} placeholder="Search item..." width={150} />
+              <SearchBox
+                value={itemSearch}
+                onChange={setItemSearch}
+                placeholder="Search item..."
+                width={150}
+              />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
                 <th className={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}>Item</th>
-                <th className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}>Games</th>
-                <th className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`} title={SCORE_HINT}>
+                <th
+                  className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Games
+                </th>
+                <th
+                  className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                  title={SCORE_HINT}
+                >
                   Score
                 </th>
-                <th className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}>Win rate</th>
+                <th
+                  className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Win rate
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -421,18 +426,34 @@ export default function ChampionDetail({
               <RarityFilter value={augRarity} onChange={setAugRarity} compact />
             </div>
             <div className="ml-auto">
-              <SearchBox value={augSearch} onChange={setAugSearch} placeholder="Search..." width={110} />
+              <SearchBox
+                value={augSearch}
+                onChange={setAugSearch}
+                placeholder="Search..."
+                width={110}
+              />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
             <thead className="bg-lol-dark/50">
               <tr>
                 <th className={`px-2 sm:px-3 py-1.5 text-left ${LABEL}`}>Augment</th>
-                <th className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}>Picks</th>
-                <th className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`} title={SCORE_HINT}>
+                <th
+                  className={`${COL_GAMES} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Picks
+                </th>
+                <th
+                  className={`${COL_SCORE} px-1 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                  title={SCORE_HINT}
+                >
                   Score
                 </th>
-                <th className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}>Win rate</th>
+                <th
+                  className={`${COL_RATE} px-2 sm:px-3 py-1.5 text-left whitespace-nowrap ${LABEL}`}
+                >
+                  Win rate
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -470,9 +491,9 @@ export default function ChampionDetail({
 
       <p className="text-xs text-lol-text/70">
         Score is the win rate the record supports, out of 100: the floor of a 95% confidence
-        interval, so 100% over 5 games scores below 60% over 2,600. Lists rank by it. Components
-        are left out of the build lists — Manamune and Archangel's Staff stay, since they
-        transform rather than build into anything. * fewer than 20 games — treat with caution.
+        interval, so 100% over 5 games scores below 60% over 2,600. Lists rank by it. Components are
+        left out of the build lists — Manamune and Archangel's Staff stay, since they transform
+        rather than build into anything. * fewer than 20 games — treat with caution.
       </p>
     </div>
   );

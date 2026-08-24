@@ -53,9 +53,7 @@ export default function AugmentIcon({
         />
       )}
       {showName && (
-        <span
-          className={`text-sm ${wrap ? "leading-snug" : "truncate"} ${nameColor}`}
-        >
+        <span className={`text-sm ${wrap ? "leading-snug" : "truncate"} ${nameColor}`}>
           {getAugmentName(augmentData, augmentId)}
         </span>
       )}

@@ -35,7 +35,7 @@ Mayhem games — contributed by players, because there is no other source.
 
 Grab `MayhemTracker-Setup.exe` (installer) or `MayhemTracker-Portable.exe` (no install, runs anywhere) from [mayhemstats.com/download](https://mayhemstats.com/download/) or the [latest release](https://github.com/MyNamesEMurray/mayhem-tracker/releases/latest). The app checks for updates automatically.
 
-MayhemStats Tracker uses the [SignPath Foundation](https://signpath.org/) for code signing of its Windows releases. Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by SignPath Foundation. *(Certificate pending — releases published before it is issued are unsigned, so Windows SmartScreen will warn on first run.)*
+MayhemStats Tracker uses the [SignPath Foundation](https://signpath.org/) for code signing of its Windows releases. Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by SignPath Foundation. _(Certificate pending — releases published before it is issued are unsigned, so Windows SmartScreen will warn on first run.)_
 
 ## Community stats & privacy
 

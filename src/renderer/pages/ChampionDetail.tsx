@@ -256,7 +256,14 @@ export default function ChampionDetail() {
   const [showComponents, setShowComponents] = useState(false);
 
   const coreBuild = useMemo(
-    () => rankForBuild(finishedItems, (i) => i.picks, (i) => i.wins, ITEM_MIN_GAMES, 6),
+    () =>
+      rankForBuild(
+        finishedItems,
+        (i) => i.picks,
+        (i) => i.wins,
+        ITEM_MIN_GAMES,
+        6,
+      ),
     [finishedItems],
   );
 
@@ -391,8 +398,7 @@ export default function ChampionDetail() {
               {champ.games} games · KDA{" "}
               <span className={`font-semibold ${kdaColor(kda)}`}>{kda.toFixed(2)}</span> (
               {formatAvg(perGame(champ.kills))} / {formatAvg(perGame(champ.deaths))} /{" "}
-              {formatAvg(perGame(champ.assists))})
-              {source === "community" && " · community games"}
+              {formatAvg(perGame(champ.assists))}){source === "community" && " · community games"}
             </p>
           </div>
           <div className="w-full min-[701px]:w-[200px] min-[701px]:ml-auto">
@@ -464,9 +470,7 @@ export default function ChampionDetail() {
                           <span className="tabular-nums">
                             {winRate(a.wins, a.picks).toFixed(0)}%
                           </span>
-                          <span className="w-2 text-left">
-                            {a.picks < MIN_SAMPLE ? "*" : ""}
-                          </span>
+                          <span className="w-2 text-left">{a.picks < MIN_SAMPLE ? "*" : ""}</span>
                         </span>
                       </div>
                     ))}
@@ -531,11 +535,11 @@ export default function ChampionDetail() {
       </div>
 
       <p className="text-[11px] text-lol-text">
-        Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked *
-        fall under {MIN_SAMPLE} games. Score is the win rate the record supports, out of 100:
-        the floor of a 95% confidence interval, so 100% over 5 games scores below 60% over
-        2,600. Components are left out of the build lists — items that transform, like
-        Manamune, are not components — and the same method runs on mayhemstats.com.
+        Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked * fall
+        under {MIN_SAMPLE} games. Score is the win rate the record supports, out of 100: the floor
+        of a 95% confidence interval, so 100% over 5 games scores below 60% over 2,600. Components
+        are left out of the build lists — items that transform, like Manamune, are not components —
+        and the same method runs on mayhemstats.com.
       </p>
     </div>
   );

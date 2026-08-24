@@ -40,9 +40,7 @@ export default function ItemIcon({
         />
       )}
       {showName && (
-        <span
-          className={`text-sm text-lol-text-bright ${wrap ? "leading-snug" : "truncate"}`}
-        >
+        <span className={`text-sm text-lol-text-bright ${wrap ? "leading-snug" : "truncate"}`}>
           {name}
         </span>
       )}

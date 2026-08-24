@@ -144,7 +144,12 @@ export default function ChampionsTable({
         )}
         <span className="text-xs">{sorted.length} champions — click one for its ideal build</span>
         <div className="ml-auto">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search champion..." width={190} />
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search champion..."
+            width={190}
+          />
         </div>
       </div>
 

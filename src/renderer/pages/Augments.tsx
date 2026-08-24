@@ -212,77 +212,77 @@ export default function Augments() {
       )}
 
       {view === "overview" && (
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-lol-dark/50">
-            <tr>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
-              <SortHeader label="Augment" field="name" />
-              <SortHeader label="Picks" field="picks" />
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
-                Pick Rate
-              </th>
-              <SortHeader label="Win Rate" field="winRate" className="w-32" />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((a) => {
-              const isExpanded = expanded.has(a.augment_id);
-              const pickRate = totalGames > 0 ? ((a.picks / totalGames) * 100).toFixed(1) : "0.0";
-              return (
-                <>
-                  <tr
-                    key={a.augment_id}
-                    onClick={() => toggleExpand(a.augment_id)}
-                    className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
-                  >
-                    <td className="px-3 py-1.5 text-xs text-lol-text">
-                      <span
-                        className={`inline-block transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                      >
-                        ▶
-                      </span>
-                    </td>
-                    <td className="px-3 py-1.5">
-                      <AugmentIcon augmentId={a.augment_id} showName />
-                    </td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
-                    <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
-                      <WinRateBar wins={a.wins} total={a.picks} />
-                    </td>
-                  </tr>
-                  {isExpanded &&
-                    a.champions.map((c) => (
-                      <tr
-                        key={`${a.augment_id}-${c.champion_id}`}
-                        className="border-t border-lol-border/30 bg-lol-dark/30"
-                      >
-                        <td></td>
-                        <td className="px-3 py-1.5 pl-8">
-                          <div className="flex items-center gap-2">
-                            <ChampionIcon championId={c.champion_id} size={22} />
-                            <span className="text-xs text-lol-text">
-                              {getChampionName(champData, c.champion_id)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-1.5 text-xs text-lol-text">{c.picks}</td>
-                        <td></td>
-                        <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
-                          <WinRateBar wins={c.wins} total={c.picks} />
-                        </td>
-                      </tr>
-                    ))}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">No augments found</div>
-        )}
-      </div>
+        <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-lol-dark/50">
+              <tr>
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
+                <SortHeader label="Augment" field="name" />
+                <SortHeader label="Picks" field="picks" />
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
+                  Pick Rate
+                </th>
+                <SortHeader label="Win Rate" field="winRate" className="w-32" />
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((a) => {
+                const isExpanded = expanded.has(a.augment_id);
+                const pickRate = totalGames > 0 ? ((a.picks / totalGames) * 100).toFixed(1) : "0.0";
+                return (
+                  <>
+                    <tr
+                      key={a.augment_id}
+                      onClick={() => toggleExpand(a.augment_id)}
+                      className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
+                    >
+                      <td className="px-3 py-1.5 text-xs text-lol-text">
+                        <span
+                          className={`inline-block transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                        >
+                          ▶
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <AugmentIcon augmentId={a.augment_id} showName />
+                      </td>
+                      <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
+                      <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                      <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                        <WinRateBar wins={a.wins} total={a.picks} />
+                      </td>
+                    </tr>
+                    {isExpanded &&
+                      a.champions.map((c) => (
+                        <tr
+                          key={`${a.augment_id}-${c.champion_id}`}
+                          className="border-t border-lol-border/30 bg-lol-dark/30"
+                        >
+                          <td></td>
+                          <td className="px-3 py-1.5 pl-8">
+                            <div className="flex items-center gap-2">
+                              <ChampionIcon championId={c.champion_id} size={22} />
+                              <span className="text-xs text-lol-text">
+                                {getChampionName(champData, c.champion_id)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-1.5 text-xs text-lol-text">{c.picks}</td>
+                          <td></td>
+                          <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                            <WinRateBar wins={c.wins} total={c.picks} />
+                          </td>
+                        </tr>
+                      ))}
+                  </>
+                );
+              })}
+            </tbody>
+          </table>
+          {sorted.length === 0 && (
+            <div className="py-8 text-center text-sm text-lol-text">No augments found</div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -301,7 +301,10 @@ function SlotsView({
   search: string;
 }) {
   const rows = useMemo(() => {
-    const byAug = new Map<number, { total: number; slots: Map<number, { picks: number; wins: number }> }>();
+    const byAug = new Map<
+      number,
+      { total: number; slots: Map<number, { picks: number; wins: number }> }
+    >();
     for (const s of slotData) {
       let e = byAug.get(s.augmentId);
       if (!e) byAug.set(s.augmentId, (e = { total: 0, slots: new Map() }));
@@ -379,8 +382,8 @@ function SlotsView({
         )}
       </div>
       <p className="text-xs text-lol-text/70 mt-2">
-        Win rate by the breakpoint the augment was taken at — Pick 1 is the first augment
-        selection of the game. * fewer than 5 picks in that slot.
+        Win rate by the breakpoint the augment was taken at — Pick 1 is the first augment selection
+        of the game. * fewer than 5 picks in that slot.
       </p>
     </div>
   );

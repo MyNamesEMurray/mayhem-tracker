@@ -78,21 +78,96 @@ const rows = [
 const icon = (n: string) => `/lol-game-data/assets/ASSETS/UX/CherryAugments/Icons/${n}_small.png`;
 
 const augmentData = {
-  901: { name: "Goliath", desc: "Become larger, gaining max health, armor and magic resist.", rarity: "kPrismatic", iconPath: icon("Goliath") },
-  902: { name: "Eureka", desc: "Gain ability haste equal to 15% of your ability power.", rarity: "kPrismatic", iconPath: icon("Eureka") },
-  903: { name: "Ethereal Weapon", desc: "Your attacks deal bonus true damage on-hit.", rarity: "kPrismatic", iconPath: icon("EtherealWeapon") },
-  904: { name: "Jeweled Gauntlet", desc: "Your abilities can critically strike.", rarity: "kPrismatic", iconPath: icon("JeweledGauntlet") },
-  501: { name: "Infernal Conduit", desc: "Damaging abilities burn enemies for magic damage over time.", rarity: "kGold", iconPath: icon("InfernalConduit") },
-  502: { name: "Frost Wraith", desc: "Periodically fire a frost bolt at a nearby enemy, slowing them.", rarity: "kGold", iconPath: icon("FrostWraith") },
-  503: { name: "Executioner", desc: "Deal increased damage to enemies below 40% health.", rarity: "kGold", iconPath: icon("Executioner") },
-  504: { name: "Spin to Win", desc: "Periodically spin, dealing physical damage to nearby enemies.", rarity: "kGold", iconPath: icon("SpinToWin") },
-  505: { name: "Lightning Strikes", desc: "Your attacks build charges that unleash chain lightning.", rarity: "kGold", iconPath: icon("LightningStrikes") },
-  506: { name: "Dawnbringer's Resolve", desc: "Heal over time when dropping below 50% health.", rarity: "kGold", iconPath: icon("DawnbringersResolve") },
-  507: { name: "Keystone Conjurer", desc: "Gain Summon Aery and your keystones recharge faster.", rarity: "kGold", iconPath: icon("KeystoneConjurer") },
-  201: { name: "Scoped Weapons", desc: "Gain attack range and deal bonus damage to distant enemies.", rarity: "kSilver", iconPath: icon("ScopedWeapons") },
-  202: { name: "Sound Wave", desc: "Periodically emit a sound wave, damaging enemies it passes through.", rarity: "kSilver", iconPath: icon("SoundWave") },
-  203: { name: "Warmup Routine", desc: "Gain stacking attack speed the longer combat lasts.", rarity: "kSilver", iconPath: icon("WarmupRoutine") },
-  204: { name: "Blunt Force", desc: "Gain attack damage. Your attacks briefly slow.", rarity: "kSilver", iconPath: icon("BluntForce") },
+  901: {
+    name: "Goliath",
+    desc: "Become larger, gaining max health, armor and magic resist.",
+    rarity: "kPrismatic",
+    iconPath: icon("Goliath"),
+  },
+  902: {
+    name: "Eureka",
+    desc: "Gain ability haste equal to 15% of your ability power.",
+    rarity: "kPrismatic",
+    iconPath: icon("Eureka"),
+  },
+  903: {
+    name: "Ethereal Weapon",
+    desc: "Your attacks deal bonus true damage on-hit.",
+    rarity: "kPrismatic",
+    iconPath: icon("EtherealWeapon"),
+  },
+  904: {
+    name: "Jeweled Gauntlet",
+    desc: "Your abilities can critically strike.",
+    rarity: "kPrismatic",
+    iconPath: icon("JeweledGauntlet"),
+  },
+  501: {
+    name: "Infernal Conduit",
+    desc: "Damaging abilities burn enemies for magic damage over time.",
+    rarity: "kGold",
+    iconPath: icon("InfernalConduit"),
+  },
+  502: {
+    name: "Frost Wraith",
+    desc: "Periodically fire a frost bolt at a nearby enemy, slowing them.",
+    rarity: "kGold",
+    iconPath: icon("FrostWraith"),
+  },
+  503: {
+    name: "Executioner",
+    desc: "Deal increased damage to enemies below 40% health.",
+    rarity: "kGold",
+    iconPath: icon("Executioner"),
+  },
+  504: {
+    name: "Spin to Win",
+    desc: "Periodically spin, dealing physical damage to nearby enemies.",
+    rarity: "kGold",
+    iconPath: icon("SpinToWin"),
+  },
+  505: {
+    name: "Lightning Strikes",
+    desc: "Your attacks build charges that unleash chain lightning.",
+    rarity: "kGold",
+    iconPath: icon("LightningStrikes"),
+  },
+  506: {
+    name: "Dawnbringer's Resolve",
+    desc: "Heal over time when dropping below 50% health.",
+    rarity: "kGold",
+    iconPath: icon("DawnbringersResolve"),
+  },
+  507: {
+    name: "Keystone Conjurer",
+    desc: "Gain Summon Aery and your keystones recharge faster.",
+    rarity: "kGold",
+    iconPath: icon("KeystoneConjurer"),
+  },
+  201: {
+    name: "Scoped Weapons",
+    desc: "Gain attack range and deal bonus damage to distant enemies.",
+    rarity: "kSilver",
+    iconPath: icon("ScopedWeapons"),
+  },
+  202: {
+    name: "Sound Wave",
+    desc: "Periodically emit a sound wave, damaging enemies it passes through.",
+    rarity: "kSilver",
+    iconPath: icon("SoundWave"),
+  },
+  203: {
+    name: "Warmup Routine",
+    desc: "Gain stacking attack speed the longer combat lasts.",
+    rarity: "kSilver",
+    iconPath: icon("WarmupRoutine"),
+  },
+  204: {
+    name: "Blunt Force",
+    desc: "Gain attack damage. Your attacks briefly slow.",
+    rarity: "kSilver",
+    iconPath: icon("BluntForce"),
+  },
 };
 
 const championData = {

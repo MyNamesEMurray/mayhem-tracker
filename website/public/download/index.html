@@ -32,25 +32,68 @@
         --bright: #e8ecf4;
         --muted: #6b7689;
       }
-      * { box-sizing: border-box; margin: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
       body {
         background-color: var(--dark);
         background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
         color: var(--text);
-        font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        font-family:
+          "Inter",
+          "Segoe UI",
+          -apple-system,
+          BlinkMacSystemFont,
+          Roboto,
+          sans-serif;
         line-height: 1.65;
         -webkit-font-smoothing: antialiased;
       }
-      main { max-width: 780px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
-      h1 { color: var(--bright); font-size: 1.75rem; margin-bottom: 0.5rem; }
-      h2 { color: var(--bright); font-size: 1.15rem; margin: 2.25rem 0 0.75rem; }
-      h3 { color: var(--bright); font-size: 1rem; margin: 0 0 0.15rem; }
-      p, li { margin-bottom: 0.85rem; font-size: 0.95rem; }
-      ul, ol { padding-left: 1.25rem; }
-      a { color: var(--gold); text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .back { display: inline-block; margin-bottom: 2rem; font-size: 0.9rem; }
-      .lead { font-size: 1.02rem; }
+      main {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 3rem 1.25rem 4rem;
+      }
+      h1 {
+        color: var(--bright);
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+      h2 {
+        color: var(--bright);
+        font-size: 1.15rem;
+        margin: 2.25rem 0 0.75rem;
+      }
+      h3 {
+        color: var(--bright);
+        font-size: 1rem;
+        margin: 0 0 0.15rem;
+      }
+      p,
+      li {
+        margin-bottom: 0.85rem;
+        font-size: 0.95rem;
+      }
+      ul,
+      ol {
+        padding-left: 1.25rem;
+      }
+      a {
+        color: var(--gold);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+      }
+      .lead {
+        font-size: 1.02rem;
+      }
       .card {
         background: var(--card);
         border: 1px solid var(--border);
@@ -58,7 +101,11 @@
         padding: 1rem 1.25rem;
         margin: 1rem 0;
       }
-      .card p:last-child, .card ul:last-child, .card li:last-child { margin-bottom: 0; }
+      .card p:last-child,
+      .card ul:last-child,
+      .card li:last-child {
+        margin-bottom: 0;
+      }
       .downloads {
         display: grid;
         gap: 1rem;
@@ -66,7 +113,9 @@
         margin: 1.5rem 0 0.5rem;
       }
       @media (min-width: 640px) {
-        .downloads { grid-template-columns: 1fr 1fr; }
+        .downloads {
+          grid-template-columns: 1fr 1fr;
+        }
       }
       .dl {
         background: var(--card);
@@ -76,7 +125,9 @@
         display: flex;
         flex-direction: column;
       }
-      .dl.primary { border-color: rgba(200, 155, 60, 0.5); }
+      .dl.primary {
+        border-color: rgba(200, 155, 60, 0.5);
+      }
       .dl .tag {
         display: inline-block;
         font-size: 0.7rem;
@@ -86,8 +137,12 @@
         color: var(--gold);
         margin-bottom: 0.4rem;
       }
-      .dl h3 { margin-bottom: 1rem; }
-      .dl .btn { margin-top: auto; }
+      .dl h3 {
+        margin-bottom: 1rem;
+      }
+      .dl .btn {
+        margin-top: auto;
+      }
       .btn {
         display: flex;
         align-items: center;
@@ -102,15 +157,29 @@
         font-weight: 600;
         transition: background-color 0.15s;
       }
-      .btn:hover { background: rgba(200, 155, 60, 0.25); text-decoration: none; }
+      .btn:hover {
+        background: rgba(200, 155, 60, 0.25);
+        text-decoration: none;
+      }
       .btn.secondary {
         border-color: var(--border);
         background: rgba(255, 255, 255, 0.03);
         color: var(--bright);
       }
-      .btn.secondary:hover { background: rgba(255, 255, 255, 0.07); }
-      .meta { font-size: 0.8rem; color: var(--muted); margin: 0.75rem 0 0; text-align: center; }
-      .both { font-size: 0.875rem; color: var(--muted); margin: 1.1rem 0 0; }
+      .btn.secondary:hover {
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .meta {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin: 0.75rem 0 0;
+        text-align: center;
+      }
+      .both {
+        font-size: 0.875rem;
+        color: var(--muted);
+        margin: 1.1rem 0 0;
+      }
       .both code {
         color: var(--text);
         font-size: 0.9em;
@@ -123,8 +192,13 @@
         padding-left: 0.9rem;
         margin: 1rem 0;
       }
-      .note p { font-size: 0.9rem; margin-bottom: 0.5rem; }
-      .note p:last-child { margin-bottom: 0; }
+      .note p {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+      }
+      .note p:last-child {
+        margin-bottom: 0;
+      }
       footer {
         margin-top: 3rem;
         padding-top: 1.5rem;
@@ -232,8 +306,9 @@
         <ul>
           <li>
             <strong>It is open source.</strong> Every line is public at
-            <a href="https://github.com/MyNamesEMurray/mayhem-tracker">github.com/MyNamesEMurray/mayhem-tracker</a>,
-            MIT licensed, and the downloads above are built from that source by a public GitHub
+            <a href="https://github.com/MyNamesEMurray/mayhem-tracker"
+              >github.com/MyNamesEMurray/mayhem-tracker</a
+            >, MIT licensed, and the downloads above are built from that source by a public GitHub
             Actions workflow — not uploaded by hand.
           </li>
           <li>
@@ -270,46 +345,50 @@
 
       <h2>Code signing</h2>
       <p>
-        MayhemStats Tracker uses the <a href="https://signpath.org/">SignPath Foundation</a> for code
-        signing of its Windows releases. Free code signing provided by
+        MayhemStats Tracker uses the <a href="https://signpath.org/">SignPath Foundation</a> for
+        code signing of its Windows releases. Free code signing provided by
         <a href="https://about.signpath.io/">SignPath.io</a>, certificate by SignPath Foundation.
       </p>
       <div class="note" id="signing-status">
         <p>
-          <strong>Status: certificate pending.</strong> Releases published before the certificate
-          is issued are unsigned, which is why SmartScreen warns on them. Once signing is live,
-          this notice goes away and Windows will show the verified publisher instead.
+          <strong>Status: certificate pending.</strong> Releases published before the certificate is
+          issued are unsigned, which is why SmartScreen warns on them. Once signing is live, this
+          notice goes away and Windows will show the verified publisher instead.
         </p>
       </div>
 
       <h2>Updates</h2>
       <p>
-        The app checks for a new version at launch and periodically while it runs, and you can
-        check on demand from
+        The app checks for a new version at launch and periodically while it runs, and you can check
+        on demand from
         <strong>Settings → General → Check for updates</strong>. Updates install in the background
         and the app relaunches on its own — you never have to come back to this page. Every
         release's changes are written up in plain language in the
-        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/blob/main/CHANGELOG.md">changelog</a>.
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/blob/main/CHANGELOG.md"
+          >changelog</a
+        >.
       </p>
 
       <h2>Something not working?</h2>
       <p>
         Open an issue at
-        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/issues">github.com/MyNamesEMurray/mayhem-tracker/issues</a>.
-        If the app isn't picking up your games, <strong>Settings → Developer → Sync
-        diagnostics</strong> has a copy button that captures exactly what to include.
+        <a href="https://github.com/MyNamesEMurray/mayhem-tracker/issues"
+          >github.com/MyNamesEMurray/mayhem-tracker/issues</a
+        >. If the app isn't picking up your games,
+        <strong>Settings → Developer → Sync diagnostics</strong> has a copy button that captures
+        exactly what to include.
       </p>
 
       <footer>
         <p>
-          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
-          Riot Games or anyone officially involved in producing or managing League of Legends.
-          League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
-          Inc.
+          MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
+          Games or anyone officially involved in producing or managing League of Legends. League of
+          Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.
         </p>
         <p>
-          <a href="/">Stats</a> · <a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">About</a> ·
-          <a href="/community/">Community impact</a> · <a href="/privacy/">Privacy</a> ·
+          <a href="/">Stats</a> · <a href="/guide/">ARAM Mayhem guide</a> ·
+          <a href="/about/">About</a> · <a href="/community/">Community impact</a> ·
+          <a href="/privacy/">Privacy</a> ·
           <a href="https://github.com/MyNamesEMurray/mayhem-tracker">GitHub</a>
         </p>
       </footer>

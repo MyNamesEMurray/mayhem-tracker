@@ -14,8 +14,20 @@ interface StatBarsProps {
 export default function StatBars({ damage, taken, heal, max, className = "" }: StatBarsProps) {
   return (
     <div className={`space-y-0.5 ${className}`}>
-      <StatBar value={damage} max={max.dmg} color="bg-red-400/50" label="DMG" title="Damage dealt" />
-      <StatBar value={taken} max={max.taken} color="bg-sky-400/50" label="TKN" title="Damage taken" />
+      <StatBar
+        value={damage}
+        max={max.dmg}
+        color="bg-red-400/50"
+        label="DMG"
+        title="Damage dealt"
+      />
+      <StatBar
+        value={taken}
+        max={max.taken}
+        color="bg-sky-400/50"
+        label="TKN"
+        title="Damage taken"
+      />
       <StatBar value={heal} max={max.heal} color="bg-emerald-400/50" label="HEL" title="Healing" />
     </div>
   );

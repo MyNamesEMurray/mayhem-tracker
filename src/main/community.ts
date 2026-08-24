@@ -157,7 +157,8 @@ const CHAMPION_QUERY =
   "&order=patch,queue_id,champion_id";
 const AUGMENT_QUERY =
   "select=patch,queue_id,augment_id,champion_id,picks,wins&order=patch,queue_id,augment_id";
-const ITEM_QUERY = "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
+const ITEM_QUERY =
+  "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
 // stale data if the network is unavailable — an offline client should still

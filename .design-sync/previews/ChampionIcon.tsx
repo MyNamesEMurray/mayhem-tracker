@@ -39,7 +39,10 @@ export function TeamRow() {
   return (
     <div style={canvas}>
       {team.map(([id, name]) => (
-        <div key={id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <div
+          key={id}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+        >
           <span style={slot(32)}>
             <ChampionIcon championId={id} size={32} />
           </span>
@@ -56,7 +59,10 @@ export function SizeScale() {
   return (
     <div style={canvas}>
       {sizes.map((s) => (
-        <div key={s} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <div
+          key={s}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+        >
           <span style={slot(s)}>
             <ChampionIcon championId={22} size={s} />
           </span>

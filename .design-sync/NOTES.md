@@ -20,7 +20,7 @@
   profile icons) because there's no direct network. Fix: point
   `DS_CHROMIUM_PATH` at `.design-sync/.cache/chromium-offline.sh` (wrapper
   adds `--no-proxy-server --host-resolver-rules NXDOMAIN-everything except
-  127.0.0.1`) so requests fail fast and `networkidle` is reachable. On a
+127.0.0.1`) so requests fail fast and `networkidle` is reachable. On a
   normal machine with internet this wrapper is unnecessary (icons will
   actually render in captures).
 - Because of the above, review sheets in this sandbox show broken/blank
@@ -29,7 +29,7 @@
   non-image parts.
 - Playwright: ESM import needs `playwright` resolvable from `.ds-sync/` —
   symlink the global install (`ln -sfn /opt/node22/lib/node_modules/playwright
-  .ds-sync/node_modules/playwright`, plus `playwright-core` from its
+.ds-sync/node_modules/playwright`, plus `playwright-core` from its
   node_modules) on this machine; a normal machine can just `npm i playwright`
   in `.ds-sync/`.
 
