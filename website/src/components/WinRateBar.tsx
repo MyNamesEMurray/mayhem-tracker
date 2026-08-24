@@ -4,7 +4,18 @@ import { MIN_SAMPLE } from "../lib/stats";
 // label carry outcome colors only — green at 50%+, red below. Small samples
 // mute the label (with *) and halve the fill's opacity so a lucky 3-0 never
 // wears a confident green.
-export default function WinRateBar({ wins, total }: { wins: number; total: number }) {
+export default function WinRateBar({
+  wins,
+  total,
+  meterFrom,
+}: {
+  wins: number;
+  total: number;
+  // Where the meter starts being drawn. In the packed champion-page tables a
+  // phone's width is worth more to the entry's name than to a 32px bar, so
+  // those pass "sm" and show the percentage alone until there is room.
+  meterFrom?: "sm";
+}) {
   const rate = total > 0 ? (wins / total) * 100 : 0;
   const lowSample = total < MIN_SAMPLE;
   const winning = rate >= 50;
@@ -14,7 +25,11 @@ export default function WinRateBar({ wins, total }: { wins: number; total: numbe
       className="flex items-center gap-2"
       title={lowSample ? `Only ${total} game(s) — small sample` : undefined}
     >
-      <div className="flex-1 h-1.5 rounded bg-lol-loss/25 overflow-hidden min-w-8">
+      <div
+        className={`flex-1 h-1.5 rounded bg-lol-loss/25 overflow-hidden min-w-8 ${
+          meterFrom === "sm" ? "hidden sm:block" : ""
+        }`}
+      >
         <div
           className={`h-full rounded ${winning ? "bg-lol-win" : "bg-lol-loss"} ${
             lowSample ? "opacity-50" : ""

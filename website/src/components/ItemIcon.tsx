@@ -5,11 +5,15 @@ export default function ItemIcon({
   itemId,
   size = 28,
   showName = false,
+  wrap = false,
 }: {
   itemData: ItemData;
   itemId: number;
   size?: number;
   showName?: boolean;
+  // Let a long name run to a second line rather than be cut off. Table rows
+  // grow a little; "Overlord's Bloodmail" stays readable on a phone.
+  wrap?: boolean;
 }) {
   const item = itemData[itemId];
   const iconUrl = item ? itemIconUrl(item.iconPath) : "";
@@ -35,7 +39,13 @@ export default function ItemIcon({
           style={{ width: size, height: size }}
         />
       )}
-      {showName && <span className="text-sm text-lol-text-bright truncate">{name}</span>}
+      {showName && (
+        <span
+          className={`text-sm text-lol-text-bright ${wrap ? "leading-snug" : "truncate"}`}
+        >
+          {name}
+        </span>
+      )}
     </div>
   );
 }

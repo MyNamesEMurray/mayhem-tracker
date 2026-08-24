@@ -74,6 +74,19 @@ const championSlug = (name) =>
 // Mirrors src/lib/stats.ts score()
 const score = (wins, games) => (100 * (wins + 10)) / (games + 20);
 
+// Mirrors src/lib/stats.ts confidenceScore(): the win rate a record supports,
+// out of 100 — the floor of a 95% Wilson interval. Item and augment lists
+// rank by it, so a 5-0 item lands below a 60% one with hundreds of games.
+const confidenceScore = (wins, games) => {
+  if (games <= 0) return 0;
+  const p = wins / games;
+  const z = 1.96;
+  const z2 = z * z;
+  const centre = p + z2 / (2 * games);
+  const margin = z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
+  return (100 * (centre - margin)) / (1 + z2 / games);
+};
+
 // Mirrors src/lib/stats.ts formatPatch(): stored patches are year-based
 // ("26.16"); shifting stray client-style values ("16.16") is idempotent
 const formatPatch = (patch) => {
@@ -107,12 +120,12 @@ function relative(value, base) {
 }
 
 // Mirrors src/lib/stats.ts rankForBuild: a workable sample AND a record that
-// isn't losing, ranked by shrunk win rate. An item that has never won is not a
+// isn't losing, ranked by confidence score. An item that has never won is not a
 // recommendation, however many times it was built.
 function rankForBuild(list, minPicks, count) {
   return list
     .filter((x) => x.picks >= minPicks && x.wins * 2 >= x.picks)
-    .sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks))
+    .sort((a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks))
     .slice(0, count);
 }
 
@@ -172,7 +185,22 @@ async function main() {
     }
   }
   const itemNames = {};
-  if (Array.isArray(itemsJson)) for (const it of itemsJson) itemNames[it.id] = it.name || "";
+  // Mirrors src/lib/dragon.ts: components are what a finished item was on the
+  // way to, so they stay out of the build lists. Manamune and Archangel's
+  // Staff transform rather than build into anything, so they stay in.
+  const itemFinished = {};
+  if (Array.isArray(itemsJson))
+    for (const it of itemsJson) {
+      itemNames[it.id] = it.name || "";
+      const buildsInto = Array.isArray(it.to) ? it.to.length : 0;
+      const builtFrom = Array.isArray(it.from) ? it.from.length : 0;
+      const categories = Array.isArray(it.categories) ? it.categories : [];
+      const price = it.priceTotal ?? 0;
+      itemFinished[it.id] =
+        (buildsInto === 0 && !categories.includes("Consumable") &&
+          (price >= 500 || it.id >= 100000)) ||
+        (categories.includes("Boots") && builtFrom > 0);
+    }
 
   const augmentName = (id) => augments[id]?.name || "";
   const itemName = (id) => itemNames[id] || "";
@@ -253,7 +281,7 @@ async function main() {
     const champItems = aggregate(
       itemRows.filter((r) => r.champion_id === id),
       "item_id",
-    ).filter((i) => itemName(i.key));
+    ).filter((i) => itemName(i.key) && itemFinished[i.key]);
     const coreBuild = rankForBuild(champItems, ITEM_MIN_PICKS, 6);
     const byRarity = (rarity) =>
       rankForBuild(
@@ -278,7 +306,7 @@ async function main() {
     const buildList = coreBuild
       .map(
         (i) =>
-          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")}</li>`,
+          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")} (score ${confidenceScore(i.wins, i.picks).toFixed(1)})</li>`,
       )
       .join("\n            ");
 
@@ -307,7 +335,7 @@ async function main() {
       .slice(0, 10)
       .map(
         (i) =>
-          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
+          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${confidenceScore(i.wins, i.picks).toFixed(1)}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
       )
       .join("\n              ");
 
@@ -374,8 +402,8 @@ ${PAGE_STYLE}
       <h2>Best augments</h2>
             ${raritySection || `<p>No augment has a winning record over ${AUGMENT_MIN_PICKS}+ picks on ${esc(name)} yet, so there is nothing worth recommending here.</p>`}
       <h2>Most-built items</h2>
-      ${itemRowsHtml ? `<table>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
-      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all.</em></p>
+      ${itemRowsHtml ? `<table>\n        <thead><tr><th>Item</th><th>Games</th><th>Score</th><th>Win rate</th></tr></thead>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
+      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all. Score is the win rate the record supports out of 100 — the floor of a 95% confidence interval — so a perfect record over a handful of games ranks below a solid one over hundreds. Components are left out; items that transform, like Manamune, are not components.</em></p>
       <p>More champions: ${crossLinks}</p>
       <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>

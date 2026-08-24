@@ -8,11 +8,10 @@ export const MIN_SAMPLE = 20;
 export const TIER_MIN_SAMPLE = 10;
 
 // The long-tail item and augment lists hide anything under this many picks.
-// Ranking is by shrunk win rate, and at two or three picks that still lets a
-// perfect record edge out a solid one over thirty games — so rather than
-// re-tune the prior for every score on the site, the rows too thin to rank
-// simply don't compete. The build panels above them already use their own,
-// stricter floors.
+// The confidence score already sinks a two-pick record to the bottom rather
+// than the top, so this is now about noise rather than ranking: a row that
+// says 100% over two games is a distraction whatever it sorts as. The build
+// panels above them use their own, stricter floors.
 export const LIST_MIN_PICKS = 5;
 
 export const QUEUE_LABELS: Record<number, string> = {
@@ -154,11 +153,13 @@ export function augmentChampionBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
+  return Array.from(map.values()).sort(
+    (a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks),
+  );
 }
 
 // Per-augment breakdown of one champion (for expanded champion rows)
-// These breakdowns rank by shrunk win rate, not by how often something was
+// These breakdowns rank by confidence score, not by how often something was
 // built. Sorting by picks put the most *popular* entry at the top of a list
 // that reads as "what works" — a different question, and one the pick count
 // in each row already answers.
@@ -175,7 +176,9 @@ export function championAugmentBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
+  return Array.from(map.values()).sort(
+    (a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks),
+  );
 }
 
 // Item picks for one champion (for the champion detail view)
@@ -192,7 +195,9 @@ export function championItemBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
+  return Array.from(map.values()).sort(
+    (a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks),
+  );
 }
 
 // Poro-Snax (base and upgraded) is handed out for free, so it would show up
@@ -228,12 +233,9 @@ export function championBuildPath(
     .sort((a, b) => a.avgBuyS - b.avgBuyS);
 }
 
-// The "ideal build" ranking: entries with a workable sample sorted by score,
-// then low-sample entries by popularity as filler. Keeps a 2-1 item from
-// outranking a proven core item while small datasets still fill the row.
-// A build entry has to earn its place twice: a workable sample, and a record
-// that isn't losing. Ranking is by shrunk win rate, so a confident 58% beats a
-// lucky 100% over three games.
+// The "ideal build" ranking. A build entry has to earn its place twice: a
+// workable sample, and a record that isn't losing. Ranking is by confidence
+// score, so a solid 58% over hundreds of games beats a lucky 100% over five.
 //
 // This used to pad the list with the most-picked entries when nothing
 // qualified, which meant a champion with thin data got a "core build" made of
@@ -251,7 +253,10 @@ export function rankForBuild<T>(
       const picks = getPicks(x);
       return picks >= minPicks && getWins(x) * 2 >= picks;
     })
-    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)))
+    .sort(
+      (a, b) =>
+        confidenceScore(getWins(b), getPicks(b)) - confidenceScore(getWins(a), getPicks(a)),
+    )
     .slice(0, count);
 }
 
@@ -264,6 +269,30 @@ const PRIOR_GAMES = 20;
 
 export function score(wins: number, games: number): number {
   return (100 * (wins + PRIOR_GAMES * 0.5)) / (games + PRIOR_GAMES);
+}
+
+// The 0-100 number the item and augment lists rank and display: the win rate
+// the record actually supports, rather than the one it happened to produce.
+//
+// It is the lower bound of the Wilson interval at 95% — read it as "the true
+// win rate is at least this". A perfect 5-0 scores 57, because five games
+// cannot rule out a coin flip; 60.1% over 2,635 games scores 58, because that
+// many games can. Shrinkage toward 50% (the `score` above) very nearly ties
+// those two, which is how a five-game item came to outrank a proven one.
+//
+// Sample size moves the number on its own: the same win rate scores higher
+// with more games behind it, and every score sits below the raw win rate by
+// however much the sample leaves in doubt.
+const WILSON_Z = 1.96;
+
+export function confidenceScore(wins: number, games: number): number {
+  if (games <= 0) return 0;
+  const p = wins / games;
+  const z2 = WILSON_Z * WILSON_Z;
+  const denominator = 1 + z2 / games;
+  const centre = p + z2 / (2 * games);
+  const margin = WILSON_Z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
+  return (100 * (centre - margin)) / denominator;
 }
 
 export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
