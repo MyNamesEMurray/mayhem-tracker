@@ -18,6 +18,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.5 — 2026-08-24
+
+- The community stats load again, and load fast. With 136,000 games in the database the app was downloading every augment and item row in existence — more than half a million of them — before it could draw a champion page, and the server started refusing the request outright. It now pulls the champion table up front and fetches a champion's augments and items when you open that champion, keeping the last two dozen you looked at in memory so flipping between them is instant. <!--fixes:v2.12.0-->
+
 ## v2.12.4 — 2026-08-23
 
 - Win rates line up in a column again. The `*` marking a small sample sat inside the number, so a starred row pushed its percentage a character to the left and the column zig-zagged; the asterisk now keeps its own space whether or not it's shown, and the digits are set in tabular figures so they stay in step too. Fixed on the champion table, the champion page's augment lists, and the augment slot table.

@@ -34,6 +34,21 @@ export interface AugmentStatRow {
   damage: number;
 }
 
+// The Augments tab's grain: one row per augment per patch, rolled up across
+// champions. The per-champion rows are 341k and growing — two orders of
+// magnitude more than this — so they are fetched per champion, on demand.
+export interface AugmentTotalRow {
+  patch: string;
+  queue_id: number;
+  augment_id: number;
+  picks: number;
+  wins: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+}
+
 export interface ItemStatRow {
   patch: string;
   queue_id: number;
@@ -55,42 +70,83 @@ export interface ItemPurchaseRow {
   avg_first_buy_s: number;
 }
 
-// PostgREST caps responses at 1000 rows, so page with Range headers until a
-// short page arrives.
-async function fetchAll<T>(view: string): Promise<T[]> {
-  const PAGE = 1000;
-  const out: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=*`, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Range: `${from}-${from + PAGE - 1}`,
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to load ${view} (HTTP ${res.status})`);
-    }
-    const rows = (await res.json()) as T[];
-    out.push(...rows);
-    if (rows.length < PAGE) return out;
+// PostgREST caps a response at 1000 rows. The first request asks for an exact
+// count so the remaining pages can go out together instead of one after
+// another — the difference between a tab that opens and a tab that hangs.
+const PAGE = 1000;
+
+async function fetchPage<T>(
+  view: string,
+  query: string,
+  from: number,
+  withCount: boolean,
+): Promise<{ rows: T[]; total: number | null }> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Range: `${from}-${from + PAGE - 1}`,
+      ...(withCount ? { Prefer: "count=exact" } : {}),
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load ${view} (HTTP ${res.status})`);
   }
+  const rows = (await res.json()) as T[];
+  // "0-999/3562" — the total is what lets the rest of the pages be parallel
+  const total = Number(res.headers.get("content-range")?.split("/")[1]);
+  return { rows, total: Number.isFinite(total) ? total : null };
+}
+
+async function fetchAll<T>(view: string, query = "select=*"): Promise<T[]> {
+  const first = await fetchPage<T>(view, query, 0, true);
+  if (first.rows.length < PAGE) return first.rows;
+
+  if (first.total == null) {
+    // No count header: walk pages until one comes up short
+    const out = [...first.rows];
+    for (let from = PAGE; ; from += PAGE) {
+      const page = await fetchPage<T>(view, query, from, false);
+      out.push(...page.rows);
+      if (page.rows.length < PAGE) return out;
+    }
+  }
+
+  const offsets: number[] = [];
+  for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
+  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, query, from, false)));
+  return [...first.rows, ...rest.flatMap((p) => p.rows)];
 }
 
 export function fetchChampionStats(): Promise<ChampionStatRow[]> {
   return fetchAll<ChampionStatRow>("champion_stats");
 }
 
-export function fetchAugmentStats(): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>("augment_stats");
+export function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
+  return fetchAll<AugmentTotalRow>("augment_totals");
 }
 
-export function fetchItemStats(): Promise<ItemStatRow[]> {
-  return fetchAll<ItemStatRow>("item_stats");
+// Everything below is per-champion or per-augment, fetched when a page that
+// needs it opens. Filtering server-side keeps a champion page to a couple of
+// thousand rows instead of the half-million the full grain would cost.
+export function fetchChampionAugments(championId: number): Promise<AugmentStatRow[]> {
+  return fetchAll<AugmentStatRow>("augment_stats", `select=*&champion_id=eq.${championId}`);
 }
 
-export function fetchItemPurchaseStats(): Promise<ItemPurchaseRow[]> {
-  return fetchAll<ItemPurchaseRow>("item_purchase_stats");
+export function fetchChampionItems(championId: number): Promise<ItemStatRow[]> {
+  return fetchAll<ItemStatRow>("item_stats", `select=*&champion_id=eq.${championId}`);
+}
+
+export function fetchChampionPurchases(championId: number): Promise<ItemPurchaseRow[]> {
+  return fetchAll<ItemPurchaseRow>(
+    "item_purchase_stats",
+    `select=*&champion_id=eq.${championId}`,
+  );
+}
+
+// For an expanded augment row: which champions carry it
+export function fetchAugmentChampions(augmentId: number): Promise<AugmentStatRow[]> {
+  return fetchAll<AugmentStatRow>("augment_stats", `select=*&augment_id=eq.${augmentId}`);
 }
 
 export interface CommunityTotals {
@@ -143,5 +199,23 @@ export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
     return await fetchAll<PatchSpanRow>("community_patch_spans");
   } catch {
     return [];
+  }
+}
+
+// How many distinct champion-vs-champion matchups the database has seen, and
+// how many champions have appeared — the denominator (every unordered pair,
+// mirror matchups included) is derived from the second.
+export interface MatchupCoverage {
+  matchups: number;
+  champions: number;
+}
+
+export async function fetchMatchupCoverage(): Promise<MatchupCoverage | null> {
+  try {
+    const rows = await fetchAll<MatchupCoverage>("matchup_coverage");
+    return rows[0] ?? null;
+  } catch {
+    // The tile falls back to a dash rather than taking the page down with it
+    return null;
   }
 }

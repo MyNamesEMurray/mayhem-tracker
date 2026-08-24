@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchCommunityTotals,
   fetchGamesPerDay,
+  fetchMatchupCoverage,
   fetchPatchSpans,
   type CommunityTotals,
   type GamesPerDayRow,
+  type MatchupCoverage,
   type PatchSpanRow,
 } from "../lib/api";
 import { formatPatch } from "../lib/stats";
@@ -32,14 +34,21 @@ export default function CommunityPage() {
   const [totals, setTotals] = useState<CommunityTotals | null>(null);
   const [perDay, setPerDay] = useState<GamesPerDayRow[]>([]);
   const [spans, setSpans] = useState<PatchSpanRow[]>([]);
+  const [coverage, setCoverage] = useState<MatchupCoverage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchCommunityTotals(), fetchGamesPerDay(), fetchPatchSpans()])
-      .then(([t, d, p]) => {
+    Promise.all([
+      fetchCommunityTotals(),
+      fetchGamesPerDay(),
+      fetchPatchSpans(),
+      fetchMatchupCoverage(),
+    ])
+      .then(([t, d, p, c]) => {
         setTotals(t);
         setPerDay(d);
         setSpans(p);
+        setCoverage(c);
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
@@ -99,6 +108,14 @@ export default function CommunityPage() {
     );
   }
 
+  // Every unordered pair of the champions that have appeared, mirror matchups
+  // (Lux vs Lux) included — that is what the observed count counts too
+  const possibleMatchups = coverage ? (coverage.champions * (coverage.champions + 1)) / 2 : 0;
+  const matchupPct =
+    coverage && possibleMatchups > 0
+      ? ((coverage.matchups / possibleMatchups) * 100).toFixed(1)
+      : "0.0";
+
   const hours = totals ? totals.total_seconds / 3600 : 0;
   const performances = totals ? totals.games * 10 : 0;
   const since = totals?.first_game_ms
@@ -137,9 +154,13 @@ export default function CommunityPage() {
           sub="of ARAM Mayhem, end to end"
         />
         <Tile
-          label="Patches covered"
-          value={totals ? String(totals.patches) : "—"}
-          sub="tracked across the mode's runs"
+          label="Champion matchups"
+          value={coverage ? coverage.matchups.toLocaleString() : "—"}
+          sub={
+            coverage
+              ? `${matchupPct}% of the ${possibleMatchups.toLocaleString()} possible`
+              : "unique pairings seen"
+          }
         />
       </div>
 

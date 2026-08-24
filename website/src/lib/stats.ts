@@ -1,4 +1,4 @@
-import type { AugmentStatRow, ChampionStatRow } from "./api";
+import type { AugmentStatRow, AugmentTotalRow, ChampionStatRow } from "./api";
 
 // Win rates below this many games render muted instead of colored, so a 3-0
 // augment doesn't outshine a 60% one with 200 picks
@@ -111,7 +111,7 @@ export interface AugmentAgg {
   damage: number;
 }
 
-export function aggregateAugments(rows: AugmentStatRow[], f: Filters): AugmentAgg[] {
+export function aggregateAugments(rows: AugmentTotalRow[], f: Filters): AugmentAgg[] {
   const map = new Map<number, AugmentAgg>();
   for (const r of rows) {
     if (!rowMatches(r, f)) continue;

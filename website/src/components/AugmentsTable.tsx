@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import type { AugmentStatRow } from "../lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { fetchAugmentChampions, type AugmentStatRow, type AugmentTotalRow } from "../lib/api";
 import type { AugmentData, ChampionData } from "../lib/dragon";
 import { getAugmentName, getChampionName } from "../lib/dragon";
 import {
@@ -35,7 +35,7 @@ export default function AugmentsTable({
   championData,
   onSelectChampion,
 }: {
-  rows: AugmentStatRow[];
+  rows: AugmentTotalRow[];
   filters: Filters;
   totalSlots: number;
   minGames?: number;
@@ -201,7 +201,6 @@ export default function AugmentsTable({
                   pickRate={totalSlots > 0 ? ((a.picks / totalSlots) * 100).toFixed(1) : "0.0"}
                   expanded={expanded}
                   onToggle={() => setExpandedId(expanded ? null : a.augment_id)}
-                  rows={rows}
                   filters={filters}
                   augmentData={augmentData}
                   championData={championData}
@@ -236,7 +235,6 @@ function AugmentRow({
   pickRate,
   expanded,
   onToggle,
-  rows,
   filters,
   augmentData,
   championData,
@@ -250,14 +248,31 @@ function AugmentRow({
   pickRate: string;
   expanded: boolean;
   onToggle: () => void;
-  rows: AugmentStatRow[];
   filters: Filters;
   augmentData: AugmentData;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
 }) {
+  // The per-champion grain is fetched for this one augment when the row opens.
+  // Holding all of it for every augment is 341k rows; one augment is ~2k.
+  const [rows, setRows] = useState<AugmentStatRow[] | null>(null);
+  useEffect(() => {
+    if (!expanded || rows) return;
+    let active = true;
+    fetchAugmentChampions(aug.augment_id)
+      .then((r) => {
+        if (active) setRows(r);
+      })
+      .catch(() => {
+        if (active) setRows([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [expanded, rows, aug.augment_id]);
+
   const breakdown = useMemo(
-    () => (expanded ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 9) : []),
+    () => (expanded && rows ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 9) : []),
     [expanded, rows, filters, aug.augment_id],
   );
 

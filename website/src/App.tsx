@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  fetchAugmentStats,
+  fetchAugmentTotals,
+  fetchChampionAugments,
+  fetchChampionItems,
+  fetchChampionPurchases,
   fetchChampionStats,
-  fetchItemPurchaseStats,
-  fetchItemStats,
   type AugmentStatRow,
+  type AugmentTotalRow,
   type ChampionStatRow,
   type ItemPurchaseRow,
   type ItemStatRow,
@@ -39,13 +41,23 @@ import { useUrlState } from "./lib/urlState";
 
 type Tab = "augments" | "champions";
 
+// What every page needs, and only that. The per-champion item and augment
+// grains are ~580k rows between them and grow with every contributed game;
+// pulling them up front meant six hundred paged requests before anything drew.
+// They load per champion instead, from the champion page that wants them.
 interface LoadedData {
   championRows: ChampionStatRow[];
+  augmentRows: AugmentTotalRow[];
+  championData: ChampionData;
+  augmentData: AugmentData;
+}
+
+// The rows behind one champion page
+interface ChampionRows {
+  championId: number;
   augmentRows: AugmentStatRow[];
   itemRows: ItemStatRow[];
   purchaseRows: ItemPurchaseRow[];
-  championData: ChampionData;
-  augmentData: AugmentData;
 }
 
 // A fresh patch has almost nothing in it for the first day or two, and the
@@ -90,10 +102,15 @@ export default function App() {
     return legacyChampion ? Number(legacyChampion) : null;
   }, [championSlugFromPath, legacyChampion, data]);
 
-  // The prerendered static block is superseded once the live app has data
+  // The prerendered static block is a fallback for readers who arrive before
+  // the bundle has data — a crawler, or a slow connection. It goes as soon as
+  // React has something to show in its place: live data, an error message, or
+  // the community page, which loads its own totals and never waits on `data`.
+  // Tying it to `data` alone meant an API failure left the static block
+  // stranded under the live page, reading as a duplicate footer on every page.
   useEffect(() => {
-    if (data) document.getElementById("prerender")?.remove();
-  }, [data]);
+    if (data || error || onCommunityPage) document.getElementById("prerender")?.remove();
+  }, [data, error, onCommunityPage]);
 
   // Canonicalize legacy ?champion=<id> links to the path form
   useEffect(() => {
@@ -123,15 +140,12 @@ export default function App() {
     setError(null);
     Promise.all([
       fetchChampionStats(),
-      fetchAugmentStats(),
-      fetchItemStats(),
-      fetchItemPurchaseStats(),
+      fetchAugmentTotals(),
       loadChampionData(),
       loadAugmentData(),
     ])
-      .then(([championRows, augmentRows, itemRows, purchaseRows, championData, augmentData]) => {
-        if (active)
-          setData({ championRows, augmentRows, itemRows, purchaseRows, championData, augmentData });
+      .then(([championRows, augmentRows, championData, augmentData]) => {
+        if (active) setData({ championRows, augmentRows, championData, augmentData });
       })
       .catch((err) => {
         if (active) setError(err instanceof Error ? err.message : String(err));
@@ -140,6 +154,38 @@ export default function App() {
       active = false;
     };
   }, []);
+
+  // A champion page's own rows. Fetched when the page opens and kept until a
+  // different champion is opened, so going back to the tier list and returning
+  // doesn't refetch.
+  const [championRows, setChampionRows] = useState<ChampionRows | null>(null);
+  const [championRowsError, setChampionRowsError] = useState<string | null>(null);
+  useEffect(() => {
+    if (selectedChampion == null) return;
+    if (championRows?.championId === selectedChampion) return;
+    let active = true;
+    setChampionRowsError(null);
+    Promise.all([
+      fetchChampionAugments(selectedChampion),
+      fetchChampionItems(selectedChampion),
+      fetchChampionPurchases(selectedChampion),
+    ])
+      .then(([augmentRows, itemRows, purchaseRows]) => {
+        if (active)
+          setChampionRows({
+            championId: selectedChampion,
+            augmentRows,
+            itemRows,
+            purchaseRows,
+          });
+      })
+      .catch((err) => {
+        if (active) setChampionRowsError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedChampion, championRows]);
 
   const patches = useMemo(() => (data ? availablePatches(data.championRows) : []), [data]);
   const queues = useMemo(() => (data ? availableQueues(data.championRows) : []), [data]);
@@ -473,14 +519,31 @@ export default function App() {
           </div>
         )}
 
-        {data && onChampionPage && selectedChampion != null && (
+        {data && onChampionPage && selectedChampion != null && championRowsError && (
+          <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
+            Could not load this champion's builds. {championRowsError}
+          </div>
+        )}
+
+        {data &&
+          onChampionPage &&
+          selectedChampion != null &&
+          !championRowsError &&
+          championRows?.championId !== selectedChampion && (
+            <div className="text-center text-lol-text py-20">Loading builds...</div>
+          )}
+
+        {data &&
+          onChampionPage &&
+          selectedChampion != null &&
+          championRows?.championId === selectedChampion && (
           <>
             <ChampionDetail
               championId={selectedChampion}
               championRows={data.championRows}
-              augmentRows={data.augmentRows}
-              itemRows={data.itemRows}
-              purchaseRows={data.purchaseRows}
+              augmentRows={championRows.augmentRows}
+              itemRows={championRows.itemRows}
+              purchaseRows={championRows.purchaseRows}
               filters={filters}
               minGames={minGames}
               championData={data.championData}
