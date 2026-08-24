@@ -92,22 +92,52 @@ function writeCache(cache: Cache): void {
   }
 }
 
-async function fetchView<T>(view: string): Promise<T[]> {
-  const out: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=*`, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Range: `${from}-${from + PAGE - 1}`,
-      },
-    });
-    if (!res.ok) throw new Error(`${view} returned HTTP ${res.status}`);
-    const rows = (await res.json()) as T[];
-    out.push(...rows);
-    if (rows.length < PAGE) return out;
-  }
+// PostgREST caps a response at 1000 rows, and the three views together are
+// ~29k — so paging them one after another was 30 sequential round trips
+// before the Champions tab could draw anything. The first request asks for
+// an exact count, and the rest of the pages then go out at once.
+async function fetchPage<T>(view: string, columns: string, from: number, withCount: boolean) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?select=${columns}`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Range: `${from}-${from + PAGE - 1}`,
+      ...(withCount ? { Prefer: "count=exact" } : {}),
+    },
+  });
+  if (!res.ok) throw new Error(`${view} returned HTTP ${res.status}`);
+  const rows = (await res.json()) as T[];
+  // "0-999/13684" — the total is what lets the remaining pages be parallel
+  const total = Number(res.headers.get("content-range")?.split("/")[1]);
+  return { rows, total: Number.isFinite(total) ? total : null };
 }
+
+async function fetchView<T>(view: string, columns: string): Promise<T[]> {
+  const first = await fetchPage<T>(view, columns, 0, true);
+  if (first.rows.length < PAGE) return first.rows;
+
+  if (first.total == null) {
+    // No count header: fall back to walking pages until one comes up short
+    const out = [...first.rows];
+    for (let from = PAGE; ; from += PAGE) {
+      const page = await fetchPage<T>(view, columns, from, false);
+      out.push(...page.rows);
+      if (page.rows.length < PAGE) return out;
+    }
+  }
+
+  const offsets: number[] = [];
+  for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
+  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, columns, from, false)));
+  return [...first.rows, ...rest.flatMap((p) => p.rows)];
+}
+
+// Only the columns the app actually reads. augment_stats and item_stats carry
+// per-augment combat lines this never touches, and they dominate the payload.
+const CHAMPION_COLUMNS =
+  "patch,queue_id,champion_id,games,wins,kills,deaths,assists,damage,damage_taken,heal,gold,pentas";
+const AUGMENT_COLUMNS = "patch,queue_id,augment_id,champion_id,picks,wins";
+const ITEM_COLUMNS = "patch,queue_id,champion_id,item_id,picks,wins";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
 // stale data if the network is unavailable — an offline client should still
@@ -115,14 +145,26 @@ async function fetchView<T>(view: string): Promise<T[]> {
 export async function loadCommunity({ force = false } = {}): Promise<Cache> {
   const cached = readCache();
   if (!force && cached && Date.now() - cached.fetchedAt < TTL_MS) return cached;
+  // Stale but present: hand it back immediately and refresh behind the tab.
+  // Waiting on the network for six-hour-old numbers to become five-minute-old
+  // numbers is the difference between the tab opening and the tab hanging.
+  if (!force && cached) {
+    if (!inFlight) void refresh().catch(() => {});
+    return cached;
+  }
   if (inFlight) return inFlight;
 
+  return refresh(cached);
+}
+
+function refresh(cached: Cache | null = readCache()): Promise<Cache> {
+  if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
       const [champions, augments, items] = await Promise.all([
-        fetchView<CommunityChampionRow>("champion_stats"),
-        fetchView<CommunityAugmentRow>("augment_stats"),
-        fetchView<CommunityItemRow>("item_stats"),
+        fetchView<CommunityChampionRow>("champion_stats", CHAMPION_COLUMNS),
+        fetchView<CommunityAugmentRow>("augment_stats", AUGMENT_COLUMNS),
+        fetchView<CommunityItemRow>("item_stats", ITEM_COLUMNS),
       ]);
       const cache: Cache = { fetchedAt: Date.now(), champions, augments, items };
       writeCache(cache);

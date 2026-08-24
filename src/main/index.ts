@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from "electron";
 import path from "path";
 import { initDatabase, getSetting, checkScoreBackfill } from "./db";
+import { loadCommunity } from "./community";
 import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
 import { setMainWindow, getMainWindow } from "./window-ref";
 import { startPolling, stopPolling, getStatus, fetchNewGames, captureFinishedGame } from "./lcu";
@@ -125,6 +126,12 @@ app.whenReady().then(async () => {
   // Load assets in background
   loadChampionData();
   loadAugmentData();
+
+  // Warm the community cache too. Fetching it lazily meant the first click on
+  // the Champions tab waited out the whole download; starting here usually
+  // means it is already on disk by then, and a failure is silent because the
+  // tab falls back to the previous cache anyway.
+  void loadCommunity().catch(() => {});
 
   // Recompute stored scores once champion class data is available, so the
   // backfill uses the same class weights as insert-time scoring.

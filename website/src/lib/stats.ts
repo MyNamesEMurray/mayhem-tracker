@@ -146,10 +146,14 @@ export function augmentChampionBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort((a, b) => b.picks - a.picks);
+  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
 }
 
 // Per-augment breakdown of one champion (for expanded champion rows)
+// These breakdowns rank by shrunk win rate, not by how often something was
+// built. Sorting by picks put the most *popular* entry at the top of a list
+// that reads as "what works" — a different question, and one the pick count
+// in each row already answers.
 export function championAugmentBreakdown(
   rows: AugmentStatRow[],
   f: Filters,
@@ -163,7 +167,7 @@ export function championAugmentBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort((a, b) => b.picks - a.picks);
+  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
 }
 
 // Item picks for one champion (for the champion detail view)
@@ -180,7 +184,7 @@ export function championItemBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort((a, b) => b.picks - a.picks);
+  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
 }
 
 // Poro-Snax (base and upgraded) is handed out for free, so it would show up

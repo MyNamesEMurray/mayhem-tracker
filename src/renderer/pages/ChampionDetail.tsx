@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useUrlStatsFilters } from "../hooks/useStatsFilters";
-import { useAugmentData, useChampionData, getAugmentName, getChampionName } from "../hooks/useChampions";
+import {
+  useAugmentData,
+  useChampionData,
+  useItemData,
+  getAugmentName,
+  getChampionName,
+} from "../hooks/useChampions";
 import type { AugmentStats, ChampionStats, ItemStats } from "../lib/types";
 import { assignTiers, rankForBuild, score, MIN_SAMPLE, winRate } from "../lib/champStats";
-import { formatAvg, formatWhole, kdaColor } from "../lib/format";
+import RarityFilter, { type Rarity } from "../components/RarityFilter";
+import { formatAvg, formatPatch, kdaColor } from "../lib/format";
 import type { StatsSource } from "../components/SourceSwitch";
 import ChampionIcon from "../components/ChampionIcon";
 import AugmentIcon from "../components/AugmentIcon";
@@ -21,6 +28,94 @@ const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text"
 // Same floors the website and the prerendered pages use
 const ITEM_MIN_GAMES = 3;
 const AUGMENT_MIN_PICKS = 3;
+
+// A champion on a fresh patch has almost nothing behind it, and a build read
+// off six games is noise. Same rule as the website: reach back a patch at a
+// time until there's enough to say something, say so, and let it be pinned
+// back to the single patch.
+const AUTO_WIDEN_MIN_GAMES = MIN_SAMPLE;
+const AUTO_WIDEN_MAX_PATCHES = 3;
+
+// What a long-tail list is ranked by. Score is the default because "what
+// works" is the question these panels answer; picks answers "what is popular",
+// which the count in each row already shows.
+export type SortBy = "score" | "winRate" | "picks";
+
+const SORT_LABELS: Record<SortBy, string> = {
+  score: "Score",
+  winRate: "Win rate",
+  picks: "Games",
+};
+
+function sortRows<T extends { picks: number; wins: number }>(rows: T[], by: SortBy): T[] {
+  const value = (r: T) =>
+    by === "picks" ? r.picks : by === "winRate" ? winRate(r.wins, r.picks) : score(r.wins, r.picks);
+  return [...rows].sort((a, b) => value(b) - value(a));
+}
+
+interface Bundle {
+  champions: ChampionStats[];
+  augments: AugmentStats[];
+  items: ItemStats[];
+}
+
+// Averages come back already rounded, without the totals behind them, so they
+// merge weighted by games rather than re-derived
+function mergeChampions(a: ChampionStats[], b: ChampionStats[]): ChampionStats[] {
+  const map = new Map<number, ChampionStats>();
+  for (const list of [a, b]) {
+    for (const c of list) {
+      const e = map.get(c.champion_id);
+      if (!e) {
+        map.set(c.champion_id, { ...c });
+        continue;
+      }
+      const games = e.games + c.games;
+      const weighted = (x: number, y: number) =>
+        games > 0 ? (x * e.games + y * c.games) / games : 0;
+      e.avg_kills = weighted(e.avg_kills, c.avg_kills);
+      e.avg_deaths = weighted(e.avg_deaths, c.avg_deaths);
+      e.avg_assists = weighted(e.avg_assists, c.avg_assists);
+      e.avg_damage = Math.round(weighted(e.avg_damage, c.avg_damage));
+      e.avg_gold = Math.round(weighted(e.avg_gold, c.avg_gold));
+      e.games = games;
+      e.wins += c.wins;
+      e.kills += c.kills;
+      e.deaths += c.deaths;
+      e.assists += c.assists;
+      e.double_kills += c.double_kills;
+      e.triple_kills += c.triple_kills;
+      e.quadra_kills += c.quadra_kills;
+      e.penta_kills += c.penta_kills;
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeCounts<T extends { picks: number; wins: number }>(
+  a: T[],
+  b: T[],
+  key: (t: T) => number,
+): T[] {
+  const map = new Map<number, T>();
+  for (const list of [a, b]) {
+    for (const row of list) {
+      const e = map.get(key(row));
+      if (!e) map.set(key(row), { ...row });
+      else {
+        e.picks += row.picks;
+        e.wins += row.wins;
+      }
+    }
+  }
+  return [...map.values()].sort((x, y) => y.picks - x.picks);
+}
+
+const mergeBundles = (a: Bundle, b: Bundle): Bundle => ({
+  champions: mergeChampions(a.champions, b.champions),
+  augments: mergeCounts(a.augments, b.augments, (x) => x.augment_id),
+  items: mergeCounts(a.items, b.items, (x) => x.item_id),
+});
 
 const RARITIES = [
   { key: "kPrismatic", label: "Prismatic", color: "text-fuchsia-300" },
@@ -42,39 +137,83 @@ export default function ChampionDetail() {
 
   const champData = useChampionData();
   const augData = useAugmentData();
+  const itemData = useItemData(patch);
   const [champions, setChampions] = useState<ChampionStats[] | null>(null);
   const [augments, setAugments] = useState<AugmentStats[] | null>(null);
   const [items, setItems] = useState<ItemStats[] | null>(null);
 
+  // The ordered patch list to reach back through — the community source knows
+  // patches this install has never played
+  const [localPatches, setLocalPatches] = useState<string[]>([]);
+  useEffect(() => {
+    if (source === "community") return;
+    window.api.getMatchFilterOptions().then((o) => setLocalPatches(o.patches));
+  }, [source]);
+  const patchList = source === "community" ? (communityPatches ?? []) : localPatches;
+
+  // Set when the reader pins the view back to the single selected patch
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => setPinned(false), [championId, patch, queue, source]);
+  const [widenedOver, setWidenedOver] = useState<string[] | null>(null);
+  const [gamesOnSelected, setGamesOnSelected] = useState(0);
+
   useEffect(() => {
     let alive = true;
-    const load = async () => {
+    const fetchFor = async (p: string | undefined): Promise<Bundle> => {
       if (source === "community") {
         const [all, detail] = await Promise.all([
-          window.api.getCommunityChampionStats(patch, queue),
-          window.api.getCommunityChampionDetail(championId, patch, queue),
+          window.api.getCommunityChampionStats(p, queue),
+          window.api.getCommunityChampionDetail(championId, p, queue),
         ]);
-        if (!alive) return;
-        setChampions(all);
-        setAugments(detail.augments);
-        setItems(detail.items);
-        return;
+        return { champions: all, augments: detail.augments, items: detail.items };
       }
       const [all, augs, its] = await Promise.all([
-        window.api.getChampionStats(patch, queue),
-        window.api.getAugmentStats(championId, patch, queue),
-        window.api.getChampionItemStats(championId, patch, queue),
+        window.api.getChampionStats(p, queue),
+        window.api.getAugmentStats(championId, p, queue),
+        window.api.getChampionItemStats(championId, p, queue),
       ]);
+      return { champions: all, augments: augs, items: its };
+    };
+
+    const gamesFor = (b: Bundle) =>
+      b.champions.find((c) => c.champion_id === championId)?.games ?? 0;
+
+    const load = async () => {
+      let acc = await fetchFor(patch);
       if (!alive) return;
-      setChampions(all);
-      setAugments(augs);
-      setItems(its);
+      const onSelected = gamesFor(acc);
+      const used = patch ? [patch] : [];
+
+      // "All patches" is already as wide as it goes, and a pinned view was
+      // asked for explicitly
+      if (patch && !pinned) {
+        let i = patchList.indexOf(patch);
+        while (
+          i >= 0 &&
+          gamesFor(acc) < AUTO_WIDEN_MIN_GAMES &&
+          used.length < AUTO_WIDEN_MAX_PATCHES &&
+          i + 1 < patchList.length
+        ) {
+          i += 1;
+          const older = await fetchFor(patchList[i]);
+          if (!alive) return;
+          acc = mergeBundles(acc, older);
+          used.push(patchList[i]);
+        }
+      }
+
+      if (!alive) return;
+      setGamesOnSelected(onSelected);
+      setWidenedOver(used.length > 1 ? used : null);
+      setChampions(acc.champions);
+      setAugments(acc.augments);
+      setItems(acc.items);
     };
     void load();
     return () => {
       alive = false;
     };
-  }, [championId, patch, queue, source]);
+  }, [championId, patch, queue, source, patchList, pinned]);
 
   const champ = champions?.find((c) => c.champion_id === championId) ?? null;
 
@@ -109,6 +248,31 @@ export default function ChampionDetail() {
       })),
     [augments, augData],
   );
+
+  // Panel controls, matching the website's: search both lists, filter augments
+  // by rarity, and choose what the list is ranked by
+  const [itemSearch, setItemSearch] = useState("");
+  const [augSearch, setAugSearch] = useState("");
+  const [augRarity, setAugRarity] = useState<Rarity>("all");
+  const [itemSort, setItemSort] = useState<SortBy>("score");
+  const [augSort, setAugSort] = useState<SortBy>("score");
+
+  const visibleItems = useMemo(() => {
+    const q = itemSearch.trim().toLowerCase();
+    const list = (items ?? []).filter((i) =>
+      q ? (itemData[i.item_id]?.name ?? "").toLowerCase().includes(q) : true,
+    );
+    return sortRows(list, itemSort);
+  }, [items, itemSearch, itemData, itemSort]);
+
+  const visibleAugments = useMemo(() => {
+    const q = augSearch.trim().toLowerCase();
+    const list = (augments ?? []).filter((a) => {
+      if (augRarity !== "all" && augData[a.augment_id]?.rarity !== augRarity) return false;
+      return q ? getAugmentName(augData, a.augment_id).toLowerCase().includes(q) : true;
+    });
+    return sortRows(list, augSort);
+  }, [augments, augSearch, augRarity, augData, augSort]);
 
   const name = getChampionName(champData, championId);
   const backTo = `/champions${source === "community" ? "?source=community" : ""}`;
@@ -156,6 +320,29 @@ export default function ChampionDetail() {
   return (
     <div className="w-full space-y-4">
       {header}
+
+      {widenedOver && (
+        <div className="flex items-start gap-3 rounded-xl border border-lol-gold/25 bg-lol-gold/[0.06] px-4 py-3">
+          <span className="text-lol-gold text-sm mt-[1px]">ⓘ</span>
+          <p className="text-[13px] leading-relaxed text-lol-text">
+            <span className="text-lol-text-bright">
+              Showing patches {formatPatch(widenedOver[widenedOver.length - 1])}–
+              {formatPatch(widenedOver[0])}.
+            </span>{" "}
+            {formatPatch(widenedOver[0])} alone has{" "}
+            {gamesOnSelected === 0
+              ? "no games"
+              : `${gamesOnSelected} game${gamesOnSelected === 1 ? "" : "s"}`}{" "}
+            on this champion.
+            <button
+              onClick={() => setPinned(true)}
+              className="ml-2 text-lol-gold hover:text-lol-gold-light cursor-pointer"
+            >
+              Use only {formatPatch(widenedOver[0])}
+            </button>
+          </p>
+        </div>
+      )}
 
       {/* Hero */}
       <div className={`${PANEL} p-5`}>
@@ -205,7 +392,11 @@ export default function ChampionDetail() {
                 const wr = winRate(i.wins, i.picks);
                 const low = i.picks < MIN_SAMPLE;
                 return (
-                  <div key={i.item_id} className="flex flex-col items-center w-[52px]">
+                  <div
+                    key={i.item_id}
+                    className="flex flex-col items-center w-[52px]"
+                    title={`${itemData[i.item_id]?.name ?? `Item ${i.item_id}`} — ${i.picks} games`}
+                  >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemId={i.item_id} size={44} patch={patch} />
                     </span>
@@ -258,17 +449,28 @@ export default function ChampionDetail() {
       <div className="grid grid-cols-1 min-[981px]:grid-cols-2 gap-4">
         <StatTable
           title="All items"
-          rows={items.map((i) => ({
+          search={itemSearch}
+          onSearch={setItemSearch}
+          placeholder="Search item…"
+          sort={itemSort}
+          onSort={setItemSort}
+          rows={visibleItems.map((i) => ({
             key: i.item_id,
             icon: <ItemIcon itemId={i.item_id} size={24} patch={patch} />,
-            name: null,
+            name: itemData[i.item_id]?.name ?? `Item ${i.item_id}`,
             picks: i.picks,
             wins: i.wins,
           }))}
         />
         <StatTable
           title="All augments"
-          rows={augments.map((a) => ({
+          search={augSearch}
+          onSearch={setAugSearch}
+          placeholder="Search augment…"
+          sort={augSort}
+          onSort={setAugSort}
+          filter={<RarityFilter value={augRarity} onChange={setAugRarity} />}
+          rows={visibleAugments.map((a) => ({
             key: a.augment_id,
             icon: <AugmentIcon augmentId={a.augment_id} size={24} />,
             name: getAugmentName(augData, a.augment_id),
@@ -290,28 +492,65 @@ export default function ChampionDetail() {
 function StatTable({
   title,
   rows,
+  search,
+  onSearch,
+  placeholder,
+  sort,
+  onSort,
+  filter,
 }: {
   title: string;
-  rows: { key: number; icon: React.ReactNode; name: string | null; picks: number; wins: number }[];
+  rows: { key: number; icon: React.ReactNode; name: string; picks: number; wins: number }[];
+  search: string;
+  onSearch: (v: string) => void;
+  placeholder: string;
+  sort: SortBy;
+  onSort: (s: SortBy) => void;
+  filter?: React.ReactNode;
 }) {
   const [showAll, setShowAll] = useState(false);
-  const sorted = [...rows].sort((a, b) => b.picks - a.picks);
-  const visible = showAll ? sorted : sorted.slice(0, 10);
+  const visible = showAll ? rows : rows.slice(0, 10);
 
   return (
     <div className={`${PANEL} p-5`}>
-      <h2 className={`${LABEL} mb-3`}>{title}</h2>
-      {sorted.length === 0 ? (
-        <p className="text-sm text-lol-text">No data yet.</p>
+      <div className="flex items-center gap-2 flex-wrap mb-3">
+        <h2 className={LABEL}>{title}</h2>
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          {filter}
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+            placeholder={placeholder}
+            className="input w-40"
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-1 mb-3">
+        <span className="text-[10px] uppercase tracking-[.08em] text-lol-text mr-1">Rank by</span>
+        {(Object.keys(SORT_LABELS) as SortBy[]).map((key) => (
+          <button
+            key={key}
+            onClick={() => onSort(key)}
+            className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors cursor-pointer ${
+              sort === key
+                ? "bg-lol-gold/20 text-lol-gold-light"
+                : "text-lol-text hover:text-lol-gold-light"
+            }`}
+          >
+            {SORT_LABELS[key]}
+          </button>
+        ))}
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-lol-text">Nothing matches.</p>
       ) : (
         <>
           <div className="space-y-1.5">
             {visible.map((r) => (
               <div key={r.key} className="flex items-center gap-2.5 h-7">
                 <span className="shrink-0 leading-none">{r.icon}</span>
-                {r.name && (
-                  <span className="text-xs text-lol-text-bright truncate min-w-0">{r.name}</span>
-                )}
+                <span className="text-xs text-lol-text-bright truncate min-w-0">{r.name}</span>
                 <span className="text-[11px] text-lol-text ml-auto shrink-0">{r.picks}x</span>
                 <span className="shrink-0">
                   <WinRateBar wins={r.wins} total={r.picks} />
@@ -319,12 +558,12 @@ function StatTable({
               </div>
             ))}
           </div>
-          {sorted.length > 10 && (
+          {rows.length > 10 && (
             <button
               onClick={() => setShowAll((v) => !v)}
               className="mt-3 text-xs text-lol-gold hover:text-lol-gold-light cursor-pointer"
             >
-              {showAll ? "Show top 10" : `Show all ${sorted.length}`}
+              {showAll ? "Show top 10" : `Show all ${rows.length}`}
             </button>
           )}
         </>

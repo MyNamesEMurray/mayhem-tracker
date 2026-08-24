@@ -18,6 +18,13 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.2 — 2026-08-23
+
+- <!--fixes:v2.7.0--> **Item and augment lists were ranked by how often something was built, not by how well it did.** The most *popular* entry sat at the top of a list that reads as "what works" — two different questions, and the pick count in each row already answered the first. Both lists now rank by the same shrunk win rate everything else uses, on the site as well as in the app.
+- The champion page's item and augment lists gained what the website has: **item names**, a **search box** for each list, a **rarity filter** for augments, and a control to rank by score, win rate, or games.
+- A champion page with too little data on the current patch now **reaches back a patch at a time** until there's enough to say something, exactly as [mayhemstats.com](https://mayhemstats.com/) does — with a note saying which patches it used, and a one-click way back to the single patch.
+- The Champions tab opens faster. Community stats download in parallel instead of one page at a time, carry only the columns the app reads, start loading when the app does, and an out-of-date cache is shown immediately while a fresh copy arrives behind it.
+
 ## v2.12.1 — 2026-08-23
 
 - Clicking a champion now opens a **full champion page** rather than a strip inside the table row: tier, score, win rate, the core build, and the best augments for each rarity, laid out the way the champion pages on [mayhemstats.com](https://mayhemstats.com/) are. It follows whichever source you're on — your own games, or the community's.
