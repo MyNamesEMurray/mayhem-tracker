@@ -16,6 +16,12 @@ export function score(wins: number, games: number): number {
 export const MIN_SAMPLE = 20;
 export const TIER_MIN_SAMPLE = 10;
 
+// The long-tail lists hide anything under this many picks. Ranking is by
+// shrunk win rate, and at two or three picks a perfect record still edges out
+// a solid one over thirty games — so rows too thin to rank don't compete,
+// rather than re-tuning the prior behind every score on the site.
+export const LIST_MIN_PICKS = 5;
+
 export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
 
 // Rank-percentile cutoffs, top to bottom

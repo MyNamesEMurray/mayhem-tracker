@@ -18,6 +18,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.12.3 — 2026-08-23
+
+- The item and augment lists on a champion page no longer show entries with fewer than five picks. Ranking blends the win rate with how much data stands behind it, but at two or three picks a perfect record could still edge out a solid one over thirty games — so the rows too thin to rank are simply left out rather than competing. The lists say so underneath.
+
 ## v2.12.2 — 2026-08-23
 
 - <!--fixes:v2.7.0--> **Item and augment lists were ranked by how often something was built, not by how well it did.** The most *popular* entry sat at the top of a list that reads as "what works" — two different questions, and the pick count in each row already answered the first. Both lists now rank by the same shrunk win rate everything else uses, on the site as well as in the app.

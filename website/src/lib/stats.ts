@@ -7,6 +7,14 @@ export const MIN_SAMPLE = 20;
 // Tier badges render dimmed below this many games
 export const TIER_MIN_SAMPLE = 10;
 
+// The long-tail item and augment lists hide anything under this many picks.
+// Ranking is by shrunk win rate, and at two or three picks that still lets a
+// perfect record edge out a solid one over thirty games — so rather than
+// re-tune the prior for every score on the site, the rows too thin to rank
+// simply don't compete. The build panels above them already use their own,
+// stricter floors.
+export const LIST_MIN_PICKS = 5;
+
 export const QUEUE_LABELS: Record<number, string> = {
   2400: "ARAM Mayhem",
   2450: "Mayhem Classic",

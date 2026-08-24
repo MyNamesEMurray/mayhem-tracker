@@ -20,6 +20,7 @@ import {
   rankForBuild,
   score,
   type Filters,
+  LIST_MIN_PICKS,
 } from "../lib/stats";
 import AugmentIcon from "./AugmentIcon";
 import ChampionIcon from "./ChampionIcon";
@@ -119,7 +120,7 @@ export default function ChampionDetail({
   // The low-sample toggle and the panel search/rarity filters narrow the full
   // tables only; Core build and Best augments already rank with shrinkage
   const visibleItems = useMemo(() => {
-    let list = minGames > 0 ? items.filter((i) => i.picks >= minGames) : items;
+    let list = items.filter((i) => i.picks >= Math.max(minGames, LIST_MIN_PICKS));
     if (itemSearch) {
       const q = itemSearch.toLowerCase();
       list = list.filter((i) => getItemName(itemData, i.item_id).toLowerCase().includes(q));
@@ -128,7 +129,7 @@ export default function ChampionDetail({
   }, [items, minGames, itemSearch, itemData]);
 
   const visibleAugments = useMemo(() => {
-    let list = minGames > 0 ? augments.filter((a) => a.picks >= minGames) : augments;
+    let list = augments.filter((a) => a.picks >= Math.max(minGames, LIST_MIN_PICKS));
     if (augRarity !== "all") {
       list = list.filter((a) => augmentData[a.augment_id]?.rarity === augRarity);
     }

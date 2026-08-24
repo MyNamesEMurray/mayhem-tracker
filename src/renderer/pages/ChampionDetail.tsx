@@ -9,7 +9,14 @@ import {
   getChampionName,
 } from "../hooks/useChampions";
 import type { AugmentStats, ChampionStats, ItemStats } from "../lib/types";
-import { assignTiers, rankForBuild, score, MIN_SAMPLE, winRate } from "../lib/champStats";
+import {
+  assignTiers,
+  rankForBuild,
+  score,
+  LIST_MIN_PICKS,
+  MIN_SAMPLE,
+  winRate,
+} from "../lib/champStats";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import { formatAvg, formatPatch, kdaColor } from "../lib/format";
 import type { StatsSource } from "../components/SourceSwitch";
@@ -259,8 +266,10 @@ export default function ChampionDetail() {
 
   const visibleItems = useMemo(() => {
     const q = itemSearch.trim().toLowerCase();
-    const list = (items ?? []).filter((i) =>
-      q ? (itemData[i.item_id]?.name ?? "").toLowerCase().includes(q) : true,
+    const list = (items ?? []).filter(
+      (i) =>
+        i.picks >= LIST_MIN_PICKS &&
+        (q ? (itemData[i.item_id]?.name ?? "").toLowerCase().includes(q) : true),
     );
     return sortRows(list, itemSort);
   }, [items, itemSearch, itemData, itemSort]);
@@ -268,6 +277,7 @@ export default function ChampionDetail() {
   const visibleAugments = useMemo(() => {
     const q = augSearch.trim().toLowerCase();
     const list = (augments ?? []).filter((a) => {
+      if (a.picks < LIST_MIN_PICKS) return false;
       if (augRarity !== "all" && augData[a.augment_id]?.rarity !== augRarity) return false;
       return q ? getAugmentName(augData, a.augment_id).toLowerCase().includes(q) : true;
     });
@@ -481,7 +491,8 @@ export default function ChampionDetail() {
       </div>
 
       <p className="text-[11px] text-lol-text">
-        Entries marked * fall under {MIN_SAMPLE} games. Score blends the win rate with a 50% prior
+        Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked *
+        fall under {MIN_SAMPLE} games. Score blends the win rate with a 50% prior
         worth 20 games, so a confident record outranks a lucky one — the same method as
         mayhemstats.com.
       </p>
