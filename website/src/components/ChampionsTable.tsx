@@ -242,8 +242,9 @@ export default function ChampionsTable({
         )}
       </div>
       <p className="text-xs text-lol-text/70">
-        Score is the win rate adjusted toward 50% for small samples; tiers rank Score across the
-        current filter. * fewer than 20 games — treat with caution.
+        Score is the win rate the record supports, out of 100 — the floor of a 95% confidence
+        interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
+        Score across the current filter. * fewer than 20 games — treat with caution.
       </p>
     </div>
   );

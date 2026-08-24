@@ -136,14 +136,24 @@
       <h2>How Score is calculated</h2>
       <p>
         Raw win rates are misleading at small sample sizes — an augment that went 3–0 is not better
-        than one that went 120–80. Score corrects for this with Bayesian shrinkage:
+        than one that went 120–80. Score answers a different question: not what the win rate was,
+        but how much of it the games behind it will support. It is the lower bound of the
+        <a
+          href="https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval"
+          >Wilson score interval</a
+        >
+        at 95% confidence, on a 0–100 scale:
       </p>
       <div class="card">
-        <p><strong>Score = 100 × (wins + 10) / (games + 20)</strong></p>
         <p>
-          Every entry is blended with a 50% prior worth twenty games. A 75% win rate over 4 games
-          scores 54.2; a 60% win rate over 200 games scores 59.5. Confidence, not luck, rises to the
-          top.
+          <strong>Score = the win rate, minus however much the sample size leaves in doubt</strong>
+        </p>
+        <p>
+          Read it as "the true win rate is at least this". A 75% win rate over 4 games scores 30.1,
+          because four games cannot rule out a coin flip. A 60% win rate over 200 games scores 53.1,
+          and the same 60% over 2,000 games scores 57.8 — the identical rate scoring higher purely
+          because more games stand behind it. Nothing arrives at the top of a list and slides down;
+          it climbs as it earns the place.
         </p>
       </div>
       <p>
@@ -172,10 +182,18 @@
 
       <h2>Ideal builds</h2>
       <p>
-        Each champion's page ranks items and augments by the same shrunk win rate, requiring a
-        minimum sample (3 games for items, 2 for augments) before an entry can lead the build; below
-        that, popularity fills in. The free starting item Poro-Snax is excluded — everyone gets it,
-        so it carries no information.
+        Each champion's page ranks items and augments by the same Score, requiring a minimum sample
+        — 3 games — and a record that is not losing before an entry can lead the build. Nothing
+        fills the gap when too little qualifies: a list that falls short says so, because an item
+        that has never won is not a recommendation however often it was built.
+      </p>
+      <p>
+        Components are left out of the build lists. Ruby Crystal and Recurve Bow carry win rates
+        because they sat in an inventory at the final whistle, not because they were anyone's plan;
+        the test is whether an item builds into something, which keeps the ones that only look like
+        components, since Manamune and Archangel's Staff transform into Muramana and Seraph's
+        Embrace rather than building into them. The free starting item Poro-Snax is excluded too —
+        everyone gets it, so it carries no information.
       </p>
 
       <h2>Frequently asked questions</h2>

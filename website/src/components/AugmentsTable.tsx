@@ -226,8 +226,9 @@ export default function AugmentsTable({
         )}
       </div>
       <p className="text-xs text-lol-text/70">
-        Score is the win rate adjusted toward 50% for small samples; tiers rank each augment against
-        others of its rarity. * fewer than 20 games — treat with caution.
+        Score is the win rate the record supports, out of 100 — the floor of a 95% confidence
+        interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
+        each augment against others of its rarity. * fewer than 20 games — treat with caution.
       </p>
     </div>
   );

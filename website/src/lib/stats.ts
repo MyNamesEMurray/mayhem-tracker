@@ -153,9 +153,7 @@ export function augmentChampionBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort(
-    (a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks),
-  );
+  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
 }
 
 // Per-augment breakdown of one champion (for expanded champion rows)
@@ -176,9 +174,7 @@ export function championAugmentBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort(
-    (a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks),
-  );
+  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
 }
 
 // Item picks for one champion (for the champion detail view)
@@ -195,9 +191,7 @@ export function championItemBreakdown(
     e.picks += r.picks;
     e.wins += r.wins;
   }
-  return Array.from(map.values()).sort(
-    (a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks),
-  );
+  return Array.from(map.values()).sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks));
 }
 
 // Poro-Snax (base and upgraded) is handed out for free, so it would show up
@@ -253,38 +247,31 @@ export function rankForBuild<T>(
       const picks = getPicks(x);
       return picks >= minPicks && getWins(x) * 2 >= picks;
     })
-    .sort(
-      (a, b) => confidenceScore(getWins(b), getPicks(b)) - confidenceScore(getWins(a), getPicks(a)),
-    )
+    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)))
     .slice(0, count);
 }
 
 // ---- Score & tiers ----
 
-// Bayesian shrinkage: blend the observed win rate with a 50% prior worth
-// PRIOR_GAMES of games, so a 3-0 entry lands mid-pack instead of topping the
-// tier list while a 60% entry with 200 games keeps most of its edge.
-const PRIOR_GAMES = 20;
-
-export function score(wins: number, games: number): number {
-  return (100 * (wins + PRIOR_GAMES * 0.5)) / (games + PRIOR_GAMES);
-}
-
-// The 0-100 number the item and augment lists rank and display: the win rate
-// the record actually supports, rather than the one it happened to produce.
+// Score: the one number every ranking on the site is built from, out of 100.
 //
-// It is the lower bound of the Wilson interval at 95% — read it as "the true
-// win rate is at least this". A perfect 5-0 scores 57, because five games
-// cannot rule out a coin flip; 60.1% over 2,635 games scores 58, because that
-// many games can. Shrinkage toward 50% (the `score` above) very nearly ties
-// those two, which is how a five-game item came to outrank a proven one.
+// It is the lower bound of the Wilson interval at 95% — read it as "the win
+// rate this record supports". A perfect 5-0 scores 56.6, because five games
+// cannot rule out a coin flip; 60.1% over 2,635 games scores 58.2, because
+// that many games can. Sample size moves the number on its own, so an entry
+// climbs as it proves itself rather than arriving at the top and sliding down,
+// and every score sits below the raw win rate by however much doubt is left.
 //
-// Sample size moves the number on its own: the same win rate scores higher
-// with more games behind it, and every score sits below the raw win rate by
-// however much the sample leaves in doubt.
+// This replaced a shrunk win rate — the observed rate blended with a 50% prior
+// worth twenty games — which champions, augments and items all used to rank
+// by. It failed the case it existed for: a 5-0 item and a 60.1% one over 2,635
+// games both scored 60.0, a tie at 500x the evidence. The two formulas ran
+// side by side for a while, one for champions and one for the item and augment
+// lists, which meant one word for two numbers; this is the whole site on the
+// interval.
 const WILSON_Z = 1.96;
 
-export function confidenceScore(wins: number, games: number): number {
+export function score(wins: number, games: number): number {
   if (games <= 0) return 0;
   const p = wins / games;
   const z2 = WILSON_Z * WILSON_Z;

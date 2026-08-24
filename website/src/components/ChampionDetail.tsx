@@ -16,7 +16,6 @@ import {
   championAugmentBreakdown,
   championBuildPath,
   championItemBreakdown,
-  confidenceScore,
   kdaRampClass,
   kdaRatio,
   rankForBuild,
@@ -125,7 +124,7 @@ export default function ChampionDetail({
   }, [purchaseRows, filters, championId, itemData]);
 
   // The low-sample toggle and the panel search/rarity filters narrow the full
-  // tables only; Core build and Best augments already rank with shrinkage
+  // tables only; Core build and Best augments already rank by Score
   const visibleItems = useMemo(() => {
     let list = (showComponents ? items : finishedItems).filter(
       (i) => i.picks >= Math.max(minGames, LIST_MIN_PICKS),
@@ -491,9 +490,9 @@ export default function ChampionDetail({
 
       <p className="text-xs text-lol-text/70">
         Score is the win rate the record supports, out of 100: the floor of a 95% confidence
-        interval, so 100% over 5 games scores below 60% over 2,600. Lists rank by it. Components are
-        left out of the build lists — Manamune and Archangel's Staff stay, since they transform
-        rather than build into anything. * fewer than 20 games — treat with caution.
+        interval, so 100% over 5 games scores below 60% over 2,600. Everything on the site ranks by
+        it. Components are left out of the build lists — Manamune and Archangel's Staff stay, since
+        they transform rather than build into anything. * fewer than 20 games — treat with caution.
       </p>
     </div>
   );
@@ -516,7 +515,7 @@ const SCORE_HINT =
 function ScoreCell({ wins, total }: { wins: number; total: number }) {
   return (
     <span className="text-[13px] font-medium tabular-nums text-lol-text-bright" title={SCORE_HINT}>
-      {confidenceScore(wins, total).toFixed(1)}
+      {score(wins, total).toFixed(1)}
     </span>
   );
 }

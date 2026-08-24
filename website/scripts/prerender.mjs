@@ -87,13 +87,10 @@ const championSlug = (name) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-// Mirrors src/lib/stats.ts score()
-const score = (wins, games) => (100 * (wins + 10)) / (games + 20);
-
-// Mirrors src/lib/stats.ts confidenceScore(): the win rate a record supports,
-// out of 100 — the floor of a 95% Wilson interval. Item and augment lists
-// rank by it, so a 5-0 item lands below a 60% one with hundreds of games.
-const confidenceScore = (wins, games) => {
+// Mirrors src/lib/stats.ts score(): the win rate a record supports, out of
+// 100 — the floor of a 95% Wilson interval. Everything ranks by it, so a 5-0
+// item lands below a 60% one with hundreds of games.
+const score = (wins, games) => {
   if (games <= 0) return 0;
   const p = wins / games;
   const z = 1.96;
@@ -145,7 +142,7 @@ function relative(value, base) {
 function rankForBuild(list, minPicks, count) {
   return list
     .filter((x) => x.picks >= minPicks && x.wins * 2 >= x.picks)
-    .sort((a, b) => confidenceScore(b.wins, b.picks) - confidenceScore(a.wins, a.picks))
+    .sort((a, b) => score(b.wins, b.picks) - score(a.wins, a.picks))
     .slice(0, count);
 }
 
@@ -329,7 +326,7 @@ async function main() {
     const buildList = coreBuild
       .map(
         (i) =>
-          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")} (score ${confidenceScore(i.wins, i.picks).toFixed(1)})</li>`,
+          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")} (score ${score(i.wins, i.picks).toFixed(1)})</li>`,
       )
       .join("\n            ");
 
@@ -358,7 +355,7 @@ async function main() {
       .slice(0, 10)
       .map(
         (i) =>
-          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${confidenceScore(i.wins, i.picks).toFixed(1)}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
+          `<tr><td>${esc(itemName(i.key))}</td><td>${i.picks}</td><td>${score(i.wins, i.picks).toFixed(1)}</td><td>${pct(i.wins, i.picks)}%</td></tr>`,
       )
       .join("\n              ");
 

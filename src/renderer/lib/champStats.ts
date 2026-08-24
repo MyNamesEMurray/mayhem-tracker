@@ -1,28 +1,20 @@
-// Champion ranking, ported from the website's src/lib/stats.ts so the app's
-// champion view reads the same as mayhemstats.com. Keep the two in sync: the
-// score formula and tier cutoffs are the site's published methodology, and a
-// number that differs between the two surfaces is worse than no number.
+// Champion, item and augment ranking, ported from the website's
+// src/lib/stats.ts so the app reads the same as mayhemstats.com. Keep the two
+// in sync: the score formula and tier cutoffs are the site's published
+// methodology, and a number that differs between the two surfaces is worse
+// than no number.
 
-// Bayesian shrinkage: blend the observed win rate with a 50% prior worth this
-// many games, so a 3-0 entry lands mid-pack instead of topping the list while
-// a 60% entry over 200 games keeps most of its edge.
-const PRIOR_GAMES = 20;
-
-export function score(wins: number, games: number): number {
-  return (100 * (wins + PRIOR_GAMES * 0.5)) / (games + PRIOR_GAMES);
-}
-
-// The 0-100 number the item and augment lists rank and display, ported from
-// the website's confidenceScore(): the win rate the record supports, being the
-// lower bound of the Wilson interval at 95%.
+// Score: the one number every ranking here and on the site is built from, out
+// of 100. It is the lower bound of the Wilson interval at 95% — read it as
+// "the win rate this record supports".
 //
-// A perfect 5-0 scores 57, because five games cannot rule out a coin flip;
-// 60.1% over 2,635 games scores 58, because that many games can. Shrinkage
-// toward 50% (the `score` above, still what champions rank by) very nearly
-// ties those two, which is how a five-game item came to outrank a proven one.
+// A perfect 5-0 scores 56.6, because five games cannot rule out a coin flip;
+// 60.1% over 2,635 games scores 58.2, because that many games can. Sample size
+// moves the number on its own, so an entry climbs as it proves itself rather
+// than arriving at the top and sliding down.
 const WILSON_Z = 1.96;
 
-export function confidenceScore(wins: number, games: number): number {
+export function score(wins: number, games: number): number {
   if (games <= 0) return 0;
   const p = wins / games;
   const z2 = WILSON_Z * WILSON_Z;
@@ -87,9 +79,7 @@ export function rankForBuild<T>(
       const picks = getPicks(x);
       return picks >= minPicks && getWins(x) * 2 >= picks;
     })
-    .sort(
-      (a, b) => confidenceScore(getWins(b), getPicks(b)) - confidenceScore(getWins(a), getPicks(a)),
-    )
+    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)))
     .slice(0, count);
 }
 

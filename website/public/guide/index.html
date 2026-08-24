@@ -255,22 +255,27 @@
       <h3>What we do about it</h3>
       <p>
         Sorting by raw win rate hands the top of every list to whatever went 3–0 last week. So
-        MayhemStats sorts by <strong>Score</strong>, a win rate pulled toward 50% by an amount that
-        depends on how little data supports it:
+        MayhemStats sorts by <strong>Score</strong>, which is the margin of error above turned into
+        a ranking: take the win rate, subtract the doubt the sample size leaves, and rank on what is
+        left.
       </p>
       <div class="card">
-        <p><strong>Score = 100 × (wins + 10) / (games + 20)</strong></p>
         <p>
-          Every entry is blended with a 50% prior worth twenty games. A 75% win rate over 4 games
-          scores 54.2. A 60% win rate over 200 games scores 59.5. The confident number wins, which
-          is the correct outcome and the opposite of what a raw sort would do.
+          <strong>Score = the win rate, minus however much the sample size leaves in doubt</strong>
+        </p>
+        <p>
+          Formally it is the lower bound of the 95% Wilson interval, on a 0–100 scale. A 75% win
+          rate over 4 games scores 30.1 — the ±44 points in the table above is the whole reason. A
+          60% win rate over 200 games scores 53.1, and the same 60% over 2,000 games scores 57.8:
+          identical rate, higher score, because the second one has ruled more out.
         </p>
       </div>
       <p>
         Raw win rates are still shown next to Score, because you should be able to see both — but
         entries under 20 games are muted, tier badges dim under 10, and champion pages simply omit
-        any item or augment with fewer than three games rather than printing a number that cannot
-        mean anything.
+        any item or augment under five picks rather than printing a number that cannot mean anything
+        — three is the floor to lead a recommended build, and a losing record cannot lead one at
+        all.
       </p>
 
       <h2>Reading a Mayhem tier list properly</h2>

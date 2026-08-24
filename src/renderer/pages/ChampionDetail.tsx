@@ -11,7 +11,6 @@ import {
 import type { AugmentStats, ChampionStats, ItemStats } from "../lib/types";
 import {
   assignTiers,
-  confidenceScore,
   rankForBuild,
   score,
   LIST_MIN_PICKS,
@@ -60,11 +59,7 @@ const SCORE_HINT =
 
 function sortRows<T extends { picks: number; wins: number }>(rows: T[], by: SortBy): T[] {
   const value = (r: T) =>
-    by === "picks"
-      ? r.picks
-      : by === "winRate"
-        ? winRate(r.wins, r.picks)
-        : confidenceScore(r.wins, r.picks);
+    by === "picks" ? r.picks : by === "winRate" ? winRate(r.wins, r.picks) : score(r.wins, r.picks);
   return [...rows].sort((a, b) => value(b) - value(a));
 }
 
@@ -537,9 +532,9 @@ export default function ChampionDetail() {
       <p className="text-[11px] text-lol-text">
         Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked * fall
         under {MIN_SAMPLE} games. Score is the win rate the record supports, out of 100: the floor
-        of a 95% confidence interval, so 100% over 5 games scores below 60% over 2,600. Components
-        are left out of the build lists — items that transform, like Manamune, are not components —
-        and the same method runs on mayhemstats.com.
+        of a 95% confidence interval, so 100% over 5 games scores below 60% over 2,600. Champions,
+        items and augments all rank by it. Components are left out of the build lists — items that
+        transform, like Manamune, are not components — and the same method runs on mayhemstats.com.
       </p>
     </div>
   );
@@ -614,7 +609,7 @@ function StatTable({
                   className="text-[11px] font-medium tabular-nums text-lol-text-bright shrink-0 w-8 text-right"
                   title={SCORE_HINT}
                 >
-                  {confidenceScore(r.wins, r.picks).toFixed(1)}
+                  {score(r.wins, r.picks).toFixed(1)}
                 </span>
                 <span className="shrink-0">
                   <WinRateBar wins={r.wins} total={r.picks} />
