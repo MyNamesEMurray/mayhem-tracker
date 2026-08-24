@@ -20,8 +20,10 @@ on Riot's end is news to everyone, so leave those unmarked.
 
 ## v2.12.7 — 2026-08-24
 
-- **The Augments tab can show the community's games.** The source switch that Champions has now sits on Augments too, so you can flip between your own augment picks and everyone's without leaving the tab. Expanding an augment loads which champions carry it across the whole pool. Best pairs and the pick-slot breakdown stay on your own games — those need to know which pick a slot was taken at, and which two an augment were taken together, and the community aggregates don't record either.
-- **"My Lobbies" says what it is.** The tab was renamed from "Global" a while back but the page heading still read "Global Stats", which made it sound like the community pool. It's your lobbies: every champion and augment played by anyone in your games, all ten players rather than just your picks. The page now says so.
+- **The Augments tab can show the community's games.** The source switch that Champions has now sits on Augments too, so you can flip between your own augment picks and everyone's without leaving the tab. Expanding an augment loads which champions carry it across the whole pool. The tab now mirrors the website: one ranked list, no separate views.
+- **The source switch is app-wide.** Turn on Community on Champions and the Augments tab is already showing community numbers when you get there, and the other way round. It sticks between launches, and a champion page opened without an explicit link follows it too.
+- **"My games" is now "My performance"**, which is what it actually means — how these have gone for *you*, not a different set of games.
+- **Removed: My Lobbies, and the augment pick-slot and best-pairs views.** My Lobbies showed everyone in your own games, which was worth having before there was a community pool and is thin next to 137,000 games now. The two augment views went the same way — the app's Augments tab is the website's, plus the community switch. If you miss any of them, say so and they can come back.
 
 ## v2.12.6 — 2026-08-24
 

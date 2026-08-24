@@ -11,22 +11,42 @@ export type StatsSource = "mine" | "community";
 
 const KEY = "stats-source";
 
+// One source for the whole app, not one per page. Reading localStorage on
+// mount already carried the choice from tab to tab, but only because tabs are
+// routes that remount; anything mounted at the same time would have drifted.
+// This keeps every subscriber on the same value the moment it changes.
+let current: StatsSource = (() => {
+  try {
+    return localStorage.getItem(KEY) === "community" ? "community" : "mine";
+  } catch {
+    return "mine";
+  }
+})();
+
+const listeners = new Set<(s: StatsSource) => void>();
+
 export function useStatsSource(): [StatsSource, (s: StatsSource) => void] {
-  const [source, setSourceState] = useState<StatsSource>(() => {
-    try {
-      return localStorage.getItem(KEY) === "community" ? "community" : "mine";
-    } catch {
-      return "mine";
-    }
-  });
+  const [source, setSourceState] = useState<StatsSource>(current);
+
+  useEffect(() => {
+    listeners.add(setSourceState);
+    // A subscriber that mounted after a change catches up here
+    setSourceState(current);
+    return () => {
+      listeners.delete(setSourceState);
+    };
+  }, []);
+
   const setSource = useCallback((next: StatsSource) => {
-    setSourceState(next);
+    current = next;
     try {
       localStorage.setItem(KEY, next);
     } catch {
       // A preference that can't be stored just doesn't persist
     }
+    for (const listener of listeners) listener(next);
   }, []);
+
   return [source, setSource];
 }
 
@@ -88,7 +108,7 @@ export default function SourceSwitch({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="flex items-center gap-0.5 rounded-lg border border-lol-border/60 bg-lol-card p-0.5">
-        {option("mine", "My games", "Champions you have played, from your own match history")}
+        {option("mine", "My performance", "Your own match history — how these have gone for you")}
         {option(
           "community",
           "Community",

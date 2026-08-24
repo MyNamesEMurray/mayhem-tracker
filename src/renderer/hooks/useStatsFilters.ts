@@ -40,8 +40,8 @@ export function useStatsFilters() {
   return { patch, setPatch, queue, setQueue };
 }
 
-// URL-param variant (Global Stats, Global Champion Detail): filters live in
-// the URL so back links restore the same view. An absent param means "use
+// URL-param variant (the champion page): filters live in the URL so back
+// links restore the same view. An absent param means "use
 // the default"; the explicit value "all" records the user choosing All.
 export function useUrlStatsFilters() {
   const [searchParams, setSearchParams] = useSearchParams();

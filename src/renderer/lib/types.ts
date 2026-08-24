@@ -152,20 +152,6 @@ export interface ItemStats {
   wins: number;
 }
 
-export interface AugmentSlotStat {
-  augmentId: number;
-  slot: number;
-  picks: number;
-  wins: number;
-}
-
-export interface AugmentPairStat {
-  augmentA: number;
-  augmentB: number;
-  picks: number;
-  wins: number;
-}
-
 export interface AugmentStatsDetailed {
   augment_id: number;
   picks: number;
@@ -270,36 +256,6 @@ export interface TeammateDetail {
   matches: TeammateMatch[];
 }
 
-export interface GlobalStats {
-  champions: { champion_id: number; games: number; wins: number }[];
-  augments: { augment_id: number; picks: number; wins: number }[];
-  totalParticipantSlots: number;
-}
-
-// One champion across every stored game, counting all ten players per game.
-export interface GlobalChampionDetail {
-  champion_id: number;
-  games: number;
-  wins: number;
-  kills: number;
-  deaths: number;
-  assists: number;
-  avgDamage: number;
-  avgDamageTaken: number;
-  avgGold: number;
-  avgHeal: number;
-  // Averaged per-game ratios, 0-1
-  damageShare: number;
-  killParticipation: number;
-  doubleKills: number;
-  tripleKills: number;
-  quadraKills: number;
-  pentaKills: number;
-  totalParticipantSlots: number;
-  items: ItemStats[];
-  augments: AugmentStats[];
-}
-
 export interface StartupStatus {
   // False in dev builds, where there is no installed exe to register
   supported: boolean;
@@ -388,8 +344,6 @@ export interface ElectronAPI {
   getChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
   getAugmentStats: (championId?: number, patch?: string, queue?: number) => Promise<AugmentStats[]>;
   getAugmentStatsDetailed: (patch?: string, queue?: number) => Promise<AugmentStatsDetailed[]>;
-  getAugmentSlotStats: (patch?: string, queue?: number) => Promise<AugmentSlotStat[]>;
-  getAugmentPairStats: (patch?: string, queue?: number) => Promise<AugmentPairStat[]>;
   getDashboard: (
     filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
   ) => Promise<DashboardData>;
@@ -407,12 +361,6 @@ export interface ElectronAPI {
   ) => Promise<ItemStats[]>;
   getTeammateStats: () => Promise<TeammateStats[]>;
   getTeammateDetail: (key: string) => Promise<TeammateDetail | null>;
-  getGlobalStats: (patch?: string, queue?: number) => Promise<GlobalStats>;
-  getGlobalChampionDetail: (
-    championId: number,
-    patch?: string,
-    queue?: number,
-  ) => Promise<GlobalChampionDetail>;
   getCommunityChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
   getCommunityChampionDetail: (
     championId: number,

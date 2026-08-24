@@ -19,7 +19,7 @@ import {
 } from "../lib/champStats";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import { formatAvg, formatPatch, kdaColor } from "../lib/format";
-import type { StatsSource } from "../components/SourceSwitch";
+import { useStatsSource, type StatsSource } from "../components/SourceSwitch";
 import ChampionIcon from "../components/ChampionIcon";
 import AugmentIcon from "../components/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
@@ -141,7 +141,13 @@ export default function ChampionDetail() {
   const championId = Number(idParam);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const source: StatsSource = searchParams.get("source") === "community" ? "community" : "mine";
+  // An explicit ?source= wins, so a link opens what it says. Without one the
+  // page follows the app-wide switch rather than snapping back to your own
+  // games.
+  const [appSource] = useStatsSource();
+  const sourceParam = searchParams.get("source");
+  const source: StatsSource =
+    sourceParam === "community" ? "community" : sourceParam === "mine" ? "mine" : appSource;
   const { patch, setPatch, queue, setQueue } = useUrlStatsFilters();
   const communityPatches = useCommunityPatches(source);
 

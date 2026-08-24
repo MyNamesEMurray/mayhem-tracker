@@ -7,7 +7,7 @@ import {
   useAugmentData,
   getAugmentName,
 } from "../hooks/useChampions";
-import type { AugmentPairStat, AugmentSlotStat, AugmentStatsDetailed } from "../lib/types";
+import type { AugmentStatsDetailed } from "../lib/types";
 import AugmentIcon from "../components/AugmentIcon";
 import ChampionIcon from "../components/ChampionIcon";
 import WinRateBar from "../components/WinRateBar";
@@ -19,16 +19,6 @@ import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
 
 type SortKey = "picks" | "winRate" | "name" | "pickRate";
-type SortDir = "asc" | "desc";
-type View = "overview" | "slots" | "pairs";
-type SlotSortKey = "name" | "slot1" | "slot2" | "slot3" | "slot4";
-type PairSortKey = "name" | "picks" | "winRate";
-
-const VIEWS: { key: View; label: string }[] = [
-  { key: "overview", label: "Win rates" },
-  { key: "slots", label: "By pick slot" },
-  { key: "pairs", label: "Best pairs" },
-];
 
 export default function Augments() {
   const champData = useChampionData();
@@ -47,18 +37,6 @@ export default function Augments() {
         : window.api.getAugmentStatsDetailed(patch, queue),
     [patch, queue, source],
   );
-  // Slot and pair breakdowns come from the raw local rows; the community
-  // aggregates don't carry which pick a slot was taken at, or which two an
-  // player took together, so those views stay on your own games.
-  const { data: slotData, refetch: refetchSlots } = useIpc<AugmentSlotStat[]>(
-    () => window.api.getAugmentSlotStats(patch, queue),
-    [patch, queue],
-  );
-  const { data: pairData, refetch: refetchPairs } = useIpc<AugmentPairStat[]>(
-    () => window.api.getAugmentPairStats(patch, queue),
-    [patch, queue],
-  );
-  const [view, setView] = useState<View>("overview");
   const [search, setSearch] = useState("");
   const { sort, toggle } = useSort<SortKey>("picks");
   const { key: sortKey, dir: sortDir } = sort;
@@ -66,20 +44,15 @@ export default function Augments() {
   const [rarityFilter, setRarityFilter] = useState<Rarity>("all");
 
   useEffect(() => {
-    const unsub = window.api.onGamesUpdated(() => {
-      refetch();
-      refetchSlots();
-      refetchPairs();
-    });
+    const unsub = window.api.onGamesUpdated(() => refetch());
     return unsub;
-  }, [refetch, refetchSlots, refetchPairs]);
+  }, [refetch]);
 
   const totalGames = useMemo(() => {
     if (!data || data.length === 0) return 0;
     const totalPicks = data.reduce((sum, a) => sum + a.picks, 0);
     return Math.round(totalPicks / 4);
   }, [data]);
-
 
   // Per-augment champion rows for the community source, keyed by augment
   const [communityChampions, setCommunityChampions] = useState<
@@ -90,12 +63,6 @@ export default function Augments() {
   useEffect(() => {
     setCommunityChampions({});
   }, [patch, queue, source]);
-
-  // Switching to the community pool while on a local-only view would leave
-  // your own games on screen under a switch that says otherwise
-  useEffect(() => {
-    if (source === "community") setView("overview");
-  }, [source]);
 
   const toggleExpand = (augmentId: number) => {
     setExpanded((prev) => {
@@ -156,30 +123,6 @@ export default function Augments() {
     <div className="w-full space-y-4">
       <div className="flex items-center gap-4">
         <h1 className="text-xl font-bold text-lol-text-bright">Augments</h1>
-        <div className="flex items-center gap-1.5">
-          {VIEWS.map((v) => {
-            const localOnly = v.key !== "overview" && source === "community";
-            return (
-              <button
-                key={v.key}
-                onClick={() => setView(v.key)}
-                disabled={localOnly}
-                title={
-                  localOnly
-                    ? "Your own games only — the community aggregates don't record which pick a slot was taken at"
-                    : undefined
-                }
-                className={`px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                  view === v.key
-                    ? "bg-lol-gold/15 text-lol-gold border-lol-gold/50"
-                    : "text-lol-text border-lol-border bg-lol-card hover:border-lol-gold/40"
-                } ${localOnly ? "opacity-40 cursor-default hover:border-lol-border" : ""}`}
-              >
-                {v.label}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Rarity Filter + Search */}
@@ -222,334 +165,78 @@ export default function Augments() {
 
       <SourceSwitch source={source} onChange={setSource} />
 
-      {view === "slots" && (
-        <SlotsView
-          slotData={slotData ?? []}
-          augmentData={augmentData}
-          rarityFilter={rarityFilter}
-          search={search}
-        />
-      )}
-
-      {view === "pairs" && (
-        <PairsView
-          pairData={pairData ?? []}
-          augmentData={augmentData}
-          rarityFilter={rarityFilter}
-          search={search}
-        />
-      )}
-
-      {view === "overview" && (
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-lol-dark/50">
-              <tr>
-                <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
-                <SortHeader label="Augment" field="name" naturalDir="asc" {...sortProps} />
-                <SortHeader label="Picks" field="picks" {...sortProps} />
-                <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
-                <SortHeader label="Win Rate" field="winRate" className="w-32" {...sortProps} />
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((a) => {
-                const isExpanded = expanded.has(a.augment_id);
-                const pickRate = totalGames > 0 ? ((a.picks / totalGames) * 100).toFixed(1) : "0.0";
-                return (
-                  <>
-                    <tr
-                      key={a.augment_id}
-                      onClick={() => toggleExpand(a.augment_id)}
-                      className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
-                    >
-                      <td className="px-3 py-1.5 text-xs text-lol-text">
-                        <span
-                          className={`inline-block transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                        >
-                          ▶
-                        </span>
-                      </td>
-                      <td className="px-3 py-1.5">
-                        <AugmentIcon augmentId={a.augment_id} showName />
-                      </td>
-                      <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
-                      <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
-                      <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
-                        <WinRateBar wins={a.wins} total={a.picks} />
-                      </td>
-                    </tr>
-                    {isExpanded &&
-                      (source === "community"
-                        ? (communityChampions[a.augment_id] ?? []).slice(0, 12)
-                        : a.champions
-                      ).map((c) => (
-                        <tr
-                          key={`${a.augment_id}-${c.champion_id}`}
-                          className="border-t border-lol-border/30 bg-lol-dark/30"
-                        >
-                          <td></td>
-                          <td className="px-3 py-1.5 pl-8">
-                            <div className="flex items-center gap-2">
-                              <ChampionIcon championId={c.champion_id} size={22} />
-                              <span className="text-xs text-lol-text">
-                                {getChampionName(champData, c.champion_id)}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-3 py-1.5 text-xs text-lol-text">{c.picks}</td>
-                          <td></td>
-                          <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
-                            <WinRateBar wins={c.wins} total={c.picks} />
-                          </td>
-                        </tr>
-                      ))}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
-          {sorted.length === 0 && (
-            <div className="py-8 text-center text-sm text-lol-text">No augments found</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// How each augment performs by the breakpoint it was taken at
-function SlotsView({
-  slotData,
-  augmentData,
-  rarityFilter,
-  search,
-}: {
-  slotData: AugmentSlotStat[];
-  augmentData: ReturnType<typeof useAugmentData>;
-  rarityFilter: Rarity;
-  search: string;
-}) {
-  const rows = useMemo(() => {
-    const byAug = new Map<
-      number,
-      { total: number; slots: Map<number, { picks: number; wins: number }> }
-    >();
-    for (const s of slotData) {
-      let e = byAug.get(s.augmentId);
-      if (!e) byAug.set(s.augmentId, (e = { total: 0, slots: new Map() }));
-      e.total += s.picks;
-      e.slots.set(s.slot, { picks: s.picks, wins: s.wins });
-    }
-    let list = [...byAug.entries()].map(([augmentId, e]) => ({ augmentId, ...e }));
-    if (rarityFilter !== "all") {
-      list = list.filter((r) => augmentData[r.augmentId]?.rarity === rarityFilter);
-    }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((r) => getAugmentName(augmentData, r.augmentId).toLowerCase().includes(q));
-    }
-    list.sort((a, b) => b.total - a.total);
-    return list;
-  }, [slotData, augmentData, rarityFilter, search]);
-
-  // Each slot column sorts by that slot's win rate. A row with no picks in
-  // the slot has nothing to compare, so it sinks to the bottom either way
-  // rather than pretending to be a 0%.
-  const { sort, toggle } = useSort<SlotSortKey>("name", "asc");
-  const sortedRows = useMemo(() => {
-    const out = [...rows];
-    out.sort((a, b) => {
-      if (sort.key === "name") {
-        const cmp = getAugmentName(augmentData, a.augmentId).localeCompare(
-          getAugmentName(augmentData, b.augmentId),
-        );
-        return sort.dir === "asc" ? cmp : -cmp;
-      }
-      const slot = Number(sort.key.slice(4));
-      const rate = (r: (typeof rows)[number]) => {
-        const st = r.slots.get(slot);
-        return st && st.picks > 0 ? st.wins / st.picks : null;
-      };
-      const ar = rate(a);
-      const br = rate(b);
-      if (ar === null || br === null) return ar === br ? 0 : ar === null ? 1 : -1;
-      return sort.dir === "desc" ? br - ar : ar - br;
-    });
-    return out;
-  }, [rows, sort, augmentData]);
-
-  const cell = (s: { picks: number; wins: number } | undefined) => {
-    if (!s) return <span className="text-lol-text/40">—</span>;
-    const wr = (s.wins / s.picks) * 100;
-    const low = s.picks < 5;
-    return (
-      <span
-        className={`inline-flex items-baseline ${
-          low ? "text-lol-text" : wr >= 50 ? "text-lol-win" : "text-lol-loss"
-        }`}
-      >
-        <span className="tabular-nums">{wr.toFixed(0)}%</span>
-        {/* The asterisk keeps its slot whether or not it's shown, so the
-            percentages — and the pick counts after them — stay in line down
-            the column */}
-        <span className="w-2 text-left">{low ? "*" : ""}</span>
-        <span className="text-lol-text text-[11px] tabular-nums ml-1">({s.picks})</span>
-      </span>
-    );
-  };
-
-  return (
-    <div>
       <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>
-              <SortHeader
-                label="Augment"
-                field="name"
-                naturalDir="asc"
-                sort={sort}
-                onSort={toggle}
-              />
-              {[1, 2, 3, 4].map((n) => (
-                <SortHeader
-                  key={n}
-                  label={`Pick ${n}`}
-                  field={`slot${n}` as SlotSortKey}
-                  className="w-24"
-                  sort={sort}
-                  onSort={toggle}
-                />
-              ))}
+              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
+              <SortHeader label="Augment" field="name" naturalDir="asc" {...sortProps} />
+              <SortHeader label="Picks" field="picks" {...sortProps} />
+              <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
+              <SortHeader label="Win Rate" field="winRate" className="w-32" {...sortProps} />
             </tr>
           </thead>
           <tbody>
-            {sortedRows.map((r) => (
-              <tr key={r.augmentId} className="border-t border-lol-border/50">
-                <td className="px-3 py-1.5">
-                  <AugmentIcon augmentId={r.augmentId} showName />
-                </td>
-                {[1, 2, 3, 4].map((n) => (
-                  <td key={n} className="px-3 py-1.5 text-sm">
-                    {cell(r.slots.get(n))}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {sorted.map((a) => {
+              const isExpanded = expanded.has(a.augment_id);
+              const pickRate = totalGames > 0 ? ((a.picks / totalGames) * 100).toFixed(1) : "0.0";
+              return (
+                <>
+                  <tr
+                    key={a.augment_id}
+                    onClick={() => toggleExpand(a.augment_id)}
+                    className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
+                  >
+                    <td className="px-3 py-1.5 text-xs text-lol-text">
+                      <span
+                        className={`inline-block transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                      >
+                        ▶
+                      </span>
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <AugmentIcon augmentId={a.augment_id} showName />
+                    </td>
+                    <td className="px-3 py-1.5 text-sm text-lol-text-bright">{a.picks}</td>
+                    <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
+                    <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                      <WinRateBar wins={a.wins} total={a.picks} />
+                    </td>
+                  </tr>
+                  {isExpanded &&
+                    (source === "community"
+                      ? (communityChampions[a.augment_id] ?? []).slice(0, 12)
+                      : a.champions
+                    ).map((c) => (
+                      <tr
+                        key={`${a.augment_id}-${c.champion_id}`}
+                        className="border-t border-lol-border/30 bg-lol-dark/30"
+                      >
+                        <td></td>
+                        <td className="px-3 py-1.5 pl-8">
+                          <div className="flex items-center gap-2">
+                            <ChampionIcon championId={c.champion_id} size={22} />
+                            <span className="text-xs text-lol-text">
+                              {getChampionName(champData, c.champion_id)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-1.5 text-xs text-lol-text">{c.picks}</td>
+                        <td></td>
+                        <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                          <WinRateBar wins={c.wins} total={c.picks} />
+                        </td>
+                      </tr>
+                    ))}
+                </>
+              );
+            })}
           </tbody>
         </table>
-        {rows.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">No slot data yet</div>
+        {sorted.length === 0 && (
+          <div className="py-8 text-center text-sm text-lol-text">No augments found</div>
         )}
       </div>
-      <p className="text-xs text-lol-text/70 mt-2">
-        Win rate by the breakpoint the augment was taken at — Pick 1 is the first augment selection
-        of the game. * fewer than 5 picks in that slot.
-      </p>
-    </div>
-  );
-}
-
-// Win rates for augment pairs taken together by the same player
-function PairsView({
-  pairData,
-  augmentData,
-  rarityFilter,
-  search,
-}: {
-  pairData: AugmentPairStat[];
-  augmentData: ReturnType<typeof useAugmentData>;
-  rarityFilter: Rarity;
-  search: string;
-}) {
-  const { sort, toggle } = useSort<PairSortKey>("winRate");
-
-  const rows = useMemo(() => {
-    let list = pairData;
-    if (rarityFilter !== "all") {
-      list = list.filter(
-        (p) =>
-          augmentData[p.augmentA]?.rarity === rarityFilter ||
-          augmentData[p.augmentB]?.rarity === rarityFilter,
-      );
-    }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (p) =>
-          getAugmentName(augmentData, p.augmentA).toLowerCase().includes(q) ||
-          getAugmentName(augmentData, p.augmentB).toLowerCase().includes(q),
-      );
-    }
-    // Sort before the cut, or "top 50" would mean "top 50 by win rate, then
-    // reordered" — which is a different set than the column asks for
-    const out = [...list];
-    out.sort((a, b) => {
-      if (sort.key === "name") {
-        const label = (p: AugmentPairStat) =>
-          `${getAugmentName(augmentData, p.augmentA)} + ${getAugmentName(augmentData, p.augmentB)}`;
-        const cmp = label(a).localeCompare(label(b));
-        return sort.dir === "asc" ? cmp : -cmp;
-      }
-      const value = (p: AugmentPairStat) =>
-        sort.key === "picks" ? p.picks : p.picks > 0 ? p.wins / p.picks : 0;
-      return sort.dir === "desc" ? value(b) - value(a) : value(a) - value(b);
-    });
-    return out.slice(0, 50);
-  }, [pairData, augmentData, rarityFilter, search, sort]);
-
-  return (
-    <div>
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-lol-dark/50">
-            <tr>
-              <SortHeader
-                label="Pair"
-                field="name"
-                naturalDir="asc"
-                sort={sort}
-                onSort={toggle}
-              />
-              <SortHeader label="Picks" field="picks" className="w-20" sort={sort} onSort={toggle} />
-              <SortHeader
-                label="Win Rate"
-                field="winRate"
-                className="w-36"
-                sort={sort}
-                onSort={toggle}
-              />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={`${p.augmentA}-${p.augmentB}`} className="border-t border-lol-border/50">
-                <td className="px-3 py-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <AugmentIcon augmentId={p.augmentA} showName />
-                    <span className="text-lol-text/60 text-xs">+</span>
-                    <AugmentIcon augmentId={p.augmentB} showName />
-                  </div>
-                </td>
-                <td className="px-3 py-1.5 text-sm text-lol-text-bright">{p.picks}</td>
-                <td className="px-3 py-1.5 w-36">
-                  <WinRateBar wins={p.wins} total={p.picks} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {rows.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">
-            No pairs with 3+ picks yet — play more games!
-          </div>
-        )}
-      </div>
-      <p className="text-xs text-lol-text/70 mt-2">
-        Pairs taken together by the same player in the same game, ranked by win rate. Only pairs
-        with 3+ picks are shown (top 50).
-      </p>
     </div>
   );
 }

@@ -30,11 +30,7 @@ const api = {
   getAugmentStatsDetailed: (patch?: string, queue?: number) =>
     ipcRenderer.invoke("db:augment-stats-detailed", patch, queue),
 
-  getAugmentSlotStats: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:augment-slot-stats", patch, queue),
 
-  getAugmentPairStats: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:augment-pair-stats", patch, queue),
 
   getDashboard: (filters?: { championId?: number; patch?: string; queue?: number }) =>
     ipcRenderer.invoke("db:dashboard", filters),
@@ -85,11 +81,7 @@ const api = {
 
   getTeammateDetail: (key: string) => ipcRenderer.invoke("db:teammate-detail", key),
 
-  getGlobalStats: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:global-stats", patch, queue),
 
-  getGlobalChampionDetail: (championId: number, patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:global-champion-detail", championId, patch, queue),
 
   getCommunityChampionStats: (patch?: string, queue?: number) =>
     ipcRenderer.invoke("community:champion-stats", patch, queue),
