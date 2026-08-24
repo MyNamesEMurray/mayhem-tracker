@@ -205,13 +205,18 @@ export async function getCommunityChampionStats(
     e.avg_damage += r.damage;
     e.avg_gold += r.gold;
   }
+  // Rounded here, matching the ROUND() in the local getChampionStats query
+  // (db.ts): a K/D/A to one decimal, damage and gold whole. Doing it at the
+  // source keeps both sources identical without every render site having to
+  // remember — the raw quotient reached the table as 10.633333333333333.
+  const oneDp = (n: number) => Math.round(n * 10) / 10;
   for (const e of byChampion.values()) {
     const n = Math.max(e.games, 1);
-    e.avg_kills = e.kills / n;
-    e.avg_deaths = e.deaths / n;
-    e.avg_assists = e.assists / n;
-    e.avg_damage = e.avg_damage / n;
-    e.avg_gold = e.avg_gold / n;
+    e.avg_kills = oneDp(e.kills / n);
+    e.avg_deaths = oneDp(e.deaths / n);
+    e.avg_assists = oneDp(e.assists / n);
+    e.avg_damage = Math.round(e.avg_damage / n);
+    e.avg_gold = Math.round(e.avg_gold / n);
   }
   return [...byChampion.values()].sort((a, b) => b.games - a.games);
 }

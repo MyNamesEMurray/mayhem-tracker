@@ -1,5 +1,20 @@
 import { toYearPatch } from "../../shared/patch";
 
+// Per-game averages. K/D/A-sized numbers carry one decimal — always, so a
+// column reads 13.6 / 12.5 / 14.0 rather than 13.6 / 12.5 / 14 — and the big
+// ones (damage, gold) are whole with separators.
+//
+// Both stat sources round at the source (SQL ROUND in db.ts, and the same
+// values rounded in main/community.ts). Formatting here as well means a table
+// can never print 10.633333333333333 if a future source forgets.
+export function formatAvg(value: number | null | undefined): string {
+  return (value ?? 0).toFixed(1);
+}
+
+export function formatWhole(value: number | null | undefined): string {
+  return Math.round(value ?? 0).toLocaleString();
+}
+
 export function formatKDA(kills: number, deaths: number, assists: number): string {
   return `${kills} / ${deaths} / ${assists}`;
 }

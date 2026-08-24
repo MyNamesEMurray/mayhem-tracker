@@ -14,6 +14,8 @@ import CommunityGate from "../components/CommunityGate";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import QueueSelect from "../components/QueueSelect";
 import {
+  formatAvg,
+  formatWhole,
   formatKDA,
   formatDuration,
   formatTimeAgo,
@@ -337,19 +339,19 @@ export default function Champions() {
                   <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
                     <WinRateBar wins={c.wins} total={c.games} />
                   </td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_kills}</td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_deaths}</td>
-                  <td className="px-3 py-1.5 text-sm text-lol-text">{c.avg_assists}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
+                  <td className="px-3 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_assists)}</td>
                   <td
                     className={`px-3 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
                   >
                     {kdaRatio(c.kills, c.deaths, c.assists)}
                   </td>
                   <td className="px-3 py-1.5 text-sm text-lol-text">
-                    {(c.avg_damage ?? 0).toLocaleString()}
+                    {formatWhole(c.avg_damage)}
                   </td>
                   <td className="px-3 py-1.5 text-sm text-lol-text-bright">
-                    {(c.avg_gold ?? 0).toLocaleString()}
+                    {formatWhole(c.avg_gold)}
                   </td>
                   <td className="px-3 py-1.5">
                     <div className="grid grid-cols-4 gap-1 text-[10px]">
