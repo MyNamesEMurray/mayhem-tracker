@@ -1,15 +1,20 @@
+import { MIN_SAMPLE } from "../lib/champStats";
+
 interface WinRateBarProps {
   wins: number;
   total: number;
   showPercent?: boolean;
 }
 
-// Unified 6px rate meter: green fill on a faint loss track, outcome-colored
-// percent (green ≥50, red below). Small samples (<20 games) render muted with
-// a "*" and half-opacity fill.
+// The unified rate meter: a 6px bar on a translucent loss track. Fill and
+// label both carry outcome colors — green at 50%+, red below — so a losing
+// record reads as one at a glance rather than as a shorter green bar. Small
+// samples mute the label (with a "*") and halve the fill's opacity, so a lucky
+// 3-0 never wears a confident green. Matches website/src/components/WinRateBar.
 export default function WinRateBar({ wins, total, showPercent = true }: WinRateBarProps) {
   const rate = total > 0 ? (wins / total) * 100 : 0;
-  const lowSample = total < 20;
+  const lowSample = total < MIN_SAMPLE;
+  const winning = rate >= 50;
 
   return (
     <div
@@ -18,14 +23,16 @@ export default function WinRateBar({ wins, total, showPercent = true }: WinRateB
     >
       <div className="flex-1 h-1.5 bg-lol-loss/25 rounded overflow-hidden min-w-16">
         <div
-          className={`h-full bg-lol-win rounded transition-all ${lowSample ? "opacity-50" : ""}`}
+          className={`h-full rounded transition-all ${winning ? "bg-lol-win" : "bg-lol-loss"} ${
+            lowSample ? "opacity-50" : ""
+          }`}
           style={{ width: `${rate}%` }}
         />
       </div>
       {showPercent && (
         <span
           className={`text-xs font-medium min-w-[3.25rem] inline-flex justify-end ${
-            lowSample ? "text-lol-text" : rate >= 50 ? "text-lol-win" : "text-lol-loss"
+            lowSample ? "text-lol-text" : winning ? "text-lol-win" : "text-lol-loss"
           }`}
         >
           {/* The asterisk gets a slot of its own, occupied or not, so the %
