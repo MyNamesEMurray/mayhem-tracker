@@ -7,8 +7,7 @@
 //
 //   npm run gen:augments
 //
-// It writes both copies — src/shared/augment-descriptions.ts and
-// website/src/lib/augment-descriptions.ts — so they can't drift apart.
+// It writes src/shared/augment-descriptions.ts, which both surfaces import.
 //
 // A "?" stands in for a number the game fills from live spell data the string
 // table doesn't carry. Augments missing from this map — a handful have no

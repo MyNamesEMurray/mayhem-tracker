@@ -1,6 +1,5 @@
 // Regenerates the augment blurbs shown when you hover an augment icon, for
-// both surfaces: src/shared/augment-descriptions.ts for the app and
-// website/src/lib/augment-descriptions.ts for the site.
+// both surfaces from src/shared/augment-descriptions.ts.
 //
 // Run it after a patch adds or reworks augments:
 //
@@ -26,13 +25,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// The website deploys with its own directory as the project root, so it can't
-// reach up into src/shared — it gets its own copy, the way it already keeps
-// its own dragon.ts rather than importing the app's.
-const OUTPUTS = [
-  path.resolve(__dirname, "../src/shared/augment-descriptions.ts"),
-  path.resolve(__dirname, "../website/src/lib/augment-descriptions.ts"),
-];
+// One file, imported by the app and by the site. The site builds with
+// website/ as its root, but the repository is checked out whole, so the
+// import up into src/shared resolves in the build and the dev server alike.
+// This used to write a second, byte-identical copy under website/src/lib.
+const OUTPUT = path.resolve(__dirname, "../src/shared/augment-descriptions.ts");
 
 const AUGMENTS_URL =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json";
@@ -230,8 +227,7 @@ const contents = `// GENERATED FILE — do not edit by hand.
 //
 //   npm run gen:augments
 //
-// It writes both copies — src/shared/augment-descriptions.ts and
-// website/src/lib/augment-descriptions.ts — so they can't drift apart.
+// It writes src/shared/augment-descriptions.ts, which both surfaces import.
 //
 // A "?" stands in for a number the game fills from live spell data the string
 // table doesn't carry. Augments missing from this map — a handful have no
@@ -246,25 +242,25 @@ ${lines.join("\n")}
 export const AUGMENT_DESCRIPTIONS_PATCH = ${JSON.stringify(patch)};
 `;
 
-for (const out of OUTPUTS) {
-  writeFileSync(out, contents);
-  // The repo's formatter owns quote style and line wrapping, so the generated
-  // files land already formatted rather than showing up as a diff the next
-  // time anyone runs `npm run format`
-  try {
-    execFileSync(path.resolve(__dirname, "../node_modules/.bin/oxfmt"), [out], { stdio: "ignore" });
-  } catch {
-    console.warn(
-      "Could not run oxfmt on the generated files — run `npm run format` before committing",
-    );
-    break;
-  }
+writeFileSync(OUTPUT, contents);
+// The repo's formatter owns quote style and line wrapping, so the generated
+// file lands already formatted rather than showing up as a diff the next time
+// anyone runs `npm run format`
+try {
+  execFileSync(path.resolve(__dirname, "../node_modules/.bin/oxfmt"), [OUTPUT], {
+    stdio: "ignore",
+  });
+} catch {
+  console.warn(
+    "Could not run oxfmt on the generated file — run `npm run format` before committing",
+  );
 }
 
 console.log(
-  `Wrote ${described.length} descriptions (patch ${patch}) to ${OUTPUTS.map((out) =>
-    path.relative(process.cwd(), out),
-  ).join(" and ")}`,
+  `Wrote ${described.length} descriptions (patch ${patch}) to ${path.relative(
+    process.cwd(),
+    OUTPUT,
+  )}`,
 );
 if (undescribed.length) {
   console.log(`No description text found for ${undescribed.length}: ${undescribed.join(", ")}`);

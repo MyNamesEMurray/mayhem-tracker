@@ -1,4 +1,4 @@
-import { AUGMENT_DESCRIPTIONS } from "../lib/augment-descriptions";
+import { AUGMENT_DESCRIPTIONS } from "../../../src/shared/augment-descriptions.ts";
 import { augmentIconUrl, getAugmentName, type AugmentData } from "../lib/dragon";
 import { useTooltip } from "../lib/useTooltip";
 
