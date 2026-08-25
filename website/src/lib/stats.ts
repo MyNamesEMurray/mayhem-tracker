@@ -22,11 +22,12 @@ export {
 export type { Tier } from "../../../src/shared/score.ts";
 
 import { score } from "../../../src/shared/score.ts";
+import { comparePatches, toYearPatch } from "../../../src/shared/patch.ts";
+import { KDA_RAMP, rampClass } from "../../../src/shared/format.ts";
 
-export const QUEUE_LABELS: Record<number, string> = {
-  2400: "ARAM Mayhem",
-  2450: "Mayhem Classic",
-};
+export { QUEUE_LABELS } from "../../../src/shared/queues.ts";
+export { comparePatches };
+export { formatWhole, kdaRatio } from "../../../src/shared/format.ts";
 
 export interface Filters {
   // Undefined means all patches; otherwise the set of included patches
@@ -40,21 +41,11 @@ function rowMatches(row: { patch: string; queue_id: number }, f: Filters): boole
   return true;
 }
 
-export function comparePatches(a: string, b: string): number {
-  const [aMajor, aMinor] = a.split(".").map(Number);
-  const [bMajor, bMinor] = b.split(".").map(Number);
-  return aMajor - bMajor || aMinor - bMinor;
-}
-
 // Patches are stored year-based ("26.16") since the community database was
 // normalized; mapping again here is a harmless safety net for any stray
-// client-style value ("16.16") — client majors stay below 25 until 2035,
-// so the shift is idempotent.
+// client-style value ("16.16"), since toYearPatch is idempotent.
 export function formatPatch(patch: string): string {
-  const m = patch.match(/^(\d+)\.(.+)$/);
-  if (!m) return patch;
-  const major = Number(m[1]);
-  return major >= 15 && major < 25 ? `${major + 10}.${m[2]}` : patch;
+  return toYearPatch(patch);
 }
 
 // Patches present in the data, newest first
@@ -236,22 +227,8 @@ export function championBuildPath(
     .sort((a, b) => a.avgBuyS - b.avgBuyS);
 }
 
-// The unified performance ramp for KDA ratios: amber ≥5, sky ≥4, emerald ≥3,
-// slate below — shared visual language with the desktop app's score colors.
+// The performance ramp, from src/shared/format.ts so a colour means the same
+// thing here as it does in the app's scoreboard.
 export function kdaRampClass(ratio: number): string {
-  if (ratio >= 5) return "text-amber-400";
-  if (ratio >= 4) return "text-sky-400";
-  if (ratio >= 3) return "text-emerald-400";
-  return "text-lol-text";
-}
-
-export function kdaRatio(kills: number, deaths: number, assists: number): number {
-  return (kills + assists) / Math.max(deaths, 1);
-}
-
-// Whole numbers carry a thousands separator, everywhere, on both surfaces.
-// This used to render "50.6k", which is shorter and reads as an estimate —
-// and disagreed with the desktop app, which has always shown 50,580.
-export function formatWhole(n: number | null | undefined): string {
-  return Math.round(n ?? 0).toLocaleString();
+  return rampClass(ratio, KDA_RAMP);
 }

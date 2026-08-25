@@ -17,3 +17,11 @@ export function toClientPatch(patch: string): string {
   const major = Number(m[1]);
   return major >= 25 ? `${major - 10}.${m[2]}` : patch;
 }
+
+// Patch ordering, for range filters and "newest first" lists. Both fields are
+// numeric in every patch name the database holds.
+export function comparePatches(a: string, b: string): number {
+  const [aMajor, aMinor] = a.split(".").map(Number);
+  const [bMajor, bMinor] = b.split(".").map(Number);
+  return aMajor - bMajor || aMinor - bMinor;
+}

@@ -1,4 +1,8 @@
 import { toYearPatch } from "../../shared/patch";
+import { KDA_RAMP, rampClass, SCORE_RAMP } from "../../shared/format";
+
+// Re-exported so call sites keep one formatting import
+export { formatWhole } from "../../shared/format";
 
 // Per-game averages. K/D/A-sized numbers carry one decimal — always, so a
 // column reads 13.6 / 12.5 / 14.0 rather than 13.6 / 12.5 / 14 — and the big
@@ -11,10 +15,6 @@ export function formatAvg(value: number | null | undefined): string {
   return (value ?? 0).toFixed(1);
 }
 
-export function formatWhole(value: number | null | undefined): string {
-  return Math.round(value ?? 0).toLocaleString();
-}
-
 export function formatKDA(kills: number, deaths: number, assists: number): string {
   return `${kills} / ${deaths} / ${assists}`;
 }
@@ -24,13 +24,10 @@ export function kdaRatio(kills: number, deaths: number, assists: number): string
   return ((kills + assists) / deaths).toFixed(2);
 }
 
-// Unified performance ramp (design rule 3): amber ≥5 · sky ≥4 · emerald ≥3 ·
-// muted below. KDA is never gold — gold means brand/interaction/"you".
+// The performance ramp, from src/shared/format.ts — the same one the site
+// colours its KDA column with.
 export function kdaColor(ratio: number): string {
-  if (ratio >= 5) return "text-amber-400";
-  if (ratio >= 4) return "text-sky-400";
-  if (ratio >= 3) return "text-emerald-400";
-  return "text-lol-text";
+  return rampClass(ratio, KDA_RAMP);
 }
 
 // Same ramp for a formatted kdaRatio() string ("Perfect" counts as top tier)
@@ -38,13 +35,9 @@ export function kdaStringColor(kda: string): string {
   return kdaColor(kda === "Perfect" ? Infinity : parseFloat(kda));
 }
 
-// Performance ramp for the 1-10 match score (design rule 3). Mirrors the
-// thresholds in shared/opScore but bottoms out on the muted text token.
+// The same ramp on the 1-10 match score's thresholds.
 export function scoreRampColor(score: number): string {
-  if (score >= 9) return "text-amber-400";
-  if (score >= 7) return "text-sky-400";
-  if (score >= 5) return "text-emerald-400";
-  return "text-lol-text";
+  return rampClass(score, SCORE_RAMP);
 }
 
 export function formatDuration(seconds: number): string {
