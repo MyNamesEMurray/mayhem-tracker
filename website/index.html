@@ -49,11 +49,13 @@
       </p>
     </section>
     <style>
+      /* Colours come from the built stylesheet's :root tokens, linked above
+         and applied before any JavaScript runs. */
       #site-intro {
         max-width: 1440px;
         margin: 0 auto;
         padding: 0 1rem 3rem;
-        color: #94a0b8;
+        color: var(--color-lol-text);
         font-family:
           "Inter",
           "Segoe UI",
@@ -63,7 +65,7 @@
           sans-serif;
       }
       #site-intro h2 {
-        color: #e8ecf4;
+        color: var(--color-lol-text-bright);
         font-size: 0.95rem;
         margin: 0 0 0.5rem;
       }
@@ -74,7 +76,7 @@
         max-width: 60rem;
       }
       #site-intro a {
-        color: #c89b3c;
+        color: var(--color-lol-gold);
         text-decoration: none;
       }
       #site-intro a:hover {

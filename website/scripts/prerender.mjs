@@ -162,16 +162,18 @@ function aggregate(rows, keyField, extra = []) {
   return Array.from(map.values());
 }
 
-const PAGE_STYLE = `      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: #94a0b8;
+// Colours come from the built stylesheet's :root tokens, which every
+// prerendered page links before any JavaScript runs.
+const PAGE_STYLE = `      #prerender { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: var(--color-lol-text);
         font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; line-height: 1.6; }
-      #prerender h1, #prerender h2, #prerender h3 { color: #e8ecf4; }
+      #prerender h1, #prerender h2, #prerender h3 { color: var(--color-lol-text-bright); }
       #prerender h1 { font-size: 1.5rem; } #prerender h2 { font-size: 1.1rem; margin-top: 1.75rem; }
       #prerender h3 { font-size: 0.95rem; margin-top: 1rem; }
-      #prerender a { color: #c89b3c; text-decoration: none; }
+      #prerender a { color: var(--color-lol-gold); text-decoration: none; }
       #prerender table { border-collapse: collapse; } #prerender td { padding: 0.2rem 0.9rem 0.2rem 0; }
       #prerender img { border-radius: 8px; vertical-align: middle; margin-right: 0.5rem; }
-      #prerender .note { border-left: 2px solid #242c3d; padding-left: 0.9rem; font-size: 0.9rem; }
-      body { background: #0b0e14; }`;
+      #prerender .note { border-left: 2px solid var(--color-lol-border); padding-left: 0.9rem; font-size: 0.9rem; }
+      body { background: var(--color-lol-dark); }`;
 
 async function main() {
   const [championRows, augmentRows, itemRows, versions] = await Promise.all([
