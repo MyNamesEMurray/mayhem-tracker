@@ -1,19 +1,23 @@
 import { ItemIcon } from "mayhem-tracker";
 
-// Icon paths are real CommunityDragon asset paths — icons render at runtime.
-const itemData = {
-  3089: {
-    name: "Rabadon's Deathcap",
-    iconPath: "/lol-game-data/assets/ASSETS/Items/Icons2D/3089_WizardsHat_Rabadons.png",
-  },
-  3031: {
-    name: "Infinity Edge",
-    iconPath: "/lol-game-data/assets/ASSETS/Items/Icons2D/3031_Marksman_T4_InfinityEdge.png",
-  },
-  3135: {
-    name: "Void Staff",
-    iconPath: "/lol-game-data/assets/ASSETS/Items/Icons2D/3135_Mage_T3_VoidStaff.png",
-  },
+// The component takes a resolved item rather than a lookup table: each surface
+// resolves it differently — the app against the patch a game was played on,
+// the site against the latest — and the drawing is what they share. Icon paths
+// are real CommunityDragon paths, so the art loads at runtime.
+const RABADONS = {
+  itemId: 3089,
+  name: "Rabadon's Deathcap",
+  iconPath: "/lol-game-data/assets/ASSETS/Items/Icons2D/3089_WizardsHat_Rabadons.png",
+};
+const INFINITY_EDGE = {
+  itemId: 3031,
+  name: "Infinity Edge",
+  iconPath: "/lol-game-data/assets/ASSETS/Items/Icons2D/3031_Marksman_T4_InfinityEdge.png",
+};
+const VOID_STAFF = {
+  itemId: 3135,
+  name: "Void Staff",
+  iconPath: "/lol-game-data/assets/ASSETS/Items/Icons2D/3135_Mage_T3_VoidStaff.png",
 };
 
 const canvas: React.CSSProperties = {
@@ -31,30 +35,31 @@ const canvas: React.CSSProperties = {
 export function BuildWithNames() {
   return (
     <div style={canvas}>
-      <ItemIcon itemData={itemData} itemId={3089} showName />
-      <ItemIcon itemData={itemData} itemId={3031} showName />
-      <ItemIcon itemData={itemData} itemId={3135} showName />
+      <ItemIcon {...RABADONS} showName />
+      <ItemIcon {...INFINITY_EDGE} showName />
+      <ItemIcon {...VOID_STAFF} showName />
     </div>
   );
 }
 
-// An id missing from itemData renders a ringed placeholder box and a
-// generic "Item N" label — graceful degradation for stale data
+// An item with no known icon path walks past the legacy mirror to a rimmed
+// placeholder, and shows whatever name the caller resolved
 export function UnknownItemFallback() {
   return (
     <div style={canvas}>
-      <ItemIcon itemData={itemData} itemId={8020} showName />
+      <ItemIcon itemId={8020} name="Item 8020" showName />
     </div>
   );
 }
 
-// The size prop scales the icon slot: 20 / 28 (default) / 40
+// The size prop scales the slot: 20 / 28 / 40. The placeholder holds its
+// space, so a row of item slots keeps its shape when one is empty.
 export function FallbackSizes() {
   return (
     <div style={{ ...canvas, flexDirection: "row", alignItems: "center", gap: 12 }}>
-      <ItemIcon itemData={itemData} itemId={9001} size={20} />
-      <ItemIcon itemData={itemData} itemId={9002} size={28} />
-      <ItemIcon itemData={itemData} itemId={9003} size={40} />
+      <ItemIcon itemId={9001} size={20} />
+      <ItemIcon itemId={9002} size={28} />
+      <ItemIcon itemId={9003} size={40} />
     </div>
   );
 }

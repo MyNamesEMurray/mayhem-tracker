@@ -9,14 +9,6 @@ const canvas: React.CSSProperties = {
   width: "fit-content",
 };
 
-const label: React.CSSProperties = {
-  fontSize: 11,
-  letterSpacing: "0.05em",
-  textTransform: "uppercase",
-  opacity: 0.65,
-  marginBottom: 6,
-};
-
 // All four tiers at count 1 — sky double, amber triple, purple quadra, red penta
 export function AllTiers() {
   return (

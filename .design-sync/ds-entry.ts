@@ -17,6 +17,7 @@ export { default as ChampionIcon } from "../src/shared/ui/ChampionIcon";
 export { default as ItemIcon } from "../src/shared/ui/ItemIcon";
 export { GameDataProvider } from "../src/shared/ui/GameData";
 export { default as RarityFilter } from "../src/shared/ui/RarityFilter";
+export { Button, buttonClass, LABEL, PANEL, Panel, StatTile } from "../src/shared/ui/primitives";
 export { default as TierBadge } from "../src/shared/ui/TierBadge";
 export { default as WinRateBar } from "../src/shared/ui/WinRateBar";
 
@@ -24,7 +25,6 @@ export { default as WinRateBar } from "../src/shared/ui/WinRateBar";
 export { default as MatchScoreboard } from "../src/renderer/components/MatchScoreboard";
 export { default as MultikillBadge } from "../src/renderer/components/MultikillBadge";
 export { default as StatBars } from "../src/renderer/components/StatBars";
-export { default as StatCard } from "../src/renderer/components/StatCard";
 export { default as SummonerIcon } from "../src/renderer/components/SummonerIcon";
 
 // Icon set (shared by both surfaces)

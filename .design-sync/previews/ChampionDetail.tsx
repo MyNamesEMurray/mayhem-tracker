@@ -109,6 +109,28 @@ const itemRows = [
   itemRow(4645, 3, 2), // Shadowflame (low sample)
 ];
 
+// Live build-order tracking: how many players bought each item and how early
+// on average. The panel sorts by that time, so these read as the order Malzahar
+// actually builds in — boots first, Liandry's second, Deathcap around 20
+// minutes. Added in v2.11.2; the preview had never shown this panel.
+const purchase = (item_id: number, picks: number, wins: number, avg_first_buy_s: number) => ({
+  patch: "16.15",
+  queue_id: 2400,
+  champion_id: 101,
+  item_id,
+  picks,
+  wins,
+  avg_first_buy_s,
+});
+
+const purchaseRows = [
+  purchase(3020, 44, 26, 512), // Sorcerer's Shoes
+  purchase(6653, 41, 26, 838), // Liandry's Torment
+  purchase(3089, 36, 23, 1206), // Rabadon's Deathcap
+  purchase(3157, 33, 20, 1584), // Zhonya's Hourglass
+  purchase(3135, 24, 14, 1902), // Void Staff
+];
+
 const icon = (n: string) => `/lol-game-data/assets/ASSETS/UX/CherryAugments/Icons/${n}_small.png`;
 
 const augmentData = {
@@ -209,14 +231,14 @@ const canvas: React.CSSProperties = {
   borderRadius: 12,
 };
 
-const detail = (minGames?: number) => (
+const detail = () => (
   <ChampionDetail
     championId={101}
     championRows={championRows}
     augmentRows={augmentRows}
     itemRows={itemRows}
+    purchaseRows={purchaseRows}
     filters={{}}
-    minGames={minGames}
     championData={championData}
     augmentData={augmentData}
     onBack={() => {}}
@@ -226,10 +248,10 @@ const detail = (minGames?: number) => (
 // The page is ~1500px tall and the capture viewport is 900x700, so the two
 // lower cells shift a fixed 590px window down the SAME page instead of
 // scaling it — every section gets graded at natural size.
-const windowed = (shift: number, height: number, minGames?: number) => (
+const windowed = (shift: number, height: number) => (
   <div style={canvas}>
     <div style={{ height, overflow: "hidden" }}>
-      <div style={{ marginTop: -shift }}>{detail(minGames)}</div>
+      <div style={{ marginTop: -shift }}>{detail()}</div>
     </div>
   </div>
 );
@@ -249,5 +271,5 @@ export function FullTables() {
 // The 20+ games toggle narrows the full tables only; window shifted to the
 // All augments table, now trimmed to confident rows, plus the footnote
 export function ConfidentOnly() {
-  return windowed(930, 440, 20);
+  return windowed(930, 440);
 }

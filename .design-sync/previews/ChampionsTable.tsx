@@ -86,7 +86,6 @@ export function ConfidentOnly() {
         rows={rows}
         filters={{}}
         totalSlots={totalSlots}
-        minGames={20}
         championData={championData}
         onSelectChampion={() => {}}
       />

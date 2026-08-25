@@ -9,10 +9,10 @@
     "ChampionDetail": {
       "cardMode": "column"
     },
-    "StatCard": {
+    "PatchRangeSelect": {
       "cardMode": "column"
     },
-    "PatchRangeSelect": {
+    "StatTile": {
       "cardMode": "column"
     }
   },
@@ -21,6 +21,7 @@
     "ArrowDownIcon": "src/shared/ui/icons.tsx",
     "AugmentIcon": "src/shared/ui/AugmentIcon.tsx",
     "AugmentsTable": "website/src/components/AugmentsTable.tsx",
+    "Button": "src/shared/ui/primitives.tsx",
     "ChampionDetail": "website/src/components/ChampionDetail.tsx",
     "ChampionIcon": "src/shared/ui/ChampionIcon.tsx",
     "ChampionsTable": "website/src/components/ChampionsTable.tsx",
@@ -31,10 +32,12 @@
     "HourglassIcon": "src/shared/ui/icons.tsx",
     "InfoIcon": "src/shared/ui/icons.tsx",
     "ItemIcon": "src/shared/ui/ItemIcon.tsx",
+    "LABEL": "src/shared/ui/primitives.tsx",
     "MatchScoreboard": "src/renderer/components/MatchScoreboard.tsx",
     "MaximizeIcon": "src/shared/ui/icons.tsx",
     "MinusIcon": "src/shared/ui/icons.tsx",
     "MultikillBadge": "src/renderer/components/MultikillBadge.tsx",
+    "Panel": "src/shared/ui/primitives.tsx",
     "PatchRangeSelect": "website/src/components/PatchRangeSelect.tsx",
     "RarityFilter": "src/shared/ui/RarityFilter.tsx",
     "RefreshIcon": "src/shared/ui/icons.tsx",
@@ -43,7 +46,7 @@
     "SearchIcon": "src/shared/ui/icons.tsx",
     "SettingsIcon": "src/shared/ui/icons.tsx",
     "StatBars": "src/renderer/components/StatBars.tsx",
-    "StatCard": "src/renderer/components/StatCard.tsx",
+    "StatTile": "src/shared/ui/primitives.tsx",
     "SummonerIcon": "src/renderer/components/SummonerIcon.tsx",
     "SwordsIcon": "src/shared/ui/icons.tsx",
     "TierBadge": "src/shared/ui/TierBadge.tsx",

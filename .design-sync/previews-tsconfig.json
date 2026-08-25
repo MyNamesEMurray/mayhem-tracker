@@ -1,0 +1,29 @@
+{
+  // The previews import from "mayhem-tracker" — the bundle design-sync builds
+  // from ds-entry.ts. Nothing generates that package locally, so the path
+  // below points the compiler straight at the entry instead. That makes the
+  // previews typecheck against the real component APIs.
+  //
+  // Without this they were checked by nothing at all, which is how two of them
+  // came to be calling components with props that no longer existed.
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
+    "types": ["react", "react-dom"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "baseUrl": "..",
+    "paths": {
+      "mayhem-tracker": [".design-sync/ds-entry.ts"]
+    }
+  },
+  "include": ["previews/**/*.tsx", "ds-entry.ts"]
+}

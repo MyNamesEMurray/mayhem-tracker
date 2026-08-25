@@ -1,11 +1,11 @@
-import { AugmentIcon } from "mayhem-tracker";
+import { AugmentIcon, GameDataProvider } from "mayhem-tracker";
 
 // Real-flavored ARAM Mayhem augments across all three rarities.
 // Icon paths are CommunityDragon asset paths — icons render at runtime.
-const augmentData = {
+const augments = {
   11: {
     name: "Eureka",
-    desc: "Gain <scaleAP>10 Ability Power</scaleAP> and refund mana on takedowns.",
+    desc: "Gain 10 Ability Power and refund mana on takedowns.",
     rarity: "kSilver",
     iconPath: "/lol-game-data/assets/ASSETS/ux/cherry/augments/icons/eureka_small.png",
   },
@@ -40,32 +40,42 @@ const canvas: React.CSSProperties = {
   width: "fit-content",
 };
 
+// Augment names and rarities come from context now rather than a prop, so
+// every preview of an augment icon supplies them once at the top.
+function Canvas({ children, width }: { children: React.ReactNode; width?: number }) {
+  return (
+    <GameDataProvider augments={augments}>
+      <div style={width ? { ...canvas, width } : canvas}>{children}</div>
+    </GameDataProvider>
+  );
+}
+
 // One augment per rarity — the name takes the rarity color
 export function AllRarities() {
   return (
-    <div style={canvas}>
-      <AugmentIcon augmentData={augmentData} augmentId={11} showName />
-      <AugmentIcon augmentData={augmentData} augmentId={27} showName />
-      <AugmentIcon augmentData={augmentData} augmentId={54} showName />
-    </div>
+    <Canvas>
+      <AugmentIcon augmentId={11} showName />
+      <AugmentIcon augmentId={27} showName />
+      <AugmentIcon augmentId={54} showName />
+    </Canvas>
   );
 }
 
 // Long names in a tight column: default truncates, wrap breaks to two lines
 export function TruncateVsWrap() {
   return (
-    <div style={{ ...canvas, width: 180 }}>
-      <AugmentIcon augmentData={augmentData} augmentId={61} showName />
-      <AugmentIcon augmentData={augmentData} augmentId={61} showName wrap />
-    </div>
+    <Canvas width={180}>
+      <AugmentIcon augmentId={61} showName />
+      <AugmentIcon augmentId={61} showName wrap />
+    </Canvas>
   );
 }
 
-// An id missing from augmentData falls back to a plain "Augment N" label
+// An id the context doesn't know falls back to a plain "Augment N" label
 export function MissingAugmentFallback() {
   return (
-    <div style={canvas}>
-      <AugmentIcon augmentData={augmentData} augmentId={7042} showName />
-    </div>
+    <Canvas>
+      <AugmentIcon augmentId={7042} showName />
+    </Canvas>
   );
 }
