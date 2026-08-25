@@ -1,16 +1,143 @@
 name: Release
 
+# Cutting a release means: build the Windows executables, tag the commit, and
+# publish the CHANGELOG section for that version as the release notes.
+#
+# It happens three ways:
+#
+#   - a merge into main that touches the app AND carries a version in
+#     package.json that has not been released yet — the usual path;
+#   - pushing a v* tag, which must match package.json;
+#   - a manual run, which releases v<package.json version> from the chosen
+#     branch.
+#
+# The repository holds the website as well as the app, so a merge that only
+# changes website/, the Supabase functions, or the design canvases must not
+# cut an app release. The gate job below decides, and says why in the run
+# summary either way.
+#
+# Releases are deliberately tied to a version bump rather than cut on every
+# app merge: the notes are hand-written for players in CHANGELOG.md, and an
+# automatic version number would produce releases with nothing to say.
+
 on:
   push:
+    branches: [main]
     tags: ["v*"]
-  # Manual trigger releases v<package.json version> from the chosen branch
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+# One release at a time. Two merges landing together must not race to build
+# and tag the same version.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  gate:
+    name: Should this cut a release?
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.decide.outputs.release }}
+      version: ${{ steps.decide.outputs.version }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Full history so the push can be diffed against what main was before it
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          echo "version=$PKG" >> "$GITHUB_OUTPUT"
+
+          # A tag push or a manual run is someone asking for a release outright
+          if [[ "$GITHUB_REF" == refs/tags/* || "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "Asked for directly ($GITHUB_EVENT_NAME) — releasing v$PKG." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # What did this push change? A force-push or a first push leaves no
+          # usable "before", so fall back to the first parent — for a merge
+          # commit that is main's previous tip, which is the same answer.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            BEFORE=$(git rev-parse "$GITHUB_SHA^" 2>/dev/null || echo "")
+          fi
+          if [ -z "$BEFORE" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "Could not work out what this push changed, so no release was cut. Run this workflow by hand if v$PKG should ship." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+
+          # What the desktop app is built from. Everything else in the
+          # repository — website/, supabase/, .design-sync/, .design-canvas/,
+          # the workflows, the README — ships without a new executable.
+          APP='^(src/|assets/|scripts/|package\.json$|package-lock\.json$|electron\.vite\.config\.ts$|tsconfig[^/]*\.json$)'
+          APP_CHANGED=$(printf '%s\n' "$CHANGED" | grep -E "$APP" || true)
+
+          if [ -z "$APP_CHANGED" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### No release — the app did not change"
+              echo
+              echo "This merge touched only files the desktop app is not built from, so the existing v$PKG build still matches what is on main."
+              echo
+              echo "<details><summary>Files in this push</summary>"
+              echo
+              echo '```'
+              printf '%s\n' "$CHANGED"
+              echo '```'
+              echo
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # The app changed. Is this a version anyone has had?
+          if gh release view "v$PKG" >/dev/null 2>&1; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### No release — v$PKG has already shipped"
+              echo
+              echo "This merge changed the app, but \`package.json\` still says **$PKG**, which is already released. Nothing was cut, so these changes are on main without a build carrying them."
+              echo
+              echo "To ship them: bump the version in \`package.json\`, add its section to \`CHANGELOG.md\`, and merge. This workflow does the rest."
+              echo
+              echo "<details><summary>App files in this push</summary>"
+              echo
+              echo '```'
+              printf '%s\n' "$APP_CHANGED"
+              echo '```'
+              echo
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::The app changed but v$PKG is already released — bump package.json to ship it."
+            exit 0
+          fi
+
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Releasing v$PKG"
+            echo
+            echo "The app changed and $PKG has not shipped before."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   release:
+    name: Build and publish
+    needs: gate
+    if: needs.gate.outputs.release == 'true'
     runs-on: windows-latest
     defaults:
       run:
@@ -38,10 +165,34 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      # Belt and braces against a re-run or a race: creating a release that
+      # exists would fail after a full Windows build, which is a slow way to
+      # find out.
+      - name: Stop if it is already released
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::$TAG is already released"
+            exit 1
+          fi
+
       - run: npm ci
 
       - name: Rebuild native modules for Electron
         run: npm run rebuild
+
+      # The same checks CI runs, before anything is published under a version
+      # number people will install
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Scoring tests
+        run: npm test
 
       - run: npm run dist
 
@@ -60,7 +211,9 @@ jobs:
             echo "args=--generate-notes" >> "$GITHUB_OUTPUT"
           fi
 
-      # On manual runs the tag doesn't exist yet; gh creates it at --target
+      # The tag doesn't exist yet on a merge or a manual run; gh creates it at
+      # --target. A tag pushed by GITHUB_TOKEN does not start another run of
+      # this workflow, so there is no loop back into the trigger above.
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
