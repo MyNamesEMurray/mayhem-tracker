@@ -20,7 +20,7 @@ on Riot's end is news to everyone, so leave those unmarked.
 
 ## v2.14.0 — 2026-08-25
 
-- **Hover an augment to see what it does.** Point at any augment icon — in match history, in a match's scoreboard, on a champion's page, on the Augments tab — and you get its name, its rarity and a one-line description of the augment. Hovering used to give you the name and nothing more, which is no help at all when you're looking at four icons you've never picked.
+- **Hover an augment to see what it does.** Point at any augment icon — in match history, in a match's scoreboard, on a champion's page, on the Augments tab — and you get its name, its rarity and a one-line description of the augment. Hovering used to give you the name and nothing more, which is no help at all when you're looking at four icons you've never picked. [MayhemStats.com](https://mayhemstats.com/) does the same now, on the augment tier list and on champion pages, where hovering an augment gave you nothing at all.
 - **Some numbers read as "?".** The augment list Riot publishes has names, icons and rarities but no description text anywhere in it, so the wording comes from the game's own text, which fills in each exact number from the game you're playing. With no game running there's nothing to fill in, so a "?" stands where the number goes — "Gain ?% Attack Damage". Two of the mode's augments have no description text at all and hover with just their name.
 
 ## v2.13.0 — 2026-08-24

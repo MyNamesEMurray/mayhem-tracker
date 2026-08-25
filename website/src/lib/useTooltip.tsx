@@ -42,9 +42,9 @@ export interface Tooltip<T extends HTMLElement> {
  * trigger because the things it describes live in scrolling panes and
  * `overflow-hidden` cells, which would clip it.
  *
- * Mirrored in website/src/lib/useTooltip.tsx — the site is a separate build
- * that keeps its own copy of what the two share (see lib/dragon.ts), so a
- * change here belongs in both.
+ * Mirrored from src/renderer/hooks/useTooltip.tsx — the app is a separate
+ * build that keeps its own copy of what the two share (see lib/dragon.ts), so
+ * a change here belongs in both.
  */
 export function useTooltip<T extends HTMLElement>(content: ReactNode): Tooltip<T> {
   const triggerRef = useRef<T | null>(null);

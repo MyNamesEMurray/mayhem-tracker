@@ -1,4 +1,6 @@
+import { AUGMENT_DESCRIPTIONS } from "../lib/augment-descriptions";
 import { augmentIconUrl, getAugmentName, type AugmentData } from "../lib/dragon";
+import { useTooltip } from "../lib/useTooltip";
 
 const rarityBorder: Record<string, string> = {
   kSilver: "ring-1 ring-gray-400/60",
@@ -10,6 +12,12 @@ const rarityTextColor: Record<string, string> = {
   kSilver: "text-gray-300",
   kGold: "text-yellow-400",
   kPrismatic: "text-fuchsia-400",
+};
+
+const rarityLabel: Record<string, string> = {
+  kSilver: "Silver",
+  kGold: "Gold",
+  kPrismatic: "Prismatic",
 };
 
 export default function AugmentIcon({
@@ -28,6 +36,31 @@ export default function AugmentIcon({
   wrap?: boolean;
 }) {
   const aug = augmentData[augmentId];
+  // Icons are often shown without a name — a champion page's best-augments
+  // list, a build row — so the tooltip carries the name and rarity whether or
+  // not a description exists for the augment.
+  const description = AUGMENT_DESCRIPTIONS[augmentId];
+  const nameColor = rarityTextColor[aug?.rarity ?? ""] || "text-lol-text-bright";
+
+  const { triggerProps, tooltip } = useTooltip<HTMLDivElement>(
+    aug && (
+      <>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className={`text-xs font-semibold ${nameColor}`}>
+            {getAugmentName(augmentData, augmentId)}
+          </span>
+          {rarityLabel[aug.rarity] && (
+            <span className="text-[10px] text-lol-text">{rarityLabel[aug.rarity]}</span>
+          )}
+        </div>
+        {description && (
+          <p className="mt-1 text-[11px] leading-snug text-lol-text-bright whitespace-pre-line">
+            {description}
+          </p>
+        )}
+      </>
+    ),
+  );
 
   if (!aug) {
     return showName ? <span className="text-xs text-lol-text">Augment {augmentId}</span> : null;
@@ -35,10 +68,9 @@ export default function AugmentIcon({
 
   const iconUrl = augmentIconUrl(aug.iconPath);
   const borderClass = rarityBorder[aug.rarity] || "";
-  const nameColor = rarityTextColor[aug.rarity] || "text-lol-text-bright";
 
   return (
-    <div className="flex items-center gap-1.5 min-w-0" title={aug.desc.replace(/<[^>]+>/g, "")}>
+    <div className="flex items-center gap-1.5 min-w-0" {...triggerProps}>
       {iconUrl && (
         <img
           src={iconUrl}
@@ -57,6 +89,7 @@ export default function AugmentIcon({
           {getAugmentName(augmentData, augmentId)}
         </span>
       )}
+      {tooltip}
     </div>
   );
 }
