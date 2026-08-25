@@ -7,6 +7,10 @@ name: Checks
 # typechecks. That asymmetry is how eleven dead imports accumulated in one
 # renderer page without anything noticing.
 #
+# The formatting check covers the whole repository, the website and the
+# Supabase edge functions included — nothing else builds those, so this is the
+# only thing that looks at them at all.
+#
 # Deliberately does NOT build the Windows executables — that costs a Windows
 # runner and several minutes, and `test-build` already does it on demand.
 on:
@@ -23,7 +27,7 @@ concurrency:
 
 jobs:
   app:
-    name: App — typecheck & tests
+    name: App — format, typecheck & tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -38,6 +42,9 @@ jobs:
       # better-sqlite3 against it. Types and test sources resolve either way,
       # and it takes the job from minutes to seconds.
       - run: npm ci --ignore-scripts
+
+      - name: Formatting
+        run: npm run format:check
 
       - name: Typecheck
         run: npm run typecheck
