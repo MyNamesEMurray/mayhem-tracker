@@ -27,6 +27,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.1 — 2026-08-25
+
+- **A losing win rate now looks like one.** The bar beside a win rate filled green whether the number read 62% or 38%, so a champion you lose on looked at a glance like one you win on — the only thing telling them apart was how far along the green went. Losing rates now fill red, matching the percentage sitting right next to it, which was already coloured that way. [MayhemStats.com](https://mayhemstats.com/) has always drawn those rows red; the app was the odd one out.
+- **Item icons match the website's.** Items in a build path now carry the same thin outline they have on the site, so a dark item square stops bleeding into the background behind it. Augment icons got the same treatment — the rim marking a silver or a gold augment is a shade stronger than it was, which is what the site has always used.
+
 ## v2.14.0 — 2026-08-25
 
 - **Hover an augment to see what it does.** Point at any augment icon — in match history, in a match's scoreboard, on a champion's page, on the Augments tab — and you get its name, its rarity and a one-line description of the augment. Hovering used to give you the name and nothing more, which is no help at all when you're looking at four icons you've never picked. [MayhemStats.com](https://mayhemstats.com/) does the same now, on the augment tier list and on champion pages, where hovering an augment gave you nothing at all.
