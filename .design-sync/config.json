@@ -18,12 +18,12 @@
   },
   "cssEntry": ".design-sync/.cache/ds-tailwind.css",
   "componentSrcMap": {
-    "AugmentIcon": "website/src/components/AugmentIcon.tsx",
+    "AugmentIcon": "src/shared/ui/AugmentIcon.tsx",
     "AugmentsTable": "website/src/components/AugmentsTable.tsx",
     "ChampionDetail": "website/src/components/ChampionDetail.tsx",
-    "ChampionIcon": "website/src/components/ChampionIcon.tsx",
+    "ChampionIcon": "src/shared/ui/ChampionIcon.tsx",
     "ChampionsTable": "website/src/components/ChampionsTable.tsx",
-    "ItemIcon": "website/src/components/ItemIcon.tsx",
+    "ItemIcon": "src/shared/ui/ItemIcon.tsx",
     "PatchRangeSelect": "website/src/components/PatchRangeSelect.tsx",
     "RarityFilter": "src/shared/ui/RarityFilter.tsx",
     "SearchInput": "website/src/components/SearchInput.tsx",
@@ -48,6 +48,7 @@
     "RestoreIcon": "src/renderer/components/icons.tsx",
     "ArrowDownIcon": "src/renderer/components/icons.tsx",
     "XIcon": "src/renderer/components/icons.tsx",
-    "XCircleIcon": "src/renderer/components/icons.tsx"
+    "XCircleIcon": "src/renderer/components/icons.tsx",
+    "GameDataProvider": "src/shared/ui/GameData.tsx"
   }
 }

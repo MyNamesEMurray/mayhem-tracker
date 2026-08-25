@@ -7,7 +7,7 @@ import { useChampionData, getChampionName } from "../hooks/useChampions";
 import { useLcuStatus } from "../hooks/useLcuStatus";
 import { useBackfill } from "../hooks/useBackfill";
 import type { DashboardData, MatchListItem } from "../lib/types";
-import ChampionIcon from "../components/ChampionIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
 import ItemIcon from "../components/ItemIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import MultikillBadge from "../components/MultikillBadge";

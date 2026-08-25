@@ -8,7 +8,7 @@ import type {
   TeammateMatch,
   MatchDetail,
 } from "../lib/types";
-import ChampionIcon from "../components/ChampionIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import StatBars from "../components/StatBars";

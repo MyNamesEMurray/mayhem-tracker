@@ -19,8 +19,8 @@ import type {
   LcuStatus,
   BackfillProgress,
 } from "../lib/types";
-import ChampionIcon from "../components/ChampionIcon";
-import AugmentIcon from "../components/AugmentIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
+import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import MultikillBadge from "../components/MultikillBadge";

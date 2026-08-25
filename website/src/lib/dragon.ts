@@ -15,18 +15,8 @@ export interface AugmentInfo {
 export type ChampionData = Record<number, ChampionInfo>;
 export type AugmentData = Record<number, AugmentInfo>;
 
-export const CHAMPION_ICON_URL = (id: number): string =>
-  `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${id}.png`;
-
-export const AUGMENT_ICON_BASE = "https://raw.communitydragon.org/latest/game/";
-
-export function augmentIconUrl(iconPath: string): string {
-  if (!iconPath) return "";
-  return (
-    AUGMENT_ICON_BASE +
-    iconPath.replace("/lol-game-data/assets/", "").replace("small", "large").toLowerCase()
-  );
-}
+// Artwork URLs are shared with the desktop app
+export { AUGMENT_ICON_BASE, augmentIconUrl, CHAMPION_ICON_URL } from "../../../src/shared/cdn.ts";
 
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
@@ -114,13 +104,7 @@ export interface ItemInfo {
 
 export type ItemData = Record<number, ItemInfo>;
 
-export function itemIconUrl(iconPath: string): string {
-  if (!iconPath) return "";
-  return (
-    "https://raw.communitydragon.org/latest/game/" +
-    iconPath.replace("/lol-game-data/assets/", "").toLowerCase()
-  );
-}
+export { itemIconUrl } from "../../../src/shared/cdn.ts";
 
 // items.json is a few MB, so it's loaded only when a champion detail view
 // needs it, reduced to id → {name, icon}, and cached like the others.

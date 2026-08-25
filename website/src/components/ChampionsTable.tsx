@@ -11,7 +11,7 @@ import {
   score,
   type Filters,
 } from "../lib/stats";
-import ChampionIcon from "./ChampionIcon";
+import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
 import SearchInput from "./SearchInput";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";

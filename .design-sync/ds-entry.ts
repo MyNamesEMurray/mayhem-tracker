@@ -4,17 +4,18 @@
 // website (the canonical brand set) or the desktop renderer.
 
 // Website (MayhemStats.com)
-export { default as AugmentIcon } from "../website/src/components/AugmentIcon";
 export { default as AugmentsTable } from "../website/src/components/AugmentsTable";
 export { default as ChampionDetail } from "../website/src/components/ChampionDetail";
-export { default as ChampionIcon } from "../website/src/components/ChampionIcon";
 export { default as ChampionsTable } from "../website/src/components/ChampionsTable";
-export { default as ItemIcon } from "../website/src/components/ItemIcon";
 export { default as PatchRangeSelect } from "../website/src/components/PatchRangeSelect";
 export { default as SearchInput } from "../website/src/components/SearchInput";
 
 // Shared by both surfaces (src/shared/ui) — one component, not two copies,
 // so a design review here covers what the app and the site actually render
+export { default as AugmentIcon } from "../src/shared/ui/AugmentIcon";
+export { default as ChampionIcon } from "../src/shared/ui/ChampionIcon";
+export { default as ItemIcon } from "../src/shared/ui/ItemIcon";
+export { GameDataProvider } from "../src/shared/ui/GameData";
 export { default as RarityFilter } from "../src/shared/ui/RarityFilter";
 export { default as TierBadge } from "../src/shared/ui/TierBadge";
 export { default as WinRateBar } from "../src/shared/ui/WinRateBar";

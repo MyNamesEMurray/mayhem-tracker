@@ -8,8 +8,8 @@ import {
   getAugmentName,
 } from "../hooks/useChampions";
 import type { AugmentStatsDetailed, ChampionStats } from "../lib/types";
-import AugmentIcon from "../components/AugmentIcon";
-import ChampionIcon from "../components/ChampionIcon";
+import AugmentIcon from "../../shared/ui/AugmentIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";

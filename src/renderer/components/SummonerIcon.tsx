@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PROFILE_ICON_URL } from "../lib/constants";
+import { PROFILE_ICON_URL } from "../../shared/cdn";
 
 interface SummonerIconProps {
   iconId: number | null;

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import type { TeammateStats } from "../lib/types";
-import ChampionIcon from "../components/ChampionIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import { formatTimeAgo, kdaRatio, kdaColor } from "../lib/format";

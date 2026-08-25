@@ -5,8 +5,8 @@ import { getChampionName } from "../hooks/useChampions";
 import { formatKDA, kdaRatio, kdaStringColor, scoreRampColor } from "../lib/format";
 import { EXCLUDED_ITEM_ID_SET } from "../../shared/items";
 import { computeMatchScores, type PlayerScore } from "../../shared/opScore";
-import ChampionIcon from "./ChampionIcon";
-import AugmentIcon from "./AugmentIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
+import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ItemIcon from "./ItemIcon";
 
 export default function MatchScoreboard({

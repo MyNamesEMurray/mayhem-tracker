@@ -13,8 +13,8 @@ import {
   type Filters,
   type Tier,
 } from "../lib/stats";
-import AugmentIcon from "./AugmentIcon";
-import ChampionIcon from "./ChampionIcon";
+import AugmentIcon from "../../../src/shared/ui/AugmentIcon.tsx";
+import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
 import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import SearchInput from "./SearchInput";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
@@ -193,7 +193,6 @@ export default function AugmentsTable({
                   expanded={expanded}
                   onToggle={() => setExpandedId(expanded ? null : a.augment_id)}
                   filters={filters}
-                  augmentData={augmentData}
                   championData={championData}
                   onSelectChampion={onSelectChampion}
                 />
@@ -224,7 +223,6 @@ function AugmentRow({
   expanded,
   onToggle,
   filters,
-  augmentData,
   championData,
   onSelectChampion,
 }: {
@@ -237,7 +235,6 @@ function AugmentRow({
   expanded: boolean;
   onToggle: () => void;
   filters: Filters;
-  augmentData: AugmentData;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
 }) {
@@ -272,7 +269,7 @@ function AugmentRow({
         className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
       >
         <td className="px-3 py-[9px]">
-          <AugmentIcon augmentData={augmentData} augmentId={aug.augment_id} size={26} showName />
+          <AugmentIcon augmentId={aug.augment_id} size={26} showName />
         </td>
         <td className="px-3 py-[9px]">
           <TierBadge tier={tier} games={aug.picks} />

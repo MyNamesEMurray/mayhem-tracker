@@ -1,20 +1,25 @@
-import { useAugmentData } from "../hooks/useChampions";
-import { useTooltip } from "../../shared/ui/useTooltip";
-import { AUGMENT_ICON_BASE } from "../lib/constants";
-import { AUGMENT_DESCRIPTIONS } from "../../shared/augment-descriptions";
-import { RARITY_LABEL, RARITY_RING, RARITY_TEXT } from "../../shared/ui/rarity";
+import { AUGMENT_DESCRIPTIONS } from "../augment-descriptions";
+import { augmentIconUrl } from "../cdn";
+import { useAugments } from "./GameData";
+import { RARITY_LABEL, RARITY_RING, RARITY_TEXT } from "./rarity";
+import { useTooltip } from "./useTooltip";
 
-interface AugmentIconProps {
+export default function AugmentIcon({
+  augmentId,
+  size = 28,
+  showName = false,
+  wrap = false,
+}: {
   augmentId: number;
   size?: number;
   showName?: boolean;
-}
-
-export default function AugmentIcon({ augmentId, size = 28, showName = false }: AugmentIconProps) {
-  const augmentData = useAugmentData();
-  const aug = augmentData[augmentId];
-  // Most icons are shown without a name — in a scoreboard cell, a match row,
-  // a champion's augment list — so the tooltip carries the name and rarity
+  // Let a long name run onto a second line instead of being cut off, for
+  // layouts where the full name matters more than a fixed row height.
+  wrap?: boolean;
+}) {
+  const aug = useAugments()[augmentId];
+  // Icons are usually drawn without a name — a scoreboard cell, a match row, a
+  // champion's best-augments list — so the tooltip carries the name and rarity
   // whether or not a description exists for the augment.
   const description = AUGMENT_DESCRIPTIONS[augmentId];
   const rarityLabel = aug ? (RARITY_LABEL[aug.rarity] ?? "") : "";
@@ -40,29 +45,28 @@ export default function AugmentIcon({ augmentId, size = 28, showName = false }: 
     return showName ? <span className="text-xs text-lol-text">Augment {augmentId}</span> : null;
   }
 
-  // CommunityDragon icon paths need to be converted
-  const iconUrl = aug.iconPath
-    ? AUGMENT_ICON_BASE +
-      aug.iconPath.replace("/lol-game-data/assets/", "").replace("small", "large").toLowerCase()
-    : "";
-
-  const borderClass = RARITY_RING[aug.rarity] || "";
+  const iconUrl = augmentIconUrl(aug.iconPath);
 
   return (
     <div className="flex items-center gap-1.5 min-w-0" {...triggerProps}>
       {iconUrl && (
         <img
           src={iconUrl}
-          alt={aug.name}
+          alt=""
           width={size}
           height={size}
-          className={`rounded shrink-0 ${borderClass}`}
+          loading="lazy"
+          className={`rounded shrink-0 ${RARITY_RING[aug.rarity] || ""}`}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
       )}
-      {showName && <span className={`text-xs truncate ${nameColor}`}>{aug.name}</span>}
+      {showName && (
+        <span className={`text-sm ${wrap ? "leading-snug" : "truncate"} ${nameColor}`}>
+          {aug.name}
+        </span>
+      )}
       {tooltip}
     </div>
   );

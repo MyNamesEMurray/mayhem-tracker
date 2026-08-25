@@ -25,8 +25,8 @@ import {
   useStatsSource,
   type StatsSource,
 } from "../components/SourceSwitch";
-import ChampionIcon from "../components/ChampionIcon";
-import AugmentIcon from "../components/AugmentIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
+import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import TierBadge from "../../shared/ui/TierBadge";

@@ -5,7 +5,7 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useStatsFilters } from "../hooks/useStatsFilters";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import type { ChampionStats } from "../lib/types";
-import ChampionIcon from "../components/ChampionIcon";
+import ChampionIcon from "../../shared/ui/ChampionIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";

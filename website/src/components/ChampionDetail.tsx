@@ -24,8 +24,8 @@ import {
   type Filters,
   LIST_MIN_PICKS,
 } from "../lib/stats";
-import AugmentIcon from "./AugmentIcon";
-import ChampionIcon from "./ChampionIcon";
+import AugmentIcon from "../../../src/shared/ui/AugmentIcon.tsx";
+import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
 import ItemIcon from "./ItemIcon";
 import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
@@ -281,7 +281,7 @@ export default function ChampionDetail({
                   <div className="space-y-3">
                     {r.best.map((a) => (
                       <div key={a.augment_id} className="flex items-center gap-2.5">
-                        <AugmentIcon augmentData={augmentData} augmentId={a.augment_id} size={30} />
+                        <AugmentIcon augmentId={a.augment_id} size={30} />
                         <div className="flex-1 min-w-0">
                           <p
                             className={`text-[13px] truncate leading-tight ${r.color}`}
@@ -486,13 +486,7 @@ export default function ChampionDetail({
               {visibleAugments.map((a) => (
                 <tr key={a.augment_id} className="border-t border-lol-border/50">
                   <td className="px-2 sm:px-3 py-1.5">
-                    <AugmentIcon
-                      augmentData={augmentData}
-                      augmentId={a.augment_id}
-                      size={24}
-                      showName
-                      wrap
-                    />
+                    <AugmentIcon augmentId={a.augment_id} size={24} showName wrap />
                   </td>
                   <td className="px-1 sm:px-3 py-1.5 text-[13px] text-lol-text-bright tabular-nums">
                     {formatWhole(a.picks)}

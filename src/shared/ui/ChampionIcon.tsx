@@ -1,4 +1,4 @@
-import { CHAMPION_ICON_URL } from "../lib/dragon";
+import { CHAMPION_ICON_URL } from "../cdn";
 
 export default function ChampionIcon({
   championId,

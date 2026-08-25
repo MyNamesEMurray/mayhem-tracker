@@ -11,6 +11,7 @@ import {
   type ItemPurchaseRow,
   type ItemStatRow,
 } from "./lib/api";
+import { GameDataProvider } from "../../src/shared/ui/GameData.tsx";
 import {
   loadAugmentData,
   loadChampionData,
@@ -350,312 +351,319 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen">
-      {/* Unified chrome: full-width bar, frozen to the top on desktop */}
-      <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/60">
-        {/* Wraps at every width: logo + nav + the whole filter group only fit
+    // Augment names and rarities, loaded once here so the shared icon reads
+    // them from context rather than every caller passing them down
+    <GameDataProvider augments={data?.augmentData ?? {}}>
+      <div className="min-h-screen">
+        {/* Unified chrome: full-width bar, frozen to the top on desktop */}
+        <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/60">
+          {/* Wraps at every width: logo + nav + the whole filter group only fit
             one row above ~1080px, and forcing nowrap below that pushed the
             filters off the right edge instead of onto a second line. */}
-        <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 flex items-center gap-6 flex-wrap">
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/");
-            }}
-            className="flex items-center gap-2 py-3 font-extrabold text-[17px] tracking-[.03em] text-lol-gold-light shrink-0"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#c89b3c"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 flex items-center gap-6 flex-wrap">
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/");
+              }}
+              className="flex items-center gap-2 py-3 font-extrabold text-[17px] tracking-[.03em] text-lol-gold-light shrink-0"
             >
-              <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
-              <line x1="13" x2="19" y1="19" y2="13" />
-              <line x1="16" x2="20" y1="16" y2="20" />
-              <line x1="19" x2="21" y1="21" y2="19" />
-              <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 10" />
-              <line x1="5" x2="9" y1="14" y2="18" />
-              <line x1="7" x2="4" y1="17" y2="20" />
-              <line x1="3" x2="5" y1="19" y2="21" />
-            </svg>
-            <span>
-              MAYHEM<span className="text-lol-gold">STATS</span>
-            </span>
-          </a>
-          {/* Pinned to the logo row rather than the filter group: there it
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#c89b3c"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+                <line x1="13" x2="19" y1="19" y2="13" />
+                <line x1="16" x2="20" y1="16" y2="20" />
+                <line x1="19" x2="21" y1="21" y2="19" />
+                <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 10" />
+                <line x1="5" x2="9" y1="14" y2="18" />
+                <line x1="7" x2="4" y1="17" y2="20" />
+                <line x1="3" x2="5" y1="19" y2="21" />
+              </svg>
+              <span>
+                MAYHEM<span className="text-lol-gold">STATS</span>
+              </span>
+            </a>
+            {/* Pinned to the logo row rather than the filter group: there it
               claimed a whole extra row once the filters wrapped */}
-          <a
-            href="/download/"
-            title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
-            className="ml-auto min-[1081px]:order-last flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <a
+              href="/download/"
+              title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
+              className="ml-auto min-[1081px]:order-last flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
             >
-              <path d="M12 3v12" />
-              <path d="m7 10 5 5 5-5" />
-              <path d="M4 21h16" />
-            </svg>
-            <span className="max-[380px]:hidden">Download app</span>
-            <span className="min-[381px]:hidden">App</span>
-          </a>
-          {/* The nav takes the slack instead of the filter group using ml-auto:
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3v12" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M4 21h16" />
+              </svg>
+              <span className="max-[380px]:hidden">Download app</span>
+              <span className="min-[381px]:hidden">App</span>
+            </a>
+            {/* The nav takes the slack instead of the filter group using ml-auto:
               that right-aligns the filters while they share the top row, but
               leaves them left-aligned with everything else once they wrap. */}
-          <nav className="flex gap-1 self-stretch min-[1081px]:flex-1">
-            {navTab(
-              "Champions",
-              !onCommunityPage && (tab === "champions" || onChampionPage),
-              () => {
+            <nav className="flex gap-1 self-stretch min-[1081px]:flex-1">
+              {navTab(
+                "Champions",
+                !onCommunityPage && (tab === "champions" || onChampionPage),
+                () => {
+                  if (onChampionPage || onCommunityPage) navigate("/");
+                  setParam("tab", null);
+                },
+              )}
+              {navTab("Augments", !onCommunityPage && tab === "augments" && !onChampionPage, () => {
                 if (onChampionPage || onCommunityPage) navigate("/");
-                setParam("tab", null);
-              },
-            )}
-            {navTab("Augments", !onCommunityPage && tab === "augments" && !onChampionPage, () => {
-              if (onChampionPage || onCommunityPage) navigate("/");
-              setParam("tab", "augments");
-            })}
-            {navTab("Community", onCommunityPage, () => {
-              if (!onCommunityPage) navigate("/community/");
-            })}
-          </nav>
-          {/* The Community page reads its own totals and its own per-day
+                setParam("tab", "augments");
+              })}
+              {navTab("Community", onCommunityPage, () => {
+                if (!onCommunityPage) navigate("/community/");
+              })}
+            </nav>
+            {/* The Community page reads its own totals and its own per-day
               series — neither takes a patch or a queue — so the filters sat
               there doing nothing. Hidden rather than disabled: a control that
               can't change anything shouldn't ask to be tried. */}
-          {!onCommunityPage && (
-            <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
-              <select
-                className="select"
-                value={queueParam ?? ""}
-                onChange={(e) => setParam("queue", e.target.value || null)}
+            {!onCommunityPage && (
+              <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
+                <select
+                  className="select"
+                  value={queueParam ?? ""}
+                  onChange={(e) => setParam("queue", e.target.value || null)}
+                >
+                  <option value="">{QUEUE_LABELS[2400]}</option>
+                  {queues
+                    .filter((q) => q !== 2400)
+                    .map((q) => (
+                      <option key={q} value={q}>
+                        {QUEUE_LABELS[q] ?? `Queue ${q}`}
+                      </option>
+                    ))}
+                  <option value="all">All queues</option>
+                </select>
+                <PatchRangeSelect
+                  patches={patches}
+                  param={patchParam}
+                  onChange={(v) => setParam("patch", v)}
+                />
+              </div>
+            )}
+          </div>
+        </header>
+
+        <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 pt-7 pb-14">
+          {error && (
+            <div className="bg-lol-card border border-lol-loss/40 rounded-xl p-5 text-sm">
+              <p className="text-lol-loss mb-2">Couldn't load community stats: {error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors"
               >
-                <option value="">{QUEUE_LABELS[2400]}</option>
-                {queues
-                  .filter((q) => q !== 2400)
-                  .map((q) => (
-                    <option key={q} value={q}>
-                      {QUEUE_LABELS[q] ?? `Queue ${q}`}
-                    </option>
-                  ))}
-                <option value="all">All queues</option>
-              </select>
-              <PatchRangeSelect
-                patches={patches}
-                param={patchParam}
-                onChange={(v) => setParam("patch", v)}
-              />
+                Retry
+              </button>
             </div>
           )}
-        </div>
-      </header>
 
-      <div className="max-w-[1120px] min-[1500px]:max-w-[1320px] mx-auto px-6 pt-7 pb-14">
-        {error && (
-          <div className="bg-lol-card border border-lol-loss/40 rounded-xl p-5 text-sm">
-            <p className="text-lol-loss mb-2">Couldn't load community stats: {error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        )}
+          {autoWiden && !onCommunityPage && (
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-lol-gold/25 bg-lol-gold/[0.06] px-4 py-3">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#c89b3c"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="mt-[3px] shrink-0"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 11v5M12 8h.01" />
+              </svg>
+              <p className="text-[13px] leading-relaxed text-lol-text">
+                <span className="text-lol-text-bright">
+                  Showing {formatPatch(autoWiden.from)}–{formatPatch(autoWiden.to)}.
+                </span>{" "}
+                {formatPatch(autoWiden.to)} alone has{" "}
+                {autoWiden.onLatest === 0
+                  ? "no games"
+                  : `${autoWiden.onLatest} game${autoWiden.onLatest === 1 ? "" : "s"}`}{" "}
+                {selectedChampion != null ? "on this champion" : "so far"}.
+                {!autoWiden.reached &&
+                  ` Still thin at ${autoWiden.widened.toLocaleString()} — read as directional.`}
+              </p>
+            </div>
+          )}
 
-        {autoWiden && !onCommunityPage && (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border border-lol-gold/25 bg-lol-gold/[0.06] px-4 py-3">
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#c89b3c"
-              strokeWidth="2"
-              strokeLinecap="round"
-              className="mt-[3px] shrink-0"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5M12 8h.01" />
-            </svg>
-            <p className="text-[13px] leading-relaxed text-lol-text">
-              <span className="text-lol-text-bright">
-                Showing {formatPatch(autoWiden.from)}–{formatPatch(autoWiden.to)}.
-              </span>{" "}
-              {formatPatch(autoWiden.to)} alone has{" "}
-              {autoWiden.onLatest === 0
-                ? "no games"
-                : `${autoWiden.onLatest} game${autoWiden.onLatest === 1 ? "" : "s"}`}{" "}
-              {selectedChampion != null ? "on this champion" : "so far"}.
-              {!autoWiden.reached &&
-                ` Still thin at ${autoWiden.widened.toLocaleString()} — read as directional.`}
-            </p>
-          </div>
-        )}
+          {onCommunityPage && <CommunityPage />}
 
-        {onCommunityPage && <CommunityPage />}
+          {!error && !data && !onCommunityPage && (
+            <div className="text-center text-lol-text py-20">Loading community stats...</div>
+          )}
 
-        {!error && !data && !onCommunityPage && (
-          <div className="text-center text-lol-text py-20">Loading community stats...</div>
-        )}
+          {data && onChampionPage && selectedChampion == null && (
+            <div className="space-y-4">
+              <button
+                onClick={() => navigate("/")}
+                className="text-sm text-lol-gold hover:underline"
+              >
+                ← All champions
+              </button>
+              <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
+                No champion found at this address.
+              </div>
+            </div>
+          )}
 
-        {data && onChampionPage && selectedChampion == null && (
-          <div className="space-y-4">
-            <button onClick={() => navigate("/")} className="text-sm text-lol-gold hover:underline">
-              ← All champions
-            </button>
+          {data && onChampionPage && selectedChampion != null && championRowsError && (
             <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
-              No champion found at this address.
+              Could not load this champion's builds. {championRowsError}
             </div>
-          </div>
-        )}
-
-        {data && onChampionPage && selectedChampion != null && championRowsError && (
-          <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
-            Could not load this champion's builds. {championRowsError}
-          </div>
-        )}
-
-        {data &&
-          onChampionPage &&
-          selectedChampion != null &&
-          !championRowsError &&
-          championRows?.championId !== selectedChampion && (
-            <div className="text-center text-lol-text py-20">Loading builds...</div>
           )}
 
-        {data &&
-          onChampionPage &&
-          selectedChampion != null &&
-          championRows?.championId === selectedChampion && (
+          {data &&
+            onChampionPage &&
+            selectedChampion != null &&
+            !championRowsError &&
+            championRows?.championId !== selectedChampion && (
+              <div className="text-center text-lol-text py-20">Loading builds...</div>
+            )}
+
+          {data &&
+            onChampionPage &&
+            selectedChampion != null &&
+            championRows?.championId === selectedChampion && (
+              <>
+                <ChampionDetail
+                  championId={selectedChampion}
+                  championRows={data.championRows}
+                  augmentRows={championRows.augmentRows}
+                  itemRows={championRows.itemRows}
+                  purchaseRows={championRows.purchaseRows}
+                  filters={filters}
+                  championData={data.championData}
+                  augmentData={data.augmentData}
+                  onBack={() => navigate("/")}
+                />
+              </>
+            )}
+
+          {data && !onChampionPage && !onCommunityPage && (
             <>
-              <ChampionDetail
-                championId={selectedChampion}
-                championRows={data.championRows}
-                augmentRows={championRows.augmentRows}
-                itemRows={championRows.itemRows}
-                purchaseRows={championRows.purchaseRows}
-                filters={filters}
-                championData={data.championData}
-                augmentData={data.augmentData}
-                onBack={() => navigate("/")}
-              />
+              {/* Page title */}
+              <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
+                <h1 className="text-[22px] font-extrabold text-lol-gold-light m-0">
+                  {queueLabel} {tab === "champions" ? "Champions" : "Augments"} Tier List
+                </h1>
+                <span className="text-xs">
+                  {patchLabel} · {totalGames.toLocaleString()} games
+                </span>
+              </div>
+              <p className="text-[13px] mb-4">
+                {tab === "champions"
+                  ? "Every champion ranked by score."
+                  : "Augments ranked within their rarity."}
+              </p>
+
+              <AdSlot slot={AD_SLOTS.top} />
+
+              {tab === "augments" ? (
+                <AugmentsTable
+                  rows={data.augmentRows}
+                  filters={filters}
+                  totalSlots={totalSlots}
+                  augmentData={data.augmentData}
+                  championData={data.championData}
+                  onSelectChampion={openChampion}
+                />
+              ) : (
+                <ChampionsTable
+                  rows={data.championRows}
+                  filters={filters}
+                  totalSlots={totalSlots}
+                  championData={data.championData}
+                  onSelectChampion={openChampion}
+                />
+              )}
             </>
           )}
 
-        {data && !onChampionPage && !onCommunityPage && (
-          <>
-            {/* Page title */}
-            <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
-              <h1 className="text-[22px] font-extrabold text-lol-gold-light m-0">
-                {queueLabel} {tab === "champions" ? "Champions" : "Augments"} Tier List
-              </h1>
-              <span className="text-xs">
-                {patchLabel} · {totalGames.toLocaleString()} games
-              </span>
-            </div>
-            <p className="text-[13px] mb-4">
-              {tab === "champions"
-                ? "Every champion ranked by score."
-                : "Augments ranked within their rarity."}
+          <AdSlot slot={AD_SLOTS.bottom} />
+
+          {/* Footer */}
+          <footer className="mt-10 pt-6 border-t border-lol-border/50 space-y-3 text-xs text-lol-text/80">
+            <nav className="flex flex-wrap gap-x-4 gap-y-1 text-lol-text">
+              <a href="/guide/" className="hover:text-lol-gold">
+                ARAM Mayhem guide
+              </a>
+              <a href="/about/" className="hover:text-lol-gold">
+                About &amp; methodology
+              </a>
+              <a
+                href="/community/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/community/");
+                }}
+                className="hover:text-lol-gold"
+              >
+                Community impact
+              </a>
+              <a href="/privacy/" className="hover:text-lol-gold">
+                Privacy
+              </a>
+              <a href="/download/" className="hover:text-lol-gold">
+                Download MayhemStats Tracker
+              </a>
+              <a
+                href="https://github.com/MyNamesEMurray/mayhem-tracker"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-lol-gold"
+              >
+                GitHub
+              </a>
+            </nav>
+            <p>
+              Powered by anonymized games contributed by{" "}
+              <a
+                href="https://github.com/MyNamesEMurray/mayhem-tracker"
+                className="text-lol-gold hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                MayhemStats Tracker
+              </a>{" "}
+              players who opted in. Contributions contain champions, augments, items, and combat
+              stats only — never summoner names, Riot IDs, or anything that identifies a player.
+              Want your games counted? Install the tracker and flip on{" "}
+              <span className="text-lol-text">Settings → Community Stats</span>.
             </p>
-
-            <AdSlot slot={AD_SLOTS.top} />
-
-            {tab === "augments" ? (
-              <AugmentsTable
-                rows={data.augmentRows}
-                filters={filters}
-                totalSlots={totalSlots}
-                augmentData={data.augmentData}
-                championData={data.championData}
-                onSelectChampion={openChampion}
-              />
-            ) : (
-              <ChampionsTable
-                rows={data.championRows}
-                filters={filters}
-                totalSlots={totalSlots}
-                championData={data.championData}
-                onSelectChampion={openChampion}
-              />
-            )}
-          </>
-        )}
-
-        <AdSlot slot={AD_SLOTS.bottom} />
-
-        {/* Footer */}
-        <footer className="mt-10 pt-6 border-t border-lol-border/50 space-y-3 text-xs text-lol-text/80">
-          <nav className="flex flex-wrap gap-x-4 gap-y-1 text-lol-text">
-            <a href="/guide/" className="hover:text-lol-gold">
-              ARAM Mayhem guide
-            </a>
-            <a href="/about/" className="hover:text-lol-gold">
-              About &amp; methodology
-            </a>
-            <a
-              href="/community/"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/community/");
-              }}
-              className="hover:text-lol-gold"
-            >
-              Community impact
-            </a>
-            <a href="/privacy/" className="hover:text-lol-gold">
-              Privacy
-            </a>
-            <a href="/download/" className="hover:text-lol-gold">
-              Download MayhemStats Tracker
-            </a>
-            <a
-              href="https://github.com/MyNamesEMurray/mayhem-tracker"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-lol-gold"
-            >
-              GitHub
-            </a>
-          </nav>
-          <p>
-            Powered by anonymized games contributed by{" "}
-            <a
-              href="https://github.com/MyNamesEMurray/mayhem-tracker"
-              className="text-lol-gold hover:underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              MayhemStats Tracker
-            </a>{" "}
-            players who opted in. Contributions contain champions, augments, items, and combat stats
-            only — never summoner names, Riot IDs, or anything that identifies a player. Want your
-            games counted? Install the tracker and flip on{" "}
-            <span className="text-lol-text">Settings → Community Stats</span>.
-          </p>
-          <p>
-            MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
-            Riot Games or anyone officially involved in producing or managing League of Legends.
-            League of Legends and Riot Games are trademarks or registered trademarks of Riot Games,
-            Inc.
-          </p>
-        </footer>
+            <p>
+              MayhemStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of
+              Riot Games or anyone officially involved in producing or managing League of Legends.
+              League of Legends and Riot Games are trademarks or registered trademarks of Riot
+              Games, Inc.
+            </p>
+          </footer>
+        </div>
       </div>
-    </div>
+    </GameDataProvider>
   );
 }
