@@ -22,127 +22,77 @@
     <link rel="stylesheet" href="/fonts/inter.css" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="stylesheet" href="/page.css" />
     <style>
       :root {
-        --dark: #0b0e14;
-        --card: #141924;
-        --border: #242c3d;
-        --gold: #c89b3c;
-        --text: #94a0b8;
-        --bright: #e8ecf4;
+        /* Local to this page: the dimmer grey under the download buttons.
+           Everything else comes from /page.css. */
         --muted: #6b7689;
       }
-      * {
-        box-sizing: border-box;
-        margin: 0;
-      }
-      body {
-        background-color: var(--dark);
-        background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
-        color: var(--text);
-        font-family:
-          "Inter",
-          "Segoe UI",
-          -apple-system,
-          BlinkMacSystemFont,
-          Roboto,
-          sans-serif;
-        line-height: 1.65;
-        -webkit-font-smoothing: antialiased;
-      }
-      main {
-        max-width: 780px;
-        margin: 0 auto;
-        padding: 3rem 1.25rem 4rem;
-      }
-      h1 {
-        color: var(--bright);
-        font-size: 1.75rem;
-        margin-bottom: 0.5rem;
-      }
-      h2 {
-        color: var(--bright);
-        font-size: 1.15rem;
-        margin: 2.25rem 0 0.75rem;
-      }
+
       h3 {
-        color: var(--bright);
+        color: var(--color-lol-text-bright);
         font-size: 1rem;
         margin: 0 0 0.15rem;
       }
-      p,
-      li {
-        margin-bottom: 0.85rem;
-        font-size: 0.95rem;
-      }
+
       ul,
       ol {
         padding-left: 1.25rem;
       }
-      a {
-        color: var(--gold);
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .back {
-        display: inline-block;
-        margin-bottom: 2rem;
-        font-size: 0.9rem;
-      }
+
       .lead {
         font-size: 1.02rem;
       }
-      .card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 0.75rem;
-        padding: 1rem 1.25rem;
-        margin: 1rem 0;
-      }
+
       .card p:last-child,
       .card ul:last-child,
       .card li:last-child {
         margin-bottom: 0;
       }
+
       .downloads {
         display: grid;
         gap: 1rem;
         grid-template-columns: 1fr;
         margin: 1.5rem 0 0.5rem;
       }
-      @media (min-width: 640px) {
-        .downloads {
-          grid-template-columns: 1fr 1fr;
-        }
+
+      .downloads {
+        grid-template-columns: 1fr 1fr;
       }
+
       .dl {
-        background: var(--card);
-        border: 1px solid var(--border);
+        background: var(--color-lol-card);
+        border: 1px solid var(--color-lol-border);
         border-radius: 0.75rem;
         padding: 1.25rem;
         display: flex;
         flex-direction: column;
       }
+
       .dl.primary {
         border-color: rgba(200, 155, 60, 0.5);
       }
+
       .dl .tag {
         display: inline-block;
         font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--gold);
+        color: var(--color-lol-gold);
         margin-bottom: 0.4rem;
       }
+
       .dl h3 {
         margin-bottom: 1rem;
       }
+
       .dl .btn {
         margin-top: auto;
       }
+
       .btn {
         display: flex;
         align-items: center;
@@ -152,58 +102,61 @@
         border-radius: 0.5rem;
         border: 1px solid rgba(200, 155, 60, 0.5);
         background: rgba(200, 155, 60, 0.15);
-        color: var(--gold);
+        color: var(--color-lol-gold);
         font-size: 0.9rem;
         font-weight: 600;
         transition: background-color 0.15s;
       }
+
       .btn:hover {
         background: rgba(200, 155, 60, 0.25);
         text-decoration: none;
       }
+
       .btn.secondary {
-        border-color: var(--border);
+        border-color: var(--color-lol-border);
         background: rgba(255, 255, 255, 0.03);
-        color: var(--bright);
+        color: var(--color-lol-text-bright);
       }
+
       .btn.secondary:hover {
         background: rgba(255, 255, 255, 0.07);
       }
+
       .meta {
         font-size: 0.8rem;
         color: var(--muted);
         margin: 0.75rem 0 0;
         text-align: center;
       }
+
       .both {
         font-size: 0.875rem;
         color: var(--muted);
         margin: 1.1rem 0 0;
       }
+
       .both code {
-        color: var(--text);
+        color: var(--color-lol-text);
         font-size: 0.9em;
         background: rgba(255, 255, 255, 0.05);
         border-radius: 0.25rem;
         padding: 0.05rem 0.3rem;
       }
+
       .note {
         border-left: 2px solid rgba(200, 155, 60, 0.5);
         padding-left: 0.9rem;
         margin: 1rem 0;
       }
+
       .note p {
         font-size: 0.9rem;
         margin-bottom: 0.5rem;
       }
+
       .note p:last-child {
         margin-bottom: 0;
-      }
-      footer {
-        margin-top: 3rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border);
-        font-size: 0.8rem;
       }
     </style>
   </head>
