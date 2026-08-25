@@ -1,0 +1,661 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+            background: #0b0e14;
+          }
+          a {
+            color: #c89b3c;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #f0e6d2;
+          }
+          .pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+          }
+          .side {
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            overflow: hidden;
+          }
+          .side > header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(11, 14, 20, 0.5);
+            border-bottom: 1px solid rgba(36, 44, 61, 0.6);
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+          }
+          .side .body {
+            padding: 16px 14px;
+          }
+          .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            flex: none;
+          }
+          .meter {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(229, 99, 110, 0.25);
+            overflow: hidden;
+            min-width: 40px;
+          }
+          .meter i {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+          }
+          .sec {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin: 30px 0 12px;
+          }
+          .chip {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid #242c3d;
+            background: #141924;
+          }
+          .note {
+            font-size: 12.5px;
+            line-height: 1.55;
+            color: #94a0b8;
+            margin: 10px 0 0;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          width: 1040px;
+          min-height: 1160px;
+          box-sizing: border-box;
+          padding: 40px 44px;
+          background: #0b0e14;
+          font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, sans-serif;
+          color: #94a0b8;
+          font-variant-numeric: tabular-nums;
+        "
+      >
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #c89b3c;
+            margin-bottom: 12px;
+          "
+        >
+          What the copies had done
+        </div>
+        <h2
+          style="
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: #f0e6d2;
+            margin: 0 0 8px;
+          "
+        >
+          Before, and after
+        </h2>
+        <p style="font-size: 14px; line-height: 1.6; max-width: 70ch; margin: 0">
+          Every pair below is drawn from the class values each surface actually shipped. In each
+          case both files opened on a comment describing the treatment as unified.
+        </p>
+
+        <div class="sec">The win-rate meter &mdash; the one users could see</div>
+        <div class="pair">
+          <div class="side">
+            <header>
+              <span class="dot" style="background: #e5636e"></span>Before &middot; tracker
+            </header>
+            <div class="body">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+                <span style="font-size: 13px; color: #e8ecf4; width: 66px">Yuumi</span
+                ><span class="meter"><i style="width: 49%; background: #3ecf8e"></i></span
+                ><span
+                  style="
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #e5636e;
+                    width: 46px;
+                    text-align: right;
+                  "
+                  >48.6%</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="font-size: 13px; color: #e8ecf4; width: 66px">Zilean</span
+                ><span class="meter"><i style="width: 41%; background: #3ecf8e"></i></span
+                ><span
+                  style="
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #e5636e;
+                    width: 46px;
+                    text-align: right;
+                  "
+                  >41.2%</span
+                >
+              </div>
+              <p class="note">
+                A losing champion wearing a green bar. Fill was always
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 11.5px;
+                    color: #f0e6d2;
+                  "
+                  >bg-lol-win</span
+                >.
+              </p>
+            </div>
+          </div>
+          <div class="side">
+            <header>
+              <span class="dot" style="background: #3ecf8e"></span>After &middot; both surfaces
+            </header>
+            <div class="body">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+                <span style="font-size: 13px; color: #e8ecf4; width: 66px">Yuumi</span
+                ><span class="meter"><i style="width: 49%; background: #e5636e"></i></span
+                ><span
+                  style="
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #e5636e;
+                    width: 46px;
+                    text-align: right;
+                  "
+                  >48.6%</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="font-size: 13px; color: #e8ecf4; width: 66px">Zilean</span
+                ><span class="meter"><i style="width: 41%; background: #e5636e"></i></span
+                ><span
+                  style="
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #e5636e;
+                    width: 46px;
+                    text-align: right;
+                  "
+                  >41.2%</span
+                >
+              </div>
+              <p class="note">
+                Fill follows the number beside it. The site already did this; the app did not.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec">Augment rarity &mdash; two silvers, two golds</div>
+        <div class="pair">
+          <div class="side">
+            <header>
+              <span class="dot" style="background: #e5636e"></span>Before &middot; tracker
+            </header>
+            <div class="body">
+              <div style="display: flex; gap: 6px; margin-bottom: 14px">
+                <span
+                  class="chip"
+                  style="
+                    background: oklch(87.2% 0.01 258.338 / 0.15);
+                    color: oklch(87.2% 0.01 258.338);
+                    border-color: oklch(87.2% 0.01 258.338 / 0.5);
+                  "
+                  >Silver</span
+                >
+                <span
+                  class="chip"
+                  style="
+                    background: oklch(85.2% 0.199 91.936 / 0.15);
+                    color: oklch(85.2% 0.199 91.936);
+                    border-color: oklch(85.2% 0.199 91.936 / 0.5);
+                  "
+                  >Gold</span
+                >
+                <span
+                  class="chip"
+                  style="
+                    background: oklch(74% 0.238 322.16 / 0.15);
+                    color: oklch(74% 0.238 322.16);
+                    border-color: oklch(74% 0.238 322.16 / 0.5);
+                  "
+                  >Prismatic</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+                  <span
+                    style="
+                      width: 44px;
+                      height: 44px;
+                      border-radius: 5px;
+                      background: #1b2130;
+                      box-shadow: 0 0 0 1px oklch(87.2% 0.01 258.338 / 0.6);
+                    "
+                  ></span>
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 9.5px;
+                      color: #4b5568;
+                    "
+                    >silver</span
+                  >
+                </span>
+                <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+                  <span
+                    style="
+                      width: 44px;
+                      height: 44px;
+                      border-radius: 5px;
+                      background: #1b2130;
+                      box-shadow: 0 0 0 1px oklch(85.2% 0.199 91.936 / 0.7);
+                    "
+                  ></span>
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 9.5px;
+                      color: #4b5568;
+                    "
+                    >gold</span
+                  >
+                </span>
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 11px;
+                    color: #4b5568;
+                    align-self: flex-start;
+                    margin-top: 15px;
+                  "
+                  >the rim<br />gray-300 &middot; yellow-400</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="side">
+            <header>
+              <span class="dot" style="background: #3ecf8e"></span>After &middot; both surfaces
+            </header>
+            <div class="body">
+              <div style="display: flex; gap: 6px; margin-bottom: 14px">
+                <span
+                  class="chip"
+                  style="
+                    background: oklch(70.7% 0.022 261.325 / 0.15);
+                    color: oklch(92.8% 0.006 264.531);
+                    border-color: oklch(70.7% 0.022 261.325 / 0.5);
+                  "
+                  >Silver</span
+                >
+                <span
+                  class="chip"
+                  style="
+                    background: oklch(79.5% 0.184 86.047 / 0.15);
+                    color: oklch(90.5% 0.182 98.111);
+                    border-color: oklch(79.5% 0.184 86.047 / 0.5);
+                  "
+                  >Gold</span
+                >
+                <span
+                  class="chip"
+                  style="
+                    background: oklch(66.7% 0.295 322.15 / 0.15);
+                    color: oklch(83.3% 0.145 321.434);
+                    border-color: oklch(74% 0.238 322.16 / 0.5);
+                  "
+                  >Prismatic</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+                  <span
+                    style="
+                      width: 44px;
+                      height: 44px;
+                      border-radius: 5px;
+                      background: #1b2130;
+                      box-shadow: 0 0 0 1px oklch(70.7% 0.022 261.325 / 0.6);
+                    "
+                  ></span>
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 9.5px;
+                      color: #4b5568;
+                    "
+                    >silver</span
+                  >
+                </span>
+                <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+                  <span
+                    style="
+                      width: 44px;
+                      height: 44px;
+                      border-radius: 5px;
+                      background: #1b2130;
+                      box-shadow: 0 0 0 1px oklch(79.5% 0.184 86.047 / 0.7);
+                    "
+                  ></span>
+                  <span
+                    style="
+                      font-family: &quot;IBM Plex Mono&quot;, monospace;
+                      font-size: 9.5px;
+                      color: #4b5568;
+                    "
+                    >gold</span
+                  >
+                </span>
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 11px;
+                    color: #4b5568;
+                    align-self: flex-start;
+                    margin-top: 15px;
+                  "
+                  >the rim<br />gray-400 &middot; yellow-500</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="max-width: 76ch">
+          The rim around an icon sits one step stronger than the name beside it &mdash; deliberate,
+          and now in one file, so the chips and the icons cannot disagree again.
+        </p>
+
+        <div class="sec">The gold call to action &mdash; eight variants</div>
+        <div class="pair">
+          <div class="side">
+            <header>
+              <span class="dot" style="background: #e5636e"></span>Before &middot; hand-written,
+              eight times
+            </header>
+            <div class="body" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 8px 20px;
+                  font-size: 13px;
+                "
+                >Visit site</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 6px 16px;
+                  font-size: 12px;
+                "
+                >Next</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 6px;
+                  border: 1px solid rgba(200, 155, 60, 0.25);
+                  background: rgba(200, 155, 60, 0.1);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 6px 12px;
+                  font-size: 12px;
+                "
+                >Update</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.3);
+                  background: rgba(200, 155, 60, 0.1);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 10px 16px;
+                  font-size: 13px;
+                "
+                >Download</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 4px;
+                  border: 1px solid transparent;
+                  background: rgba(200, 155, 60, 0.2);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 6px 16px;
+                  font-size: 14px;
+                "
+                >Retry</span
+              >
+              <p class="note" style="width: 100%">
+                Border at .50, .30 or .25. Background .15 or .10. Radius lg or md. Five padding
+                pairs.
+              </p>
+            </div>
+          </div>
+          <div class="side">
+            <header>
+              <span class="dot" style="background: #3ecf8e"></span>After &middot; one component,
+              three sizes
+            </header>
+            <div class="body" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 8px 20px;
+                  font-size: 13px;
+                "
+                >Visit site</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 4px 12px;
+                  font-size: 12px;
+                "
+                >Next</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 4px 12px;
+                  font-size: 12px;
+                "
+                >Update</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 8px 20px;
+                  font-size: 13px;
+                "
+                >Download</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  border-radius: 8px;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.15);
+                  color: #c89b3c;
+                  font-weight: 600;
+                  padding: 6px 14px;
+                  font-size: 13px;
+                "
+                >Retry</span
+              >
+              <p class="note" style="width: 100%">
+                Two anchors among these &mdash; they take the same look through
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 11.5px;
+                    color: #f0e6d2;
+                  "
+                  >buttonClass()</span
+                >.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec">The stat tile, and the controls</div>
+        <div class="pair">
+          <div class="side">
+            <header><span class="dot" style="background: #e5636e"></span>Before</header>
+            <div class="body">
+              <div
+                style="
+                  background: #0b0e14;
+                  border-radius: 12px;
+                  border: 1px solid rgba(36, 44, 61, 0.6);
+                  padding: 16px;
+                  margin-bottom: 12px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: #94a0b8;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Games tracked
+                </div>
+                <div style="font-size: 24px; font-weight: 700; color: #e8ecf4">12,481</div>
+                <div style="font-size: 12px; color: #94a0b8; margin-top: 4px">across 6 patches</div>
+              </div>
+              <span
+                style="
+                  display: inline-block;
+                  background: #0b0e14;
+                  border: 1px solid #242c3d;
+                  border-radius: 8px;
+                  color: #e8ecf4;
+                  font-size: 14px;
+                  padding: 6px 12px;
+                "
+                >Patch 26.16</span
+              >
+              <p class="note">Tile: p-4, label at normal weight. Control: 14px, wider padding.</p>
+            </div>
+          </div>
+          <div class="side">
+            <header><span class="dot" style="background: #3ecf8e"></span>After</header>
+            <div class="body">
+              <div
+                style="
+                  background: #0b0e14;
+                  border-radius: 12px;
+                  border: 1px solid rgba(36, 44, 61, 0.6);
+                  padding: 18px;
+                  margin-bottom: 12px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 11px;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: #94a0b8;
+                  "
+                >
+                  Games tracked
+                </div>
+                <div style="font-size: 24px; font-weight: 700; color: #e8ecf4; margin-top: 4px">
+                  12,481
+                </div>
+                <div style="font-size: 12px; color: #94a0b8; margin-top: 2px">across 6 patches</div>
+              </div>
+              <span
+                style="
+                  display: inline-block;
+                  background: #0b0e14;
+                  border: 1px solid #242c3d;
+                  border-radius: 8px;
+                  color: #e8ecf4;
+                  font-size: 13px;
+                  padding: 6px 10px;
+                "
+                >Patch 26.16</span
+              >
+              <p class="note">Tile: p-[18px], label at 500. Control: 13px on both surfaces.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </x-dc>
+  </body>
+</html>

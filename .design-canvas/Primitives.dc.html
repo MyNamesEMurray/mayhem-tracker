@@ -1,0 +1,486 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+            background: #0b0e14;
+          }
+          a {
+            color: #c89b3c;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #f0e6d2;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          width: 900px;
+          min-height: 720px;
+          box-sizing: border-box;
+          padding: 40px 44px;
+          background: #0b0e14;
+          font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, sans-serif;
+          color: #94a0b8;
+          font-variant-numeric: tabular-nums;
+        "
+      >
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #c89b3c;
+            margin-bottom: 12px;
+          "
+        >
+          New &middot; src/shared/ui/primitives.tsx
+        </div>
+        <h2
+          style="
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: #f0e6d2;
+            margin: 0 0 8px;
+          "
+        >
+          The house furniture
+        </h2>
+        <p style="font-size: 14px; line-height: 1.6; max-width: 66ch; margin: 0 0 32px">
+          None of this existed. The panel was a class string typed out in thirteen places, the gold
+          button was hand-written eight times with every value drifting, and the tile existed twice
+          under two names.
+        </p>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 14px;
+          "
+        >
+          Button &mdash; two tones, three sizes
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 34px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #94a0b8;
+                width: 46px;
+                flex: none;
+              "
+              >sm</span
+            >
+            <button
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-radius: 8px;
+                border: 1px solid rgba(200, 155, 60, 0.5);
+                background: rgba(200, 155, 60, 0.15);
+                color: #c89b3c;
+                font-family: inherit;
+                font-weight: 600;
+                padding: 4px 12px;
+                font-size: 12px;
+                cursor: pointer;
+              "
+            >
+              Next
+            </button>
+            <button
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-radius: 8px;
+                border: 1px solid #242c3d;
+                background: #141924;
+                color: #94a0b8;
+                font-family: inherit;
+                font-weight: 600;
+                padding: 4px 12px;
+                font-size: 12px;
+                cursor: pointer;
+              "
+            >
+              Skip
+            </button>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >px-3 py-1 &middot; 12px</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #94a0b8;
+                width: 46px;
+                flex: none;
+              "
+              >md</span
+            >
+            <button
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-radius: 8px;
+                border: 1px solid rgba(200, 155, 60, 0.5);
+                background: rgba(200, 155, 60, 0.15);
+                color: #c89b3c;
+                font-family: inherit;
+                font-weight: 600;
+                padding: 6px 14px;
+                font-size: 13px;
+                cursor: pointer;
+              "
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+              Refresh
+            </button>
+            <button
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-radius: 8px;
+                border: 1px solid #242c3d;
+                background: #141924;
+                color: #94a0b8;
+                font-family: inherit;
+                font-weight: 600;
+                padding: 6px 14px;
+                font-size: 13px;
+                cursor: pointer;
+              "
+            >
+              Cancel
+            </button>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >px-3.5 py-1.5 &middot; 13px</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #94a0b8;
+                width: 46px;
+                flex: none;
+              "
+              >lg</span
+            >
+            <button
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-radius: 8px;
+                border: 1px solid rgba(200, 155, 60, 0.5);
+                background: rgba(200, 155, 60, 0.15);
+                color: #c89b3c;
+                font-family: inherit;
+                font-weight: 600;
+                padding: 8px 20px;
+                font-size: 13px;
+                cursor: pointer;
+              "
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                <path d="M2 12h20" />
+              </svg>
+              Visit MayhemStats.com
+            </button>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >px-5 py-2 &middot; 13px</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #94a0b8;
+                width: 46px;
+                flex: none;
+              "
+              >disabled</span
+            >
+            <button
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-radius: 8px;
+                border: 1px solid rgba(200, 155, 60, 0.5);
+                background: rgba(200, 155, 60, 0.15);
+                color: #c89b3c;
+                font-family: inherit;
+                font-weight: 600;
+                padding: 6px 14px;
+                font-size: 13px;
+                opacity: 0.5;
+              "
+            >
+              Updating&hellip;
+            </button>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >opacity .5</span
+            >
+          </div>
+        </div>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 14px;
+          "
+        >
+          Panel &mdash; the surface, padding is the caller&rsquo;s
+        </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 34px;
+          "
+        >
+          <div
+            style="
+              background: #141924;
+              border-radius: 12px;
+              border: 1px solid rgba(36, 44, 61, 0.6);
+              padding: 16px;
+            "
+          >
+            <p
+              style="
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin: 0 0 4px;
+              "
+            >
+              Compact
+            </p>
+            <p style="font-size: 13px; color: #e8ecf4; margin: 0">p-4 &mdash; a stat block</p>
+          </div>
+          <div
+            style="
+              background: #141924;
+              border-radius: 12px;
+              border: 1px solid rgba(36, 44, 61, 0.6);
+              padding: 20px;
+            "
+          >
+            <p
+              style="
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin: 0 0 4px;
+              "
+            >
+              Section
+            </p>
+            <p style="font-size: 13px; color: #e8ecf4; margin: 0">p-5 &mdash; a titled group</p>
+          </div>
+          <div
+            style="
+              background: #141924;
+              border-radius: 12px;
+              border: 1px solid rgba(36, 44, 61, 0.6);
+              padding: 32px 16px;
+              text-align: center;
+            "
+          >
+            <p style="font-size: 13px; margin: 0">No games match these filters.</p>
+          </div>
+        </div>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 14px;
+          "
+        >
+          StatTile &mdash; was StatCard in the app and Tile on the site
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+          <div
+            style="
+              background: #141924;
+              border-radius: 12px;
+              border: 1px solid rgba(36, 44, 61, 0.6);
+              padding: 18px;
+            "
+          >
+            <p
+              style="
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin: 0;
+              "
+            >
+              Games
+            </p>
+            <p style="font-size: 24px; font-weight: 700; color: #e8ecf4; margin: 4px 0 0">12,481</p>
+            <p style="font-size: 12px; color: #94a0b8; margin: 2px 0 0">all time</p>
+          </div>
+          <div
+            style="
+              background: #141924;
+              border-radius: 12px;
+              border: 1px solid rgba(36, 44, 61, 0.6);
+              padding: 18px;
+            "
+          >
+            <p
+              style="
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin: 0;
+              "
+            >
+              Win rate
+            </p>
+            <p style="font-size: 24px; font-weight: 700; color: #3ecf8e; margin: 4px 0 0">57.4%</p>
+            <p style="font-size: 12px; color: #94a0b8; margin: 2px 0 0">716 W &middot; 531 L</p>
+          </div>
+          <div
+            style="
+              background: #141924;
+              border-radius: 12px;
+              border: 1px solid rgba(36, 44, 61, 0.6);
+              padding: 18px;
+            "
+          >
+            <p
+              style="
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin: 0;
+              "
+            >
+              KDA
+            </p>
+            <p
+              style="
+                font-size: 24px;
+                font-weight: 700;
+                color: oklch(82.8% 0.111 230.318);
+                margin: 4px 0 0;
+              "
+            >
+              4.12
+            </p>
+            <p style="font-size: 12px; color: #94a0b8; margin: 2px 0 0">8.4 / 5.1 / 12.6</p>
+          </div>
+        </div>
+      </div>
+    </x-dc>
+  </body>
+</html>

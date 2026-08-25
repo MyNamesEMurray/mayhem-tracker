@@ -9,3 +9,8 @@ ds-bundle/
 .design-sync/.cache/
 .design-sync/learnings/
 .design-sync/node_modules
+
+# design canvas: the seeded page is a ~2.5MB editor payload, rebuilt from the
+# artboards beside it. The .dc.html sources and canvas.json are the real files.
+.design-canvas/*.html
+!.design-canvas/*.dc.html

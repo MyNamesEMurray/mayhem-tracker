@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+            background: #0b0e14;
+          }
+          a {
+            color: #c89b3c;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #f0e6d2;
+          }
+          .tier {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 30px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid;
+            font-size: 12px;
+            font-weight: 700;
+          }
+          .meter {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(229, 99, 110, 0.25);
+            overflow: hidden;
+            min-width: 32px;
+          }
+          .meter i {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+          }
+          .pct {
+            font-size: 12px;
+            font-weight: 500;
+            width: 3.25rem;
+            display: inline-flex;
+            justify-content: flex-end;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+          }
+          .star {
+            width: 8px;
+            text-align: left;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          width: 900px;
+          min-height: 660px;
+          box-sizing: border-box;
+          padding: 40px 44px;
+          background: #0b0e14;
+          font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, sans-serif;
+          color: #94a0b8;
+          font-variant-numeric: tabular-nums;
+        "
+      >
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #c89b3c;
+            margin-bottom: 12px;
+          "
+        >
+          src/shared/ui
+        </div>
+        <h2
+          style="
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: #f0e6d2;
+            margin: 0 0 8px;
+          "
+        >
+          Reading a record
+        </h2>
+        <p style="font-size: 14px; line-height: 1.6; max-width: 66ch; margin: 0 0 32px">
+          The two components that carry every number on both surfaces. Each existed twice, and both
+          copies opened on a comment calling the treatment unified.
+        </p>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 14px;
+          "
+        >
+          WinRateBar &mdash; fill and label both carry the outcome
+        </div>
+
+        <div
+          style="
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+            margin-bottom: 32px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-size: 13px; color: #e8ecf4; width: 92px; flex: none">Braum</span>
+            <span class="meter"><i style="width: 57%; background: #3ecf8e"></i></span>
+            <span class="pct" style="color: #3ecf8e">57.4%<span class="star"></span></span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                width: 168px;
+                flex: none;
+              "
+              >winning &middot; 486 games</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-size: 13px; color: #e8ecf4; width: 92px; flex: none">Yuumi</span>
+            <span class="meter"><i style="width: 49%; background: #e5636e"></i></span>
+            <span class="pct" style="color: #e5636e">48.6%<span class="star"></span></span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                width: 168px;
+                flex: none;
+              "
+              >losing &middot; 312 games</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-size: 13px; color: #e8ecf4; width: 92px; flex: none">Zilean</span>
+            <span class="meter"><i style="width: 41%; background: #e5636e"></i></span>
+            <span class="pct" style="color: #e5636e">41.2%<span class="star"></span></span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                width: 168px;
+                flex: none;
+              "
+              >losing &middot; 97 games</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-size: 13px; color: #e8ecf4; width: 92px; flex: none">Naafiri</span>
+            <span class="meter"><i style="width: 66%; background: #3ecf8e; opacity: 0.5"></i></span>
+            <span class="pct" style="color: #94a0b8">66.7%<span class="star">*</span></span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                width: 168px;
+                flex: none;
+              "
+              >under 20 games &middot; muted</span
+            >
+          </div>
+        </div>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 14px;
+          "
+        >
+          TierBadge &mdash; the letter carries the tier, colour reinforces it
+        </div>
+
+        <div
+          style="
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            padding: 20px;
+            margin-bottom: 20px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px">
+            <span
+              class="tier"
+              style="
+                background: oklch(82.8% 0.189 84.429 / 0.15);
+                color: oklch(87.9% 0.169 91.605);
+                border-color: oklch(82.8% 0.189 84.429 / 0.6);
+              "
+              >S+</span
+            >
+            <span
+              class="tier"
+              style="
+                background: oklch(70.5% 0.213 47.604 / 0.15);
+                color: oklch(83.7% 0.128 66.29);
+                border-color: oklch(70.5% 0.213 47.604 / 0.6);
+              "
+              >S</span
+            >
+            <span
+              class="tier"
+              style="
+                background: oklch(69.6% 0.17 162.48 / 0.15);
+                color: oklch(84.5% 0.143 164.978);
+                border-color: oklch(69.6% 0.17 162.48 / 0.6);
+              "
+              >A</span
+            >
+            <span
+              class="tier"
+              style="
+                background: oklch(68.5% 0.169 237.323 / 0.15);
+                color: oklch(82.8% 0.111 230.318);
+                border-color: oklch(68.5% 0.169 237.323 / 0.6);
+              "
+              >B</span
+            >
+            <span
+              class="tier"
+              style="
+                background: oklch(60.6% 0.25 292.717 / 0.15);
+                color: oklch(81.1% 0.111 293.571);
+                border-color: oklch(60.6% 0.25 292.717 / 0.6);
+              "
+              >C</span
+            >
+            <span
+              class="tier"
+              style="
+                background: oklch(55.4% 0.046 257.417 / 0.15);
+                color: oklch(86.9% 0.022 252.894);
+                border-color: oklch(55.4% 0.046 257.417 / 0.6);
+              "
+              >D</span
+            >
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                margin-left: 6px;
+              "
+              >translucent .15 fill &middot; .6 border &middot; -300 text</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span
+              class="tier"
+              style="
+                background: oklch(82.8% 0.189 84.429 / 0.15);
+                color: oklch(87.9% 0.169 91.605);
+                border-color: oklch(82.8% 0.189 84.429 / 0.6);
+                opacity: 0.4;
+              "
+              >S+</span
+            >
+            <span
+              class="tier"
+              style="
+                background: oklch(69.6% 0.17 162.48 / 0.15);
+                color: oklch(84.5% 0.143 164.978);
+                border-color: oklch(69.6% 0.17 162.48 / 0.6);
+                opacity: 0.4;
+              "
+              >A</span
+            >
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                margin-left: 6px;
+              "
+              >under 10 games &mdash; provisional, dimmed to .4</span
+            >
+          </div>
+        </div>
+
+        <p style="font-size: 13px; line-height: 1.6; max-width: 72ch; margin: 0; color: #94a0b8">
+          Tiers are percentile ranks within a cohort, so a cohort of fewer than twenty entries has
+          no S+ at all &mdash; which is why a rarity holding three augments never shows one.
+          <span style="color: #e8ecf4">Now pinned by a test.</span>
+        </p>
+      </div>
+    </x-dc>
+  </body>
+</html>

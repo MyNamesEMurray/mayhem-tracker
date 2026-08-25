@@ -1,0 +1,412 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+            background: #0b0e14;
+          }
+          a {
+            color: #c89b3c;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #f0e6d2;
+          }
+          .chip {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid #242c3d;
+            background: #141924;
+            line-height: 1.35;
+          }
+          .chip-c {
+            font-size: 11px;
+            padding: 3px 8px;
+          }
+          .ctl {
+            background: #141924;
+            border: 1px solid #242c3d;
+            border-radius: 8px;
+            color: #e8ecf4;
+            font-size: 13px;
+            line-height: 1.25rem;
+            font-family: inherit;
+          }
+          .th {
+            padding: 9px 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          width: 900px;
+          min-height: 840px;
+          box-sizing: border-box;
+          padding: 40px 44px;
+          background: #0b0e14;
+          font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, sans-serif;
+          color: #94a0b8;
+          font-variant-numeric: tabular-nums;
+        "
+      >
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #c89b3c;
+            margin-bottom: 12px;
+          "
+        >
+          src/shared/ui &middot; src/shared/theme.css
+        </div>
+        <h2
+          style="
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: #f0e6d2;
+            margin: 0 0 8px;
+          "
+        >
+          Filters and controls
+        </h2>
+        <p style="font-size: 14px; line-height: 1.6; max-width: 66ch; margin: 0 0 30px">
+          Every dropdown and text field on both surfaces is 13px now. The app was 14px with wider
+          padding, so the same control was quietly the wrong size next to its twin on every screen.
+        </p>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 12px;
+          "
+        >
+          RarityFilter &mdash; the augment system&rsquo;s primary visual key
+        </div>
+        <div
+          style="
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            padding: 18px 20px;
+            margin-bottom: 26px;
+          "
+        >
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px">
+            <span
+              class="chip"
+              style="
+                background: rgba(200, 155, 60, 0.15);
+                color: #c89b3c;
+                border-color: rgba(200, 155, 60, 0.5);
+              "
+              >All</span
+            >
+            <span class="chip" style="color: oklch(87.2% 0.01 258.338)">Silver</span>
+            <span class="chip" style="color: oklch(85.2% 0.199 91.936)">Gold</span>
+            <span class="chip" style="color: oklch(74% 0.238 322.16)">Prismatic</span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                align-self: center;
+                margin-left: 8px;
+              "
+              >All selected</span
+            >
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px">
+            <span class="chip" style="color: #94a0b8">All</span>
+            <span
+              class="chip"
+              style="
+                background: oklch(70.7% 0.022 261.325 / 0.15);
+                color: oklch(92.8% 0.006 264.531);
+                border-color: oklch(70.7% 0.022 261.325 / 0.5);
+              "
+              >Silver</span
+            >
+            <span
+              class="chip"
+              style="
+                background: oklch(79.5% 0.184 86.047 / 0.15);
+                color: oklch(90.5% 0.182 98.111);
+                border-color: oklch(79.5% 0.184 86.047 / 0.5);
+              "
+              >Gold</span
+            >
+            <span
+              class="chip"
+              style="
+                background: oklch(66.7% 0.295 322.15 / 0.15);
+                color: oklch(83.3% 0.145 321.434);
+                border-color: oklch(74% 0.238 322.16 / 0.5);
+              "
+              >Prismatic</span
+            >
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                align-self: center;
+                margin-left: 8px;
+              "
+              >each rarity active</span
+            >
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap">
+            <span class="chip chip-c" style="color: #94a0b8">All</span>
+            <span class="chip chip-c" style="color: oklch(87.2% 0.01 258.338)">Silver</span>
+            <span
+              class="chip chip-c"
+              style="
+                background: oklch(79.5% 0.184 86.047 / 0.15);
+                color: oklch(90.5% 0.182 98.111);
+                border-color: oklch(79.5% 0.184 86.047 / 0.5);
+              "
+              >Gold</span
+            >
+            <span class="chip chip-c" style="color: oklch(74% 0.238 322.16)">Prismatic</span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+                align-self: center;
+                margin-left: 8px;
+              "
+              >compact &mdash; panel headers</span
+            >
+          </div>
+        </div>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 12px;
+          "
+        >
+          SearchField, select, input
+        </div>
+        <div
+          style="
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 26px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="position: relative; display: inline-block">
+              <span
+                class="ctl"
+                style="
+                  display: inline-block;
+                  width: 192px;
+                  padding: 6px 28px 6px 10px;
+                  box-sizing: border-box;
+                "
+                >Braum</span
+              >
+              <span
+                style="
+                  position: absolute;
+                  right: 8px;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  color: rgba(148, 160, 184, 0.5);
+                  display: inline-flex;
+                "
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    fill-rule="evenodd"
+                    d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm2.78-4.22a.75.75 0 0 1-1.06 0L8 9.06l-1.72 1.72a.75.75 0 1 1-1.06-1.06L6.94 8 5.22 6.28a.75.75 0 0 1 1.06-1.06L8 6.94l1.72-1.72a.75.75 0 1 1 1.06 1.06L9.06 8l1.72 1.72a.75.75 0 0 1 0 1.06Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >clearable &middot; width 192</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              class="ctl"
+              style="
+                display: inline-block;
+                width: 260px;
+                padding: 6px 10px;
+                box-sizing: border-box;
+                color: rgba(148, 160, 184, 0.5);
+              "
+              >Search item&hellip;</span
+            >
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >no clear &middot; fills its container</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              class="ctl"
+              style="
+                display: inline-block;
+                width: 160px;
+                padding: 6px 28px 6px 10px;
+                box-sizing: border-box;
+                background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a0b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E&quot;);
+                background-repeat: no-repeat;
+                background-position: right 8px center;
+                background-size: 14px;
+              "
+              >ARAM Mayhem</span
+            >
+            <span
+              class="ctl"
+              style="
+                display: inline-block;
+                width: 200px;
+                padding: 6px 28px 6px 10px;
+                box-sizing: border-box;
+                background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a0b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E&quot;);
+                background-repeat: no-repeat;
+                background-position: right 8px center;
+                background-size: 14px;
+              "
+              >Patch 26.16</span
+            >
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >.select &middot; sized by class, never by option</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              class="ctl"
+              style="
+                display: inline-block;
+                width: 192px;
+                padding: 6px 10px;
+                box-sizing: border-box;
+                border-color: rgba(200, 155, 60, 0.5);
+                box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.1);
+              "
+              >Focused</span
+            >
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 11px;
+                color: #4b5568;
+              "
+              >gold border at .5, halo at .1</span
+            >
+          </div>
+        </div>
+
+        <div
+          style="
+            font-family: &quot;IBM Plex Mono&quot;, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a0b8;
+            margin-bottom: 12px;
+          "
+        >
+          SortHeader &mdash; the app gained the site&rsquo;s compact mode and aria-sort
+        </div>
+        <div
+          style="
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            overflow: hidden;
+          "
+        >
+          <table style="width: 100%; border-collapse: collapse">
+            <thead style="background: rgba(11, 14, 20, 0.5)">
+              <tr>
+                <th class="th" style="color: #94a0b8; width: 44px">#</th>
+                <th class="th" style="color: #94a0b8">Champion</th>
+                <th class="th" style="color: #c89b3c">
+                  Score <span style="font-size: 10px">&#9660;</span>
+                </th>
+                <th class="th" style="color: #94a0b8">
+                  Win rate <span style="opacity: 0">&#9660;</span>
+                </th>
+                <th class="th" style="color: #94a0b8">
+                  Games <span style="opacity: 0">&#9660;</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-top: 1px solid rgba(36, 44, 61, 0.5)">
+                <td style="padding: 9px 12px; font-size: 12px; color: #94a0b8">1</td>
+                <td style="padding: 9px 12px; font-size: 13px; color: #e8ecf4">Braum</td>
+                <td style="padding: 9px 12px; font-size: 13px; font-weight: 600; color: #e8ecf4">
+                  55.8
+                </td>
+                <td style="padding: 9px 12px; font-size: 13px; color: #3ecf8e">57.4%</td>
+                <td style="padding: 9px 12px; font-size: 13px; color: #e8ecf4">486</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </x-dc>
+  </body>
+</html>

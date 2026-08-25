@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+            background: #0b0e14;
+          }
+          a {
+            color: #c89b3c;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #f0e6d2;
+          }
+          .mono {
+            font-family: "IBM Plex Mono", monospace;
+          }
+          .box {
+            background: #141924;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 44, 61, 0.6);
+            padding: 16px 18px;
+          }
+          .file {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 12px;
+            color: #e8ecf4;
+          }
+          .desc {
+            font-size: 12px;
+            color: #94a0b8;
+            line-height: 1.5;
+          }
+          .row {
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+          }
+          .row + .row {
+            margin-top: 9px;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          width: 940px;
+          min-height: 840px;
+          box-sizing: border-box;
+          padding: 40px 44px;
+          background: #0b0e14;
+          font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, sans-serif;
+          color: #94a0b8;
+        "
+      >
+        <div
+          class="mono"
+          style="
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #c89b3c;
+            margin-bottom: 12px;
+          "
+        >
+          Where it lives
+        </div>
+        <h2
+          style="
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: #f0e6d2;
+            margin: 0 0 8px;
+          "
+        >
+          One tree, two surfaces
+        </h2>
+        <p style="font-size: 14px; line-height: 1.6; max-width: 72ch; margin: 0 0 28px">
+          The site builds from
+          <span class="mono" style="font-size: 12.5px; color: #f0e6d2">website/</span> but the
+          repository is checked out whole, so an import across the boundary resolves &mdash; in tsc,
+          the production build, the prerender pass and the dev server alike. That one fact is why
+          none of this needed workspaces or a deploy change.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px">
+          <div class="box">
+            <div
+              class="mono"
+              style="
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #c89b3c;
+                margin-bottom: 12px;
+              "
+            >
+              src/shared &mdash; logic
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none">score.ts</span
+              ><span class="desc">Wilson lower bound, tiers, build ranking</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none">format.ts</span
+              ><span class="desc">Thousands, KDA, the performance ramp</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none">patch.ts</span
+              ><span class="desc">Year &harr; client versions, ordering</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none">queues.ts</span
+              ><span class="desc">Queue ids and labels</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none">cdn.ts</span
+              ><span class="desc">Artwork URLs and the fallback chain</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none">theme.css</span
+              ><span class="desc">The eleven tokens, controls, scrollbar</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 168px; flex: none"
+                >augment&#8209;descriptions.ts</span
+              ><span class="desc">604 blurbs, generated</span>
+            </div>
+          </div>
+          <div class="box">
+            <div
+              class="mono"
+              style="
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #c89b3c;
+                margin-bottom: 12px;
+              "
+            >
+              src/shared/ui &mdash; components
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">primitives.tsx</span
+              ><span class="desc">Panel, Button, StatTile, PANEL, LABEL</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">WinRateBar.tsx</span
+              ><span class="desc">The rate meter</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">TierBadge.tsx</span
+              ><span class="desc">S+ through D</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">SortHeader.tsx</span
+              ><span class="desc">Sortable column, compact mode</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">RarityFilter.tsx</span
+              ><span class="desc">Chips, from rarity.ts</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">SearchField.tsx</span
+              ><span class="desc">Optional clear, settable width</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">icons.tsx</span
+              ><span class="desc">Eighteen glyphs</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">useTooltip.tsx</span
+              ><span class="desc">Positioned hover card</span>
+            </div>
+            <div class="row">
+              <span class="file" style="width: 150px; flex: none">GameData.tsx</span
+              ><span class="desc">Augment context</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="box" style="margin-bottom: 16px">
+          <div
+            class="mono"
+            style="
+              font-size: 10px;
+              font-weight: 600;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: #c89b3c;
+              margin-bottom: 12px;
+            "
+          >
+            The one thing each surface still keeps for itself
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr auto 1fr;
+              gap: 18px;
+              align-items: center;
+            "
+          >
+            <div>
+              <div class="file" style="margin-bottom: 5px">
+                src/renderer/components/ItemIcon.tsx
+              </div>
+              <div class="desc">
+                Resolves an item against the CommunityDragon branch matching the patch a game was
+                played on, then hands it over.
+              </div>
+            </div>
+            <div style="text-align: center; display: flex; align-items: center; gap: 8px">
+              <span style="color: #c89b3c; font-size: 15px">&rarr;</span>
+              <span
+                class="mono"
+                style="
+                  font-size: 10.5px;
+                  color: #f0e6d2;
+                  border: 1px solid rgba(200, 155, 60, 0.5);
+                  background: rgba(200, 155, 60, 0.12);
+                  border-radius: 999px;
+                  padding: 5px 10px;
+                  white-space: nowrap;
+                "
+                >shared/ui/ItemIcon</span
+              >
+              <span style="color: #c89b3c; font-size: 15px">&larr;</span>
+            </div>
+            <div>
+              <div class="file" style="margin-bottom: 5px">website/src/components/ItemIcon.tsx</div>
+              <div class="desc">
+                Resolves against the latest patch &mdash; a map lookup. The drawing, and the walk
+                down candidate URLs, is shared.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+          <div class="box" style="padding: 14px 16px">
+            <div style="font-size: 22px; font-weight: 700; color: #e8ecf4">16 &rarr; 0</div>
+            <div
+              class="mono"
+              style="
+                font-size: 10px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin-top: 5px;
+                line-height: 1.4;
+              "
+            >
+              concepts written twice
+            </div>
+          </div>
+          <div class="box" style="padding: 14px 16px">
+            <div style="font-size: 22px; font-weight: 700; color: #e8ecf4">13 &rarr; 7</div>
+            <div
+              class="mono"
+              style="
+                font-size: 10px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin-top: 5px;
+                line-height: 1.4;
+              "
+            >
+              files spelling out the palette
+            </div>
+          </div>
+          <div class="box" style="padding: 14px 16px">
+            <div style="font-size: 22px; font-weight: 700; color: #e8ecf4">0 &rarr; 65</div>
+            <div
+              class="mono"
+              style="
+                font-size: 10px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin-top: 5px;
+                line-height: 1.4;
+              "
+            >
+              tests, plus CI on both builds
+            </div>
+          </div>
+          <div class="box" style="padding: 14px 16px">
+            <div style="font-size: 22px; font-weight: 700; color: #e8ecf4">&minus;957</div>
+            <div
+              class="mono"
+              style="
+                font-size: 10px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #94a0b8;
+                margin-top: 5px;
+                line-height: 1.4;
+              "
+            >
+              net lines, incl. ~700 of tests
+            </div>
+          </div>
+        </div>
+      </div>
+    </x-dc>
+  </body>
+</html>
