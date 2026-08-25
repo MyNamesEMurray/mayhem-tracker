@@ -1,4 +1,4 @@
-import { SearchInput } from "mayhem-tracker";
+import { SearchField } from "mayhem-tracker";
 
 // MayhemStats components live on the site's dark canvas — previews carry it
 const canvas: React.CSSProperties = {
@@ -13,7 +13,7 @@ const canvas: React.CSSProperties = {
 export function EmptyWithPlaceholder() {
   return (
     <div style={canvas}>
-      <SearchInput value="" onChange={() => {}} placeholder="Search champions…" />
+      <SearchField value="" onChange={() => {}} placeholder="Search champions…" />
     </div>
   );
 }
@@ -22,7 +22,7 @@ export function EmptyWithPlaceholder() {
 export function FilledWithClear() {
   return (
     <div style={canvas}>
-      <SearchInput value="Malzahar" onChange={() => {}} placeholder="Search champions…" />
+      <SearchField value="Malzahar" onChange={() => {}} placeholder="Search champions…" />
     </div>
   );
 }
@@ -31,7 +31,7 @@ export function FilledWithClear() {
 export function AugmentSearch() {
   return (
     <div style={canvas}>
-      <SearchInput value="" onChange={() => {}} placeholder="Search augments…" />
+      <SearchField value="" onChange={() => {}} placeholder="Search augments…" />
     </div>
   );
 }

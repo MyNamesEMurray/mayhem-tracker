@@ -1,12 +1,11 @@
 # design-sync notes — mayhem-tracker
 
 - App repo, not a packaged library: the bundle entry is the hand-authored
-  `.design-sync/ds-entry.ts` (passed via `--entry`), which curates 31 exports
-  across two trees — `website/src/components/` (canonical brand set) and
-  `src/renderer/components/` (desktop stat components + icon set). Where names
-  collide (AugmentIcon, ChampionIcon, ItemIcon, RarityFilter, WinRateBar), the
-  website version is exported; the renderer versions still bundle as internals
-  of MatchScoreboard.
+  `.design-sync/ds-entry.ts` (passed via `--entry`). Most of what it exports
+  now lives in `src/shared/ui/` — one component rendered by both the site and
+  the desktop app, so reviewing it here reviews both. Names no longer collide
+  across trees; what remains outside `src/shared/ui/` is the site's own tables
+  and champion page, and the desktop scoreboard and its parts.
 - CSS is compiled Tailwind v4: `cfg.buildCmd` runs the CLI over
   `website/src/global.css` from the repo root so source auto-detection scans
   BOTH component trees plus `.design-sync/previews/`. Re-run it whenever
@@ -39,11 +38,11 @@
   `SVGProps<SVGSVGElement>` with defaults `width/height="1em"`,
   `stroke="currentColor"`. Size with `width={n} height={n}`; color via CSS
   `color` on an ancestor.
-- MatchScoreboard preview needs a `window.api` shim (`getAugmentData`,
-  `getItemData`, `getChampionData`) defined at module top — the renderer
-  AugmentIcon/ItemIcon call the Electron bridge in mount effects and unmount
-  the tree without it. Any preview rendering renderer-hook components needs
-  the same.
+- (retired) MatchScoreboard's preview used to need a `window.api` shim,
+  because the renderer's AugmentIcon and ItemIcon called the Electron bridge
+  in mount effects. The shared components take their data through
+  `GameDataProvider` instead, so a preview supplies augments as a prop and
+  needs no shim. ItemIcon is presentational and takes its URLs directly.
 - Offline-sandbox img collapse: components hide failed CDN `<img>`s via
   onError `display:none`, which deletes grid tracks and misaligns rows. The
   MatchScoreboard preview carries a scoped
@@ -77,8 +76,11 @@
 
 ## Re-sync risks
 
-- `ds-entry.ts` is hand-curated: a new website/renderer component does NOT
-  appear automatically — add it to the entry AND `componentSrcMap`.
+- `ds-entry.ts` is hand-curated: a new component does NOT appear
+  automatically — add it to the entry AND `componentSrcMap`.
+- Comments in `src/shared/ui/` are scanned by Tailwind like any other text, so
+  a bare utility word in prose ("ring", "inline") mints a real rule in both
+  bundles. `test/shared-ui.test.mts` guards the words that have caused it.
 - Mock data in `.design-sync/previews/*.tsx` mirrors the live row shapes
   (`ChampionStatRow` with `patch`/`queue_id`, `Filters` with `patches?: Set`).
   If `website/src/lib/api.ts` or `stats.ts` shapes change, previews compile

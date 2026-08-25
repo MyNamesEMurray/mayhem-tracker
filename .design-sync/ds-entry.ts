@@ -8,7 +8,7 @@ export { default as AugmentsTable } from "../website/src/components/AugmentsTabl
 export { default as ChampionDetail } from "../website/src/components/ChampionDetail";
 export { default as ChampionsTable } from "../website/src/components/ChampionsTable";
 export { default as PatchRangeSelect } from "../website/src/components/PatchRangeSelect";
-export { default as SearchInput } from "../website/src/components/SearchInput";
+export { default as SearchField } from "../src/shared/ui/SearchField";
 
 // Shared by both surfaces (src/shared/ui) — one component, not two copies,
 // so a design review here covers what the app and the site actually render
