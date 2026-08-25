@@ -160,9 +160,8 @@ export function registerIpcHandlers() {
     },
   );
 
-  ipcMain.handle(
-    "community:augment-stats",
-    (_e, patch?: string, queue?: number) => community.getCommunityAugmentStats(patch, queue),
+  ipcMain.handle("community:augment-stats", (_e, patch?: string, queue?: number) =>
+    community.getCommunityAugmentStats(patch, queue),
   );
 
   ipcMain.handle(

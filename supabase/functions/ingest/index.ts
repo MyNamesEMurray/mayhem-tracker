@@ -411,12 +411,10 @@ Deno.serve(async (req: Request) => {
   }
 
   if (quarantineRows.length > 0) {
-    const q = await supabase
-      .from("quarantine")
-      .upsert(quarantineRows, {
-        onConflict: "contributor_token,platform,game_id",
-        ignoreDuplicates: true,
-      });
+    const q = await supabase.from("quarantine").upsert(quarantineRows, {
+      onConflict: "contributor_token,platform,game_id",
+      ignoreDuplicates: true,
+    });
     if (q.error) return json({ error: "storing quarantine failed" }, 500);
   }
 
@@ -430,29 +428,23 @@ Deno.serve(async (req: Request) => {
       .upsert(partRows, { onConflict: "platform,game_id,participant_id", ignoreDuplicates: true });
     if (p.error) return json({ error: "storing participants failed" }, 500);
     if (augRows.length > 0) {
-      const a = await supabase
-        .from("match_participant_augments")
-        .upsert(augRows, {
-          onConflict: "platform,game_id,participant_id,slot",
-          ignoreDuplicates: true,
-        });
+      const a = await supabase.from("match_participant_augments").upsert(augRows, {
+        onConflict: "platform,game_id,participant_id,slot",
+        ignoreDuplicates: true,
+      });
       if (a.error) return json({ error: "storing augments failed" }, 500);
     }
     if (itemEventRows.length > 0) {
-      const e = await supabase
-        .from("match_item_events")
-        .upsert(itemEventRows, {
-          onConflict: "platform,game_id,participant_id,seq",
-          ignoreDuplicates: true,
-        });
-      if (e.error) return json({ error: "storing item events failed" }, 500);
-    }
-    const c = await supabase
-      .from("contributions")
-      .upsert(contribRows, {
-        onConflict: "contributor_token,platform,game_id",
+      const e = await supabase.from("match_item_events").upsert(itemEventRows, {
+        onConflict: "platform,game_id,participant_id,seq",
         ignoreDuplicates: true,
       });
+      if (e.error) return json({ error: "storing item events failed" }, 500);
+    }
+    const c = await supabase.from("contributions").upsert(contribRows, {
+      onConflict: "contributor_token,platform,game_id",
+      ignoreDuplicates: true,
+    });
     if (c.error) return json({ error: "storing contributions failed" }, 500);
   }
 

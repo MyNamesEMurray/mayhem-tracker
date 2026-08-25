@@ -1352,14 +1352,14 @@ export function getAugmentStatsWithChampions(
     ORDER BY picks DESC
   `)
     .all(...params) as {
-      augment_id: number;
-      picks: number;
-      wins: number;
-      kills: number;
-      deaths: number;
-      assists: number;
-      damage: number;
-    }[];
+    augment_id: number;
+    picks: number;
+    wins: number;
+    kills: number;
+    deaths: number;
+    assists: number;
+    damage: number;
+  }[];
 
   const champBreakdown = db
     .prepare(`
@@ -1885,8 +1885,6 @@ export function getChampionItemStats(
     .all(...params) as any[];
 }
 
-
-
 export function getDatabase(): Database.Database {
   return db;
 }
@@ -2346,5 +2344,3 @@ export function repairPuuids(): {
 }
 
 // ── Augment analytics (extended stats, schema v2) ───────────────────────────
-
-

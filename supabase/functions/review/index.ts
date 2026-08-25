@@ -160,24 +160,43 @@ async function approveRows(supabase: any, rows: any[]) {
     const m = await supabase
       .from("matches")
       .upsert(matches, { onConflict: "platform,game_id", ignoreDuplicates: true });
-    if (m.error) return { ok: [], failed: rows.map((r: any) => ({ id: r.id, error: "storing match failed" })) };
+    if (m.error)
+      return {
+        ok: [],
+        failed: rows.map((r: any) => ({ id: r.id, error: "storing match failed" })),
+      };
 
-    const p = await supabase
-      .from("match_participants")
-      .upsert(participants, { onConflict: "platform,game_id,participant_id", ignoreDuplicates: true });
-    if (p.error) return { ok: [], failed: rows.map((r: any) => ({ id: r.id, error: "storing participants failed" })) };
+    const p = await supabase.from("match_participants").upsert(participants, {
+      onConflict: "platform,game_id,participant_id",
+      ignoreDuplicates: true,
+    });
+    if (p.error)
+      return {
+        ok: [],
+        failed: rows.map((r: any) => ({ id: r.id, error: "storing participants failed" })),
+      };
 
     if (augments.length > 0) {
-      const a = await supabase
-        .from("match_participant_augments")
-        .upsert(augments, { onConflict: "platform,game_id,participant_id,slot", ignoreDuplicates: true });
-      if (a.error) return { ok: [], failed: rows.map((r: any) => ({ id: r.id, error: "storing augments failed" })) };
+      const a = await supabase.from("match_participant_augments").upsert(augments, {
+        onConflict: "platform,game_id,participant_id,slot",
+        ignoreDuplicates: true,
+      });
+      if (a.error)
+        return {
+          ok: [],
+          failed: rows.map((r: any) => ({ id: r.id, error: "storing augments failed" })),
+        };
     }
 
-    const c = await supabase
-      .from("contributions")
-      .upsert(contributions, { onConflict: "contributor_token,platform,game_id", ignoreDuplicates: true });
-    if (c.error) return { ok: [], failed: rows.map((r: any) => ({ id: r.id, error: "storing contribution failed" })) };
+    const c = await supabase.from("contributions").upsert(contributions, {
+      onConflict: "contributor_token,platform,game_id",
+      ignoreDuplicates: true,
+    });
+    if (c.error)
+      return {
+        ok: [],
+        failed: rows.map((r: any) => ({ id: r.id, error: "storing contribution failed" })),
+      };
   }
 
   // Only after every row is safely stored — a quarantine row still marked
@@ -189,7 +208,10 @@ async function approveRows(supabase: any, rows: any[]) {
       .in("id", ok)
       .eq("status", "pending");
     if (upd.error) {
-      return { ok: [], failed: ok.map((id) => ({ id, error: "stored, but marking approved failed" })) };
+      return {
+        ok: [],
+        failed: ok.map((id) => ({ id, error: "stored, but marking approved failed" })),
+      };
     }
   }
 
@@ -243,7 +265,8 @@ Deno.serve(async (req: Request) => {
     if (exp - now > MAX_ADMIN_TTL_S) return json({ error: "link lifetime too long" }, 403);
 
     const expectedAdmin = await sha256Hex(`${secret}:admin:${exp}`);
-    if (!timingSafeEqual(expectedAdmin, key.toLowerCase())) return json({ error: "invalid key" }, 403);
+    if (!timingSafeEqual(expectedAdmin, key.toLowerCase()))
+      return json({ error: "invalid key" }, 403);
 
     if (action === "queue") {
       const limit = Math.min(Number(body?.limit) || 200, 500);

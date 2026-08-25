@@ -15,6 +15,7 @@
     "rebuild": "electron-builder install-app-deps",
     "dist": "npm run typecheck && electron-vite build && electron-builder --win --publish never",
     "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "gen:augments": "node scripts/gen-augment-descriptions.mjs"
   },
   "dependencies": {

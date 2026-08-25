@@ -138,18 +138,20 @@ Deno.serve(async (req: Request) => {
   const cell = "padding:5px 10px;font-size:13px";
   const breakdown = [...flagCount.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([c, flags]) =>
-      `<tr>
+    .map(
+      ([c, flags]) =>
+        `<tr>
         <td style="${cell};color:#e2e8f0">${esc(c)}</td>
         <td style="${cell};color:#94a0b8">${gamesPerCategory.get(c)!.size}</td>
         <td style="${cell};color:#94a0b8">${flags}</td>
-      </tr>`
+      </tr>`,
     )
     .join("");
 
   // Contributors whose uploads ingest is now refusing
   const perToken = new Map<string, number>();
-  for (const q of rows) perToken.set(q.contributor_token, (perToken.get(q.contributor_token) ?? 0) + 1);
+  for (const q of rows)
+    perToken.set(q.contributor_token, (perToken.get(q.contributor_token) ?? 0) + 1);
   const blocked = [...perToken.values()].filter((n) => n >= MAX_PENDING_QUARANTINE).length;
 
   const oldest = rows[0]?.created_at

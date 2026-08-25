@@ -172,7 +172,11 @@ function ContributorId() {
             spellCheck={false}
             className="input font-mono text-[12px] flex-1"
           />
-          <button onClick={handleRecover} disabled={busy || !entry.trim()} className={BUTTON_PRIMARY}>
+          <button
+            onClick={handleRecover}
+            disabled={busy || !entry.trim()}
+            className={BUTTON_PRIMARY}
+          >
             Use this ID
           </button>
         </div>

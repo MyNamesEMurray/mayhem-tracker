@@ -4,8 +4,8 @@ The deployed source of the project's Supabase edge functions. Deploy from the
 Supabase dashboard (Edge Functions → the function → paste and deploy) or with
 the Supabase CLI; the copy here is the record of what is live.
 
-| Function | What it does |
-| --- | --- |
+| Function | What it does                                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------- |
 | `ingest` | Anonymous match upload from the desktop app. Validates, dedupes, rate-shapes, and quarantines implausible games. |
 
 The plausibility ceilings in `ingest` are set from the measured distribution,
@@ -18,6 +18,7 @@ select round(percentile_cont(0.9999) within group (order by v)::numeric, 1) as p
   from (select p.total_damage_taken::float / m.game_duration as v
           from match_participants p join matches m using (platform, game_id)) x;
 ```
+
 | `review` | Approve/deny quarantined games — one at a time from a digest email link, or in bulk from the review queue page. |
 | `quarantine-digest` | Every 6 hours, emails a summary of what's pending with a link to the review queue — only when something new has arrived. |
 | `delete-contributions` | Erases one contributor token's games on request. |

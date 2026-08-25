@@ -48,7 +48,7 @@ Any static host works. On Vercel: import the repository, set the project's
 
 The build reads a few modules from `../src/shared` — the scoring and tier
 maths, the augment descriptions, the design tokens — so that the site and the
-desktop app cannot disagree about them. It still builds *from* this directory;
+desktop app cannot disagree about them. It still builds _from_ this directory;
 it just needs the repository checked out whole, which is what Cloudflare Pages
 and GitHub Actions do by default. On Vercel, keep **Include source files
 outside of the Root Directory** enabled.
