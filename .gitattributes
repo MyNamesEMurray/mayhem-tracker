@@ -1,0 +1,17 @@
+# Every text file is stored and checked out with LF, on Windows as well.
+#
+# Git's default on Windows hands the working tree CRLF, and oxfmt counts that
+# as a formatting difference: `npm run format:check` reports all 184 files as
+# unformatted on a fresh Windows clone, and the release job — which builds the
+# executables on a Windows runner — failed on its formatting step for the same
+# reason, before it had built anything.
+#
+# Nothing is renormalised by this: every file is already stored with LF, so
+# this only settles what lands in a working tree.
+* text=auto eol=lf
+
+# Left byte for byte alone. Git detects these as binary on its own, but a font
+# or an icon quietly rewritten by an end-of-line rule is a corrupt file rather
+# than a noisy diff, so they are named rather than inferred.
+*.png binary
+*.woff2 binary
