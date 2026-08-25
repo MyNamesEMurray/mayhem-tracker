@@ -2,32 +2,12 @@ import { useAugmentData } from "../hooks/useChampions";
 import { useTooltip } from "../../shared/ui/useTooltip";
 import { AUGMENT_ICON_BASE } from "../lib/constants";
 import { AUGMENT_DESCRIPTIONS } from "../../shared/augment-descriptions";
+import { RARITY_LABEL, RARITY_RING, RARITY_TEXT } from "../../shared/ui/rarity";
 
 interface AugmentIconProps {
   augmentId: number;
   size?: number;
   showName?: boolean;
-}
-
-// Rarity ring colors from the unified token set: silver #d1d5db, gold
-// #facc15, prismatic #e879f9
-const rarityBorder: Record<string, string> = {
-  kSilver: "ring-1 ring-gray-300/60",
-  kGold: "ring-1 ring-yellow-400/70",
-  kPrismatic: "ring-1 ring-fuchsia-400/80",
-};
-
-const rarityTextColor: Record<string, string> = {
-  kSilver: "text-gray-300",
-  kGold: "text-yellow-400",
-  kPrismatic: "text-fuchsia-400",
-};
-
-export function getAugmentRarityLabel(rarity: string): string {
-  if (rarity === "kSilver") return "Silver";
-  if (rarity === "kGold") return "Gold";
-  if (rarity === "kPrismatic") return "Prismatic";
-  return "";
 }
 
 export default function AugmentIcon({ augmentId, size = 28, showName = false }: AugmentIconProps) {
@@ -37,8 +17,8 @@ export default function AugmentIcon({ augmentId, size = 28, showName = false }: 
   // a champion's augment list — so the tooltip carries the name and rarity
   // whether or not a description exists for the augment.
   const description = AUGMENT_DESCRIPTIONS[augmentId];
-  const rarityLabel = aug ? getAugmentRarityLabel(aug.rarity) : "";
-  const nameColor = rarityTextColor[aug?.rarity ?? ""] || "text-lol-text-bright";
+  const rarityLabel = aug ? (RARITY_LABEL[aug.rarity] ?? "") : "";
+  const nameColor = RARITY_TEXT[aug?.rarity ?? ""] || "text-lol-text-bright";
 
   const { triggerProps, tooltip } = useTooltip<HTMLDivElement>(
     aug && (
@@ -66,7 +46,7 @@ export default function AugmentIcon({ augmentId, size = 28, showName = false }: 
       aug.iconPath.replace("/lol-game-data/assets/", "").replace("small", "large").toLowerCase()
     : "";
 
-  const borderClass = rarityBorder[aug.rarity] || "";
+  const borderClass = RARITY_RING[aug.rarity] || "";
 
   return (
     <div className="flex items-center gap-1.5 min-w-0" {...triggerProps}>

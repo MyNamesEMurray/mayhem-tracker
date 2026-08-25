@@ -1,24 +1,7 @@
 import { AUGMENT_DESCRIPTIONS } from "../../../src/shared/augment-descriptions.ts";
+import { RARITY_LABEL, RARITY_RING, RARITY_TEXT } from "../../../src/shared/ui/rarity.ts";
 import { augmentIconUrl, getAugmentName, type AugmentData } from "../lib/dragon";
 import { useTooltip } from "../../../src/shared/ui/useTooltip.tsx";
-
-const rarityBorder: Record<string, string> = {
-  kSilver: "ring-1 ring-gray-400/60",
-  kGold: "ring-1 ring-yellow-500/70",
-  kPrismatic: "ring-1 ring-fuchsia-400/80",
-};
-
-const rarityTextColor: Record<string, string> = {
-  kSilver: "text-gray-300",
-  kGold: "text-yellow-400",
-  kPrismatic: "text-fuchsia-400",
-};
-
-const rarityLabel: Record<string, string> = {
-  kSilver: "Silver",
-  kGold: "Gold",
-  kPrismatic: "Prismatic",
-};
 
 export default function AugmentIcon({
   augmentData,
@@ -40,7 +23,7 @@ export default function AugmentIcon({
   // list, a build row — so the tooltip carries the name and rarity whether or
   // not a description exists for the augment.
   const description = AUGMENT_DESCRIPTIONS[augmentId];
-  const nameColor = rarityTextColor[aug?.rarity ?? ""] || "text-lol-text-bright";
+  const nameColor = RARITY_TEXT[aug?.rarity ?? ""] || "text-lol-text-bright";
 
   const { triggerProps, tooltip } = useTooltip<HTMLDivElement>(
     aug && (
@@ -49,8 +32,8 @@ export default function AugmentIcon({
           <span className={`text-xs font-semibold ${nameColor}`}>
             {getAugmentName(augmentData, augmentId)}
           </span>
-          {rarityLabel[aug.rarity] && (
-            <span className="text-[10px] text-lol-text">{rarityLabel[aug.rarity]}</span>
+          {RARITY_LABEL[aug.rarity] && (
+            <span className="text-[10px] text-lol-text">{RARITY_LABEL[aug.rarity]}</span>
           )}
         </div>
         {description && (
@@ -67,7 +50,7 @@ export default function AugmentIcon({
   }
 
   const iconUrl = augmentIconUrl(aug.iconPath);
-  const borderClass = rarityBorder[aug.rarity] || "";
+  const borderClass = RARITY_RING[aug.rarity] || "";
 
   return (
     <div className="flex items-center gap-1.5 min-w-0" {...triggerProps}>

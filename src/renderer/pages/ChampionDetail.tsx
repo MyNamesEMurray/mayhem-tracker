@@ -17,7 +17,7 @@ import {
   MIN_SAMPLE,
   winRate,
 } from "../../shared/score";
-import RarityFilter, { type Rarity } from "../components/RarityFilter";
+import RarityFilter, { type Rarity } from "../../shared/ui/RarityFilter";
 import { formatAvg, formatPatch, kdaColor } from "../lib/format";
 import {
   resolveSource,

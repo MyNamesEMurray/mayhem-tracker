@@ -25,7 +25,7 @@
     "ChampionsTable": "website/src/components/ChampionsTable.tsx",
     "ItemIcon": "website/src/components/ItemIcon.tsx",
     "PatchRangeSelect": "website/src/components/PatchRangeSelect.tsx",
-    "RarityFilter": "website/src/components/RarityFilter.tsx",
+    "RarityFilter": "src/shared/ui/RarityFilter.tsx",
     "SearchInput": "website/src/components/SearchInput.tsx",
     "TierBadge": "src/shared/ui/TierBadge.tsx",
     "WinRateBar": "src/shared/ui/WinRateBar.tsx",

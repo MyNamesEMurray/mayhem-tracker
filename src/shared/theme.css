@@ -2,7 +2,7 @@
  * and mayhemstats.com.
  *
  * Both surfaces used to declare all of this separately — the same eleven
- * colour tokens, the same select and input, the same focus ring, the same
+ * colour tokens, the same select and input, the same focus halo, the same
  * scrollbar — and the copies had drifted: a control was 14px in the app and
  * 13px on the site, with different horizontal padding. Import this instead,
  * after `@import "tailwindcss"`, and add only what is genuinely local to a

@@ -1,4 +1,4 @@
-import type { SortDir, SortState } from "./SortHeader";
+import type { SortDir, SortState } from "../../../src/shared/ui/SortHeader.tsx";
 
 export interface SortOption<K extends string> {
   key: K;

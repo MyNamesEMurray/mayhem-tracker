@@ -7,9 +7,10 @@ export interface SortState<K extends string> {
   dir: SortDir;
 }
 
-// Column sorting for a data table. Clicking a new column sorts it by its
-// natural direction — descending for numbers, ascending for names — and
-// clicking the active column reverses it.
+// Column sorting for a data table, shared by the desktop app and
+// mayhemstats.com. Clicking a new column sorts it by its natural direction —
+// descending for numbers, ascending for names — and clicking the active
+// column reverses it.
 export function useSort<K extends string>(initialKey: K, initialDir: SortDir = "desc") {
   const [sort, setSort] = useState<SortState<K>>({ key: initialKey, dir: initialDir });
   const toggle = (key: K, naturalDir: SortDir = "desc") =>

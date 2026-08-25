@@ -7,7 +7,7 @@ import ChampionIcon from "../components/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import { formatTimeAgo, kdaRatio, kdaColor } from "../lib/format";
-import SortHeader, { useSort } from "../components/SortHeader";
+import SortHeader, { useSort } from "../../shared/ui/SortHeader";
 
 type SortKey = "games" | "winRate" | "kda" | "lastPlayed" | "name";
 
@@ -23,7 +23,6 @@ export default function Friends() {
     const unsub = window.api.onGamesUpdated(() => refetch());
     return unsub;
   }, [refetch]);
-
 
   const sorted = useMemo(() => {
     if (!data) return [];

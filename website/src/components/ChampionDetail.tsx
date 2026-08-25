@@ -27,10 +27,10 @@ import {
 import AugmentIcon from "./AugmentIcon";
 import ChampionIcon from "./ChampionIcon";
 import ItemIcon from "./ItemIcon";
-import RarityFilter, { type Rarity } from "./RarityFilter";
+import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
-import SortHeader, { useSort } from "./SortHeader";
+import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
 
 // A build entry needs this many games behind it before it can be recommended
 // at all — below that a win rate is noise, however good it looks

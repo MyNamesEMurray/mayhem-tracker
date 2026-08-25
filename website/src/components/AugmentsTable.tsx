@@ -15,12 +15,12 @@ import {
 } from "../lib/stats";
 import AugmentIcon from "./AugmentIcon";
 import ChampionIcon from "./ChampionIcon";
-import RarityFilter, { type Rarity } from "./RarityFilter";
+import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import SearchInput from "./SearchInput";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import { championSlug } from "../lib/slug";
-import SortHeader, { useSort } from "./SortHeader";
+import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
 import SortControl, { type SortOption } from "./SortControl";
 import { TIER_ORDER } from "../lib/stats";
 
@@ -202,9 +202,7 @@ export default function AugmentsTable({
           </tbody>
         </table>
         {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">
-            "No augments found"
-          </div>
+          <div className="py-8 text-center text-sm text-lol-text">"No augments found"</div>
         )}
       </div>
       <p className="text-xs text-lol-text/70">
@@ -285,9 +283,7 @@ function AugmentRow({
         <td className="px-3 py-[9px]">
           <WinRateBar wins={aug.wins} total={aug.picks} />
         </td>
-        <td className="px-3 py-[9px] text-[13px] text-lol-text-bright">
-          {formatWhole(aug.picks)}
-        </td>
+        <td className="px-3 py-[9px] text-[13px] text-lol-text-bright">{formatWhole(aug.picks)}</td>
         <td className="px-3 py-[9px] text-[13px] text-lol-text">{pickRate}%</td>
         <td className={`px-3 py-[9px] text-[13px] font-semibold ${kdaRampClass(kda)}`}>
           {kda.toFixed(2)}
@@ -318,7 +314,9 @@ function AugmentRow({
                       {getChampionName(championData, c.champion_id)}
                     </span>
                   </a>
-                  <span className="text-xs text-lol-text w-14 shrink-0">{formatWhole(c.picks)} picks</span>
+                  <span className="text-xs text-lol-text w-14 shrink-0">
+                    {formatWhole(c.picks)} picks
+                  </span>
                   <div className="flex-1 min-w-16">
                     <WinRateBar wins={c.wins} total={c.picks} />
                   </div>

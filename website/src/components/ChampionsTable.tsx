@@ -16,7 +16,7 @@ import SearchInput from "./SearchInput";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import { championSlug } from "../lib/slug";
-import SortHeader, { useSort } from "./SortHeader";
+import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
 import SortControl, { type SortOption } from "./SortControl";
 import { TIER_ORDER } from "../lib/stats";
 
@@ -220,9 +220,7 @@ export default function ChampionsTable({
           </tbody>
         </table>
         {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">
-            "No champions found"
-          </div>
+          <div className="py-8 text-center text-sm text-lol-text">"No champions found"</div>
         )}
       </div>
       <p className="text-xs text-lol-text/70">

@@ -12,7 +12,7 @@ import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import TierBadge from "../../shared/ui/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../../shared/score";
-import SortHeader, { useSort } from "../components/SortHeader";
+import SortHeader, { useSort } from "../../shared/ui/SortHeader";
 import QueueSelect from "../components/QueueSelect";
 import { QUEUE_LABELS } from "../../shared/queues";
 import { formatAvg, formatWhole, kdaRatio, kdaColor } from "../lib/format";

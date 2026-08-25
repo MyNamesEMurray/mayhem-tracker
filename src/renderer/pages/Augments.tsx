@@ -14,8 +14,8 @@ import WinRateBar from "../../shared/ui/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
 import { QUEUE_LABELS } from "../../shared/queues";
-import RarityFilter, { type Rarity } from "../components/RarityFilter";
-import SortHeader, { useSort } from "../components/SortHeader";
+import RarityFilter, { type Rarity } from "../../shared/ui/RarityFilter";
+import SortHeader, { useSort } from "../../shared/ui/SortHeader";
 import TierBadge from "../../shared/ui/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../../shared/score";
 import { formatWhole, kdaColor, kdaRatio } from "../lib/format";
@@ -70,7 +70,11 @@ export default function Augments() {
   // stronger than Silvers, so one global ranking would just sort by rarity.
   // Assigned over the unfiltered list so searching never reshuffles a badge.
   const tiers = useMemo(() => {
-    if (!data) return new Map<number, ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never>();
+    if (!data)
+      return new Map<
+        number,
+        ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never
+      >();
     const byRarity = new Map<string, typeof data>();
     for (const a of data) {
       const r = augmentData[a.augment_id]?.rarity ?? "unknown";
@@ -78,7 +82,10 @@ export default function Augments() {
       group.push(a);
       byRarity.set(r, group);
     }
-    const all = new Map<number, ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never>();
+    const all = new Map<
+      number,
+      ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never
+    >();
     for (const group of byRarity.values()) {
       for (const [id, tier] of assignTiers(
         group,
