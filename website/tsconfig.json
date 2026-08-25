@@ -10,6 +10,22 @@
     "noUnusedParameters": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+
+    // The shared components in ../src/shared/ui sit outside this package, so
+    // their `import ... from "react"` resolves by walking up from src/shared/
+    // to the repository root — where node_modules only exists on a machine
+    // that has also installed the desktop app. Cloudflare Pages and the
+    // website CI job install website/ alone, so without these mappings every
+    // shared component fails to typecheck there while building fine locally.
+    // React ships no types of its own, hence @types; vite.config.ts pins the
+    // runtime copy the same way, with resolve.dedupe.
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-dom": ["./node_modules/@types/react-dom"],
+      "react-dom/*": ["./node_modules/@types/react-dom/*"]
+    },
+
     // src/lib/stats.ts re-exports ../../../src/shared/score.ts by full path so
     // plain Node can resolve it as well as Vite
     "allowImportingTsExtensions": true,
