@@ -8,6 +8,10 @@
     "outDir": "./out",
     "rootDir": ".",
     "strict": true,
+    // Same unused-symbol checks the website build has always run, so dead
+    // imports and parameters fail here rather than accumulating
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

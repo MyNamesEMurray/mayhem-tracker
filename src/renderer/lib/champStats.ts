@@ -67,9 +67,10 @@ export function assignTiers<T>(
 }
 
 // A build entry has to earn its place twice: a workable sample, and a record
-// that isn't losing. Ranked by confidence score, so a solid 58% over hundreds
-// of games beats a lucky 100% over five. No popularity filler — an item that
-// has never won is not a recommendation, however many times it was built.
+// that isn't losing. Ranked by confidence score, so an entry overtakes a lucky
+// 5-0 once its sample makes the rate defensible — 60.1% over 2,635 games does
+// it, while 58% needs a few thousand. No popularity filler — an item that has
+// never won is not a recommendation, however many times it was built.
 export function rankForBuild<T>(
   list: T[],
   getPicks: (t: T) => number,

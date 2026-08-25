@@ -173,10 +173,3 @@ export function scoreInputsFromRaw(raw: any): (ScoreInput & { puuid: string | nu
     };
   });
 }
-
-export function scoreColor(score: number): string {
-  if (score >= 9) return "text-amber-400";
-  if (score >= 7) return "text-sky-400";
-  if (score >= 5) return "text-emerald-400";
-  return "text-slate-400";
-}

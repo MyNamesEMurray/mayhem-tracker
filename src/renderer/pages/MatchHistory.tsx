@@ -29,7 +29,6 @@ import StatCard from "../components/StatCard";
 import { ArrowDownIcon } from "../components/icons";
 import {
   formatDuration,
-  formatTimeAgo,
   formatDateTime,
   formatKDA,
   kdaRatio,

@@ -1,0 +1,67 @@
+name: Checks
+
+# Typechecks the desktop app, runs the scoring tests, and builds the website —
+# on every push and pull request. Before this existed, only the website was
+# verified: its build runs `tsc --noEmit` with unused-symbol checks on, while
+# the app's `electron-vite build` transpiles through esbuild and never
+# typechecks. That asymmetry is how eleven dead imports accumulated in one
+# renderer page without anything noticing.
+#
+# Deliberately does NOT build the Windows executables — that costs a Windows
+# runner and several minutes, and `test-build` already does it on demand.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push supersedes an in-flight run on the same ref
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: App — typecheck & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # Nothing here runs Electron or touches the database, so skip the
+      # install scripts that download the Electron binary and rebuild
+      # better-sqlite3 against it. Types and test sources resolve either way,
+      # and it takes the job from minutes to seconds.
+      - run: npm ci --ignore-scripts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Scoring tests
+        run: npm test
+
+  website:
+    name: Website — typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - run: npm ci
+        working-directory: website
+
+      # Runs tsc --noEmit, then vite build, then the prerender pass. Prerender
+      # reads live community data and fails soft, so a Supabase hiccup leaves
+      # the build green rather than blocking a pull request.
+      - run: npm run build
+        working-directory: website

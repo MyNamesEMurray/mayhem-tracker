@@ -229,7 +229,8 @@ export function championBuildPath(
 
 // The "ideal build" ranking. A build entry has to earn its place twice: a
 // workable sample, and a record that isn't losing. Ranking is by confidence
-// score, so a solid 58% over hundreds of games beats a lucky 100% over five.
+// score, so an entry overtakes a lucky 5-0 once its sample makes the rate
+// defensible — 60.1% over 2,635 games does it, while 58% needs a few thousand.
 //
 // This used to pad the list with the most-picked entries when nothing
 // qualified, which meant a champion with thin data got a "core build" made of

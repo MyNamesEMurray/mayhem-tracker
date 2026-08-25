@@ -88,15 +88,3 @@ export function formatDateTime(timestamp: number): string {
 export function formatPatch(patch: string): string {
   return toYearPatch(patch);
 }
-
-export function winRatePercent(wins: number, total: number): string {
-  if (total === 0) return "0%";
-  return `${((wins / total) * 100).toFixed(1)}%`;
-}
-
-// Win rate is outcome-only (design rule 2): green ≥50%, red below, muted for
-// small samples (<20 games).
-export function winRateColor(wins: number, total: number): string {
-  if (total < 20) return "text-lol-text";
-  return wins / total >= 0.5 ? "text-lol-win" : "text-lol-loss";
-}

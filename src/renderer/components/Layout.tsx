@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useLcuStatus } from "../hooks/useLcuStatus";
 import { useBackfill } from "../hooks/useBackfill";
 import type { UpdateInfo } from "../lib/types";
-import { eventTrace, recordGamesUpdated } from "../lib/eventTrace";
+import { recordGamesUpdated } from "../lib/eventTrace";
 import TitleBar from "./TitleBar";
 import TabBar from "./TabBar";
 import UpdateDialog from "./UpdateDialog";

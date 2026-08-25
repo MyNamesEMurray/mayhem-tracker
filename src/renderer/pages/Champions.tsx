@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useStatsFilters } from "../hooks/useStatsFilters";
-import { useChampionData, getChampionName, useAugmentData } from "../hooks/useChampions";
-import type { ChampionStats, AugmentStats, ItemStats, MatchListItem } from "../lib/types";
+import { useChampionData, getChampionName } from "../hooks/useChampions";
+import type { ChampionStats } from "../lib/types";
 import ChampionIcon from "../components/ChampionIcon";
-import AugmentIcon from "../components/AugmentIcon";
-import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../components/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
@@ -17,17 +15,7 @@ import { assignTiers, score, TIER_ORDER } from "../lib/champStats";
 import SortHeader, { useSort } from "../components/SortHeader";
 import QueueSelect from "../components/QueueSelect";
 import { QUEUE_LABELS } from "../../shared/queues";
-import {
-  formatAvg,
-  formatWhole,
-  formatKDA,
-  formatDuration,
-  formatTimeAgo,
-  formatDateTime,
-  kdaRatio,
-  kdaColor,
-  scoreRampColor,
-} from "../lib/format";
+import { formatAvg, formatWhole, kdaRatio, kdaColor } from "../lib/format";
 
 type SortKey =
   | "score"
@@ -67,7 +55,6 @@ export default function Champions() {
     const unsub = window.api.onGamesUpdated(() => refetch());
     return unsub;
   }, [refetch]);
-
 
   // Clicking a champion opens the full page — tier, score, core build, best
   // augments per rarity — rather than a three-column strip inside the row.
