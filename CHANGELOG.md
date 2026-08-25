@@ -6,6 +6,15 @@ it in the update window — so every entry here should be readable at a
 glance: what changed, why you'd care. Newest first. Only credit people by
 name when a change came from their reported issue or suggestion.
 
+Not every version needs a section. A merge that touches the app cuts a patch
+release on its own, and plenty of those change nothing anyone can see — a
+refactor, a build fix, a test. Those publish with an empty body, and the
+update window skips a release with nothing in it, so the gaps in the numbering
+below are deliberate. Write a section when there is something to tell someone,
+under the version that merge will ship as: the next patch after the newest tag,
+unless `package.json` names a higher one. To ship a minor or a major instead,
+set that version in `package.json` and head the section with it.
+
 The update window shows every version between what someone is running and
 what they're installing, so a bullet fixing a bug we shipped can reach
 people who never ran the broken build. Mark those with the release that
