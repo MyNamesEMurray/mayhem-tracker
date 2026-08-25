@@ -26,9 +26,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # On both platforms, because the app ships on Windows. Testing it only on
+  # Linux let a test build a path by concatenating a file:// URL's pathname —
+  # fine everywhere except the one operating system anyone runs this on, where
+  # it produced "D:\D:\a\...". The release job builds on Windows and would
+  # eventually have caught it, but failing a release is a slow way to hear it.
   app:
-    name: App — format, typecheck & tests
-    runs-on: ubuntu-latest
+    name: App — format, typecheck & tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        # Same shell the release job uses, so both see the same glob expansion
+        shell: bash
     steps:
       - uses: actions/checkout@v7
 

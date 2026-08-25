@@ -15,9 +15,14 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const SHARED_UI = new URL("../src/shared/ui/", import.meta.url).pathname;
-const THEME = new URL("../src/shared/theme.css", import.meta.url).pathname;
+// fileURLToPath, not .pathname: on Windows a file:// URL's pathname is
+// "/D:/a/..." with a leading slash, and joining that against the working
+// directory produces "D:\D:\a\..." — which is how this first ran on a Windows
+// runner, and only there, since the app is built on one but tested on Linux.
+const SHARED_UI = fileURLToPath(new URL("../src/shared/ui/", import.meta.url));
+const THEME = fileURLToPath(new URL("../src/shared/theme.css", import.meta.url));
 
 const AVOID = [
   "ring",
