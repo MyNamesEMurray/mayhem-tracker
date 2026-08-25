@@ -11,7 +11,7 @@ import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import TierBadge from "../components/TierBadge";
-import { assignTiers, score, TIER_ORDER } from "../lib/champStats";
+import { assignTiers, score, TIER_ORDER } from "../../shared/score";
 import SortHeader, { useSort } from "../components/SortHeader";
 import QueueSelect from "../components/QueueSelect";
 import { QUEUE_LABELS } from "../../shared/queues";

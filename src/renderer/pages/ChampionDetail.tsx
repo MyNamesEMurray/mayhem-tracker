@@ -16,7 +16,7 @@ import {
   LIST_MIN_PICKS,
   MIN_SAMPLE,
   winRate,
-} from "../lib/champStats";
+} from "../../shared/score";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import { formatAvg, formatPatch, kdaColor } from "../lib/format";
 import {

@@ -1,4 +1,4 @@
-import { MIN_SAMPLE } from "../lib/champStats";
+import { MIN_SAMPLE } from "../../shared/score";
 
 interface WinRateBarProps {
   wins: number;

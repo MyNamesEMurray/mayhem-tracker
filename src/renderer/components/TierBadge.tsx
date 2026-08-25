@@ -1,4 +1,4 @@
-import { TIER_MIN_SAMPLE, type Tier } from "../lib/champStats";
+import { TIER_MIN_SAMPLE, type Tier } from "../../shared/score";
 
 // The letter always carries the tier — color reinforces, never replaces it.
 // Same palette as the website's badge so a champion reads identically in both.

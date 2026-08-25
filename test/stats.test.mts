@@ -5,11 +5,11 @@
 // Score is the floor of a 95% Wilson interval, and the whole point of it is
 // that sample size moves the number on its own.
 //
-// Second, and the reason this file spans both trees: the app and the site each
-// carry their own copy of this maths (src/renderer/lib/champStats.ts and
-// website/src/lib/stats.ts). They agree today, and nothing but this file makes
-// them keep agreeing. A champion that is A-tier on one surface and B on the
-// other — both citing the same published method — is the failure this guards.
+// Second, that the site still reaches for this module rather than a copy of
+// it. The maths lived in two files until src/shared/score.ts merged them, and
+// the last suite asserts website/src/lib/stats.ts re-exports these exact
+// functions — identity, not equality — so a re-fork fails here rather than
+// shipping as a champion that is A-tier on one surface and B on the other.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -22,7 +22,7 @@ import {
   score,
   TIER_MIN_SAMPLE,
   TIER_ORDER,
-} from "../src/renderer/lib/champStats.ts";
+} from "../src/shared/score.ts";
 import * as site from "../website/src/lib/stats.ts";
 
 // A spread of records: perfect, thin, losing, even, and proven-over-many.
@@ -231,58 +231,26 @@ describe("rankForBuild — what a build entry has to earn", () => {
   });
 });
 
-describe("the app and the site compute the same numbers", () => {
-  test("score() agrees on every record", () => {
+describe("the site uses this module rather than a copy of it", () => {
+  test("website/src/lib/stats.ts re-exports these exact functions", () => {
+    assert.equal(site.score, score, "stats.ts exports a different score()");
+    assert.equal(site.assignTiers, assignTiers, "stats.ts exports a different assignTiers()");
+    assert.equal(site.rankForBuild, rankForBuild, "stats.ts exports a different rankForBuild()");
+  });
+
+  test("and the same sample floors and tier ladder", () => {
+    assert.equal(site.MIN_SAMPLE, MIN_SAMPLE);
+    assert.equal(site.TIER_MIN_SAMPLE, TIER_MIN_SAMPLE);
+    assert.equal(site.LIST_MIN_PICKS, LIST_MIN_PICKS);
+    assert.equal(site.TIER_ORDER, TIER_ORDER, "stats.ts exports a different TIER_ORDER");
+  });
+
+  // A safety net for the re-export itself: if someone swaps stats.ts back to a
+  // local implementation the identity checks above catch it, but this catches
+  // a re-export that resolves to something subtly different.
+  test("and produces the same numbers through the site's own entry point", () => {
     for (const [wins, games] of RECORDS) {
-      assert.equal(
-        score(wins, games),
-        site.score(wins, games),
-        `score(${wins}, ${games}) differs between the tracker and mayhemstats.com`,
-      );
+      assert.equal(site.score(wins, games), score(wins, games), `score(${wins}, ${games})`);
     }
-  });
-
-  test("the sample thresholds agree", () => {
-    assert.equal(MIN_SAMPLE, site.MIN_SAMPLE);
-    assert.equal(TIER_MIN_SAMPLE, site.TIER_MIN_SAMPLE);
-    assert.equal(LIST_MIN_PICKS, site.LIST_MIN_PICKS);
-  });
-
-  test("the tier ladder agrees", () => {
-    assert.deepEqual(TIER_ORDER, site.TIER_ORDER);
-  });
-
-  test("assignTiers() agrees on the same cohort", () => {
-    const cohort = Array.from({ length: 37 }, (_, i) => ({
-      id: i,
-      wins: 260 - i * 5,
-      games: 500,
-    }));
-    const mine = assignTiers(
-      cohort,
-      (c) => score(c.wins, c.games),
-      (c) => c.id,
-    );
-    const theirs = site.assignTiers(
-      cohort,
-      (c) => site.score(c.wins, c.games),
-      (c) => c.id,
-    );
-    assert.deepEqual([...mine.entries()], [...theirs.entries()]);
-  });
-
-  test("rankForBuild() agrees on the same list", () => {
-    const list = [
-      { picks: 5, wins: 5 },
-      { picks: 300, wins: 174 },
-      { picks: 200, wins: 80 },
-      { picks: 40, wins: 20 },
-      { picks: 120, wins: 70 },
-    ];
-    const args = [(i: { picks: number }) => i.picks, (i: { wins: number }) => i.wins] as const;
-    assert.deepEqual(
-      rankForBuild(list, args[0], args[1], 5, 4),
-      site.rankForBuild(list, args[0], args[1], 5, 4),
-    );
   });
 });

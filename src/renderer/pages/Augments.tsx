@@ -17,7 +17,7 @@ import { QUEUE_LABELS } from "../../shared/queues";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import SortHeader, { useSort } from "../components/SortHeader";
 import TierBadge from "../components/TierBadge";
-import { assignTiers, score, TIER_ORDER } from "../lib/champStats";
+import { assignTiers, score, TIER_ORDER } from "../../shared/score";
 import { formatWhole, kdaColor, kdaRatio } from "../lib/format";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";

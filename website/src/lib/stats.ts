@@ -1,18 +1,27 @@
 import type { AugmentStatRow, AugmentTotalRow, ChampionStatRow } from "./api";
 
-// Win rates below this many games render muted instead of colored, so a 3-0
-// augment doesn't outshine a 60% one with 200 picks
-export const MIN_SAMPLE = 20;
+// Score, tiers and the sample-size floors live in src/shared/score.ts, which
+// the desktop app imports from too — the site's build root is website/, but
+// the repository is checked out whole, so the import resolves in dev, in the
+// production build, and in the prerender pass alike. Re-exported here so the
+// call sites below and in components/ keep importing from one place.
+//
+// Written with the .ts extension so plain Node resolves it too — Vite and tsc
+// are happy either way, but test/stats.test.mts loads this file directly to
+// check the re-export still points at the shared module.
+export {
+  assignTiers,
+  LIST_MIN_PICKS,
+  MIN_SAMPLE,
+  rankForBuild,
+  score,
+  TIER_MIN_SAMPLE,
+  TIER_ORDER,
+  winRate,
+} from "../../../src/shared/score.ts";
+export type { Tier } from "../../../src/shared/score.ts";
 
-// Tier badges render dimmed below this many games
-export const TIER_MIN_SAMPLE = 10;
-
-// The long-tail item and augment lists hide anything under this many picks.
-// The confidence score already sinks a two-pick record to the bottom rather
-// than the top, so this is now about noise rather than ranking: a row that
-// says 100% over two games is a distraction whatever it sorts as. The build
-// panels above them use their own, stricter floors.
-export const LIST_MIN_PICKS = 5;
+import { score } from "../../../src/shared/score.ts";
 
 export const QUEUE_LABELS: Record<number, string> = {
   2400: "ARAM Mayhem",
@@ -227,63 +236,6 @@ export function championBuildPath(
     .sort((a, b) => a.avgBuyS - b.avgBuyS);
 }
 
-// The "ideal build" ranking. A build entry has to earn its place twice: a
-// workable sample, and a record that isn't losing. Ranking is by confidence
-// score, so an entry overtakes a lucky 5-0 once its sample makes the rate
-// defensible — 60.1% over 2,635 games does it, while 58% needs a few thousand.
-//
-// This used to pad the list with the most-picked entries when nothing
-// qualified, which meant a champion with thin data got a "core build" made of
-// items that had never won a game — presenting coverage as a recommendation.
-// Falling short of `count` now says so, and the caller shows an empty state.
-export function rankForBuild<T>(
-  list: T[],
-  getPicks: (t: T) => number,
-  getWins: (t: T) => number,
-  minPicks: number,
-  count: number,
-): T[] {
-  return list
-    .filter((x) => {
-      const picks = getPicks(x);
-      return picks >= minPicks && getWins(x) * 2 >= picks;
-    })
-    .sort((a, b) => score(getWins(b), getPicks(b)) - score(getWins(a), getPicks(a)))
-    .slice(0, count);
-}
-
-// ---- Score & tiers ----
-
-// Score: the one number every ranking on the site is built from, out of 100.
-//
-// It is the lower bound of the Wilson interval at 95% — read it as "the win
-// rate this record supports". A perfect 5-0 scores 56.6, because five games
-// cannot rule out a coin flip; 60.1% over 2,635 games scores 58.2, because
-// that many games can. Sample size moves the number on its own, so an entry
-// climbs as it proves itself rather than arriving at the top and sliding down,
-// and every score sits below the raw win rate by however much doubt is left.
-//
-// This replaced a shrunk win rate — the observed rate blended with a 50% prior
-// worth twenty games — which champions, augments and items all used to rank
-// by. It failed the case it existed for: a 5-0 item and a 60.1% one over 2,635
-// games both scored 60.0, a tie at 500x the evidence. The two formulas ran
-// side by side for a while, one for champions and one for the item and augment
-// lists, which meant one word for two numbers; this is the whole site on the
-// interval.
-const WILSON_Z = 1.96;
-
-export function score(wins: number, games: number): number {
-  if (games <= 0) return 0;
-  const p = wins / games;
-  const z2 = WILSON_Z * WILSON_Z;
-  const denominator = 1 + z2 / games;
-  const centre = p + z2 / (2 * games);
-  const margin = WILSON_Z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
-  return (100 * (centre - margin)) / denominator;
-}
-
-export type Tier = "S+" | "S" | "A" | "B" | "C" | "D";
-
 // The unified performance ramp for KDA ratios: amber ≥5, sky ≥4, emerald ≥3,
 // slate below — shared visual language with the desktop app's score colors.
 export function kdaRampClass(ratio: number): string {
@@ -291,36 +243,6 @@ export function kdaRampClass(ratio: number): string {
   if (ratio >= 4) return "text-sky-400";
   if (ratio >= 3) return "text-emerald-400";
   return "text-lol-text";
-}
-
-// Best to worst. Sorting a table by its tier column orders against this.
-export const TIER_ORDER: Tier[] = ["S+", "S", "A", "B", "C", "D"];
-
-// Rank-percentile cutoffs, top to bottom
-const TIER_CUTOFFS: [Tier, number][] = [
-  ["S+", 0.05],
-  ["S", 0.15],
-  ["A", 0.35],
-  ["B", 0.65],
-  ["C", 0.85],
-  ["D", 1.01],
-];
-
-// Tiers by score rank within a cohort (all champions, or augments of one
-// rarity). Relative by design: the current meta always has an S+ and a D.
-export function assignTiers<T>(
-  items: T[],
-  getScore: (t: T) => number,
-  getKey: (t: T) => number,
-): Map<number, Tier> {
-  const sorted = [...items].sort((a, b) => getScore(b) - getScore(a));
-  const tiers = new Map<number, Tier>();
-  sorted.forEach((item, i) => {
-    const pct = (i + 1) / sorted.length;
-    const tier = TIER_CUTOFFS.find(([, cut]) => pct <= cut)![0];
-    tiers.set(getKey(item), tier);
-  });
-  return tiers;
 }
 
 export function kdaRatio(kills: number, deaths: number, assists: number): number {

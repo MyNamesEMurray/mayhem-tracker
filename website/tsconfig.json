@@ -10,6 +10,9 @@
     "noUnusedParameters": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    // src/lib/stats.ts re-exports ../../../src/shared/score.ts by full path so
+    // plain Node can resolve it as well as Vite
+    "allowImportingTsExtensions": true,
     "noEmit": true
   },
   "include": ["src"]
