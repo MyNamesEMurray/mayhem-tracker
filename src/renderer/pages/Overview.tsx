@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { Button } from "../../shared/ui/primitives";
 import { Link, useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useNow } from "../hooks/useNow";
@@ -11,7 +12,7 @@ import ChampionIcon from "../../shared/ui/ChampionIcon";
 import ItemIcon from "../components/ItemIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import MultikillBadge from "../components/MultikillBadge";
-import StatCard from "../components/StatCard";
+import { StatTile } from "../../shared/ui/primitives";
 import { RefreshIcon } from "../../shared/ui/icons";
 import {
   formatTimeAgo,
@@ -192,36 +193,32 @@ export default function Overview() {
               {updatedText}
             </span>
           )}
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing || backfilling}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-semibold rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold hover:bg-lol-gold/25 disabled:opacity-50 transition-colors"
-          >
+          <Button onClick={handleRefresh} disabled={refreshing || backfilling}>
             <RefreshIcon className={`w-[13px] h-[13px] ${refreshing ? "animate-spin" : ""}`} />
             {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 min-[880px]:grid-cols-4 gap-3">
-        <StatCard label="Games" value={totalGames} subtext="all time" />
-        <StatCard
+        <StatTile label="Games" value={totalGames} sub="all time" />
+        <StatTile
           label="Win rate"
           value={winRate}
           valueClassName={totalGames > 0 ? "text-lol-win" : "text-lol-text-bright"}
-          subtext={`${wins} W · ${losses} L`}
+          sub={`${wins} W · ${losses} L`}
         />
-        <StatCard
+        <StatTile
           label="KDA"
           value={kda}
           valueClassName={dashboard ? kdaStringColor(kda) : "text-lol-text-bright"}
-          subtext={`${avg(dashboard?.totalKills ?? 0)} / ${avg(dashboard?.totalDeaths ?? 0)} / ${avg(dashboard?.totalAssists ?? 0)}`}
+          sub={`${avg(dashboard?.totalKills ?? 0)} / ${avg(dashboard?.totalDeaths ?? 0)} / ${avg(dashboard?.totalAssists ?? 0)}`}
         />
-        <StatCard
+        <StatTile
           label="Pentakills"
           value={dashboard?.multikills.pentas ?? 0}
-          subtext={`${dashboard?.multikills.quadras ?? 0} quadrakills`}
+          sub={`${dashboard?.multikills.quadras ?? 0} quadrakills`}
         />
       </div>
 

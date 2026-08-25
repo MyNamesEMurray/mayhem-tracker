@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "../../shared/ui/primitives";
 import type { UpdateInfo } from "../lib/types";
 import { RefreshIcon } from "../../shared/ui/icons";
 
@@ -116,14 +117,10 @@ export default function UpdateDialog({
           >
             Not Now
           </button>
-          <button
-            onClick={handleUpdate}
-            disabled={downloading || !update.assetUrl}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-lol-gold/25 bg-lol-gold/10 text-lol-gold hover:bg-lol-gold/20 disabled:opacity-50 transition-colors"
-          >
+          <Button onClick={handleUpdate} disabled={downloading || !update.assetUrl} size="sm">
             <RefreshIcon className={`w-3 h-3 ${downloading ? "animate-spin" : ""}`} />
             {downloading ? "Updating..." : "Update & Restart"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

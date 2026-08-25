@@ -1,6 +1,4 @@
-import { useMemo } from "react";
 import { useItemData } from "../hooks/useChampions";
-import { itemIconSources } from "../../shared/cdn";
 import SharedItemIcon from "../../shared/ui/ItemIcon";
 
 // The app's item lookup is per-patch: match history draws a game's items from
@@ -26,14 +24,11 @@ export default function ItemIcon({
   const latestItems = useItemData(null);
   const item = itemData[itemId] ?? (patch ? latestItems[itemId] : undefined);
 
-  const sources = useMemo(
-    () => (itemId ? itemIconSources(itemId, item?.iconPath, item?.branch) : []),
-    [itemId, item?.iconPath, item?.branch],
-  );
-
   return (
     <SharedItemIcon
-      sources={sources}
+      itemId={itemId}
+      iconPath={item?.iconPath}
+      branch={item?.branch}
       name={item?.name}
       size={size}
       showName={showName}

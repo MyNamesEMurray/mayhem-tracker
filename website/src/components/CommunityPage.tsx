@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { buttonClass, LABEL, PANEL, StatTile } from "../../../src/shared/ui/primitives.tsx";
 import {
   fetchCommunityTotals,
   fetchGamesPerDay,
@@ -11,22 +12,10 @@ import {
 } from "../lib/api";
 import { formatPatch } from "../lib/stats";
 
-const PANEL = "bg-lol-card rounded-xl border border-lol-border/60";
 const CHART_DAYS = 45;
 // A patch label needs this many columns of clear run before the next boundary,
 // or it collides with its neighbour and both become unreadable
 const LABEL_MIN_SPAN = 4;
-const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text";
-
-function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className={`${PANEL} p-[18px]`}>
-      <p className={LABEL}>{label}</p>
-      <p className="text-2xl font-bold text-lol-text-bright mt-1">{value}</p>
-      <p className="text-xs text-lol-text mt-0.5">{sub}</p>
-    </div>
-  );
-}
 
 // The impact of the crowdsourced database: every number here exists because
 // players opted in — there is no other source of ARAM Mayhem data.
@@ -138,17 +127,17 @@ export default function CommunityPage() {
       </p>
 
       <div className="grid grid-cols-2 min-[881px]:grid-cols-4 gap-4">
-        <Tile
+        <StatTile
           label="Contributors"
           value={totals ? totals.contributors.toLocaleString() : "—"}
           sub="players sharing their games"
         />
-        <Tile
+        <StatTile
           label="Games analyzed"
           value={totals ? totals.games.toLocaleString() : "—"}
           sub={`${performances.toLocaleString()} player performances`}
         />
-        <Tile
+        <StatTile
           label="Gameplay analyzed"
           value={
             totals
@@ -157,7 +146,7 @@ export default function CommunityPage() {
           }
           sub="of ARAM Mayhem, end to end"
         />
-        <Tile
+        <StatTile
           label="Champion matchups"
           value={coverage ? coverage.matchups.toLocaleString() : "—"}
           sub={
@@ -240,10 +229,7 @@ export default function CommunityPage() {
             .
           </p>
         </div>
-        <a
-          href="/download/"
-          className="shrink-0 min-[861px]:ml-auto inline-flex items-center justify-center gap-2 rounded-lg border border-lol-gold/30 bg-lol-gold/10 px-4 py-2.5 text-[13px] font-semibold text-lol-gold hover:bg-lol-gold/20 transition-colors"
-        >
+        <a href="/download/" className={buttonClass("gold", "lg", "shrink-0 min-[861px]:ml-auto")}>
           <svg
             width="14"
             height="14"

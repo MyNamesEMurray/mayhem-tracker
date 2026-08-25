@@ -25,7 +25,7 @@ import ItemIcon from "../components/ItemIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import MultikillBadge from "../components/MultikillBadge";
 import StatBars from "../components/StatBars";
-import StatCard from "../components/StatCard";
+import { PANEL, StatTile } from "../../shared/ui/primitives";
 import { ArrowDownIcon } from "../../shared/ui/icons";
 import {
   formatDuration,
@@ -252,17 +252,17 @@ export default function MatchHistory() {
       {/* Stat Cards */}
       {dashboard && (
         <div className="grid grid-cols-3 gap-4">
-          <StatCard
+          <StatTile
             label="Total Games"
             value={dashboard.totalGames}
-            subtext={`${dashboard.wins}W ${losses}L · ${winRate} win rate`}
+            sub={`${dashboard.wins}W ${losses}L · ${winRate} win rate`}
           />
-          <StatCard
+          <StatTile
             label="Avg KDA"
             value={`${avgKills} / ${avgDeaths} / ${avgAssists}`}
-            subtext={`${kdaRatio(dashboard.totalKills, dashboard.totalDeaths, dashboard.totalAssists)} KDA · ${dashboard.totalKills} / ${dashboard.totalDeaths} / ${dashboard.totalAssists} total`}
+            sub={`${kdaRatio(dashboard.totalKills, dashboard.totalDeaths, dashboard.totalAssists)} KDA · ${dashboard.totalKills} / ${dashboard.totalDeaths} / ${dashboard.totalAssists} total`}
           />
-          <div className="bg-lol-card rounded-xl border border-lol-border/60 p-4">
+          <div className={`${PANEL} p-4`}>
             <div className="text-[11px] text-lol-text uppercase tracking-wider mb-1">
               Multikills
             </div>
@@ -413,7 +413,7 @@ export default function MatchHistory() {
       </div>
 
       {matches.length === 0 && !loading && (
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-lol-text">
+        <div className={`${PANEL} p-8 text-center text-lol-text`}>
           {championFilter !== undefined ||
           patchFilter !== undefined ||
           queueFilter !== undefined ||

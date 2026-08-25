@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { PANEL } from "../../../src/shared/ui/primitives.tsx";
 import type { ChampionStatRow } from "../lib/api";
 import type { ChampionData } from "../lib/dragon";
 import { getChampionName } from "../lib/dragon";
@@ -139,7 +140,7 @@ export default function ChampionsTable({
         </div>
       </div>
 
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-x-auto">
+      <div className={`${PANEL} overflow-x-auto`}>
         <table className="ctbl table-fixed w-full min-w-[1000px] border-collapse">
           <thead className="bg-lol-dark/50">
             <tr>

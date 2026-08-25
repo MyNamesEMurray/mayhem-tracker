@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { PANEL } from "../../shared/ui/primitives";
 import { useIpc } from "../hooks/useIpc";
 import { useStatsFilters } from "../hooks/useStatsFilters";
 import {
@@ -239,7 +240,7 @@ export default function Augments() {
 
       <SourceSwitch source={source} onChange={setSource} />
 
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
+      <div className={`${PANEL} overflow-hidden`}>
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>

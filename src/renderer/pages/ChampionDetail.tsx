@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PANEL, LABEL } from "../../shared/ui/primitives";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useUrlStatsFilters } from "../hooks/useStatsFilters";
 import {
@@ -34,9 +35,6 @@ import TierBadge from "../../shared/ui/TierBadge";
 import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import QueueSelect from "../components/QueueSelect";
-
-const PANEL = "bg-lol-card rounded-xl border border-lol-border/60";
-const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text";
 
 // Same floors the website and the prerendered pages use
 const ITEM_MIN_GAMES = 3;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "../../shared/ui/primitives";
 import { GlobeIcon, RefreshIcon, SwordsIcon, UsersIcon } from "../../shared/ui/icons";
 import Toggle from "./Toggle";
 
@@ -111,13 +112,14 @@ export default function OnboardingWizard() {
               lists, win rates, and the best builds from every contributed game — the community site
               has it all.
             </p>
-            <button
+            <Button
               onClick={() => window.api.openUrl("https://mayhemstats.com")}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold transition-colors hover:bg-lol-gold/25"
+              className="mt-5"
+              size="lg"
             >
               <GlobeIcon width={15} height={15} />
               Explore mayhemstats.com
-            </button>
+            </Button>
           </div>
         )}
 
@@ -156,12 +158,9 @@ export default function OnboardingWizard() {
               >
                 Skip
               </button>
-              <button
-                onClick={() => setStep(step + 1)}
-                className="px-4 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-xs font-semibold transition-colors hover:bg-lol-gold/25"
-              >
+              <Button onClick={() => setStep(step + 1)} size="sm">
                 Next
-              </button>
+              </Button>
             </div>
           )}
         </div>

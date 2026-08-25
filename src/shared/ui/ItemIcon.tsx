@@ -1,22 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { itemIconSources } from "../cdn";
 
 // An item's artwork, and its name when asked for.
 //
-// Presentational on purpose: the caller resolves which URLs are worth trying
-// and what the item is called, because that differs by surface. The app looks
-// items up on the CommunityDragon branch matching the patch a game was played
-// on and falls back twice; the site only ever needs the latest. What is shared
-// is the drawing — the size, the rim, the placeholder that holds its space
-// when nothing loads, and walking the candidate URLs on error.
+// The caller resolves the item — which mapping to look it up in differs by
+// surface, since the app wants the CommunityDragon branch matching the patch a
+// game was played on and the site only ever needs the latest — and hands over
+// what it found. Everything after that is shared: which URLs are worth trying,
+// walking them on error, the size, the rim, and the placeholder that holds its
+// space when nothing loads.
 export default function ItemIcon({
-  sources,
+  itemId,
+  iconPath,
+  branch,
   name,
   size = 24,
   showName = false,
   wrap = false,
 }: {
-  // Candidate URLs, best first. Empty renders the placeholder.
-  sources: string[];
+  itemId: number;
+  // From the item mapping. Absent — an unknown id, or a mapping still loading
+  // — falls straight through to the legacy mirror and then the placeholder.
+  iconPath?: string;
+  // The CommunityDragon branch the path came from. Defaults to "latest".
+  branch?: string;
   name?: string;
   size?: number;
   showName?: boolean;
@@ -25,6 +32,10 @@ export default function ItemIcon({
   wrap?: boolean;
 }) {
   const [attempt, setAttempt] = useState(0);
+  const sources = useMemo(
+    () => (itemId ? itemIconSources(itemId, iconPath, branch) : []),
+    [itemId, iconPath, branch],
+  );
   const key = sources.join("|");
 
   // A different item (or a newly loaded mapping) starts the walk again

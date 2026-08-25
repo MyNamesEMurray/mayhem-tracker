@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PANEL } from "../../../src/shared/ui/primitives.tsx";
 import { fetchAugmentChampions, type AugmentStatRow, type AugmentTotalRow } from "../lib/api";
 import type { AugmentData, ChampionData } from "../lib/dragon";
 import { getAugmentName, getChampionName } from "../lib/dragon";
@@ -164,7 +165,7 @@ export default function AugmentsTable({
         </div>
       </div>
 
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-x-auto">
+      <div className={`${PANEL} overflow-x-auto`}>
         <table className="atbl table-fixed w-full min-w-[960px] border-collapse">
           <thead className="bg-lol-dark/50">
             <tr>

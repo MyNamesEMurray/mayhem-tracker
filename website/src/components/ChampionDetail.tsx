@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LABEL, PANEL } from "../../../src/shared/ui/primitives.tsx";
 import type { AugmentStatRow, ChampionStatRow, ItemPurchaseRow, ItemStatRow } from "../lib/api";
 import {
   getAugmentName,
@@ -50,9 +51,6 @@ function ordinal(n: number): string {
   const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
   return `${n}${suffix}`;
 }
-
-const PANEL = "bg-lol-card rounded-xl border border-lol-border/60";
-const LABEL = "text-[11px] font-medium uppercase tracking-[.08em] text-lol-text";
 
 export default function ChampionDetail({
   championId,

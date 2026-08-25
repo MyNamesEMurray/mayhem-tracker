@@ -13,6 +13,7 @@ import {
 } from "./lib/api";
 import { GameDataProvider, NO_AUGMENTS } from "../../src/shared/ui/GameData.tsx";
 import { DownloadIcon, InfoIcon, SwordsIcon } from "../../src/shared/ui/icons.tsx";
+import { Button, PANEL, buttonClass } from "../../src/shared/ui/primitives.tsx";
 import {
   loadAugmentData,
   loadChampionData,
@@ -380,7 +381,11 @@ export default function App() {
             <a
               href="/download/"
               title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
-              className="ml-auto min-[1081px]:order-last flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
+              className={buttonClass(
+                "gold",
+                "md",
+                "ml-auto min-[1081px]:order-last whitespace-nowrap",
+              )}
             >
               <DownloadIcon width={14} height={14} />
               <span className="max-[380px]:hidden">Download app</span>
@@ -441,12 +446,7 @@ export default function App() {
           {error && (
             <div className="bg-lol-card border border-lol-loss/40 rounded-xl p-5 text-sm">
               <p className="text-lol-loss mb-2">Couldn't load community stats: {error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-1.5 rounded text-sm bg-lol-gold/20 text-lol-gold hover:bg-lol-gold/30 transition-colors"
-              >
-                Retry
-              </button>
+              <Button onClick={() => window.location.reload()}>Retry</Button>
             </div>
           )}
 
@@ -487,14 +487,14 @@ export default function App() {
               >
                 ← All champions
               </button>
-              <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
+              <div className={`${PANEL} p-8 text-center text-sm text-lol-text`}>
                 No champion found at this address.
               </div>
             </div>
           )}
 
           {data && onChampionPage && selectedChampion != null && championRowsError && (
-            <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-sm text-lol-text">
+            <div className={`${PANEL} p-8 text-center text-sm text-lol-text`}>
               Could not load this champion's builds. {championRowsError}
             </div>
           )}

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { PANEL } from "../../shared/ui/primitives";
 import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
@@ -79,7 +80,7 @@ export default function Friends() {
         />
       </div>
 
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
+      <div className={`${PANEL} overflow-hidden`}>
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>

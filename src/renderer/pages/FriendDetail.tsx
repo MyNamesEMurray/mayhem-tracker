@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { PANEL } from "../../shared/ui/primitives";
 import { useParams, Link } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
@@ -71,7 +72,7 @@ export default function FriendDetail() {
     return (
       <div className="w-full space-y-4">
         <BackLink />
-        <div className="bg-lol-card rounded-xl border border-lol-border/60 p-8 text-center text-lol-text">
+        <div className={`${PANEL} p-8 text-center text-lol-text`}>
           No games found with this player.
         </div>
       </div>

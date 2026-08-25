@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { PANEL } from "../../shared/ui/primitives";
 import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -195,7 +196,7 @@ export default function Champions() {
 
       <SourceSwitch source={source} onChange={setSource} />
 
-      <div className="bg-lol-card rounded-xl border border-lol-border/60 overflow-hidden">
+      <div className={`${PANEL} overflow-hidden`}>
         <table className="w-full">
           <thead className="bg-lol-dark/50">
             <tr>

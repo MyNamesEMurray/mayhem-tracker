@@ -1,5 +1,4 @@
 import { getItemName, type ItemData } from "../lib/dragon";
-import { itemIconSources } from "../../../src/shared/cdn.ts";
 import SharedItemIcon from "../../../src/shared/ui/ItemIcon.tsx";
 
 // The site only ever shows the current patch's items, so resolving one is a
@@ -17,10 +16,10 @@ export default function ItemIcon({
   showName?: boolean;
   wrap?: boolean;
 }) {
-  const item = itemData[itemId];
   return (
     <SharedItemIcon
-      sources={item ? itemIconSources(itemId, item.iconPath) : []}
+      itemId={itemId}
+      iconPath={itemData[itemId]?.iconPath}
       name={getItemName(itemData, itemId)}
       size={size}
       showName={showName}
