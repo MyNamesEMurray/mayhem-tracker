@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 // and what the item is called, because that differs by surface. The app looks
 // items up on the CommunityDragon branch matching the patch a game was played
 // on and falls back twice; the site only ever needs the latest. What is shared
-// is the drawing — the size, the outline, the placeholder that holds its space
+// is the drawing — the size, the rim, the placeholder that holds its space
 // when nothing loads, and walking the candidate URLs on error.
 export default function ItemIcon({
   sources,

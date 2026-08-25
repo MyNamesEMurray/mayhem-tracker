@@ -18,6 +18,7 @@ import {
   winRate,
 } from "../../shared/score";
 import RarityFilter, { type Rarity } from "../../shared/ui/RarityFilter";
+import SearchField from "../../shared/ui/SearchField";
 import { formatAvg, formatPatch, kdaColor } from "../lib/format";
 import {
   resolveSource,
@@ -498,7 +499,7 @@ export default function ChampionDetail() {
           title="All items"
           search={itemSearch}
           onSearch={setItemSearch}
-          placeholder="Search item…"
+          placeholder="Search item..."
           sort={itemSort}
           onSort={setItemSort}
           filter={
@@ -530,7 +531,7 @@ export default function ChampionDetail() {
           title="All augments"
           search={augSearch}
           onSearch={setAugSearch}
-          placeholder="Search augment…"
+          placeholder="Search augment..."
           sort={augSort}
           onSort={setAugSort}
           filter={<RarityFilter value={augRarity} onChange={setAugRarity} />}
@@ -590,12 +591,11 @@ function StatTable({
             the search sits flush right when the cap bites on a wide panel
             instead of leaving a hole beside it on a wrapped one. */}
         <div className="flex-1 min-w-[96px] max-w-[280px]">
-          <input
-            type="text"
+          <SearchField
             value={search}
-            onChange={(e) => onSearch(e.target.value)}
+            onChange={onSearch}
             placeholder={placeholder}
-            className="input w-full"
+            clearable={false}
           />
         </div>
       </div>

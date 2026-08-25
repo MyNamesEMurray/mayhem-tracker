@@ -12,6 +12,7 @@ import {
   type ItemStatRow,
 } from "./lib/api";
 import { GameDataProvider } from "../../src/shared/ui/GameData.tsx";
+import { DownloadIcon, InfoIcon, SwordsIcon } from "../../src/shared/ui/icons.tsx";
 import {
   loadAugmentData,
   loadChampionData,
@@ -342,7 +343,7 @@ export default function App() {
       onClick={onClick}
       className={`flex items-center px-3.5 max-[360px]:px-2 text-[13px] font-semibold transition-colors ${
         active
-          ? "text-lol-gold-light shadow-[inset_0_-2px_0_#c89b3c]"
+          ? "text-lol-gold-light shadow-[inset_0_-2px_0_var(--color-lol-gold)]"
           : "text-lol-text hover:text-lol-gold-light"
       }`}
     >
@@ -369,25 +370,7 @@ export default function App() {
               }}
               className="flex items-center gap-2 py-3 font-extrabold text-[17px] tracking-[.03em] text-lol-gold-light shrink-0"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#c89b3c"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
-                <line x1="13" x2="19" y1="19" y2="13" />
-                <line x1="16" x2="20" y1="16" y2="20" />
-                <line x1="19" x2="21" y1="21" y2="19" />
-                <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 10" />
-                <line x1="5" x2="9" y1="14" y2="18" />
-                <line x1="7" x2="4" y1="17" y2="20" />
-                <line x1="3" x2="5" y1="19" y2="21" />
-              </svg>
+              <SwordsIcon width={20} height={20} className="text-lol-gold" />
               <span>
                 MAYHEM<span className="text-lol-gold">STATS</span>
               </span>
@@ -399,20 +382,7 @@ export default function App() {
               title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
               className="ml-auto min-[1081px]:order-last flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-lol-gold/50 bg-lol-gold/15 text-lol-gold text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-lol-gold/25"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 3v12" />
-                <path d="m7 10 5 5 5-5" />
-                <path d="M4 21h16" />
-              </svg>
+              <DownloadIcon width={14} height={14} />
               <span className="max-[380px]:hidden">Download app</span>
               <span className="min-[381px]:hidden">App</span>
             </a>
@@ -482,20 +452,12 @@ export default function App() {
 
           {autoWiden && !onCommunityPage && (
             <div className="mb-4 flex items-start gap-3 rounded-xl border border-lol-gold/25 bg-lol-gold/[0.06] px-4 py-3">
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#c89b3c"
-                strokeWidth="2"
-                strokeLinecap="round"
-                className="mt-[3px] shrink-0"
+              <InfoIcon
+                width={15}
+                height={15}
+                className="mt-[3px] shrink-0 text-lol-gold"
                 aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 11v5M12 8h.01" />
-              </svg>
+              />
               <p className="text-[13px] leading-relaxed text-lol-text">
                 <span className="text-lol-text-bright">
                   Showing {formatPatch(autoWiden.from)}–{formatPatch(autoWiden.to)}.

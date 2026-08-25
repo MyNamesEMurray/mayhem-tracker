@@ -78,7 +78,7 @@ export function useTooltip<T extends HTMLElement>(content: ReactNode): Tooltip<T
     const { width, height } = bubble.getBoundingClientRect();
 
     // Above by preference, below when the trigger is near the top of the
-    // window — the app's densest augment rows sit under a sticky header
+    // window — the app's densest augment rows sit under a pinned header
     const above = anchor.top - height - GAP;
     const below = Math.min(anchor.bottom + GAP, window.innerHeight - height - EDGE);
     const top = Math.max(EDGE, above >= EDGE ? above : below);

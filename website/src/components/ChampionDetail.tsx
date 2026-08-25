@@ -31,6 +31,7 @@ import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.t
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
+import SearchField from "../../../src/shared/ui/SearchField.tsx";
 
 // A build entry needs this many games behind it before it can be recommended
 // at all — below that a win rate is noise, however good it looks
@@ -367,7 +368,12 @@ export default function ChampionDetail({
               </ToggleChip>
             )}
             <div className="flex-1 min-w-[96px] sm:flex-none sm:w-[180px] sm:ml-auto">
-              <SearchBox value={itemSearch} onChange={setItemSearch} placeholder="Search item..." />
+              <SearchField
+                value={itemSearch}
+                onChange={setItemSearch}
+                placeholder="Search item..."
+                clearable={false}
+              />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
@@ -440,7 +446,12 @@ export default function ChampionDetail({
             <h2 className={LABEL}>All augments</h2>
             <RarityFilter value={augRarity} onChange={setAugRarity} compact />
             <div className="flex-1 min-w-[96px] sm:flex-none sm:w-[150px] sm:ml-auto">
-              <SearchBox value={augSearch} onChange={setAugSearch} placeholder="Search..." />
+              <SearchField
+                value={augSearch}
+                onChange={setAugSearch}
+                placeholder="Search..."
+                clearable={false}
+              />
             </div>
           </div>
           <table className="table-fixed w-full border-collapse">
@@ -595,27 +606,5 @@ function ToggleChip({
     >
       {children}
     </button>
-  );
-}
-
-// Local slim search input (the shared SearchInput carries a clear button and
-// larger default width than these panel headers want)
-function SearchBox({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="input w-full"
-    />
   );
 }

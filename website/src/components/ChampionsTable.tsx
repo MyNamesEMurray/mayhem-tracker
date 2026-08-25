@@ -12,7 +12,7 @@ import {
   type Filters,
 } from "../lib/stats";
 import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
-import SearchInput from "./SearchInput";
+import SearchField from "../../../src/shared/ui/SearchField.tsx";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import { championSlug } from "../lib/slug";
@@ -130,11 +130,11 @@ export default function ChampionsTable({
         </span>
         <SortControl options={sortOptions} sort={sort} onSort={toggle} />
         <div className="ml-auto">
-          <SearchInput
+          <SearchField
             value={search}
             onChange={setSearch}
             placeholder="Search champion..."
-            width={190}
+            width={192}
           />
         </div>
       </div>

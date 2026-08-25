@@ -1,6 +1,14 @@
 import type { SVGProps } from "react";
 
-/* Stroke icons based on Lucide (https://lucide.dev), ISC license */
+/* Stroke icons based on Lucide (https://lucide.dev), ISC license.
+ *
+ * Shared by the desktop app and mayhemstats.com. The site used to carry its
+ * own copy of the crossed swords for the wordmark, written straight into the
+ * page with the brand gold as a literal rather than inherited.
+ *
+ * No size prop: these spread SVGProps with width/height defaulting to 1em and
+ * stroke to currentColor, so they take their size from the type around them
+ * and their colour from whatever sets `color` on an ancestor. */
 
 function Icon({ children, ...props }: SVGProps<SVGSVGElement>) {
   return (
@@ -175,5 +183,48 @@ export function XCircleIcon(props: SVGProps<SVGSVGElement>) {
       <path d="m15 9-6 6" />
       <path d="m9 9 6 6" />
     </Icon>
+  );
+}
+
+// The site's download call to action
+export function DownloadIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M4 21h16" />
+    </Icon>
+  );
+}
+
+// Marks an explanatory notice, like the site's "widened to more patches" bar
+export function InfoIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </Icon>
+  );
+}
+
+// The clear-search glyph. Solid rather than stroked, unlike the rest of this
+// set: it sits at 14px inside a text field, where a stroked circle-and-cross
+// turns to mush. XCircleIcon above is the stroked one, for larger sizes.
+export function ClearIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      width="1em"
+      height="1em"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm2.78-4.22a.75.75 0 0 1-1.06 0L8 9.06l-1.72 1.72a.75.75 0 1 1-1.06-1.06L6.94 8 5.22 6.28a.75.75 0 0 1 1.06-1.06L8 6.94l1.72-1.72a.75.75 0 1 1 1.06 1.06L9.06 8l1.72 1.72a.75.75 0 0 1 0 1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
   );
 }

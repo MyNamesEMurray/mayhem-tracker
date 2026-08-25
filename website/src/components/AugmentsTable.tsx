@@ -16,7 +16,7 @@ import {
 import AugmentIcon from "../../../src/shared/ui/AugmentIcon.tsx";
 import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
 import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
-import SearchInput from "./SearchInput";
+import SearchField from "../../../src/shared/ui/SearchField.tsx";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import { championSlug } from "../lib/slug";
@@ -155,11 +155,11 @@ export default function AugmentsTable({
         </span>
         <SortControl options={sortOptions} sort={sort} onSort={toggle} />
         <div className="ml-auto">
-          <SearchInput
+          <SearchField
             value={search}
             onChange={setSearch}
             placeholder="Search augment..."
-            width={190}
+            width={192}
           />
         </div>
       </div>

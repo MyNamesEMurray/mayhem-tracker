@@ -9,7 +9,7 @@
  * surface (window chrome for the app, the responsive stat tables for the
  * site).
  *
- * Tailwind reads @theme from an imported file the same as an inline one.
+ * Tailwind reads @theme from an imported file the same as one written here.
  */
 
 /* The shared components live outside both surfaces' own source trees, so

@@ -27,7 +27,7 @@ export { default as StatBars } from "../src/renderer/components/StatBars";
 export { default as StatCard } from "../src/renderer/components/StatCard";
 export { default as SummonerIcon } from "../src/renderer/components/SummonerIcon";
 
-// Icon set (desktop renderer)
+// Icon set (shared by both surfaces)
 export {
   SwordsIcon,
   HourglassIcon,
@@ -44,4 +44,6 @@ export {
   ArrowDownIcon,
   XIcon,
   XCircleIcon,
-} from "../src/renderer/components/icons";
+  DownloadIcon,
+  InfoIcon,
+} from "../src/shared/ui/icons";

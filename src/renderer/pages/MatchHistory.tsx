@@ -26,7 +26,7 @@ import MatchScoreboard from "../components/MatchScoreboard";
 import MultikillBadge from "../components/MultikillBadge";
 import StatBars from "../components/StatBars";
 import StatCard from "../components/StatCard";
-import { ArrowDownIcon } from "../components/icons";
+import { ArrowDownIcon } from "../../shared/ui/icons";
 import {
   formatDuration,
   formatDateTime,

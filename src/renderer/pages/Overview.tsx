@@ -12,7 +12,7 @@ import ItemIcon from "../components/ItemIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import MultikillBadge from "../components/MultikillBadge";
 import StatCard from "../components/StatCard";
-import { RefreshIcon } from "../components/icons";
+import { RefreshIcon } from "../../shared/ui/icons";
 import {
   formatTimeAgo,
   formatDateTime,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { GlobeIcon, RefreshIcon, SwordsIcon, UsersIcon } from "./icons";
+import { GlobeIcon, RefreshIcon, SwordsIcon, UsersIcon } from "../../shared/ui/icons";
 import Toggle from "./Toggle";
 
 const DONE_KEY = "onboarding_done";

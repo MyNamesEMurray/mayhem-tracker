@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SwordsIcon, MinusIcon, MaximizeIcon, RestoreIcon, XIcon } from "./icons";
+import { SwordsIcon, MinusIcon, MaximizeIcon, RestoreIcon, XIcon } from "../../shared/ui/icons";
 
 // 38px window title bar: brand lockup + version on the left, the three
 // window controls on the right. The whole bar is a drag region except the

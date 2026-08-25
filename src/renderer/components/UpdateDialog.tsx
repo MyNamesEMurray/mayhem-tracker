@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { UpdateInfo } from "../lib/types";
-import { RefreshIcon } from "./icons";
+import { RefreshIcon } from "../../shared/ui/icons";
 
 export default function UpdateDialog({
   update,
