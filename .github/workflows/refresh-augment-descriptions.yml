@@ -2,9 +2,11 @@ name: Refresh augment descriptions
 
 # The augment blurbs shown on hover are generated from the game's own string
 # table into src/shared/augment-descriptions.ts, which the app and the site
-# both import, and committed because that file is ~33 MB — far too much for
-# either to fetch at runtime. Committed text goes stale: an augment added
-# or reworded in a patch hovers with just its name until someone regenerates.
+# both import. It is committed rather than fetched because the string table it
+# comes from is ~33 MB — far too much to pull down for a hover tooltip — so the
+# text is resolved once and shipped as a small map. Committed text goes stale:
+# an augment added or reworded in a patch hovers with just its name until
+# someone regenerates.
 #
 # So this runs the generator daily and opens a pull request on the days the
 # text actually changes, which in practice means a patch moved the augment
