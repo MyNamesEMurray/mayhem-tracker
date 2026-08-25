@@ -66,32 +66,60 @@ jobs:
         run: |
           PKG=$(node -p "require('./package.json').version")
 
-          # A tag push or a manual run is someone asking for a release outright,
-          # at exactly the version package.json carries
-          if [[ "$GITHUB_REF" == refs/tags/* || "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+          # Pushing a v* tag names the version outright. Nothing to work out and
+          # nothing to gate: someone asked for this exact release.
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            BUMP=false
+            [ "$VERSION" != "$PKG" ] && BUMP=true
             {
               echo "release=true"
-              echo "version=$PKG"
-              echo "bump=false"
+              echo "version=$VERSION"
+              echo "bump=$BUMP"
             } >> "$GITHUB_OUTPUT"
-            echo "Asked for directly ($GITHUB_EVENT_NAME) — releasing v$PKG." >> "$GITHUB_STEP_SUMMARY"
+            echo "Releasing v$VERSION, asked for by the tag push." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          # What did this push change? A force-push or a first push leaves no
-          # usable "before", so fall back to the first parent — for a merge
-          # commit that is main's previous tip, which is the same answer.
-          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
-             || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            BEFORE=$(git rev-parse "$GITHUB_SHA^" 2>/dev/null || echo "")
-          fi
-          if [ -z "$BEFORE" ]; then
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            echo "Could not work out what this push changed, so no release was cut. Run this workflow by hand if v$PKG should ship." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+          # Everything else compares two commits and releases if the app differs
+          # between them. What sits on the far side depends on why this ran.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # Someone pressed Run workflow, which means "ship what is sitting
+            # here unreleased" — so compare against the newest release, not
+            # against one push. This is how app changes that landed before this
+            # workflow existed, or during a spell when it was failing, get out.
+            BASE=$(node .github/scripts/next-version.mts --highest)
+            SINCE="since $BASE"
+            if [ -z "$BASE" ]; then
+              # Nothing has ever been released, so all of it is unreleased
+              NEXT=$(node .github/scripts/next-version.mts)
+              {
+                echo "release=true"
+                echo "version=${NEXT% *}"
+                echo "bump=${NEXT#* }"
+              } >> "$GITHUB_OUTPUT"
+              echo "Releasing v${NEXT% *} — the first release of this app." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          else
+            # A push to main: compare against what main was before it. A
+            # force-push or a first push leaves no usable "before", so fall back
+            # to the first parent — for a merge commit that is main's previous
+            # tip, which is the same answer.
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+              BEFORE=$(git rev-parse "$GITHUB_SHA^" 2>/dev/null || echo "")
+            fi
+            if [ -z "$BEFORE" ]; then
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              echo "Could not work out what this push changed, so no release was cut. Run this workflow by hand to ship whatever is sitting on main unreleased." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            BASE="$BEFORE"
+            SINCE="in this push"
           fi
 
-          CHANGED=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+          CHANGED=$(git diff --name-only "$BASE" "$GITHUB_SHA")
 
           # What the desktop app is built from. Everything else in the
           # repository — website/, supabase/, .design-sync/, .design-canvas/,
@@ -103,11 +131,11 @@ jobs:
           if [ -z "$APP_CHANGED" ]; then
             echo "release=false" >> "$GITHUB_OUTPUT"
             {
-              echo "### No release — the app did not change"
+              echo "### No release — the app has not changed"
               echo
-              echo "This merge touched only files the desktop app is not built from, so the existing v$PKG build still matches what is on main."
+              echo "Nothing $SINCE touched a file the desktop app is built from, so the existing v$PKG build still matches what is here."
               echo
-              echo "<details><summary>Files in this push</summary>"
+              echo "<details><summary>Files changed $SINCE</summary>"
               echo
               echo '```'
               printf '%s\n' "$CHANGED"
@@ -136,9 +164,9 @@ jobs:
           {
             echo "### Releasing v$VERSION"
             echo
-            echo "The app changed, so this merge ships as v$VERSION — $WHY."
+            echo "The app changed $SINCE, so this ships as v$VERSION — $WHY."
             echo
-            echo "<details><summary>App files in this push</summary>"
+            echo "<details><summary>App files changed $SINCE</summary>"
             echo
             echo '```'
             printf '%s\n' "$APP_CHANGED"
@@ -169,19 +197,12 @@ jobs:
           node-version: 24
           cache: npm
 
+      # One rule for all three ways in: the gate has already settled the
+      # version, including reading it off the tag when that is what triggered
+      # this, so the tag is always v<that>.
       - name: Resolve release tag
         id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG="$GITHUB_REF_NAME"
-            if [ "${TAG#v}" != "$VERSION" ]; then
-              echo "::error::tag $TAG does not match package.json version $VERSION"
-              exit 1
-            fi
-          else
-            TAG="v$VERSION"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+        run: echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
       # Belt and braces against a re-run or a race: creating a release that
       # exists would fail after a full Windows build, which is a slow way to
@@ -215,11 +236,16 @@ jobs:
       # exactly the tree the executables came from rather than on a commit that
       # only caught up to it afterwards.
       #
-      # bump is only ever true for a push to main: a tag push and a manual run
-      # both release the version package.json already carries.
+      # A tag push, or a manual run off some other branch, still needs the
+      # version in place for electron-builder to stamp into the executables —
+      # just not committed to a branch it did not come from.
+      - name: Set the version for the build
+        if: env.BUMP == 'true' && github.ref != 'refs/heads/main'
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
       - name: Set the version on main
         id: commit
-        if: env.BUMP == 'true'
+        if: env.BUMP == 'true' && github.ref == 'refs/heads/main'
         run: |
           npm version "$VERSION" --no-git-tag-version --allow-same-version
           git config user.name "github-actions[bot]"

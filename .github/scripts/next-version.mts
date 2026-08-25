@@ -66,6 +66,12 @@ if (
   const { readFileSync } = await import("node:fs");
   const packageVersion = JSON.parse(readFileSync("package.json", "utf8")).version as string;
   const tags = execFileSync("git", ["tag", "--list", "v*"], { encoding: "utf8" }).split("\n");
-  const next = nextVersion(packageVersion, tags);
-  process.stdout.write(`${next.version} ${next.bump}\n`);
+  if (process.argv[2] === "--highest") {
+    // The tag a manual run diffs against to find what hasn't shipped yet
+    const highest = highestRelease(tags);
+    process.stdout.write(highest === null ? "\n" : `v${highest}\n`);
+  } else {
+    const next = nextVersion(packageVersion, tags);
+    process.stdout.write(`${next.version} ${next.bump}\n`);
+  }
 }
