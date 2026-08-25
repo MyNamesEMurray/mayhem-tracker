@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 // Augment names and rarities, for the components that draw them.
 //
@@ -23,7 +23,11 @@ export interface AugmentInfo {
 
 export type AugmentData = Record<number, AugmentInfo>;
 
-const GameDataContext = createContext<{ augments: AugmentData }>({ augments: {} });
+// A stable empty map, so a surface that has not loaded yet does not hand the
+// context a fresh object on every render
+export const NO_AUGMENTS: AugmentData = {};
+
+const GameDataContext = createContext<{ augments: AugmentData }>({ augments: NO_AUGMENTS });
 
 export function GameDataProvider({
   augments,
@@ -32,7 +36,10 @@ export function GameDataProvider({
   augments: AugmentData;
   children: ReactNode;
 }) {
-  return <GameDataContext.Provider value={{ augments }}>{children}</GameDataContext.Provider>;
+  // The site re-renders its root on every filter change, so the value is
+  // memoised rather than rebuilt each time and pushed at every consumer.
+  const value = useMemo(() => ({ augments }), [augments]);
+  return <GameDataContext.Provider value={value}>{children}</GameDataContext.Provider>;
 }
 
 export function useAugments(): AugmentData {

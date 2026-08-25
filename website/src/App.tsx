@@ -11,7 +11,7 @@ import {
   type ItemPurchaseRow,
   type ItemStatRow,
 } from "./lib/api";
-import { GameDataProvider } from "../../src/shared/ui/GameData.tsx";
+import { GameDataProvider, NO_AUGMENTS } from "../../src/shared/ui/GameData.tsx";
 import { DownloadIcon, InfoIcon, SwordsIcon } from "../../src/shared/ui/icons.tsx";
 import {
   loadAugmentData,
@@ -354,7 +354,7 @@ export default function App() {
   return (
     // Augment names and rarities, loaded once here so the shared icon reads
     // them from context rather than every caller passing them down
-    <GameDataProvider augments={data?.augmentData ?? {}}>
+    <GameDataProvider augments={data?.augmentData ?? NO_AUGMENTS}>
       <div className="min-h-screen">
         {/* Unified chrome: full-width bar, frozen to the top on desktop */}
         <header className="md:sticky md:top-0 md:z-40 bg-lol-dark/85 backdrop-blur-md border-b border-lol-border/60">
