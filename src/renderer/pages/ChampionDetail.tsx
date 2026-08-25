@@ -28,8 +28,8 @@ import {
 import ChampionIcon from "../components/ChampionIcon";
 import AugmentIcon from "../components/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
-import WinRateBar from "../components/WinRateBar";
-import TierBadge from "../components/TierBadge";
+import WinRateBar from "../../shared/ui/WinRateBar";
+import TierBadge from "../../shared/ui/TierBadge";
 import PatchSelect from "../components/PatchSelect";
 import { useCommunityPatches } from "../hooks/useCommunityPatches";
 import QueueSelect from "../components/QueueSelect";

@@ -1,5 +1,5 @@
 import { useAugmentData } from "../hooks/useChampions";
-import { useTooltip } from "../hooks/useTooltip";
+import { useTooltip } from "../../shared/ui/useTooltip";
 import { AUGMENT_ICON_BASE } from "../lib/constants";
 import { AUGMENT_DESCRIPTIONS } from "../../shared/augment-descriptions";
 

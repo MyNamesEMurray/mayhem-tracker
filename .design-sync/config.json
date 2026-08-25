@@ -6,9 +6,15 @@
   "buildCmd": ".ds-sync/node_modules/.bin/tailwindcss -i website/src/global.css -o .design-sync/.cache/ds-tailwind.css",
   "readmeHeader": ".design-sync/conventions.md",
   "overrides": {
-    "ChampionDetail": { "cardMode": "column" },
-    "StatCard": { "cardMode": "column" },
-    "PatchRangeSelect": { "cardMode": "column" }
+    "ChampionDetail": {
+      "cardMode": "column"
+    },
+    "StatCard": {
+      "cardMode": "column"
+    },
+    "PatchRangeSelect": {
+      "cardMode": "column"
+    }
   },
   "cssEntry": ".design-sync/.cache/ds-tailwind.css",
   "componentSrcMap": {
@@ -21,8 +27,8 @@
     "PatchRangeSelect": "website/src/components/PatchRangeSelect.tsx",
     "RarityFilter": "website/src/components/RarityFilter.tsx",
     "SearchInput": "website/src/components/SearchInput.tsx",
-    "TierBadge": "website/src/components/TierBadge.tsx",
-    "WinRateBar": "website/src/components/WinRateBar.tsx",
+    "TierBadge": "src/shared/ui/TierBadge.tsx",
+    "WinRateBar": "src/shared/ui/WinRateBar.tsx",
     "MatchScoreboard": "src/renderer/components/MatchScoreboard.tsx",
     "MultikillBadge": "src/renderer/components/MultikillBadge.tsx",
     "StatBars": "src/renderer/components/StatBars.tsx",

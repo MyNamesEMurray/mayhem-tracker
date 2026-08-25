@@ -1,9 +1,10 @@
-import { MIN_SAMPLE } from "../lib/stats";
+import { MIN_SAMPLE } from "../score";
 
-// The unified "rate meter": 6px bar on a translucent loss track. Fill and
-// label carry outcome colors only — green at 50%+, red below. Small samples
-// mute the label (with *) and halve the fill's opacity so a lucky 3-0 never
-// wears a confident green.
+// The rate meter, shared by the desktop app and mayhemstats.com: a 6px bar on
+// a translucent loss track. Fill and label both carry outcome colours — green
+// at 50% and above, red below — so a losing record reads as one at a glance.
+// Small samples mute the label (with a "*") and halve the fill's opacity, so a
+// lucky 3-0 never wears a confident green.
 export default function WinRateBar({
   wins,
   total,
@@ -23,15 +24,19 @@ export default function WinRateBar({
   return (
     <div
       className="flex items-center gap-2"
-      title={lowSample ? `Only ${total} game(s) — small sample` : undefined}
+      title={lowSample ? `Only ${total} game${total === 1 ? "" : "s"} — small sample` : undefined}
     >
+      {/* The track floors at 32px rather than 64: flex-1 gives it the room
+          wherever there is any, and the wider floor overflowed the narrower
+          cells in the app's friend and champion panels. (Tailwind scans
+          comments as well as code, so no class name is spelled out here.) */}
       <div
         className={`flex-1 h-1.5 rounded bg-lol-loss/25 overflow-hidden min-w-8 ${
           meterFrom === "sm" ? "hidden sm:block" : ""
         }`}
       >
         <div
-          className={`h-full rounded ${winning ? "bg-lol-win" : "bg-lol-loss"} ${
+          className={`h-full rounded transition-all ${winning ? "bg-lol-win" : "bg-lol-loss"} ${
             lowSample ? "opacity-50" : ""
           }`}
           style={{ width: `${rate}%` }}

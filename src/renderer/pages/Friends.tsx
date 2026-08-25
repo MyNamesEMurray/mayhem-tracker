@@ -5,7 +5,7 @@ import { useChampionData, getChampionName } from "../hooks/useChampions";
 import type { TeammateStats } from "../lib/types";
 import ChampionIcon from "../components/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
-import WinRateBar from "../components/WinRateBar";
+import WinRateBar from "../../shared/ui/WinRateBar";
 import { formatTimeAgo, kdaRatio, kdaColor } from "../lib/format";
 import SortHeader, { useSort } from "../components/SortHeader";
 

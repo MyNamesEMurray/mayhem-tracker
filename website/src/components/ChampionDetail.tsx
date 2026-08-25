@@ -28,8 +28,8 @@ import AugmentIcon from "./AugmentIcon";
 import ChampionIcon from "./ChampionIcon";
 import ItemIcon from "./ItemIcon";
 import RarityFilter, { type Rarity } from "./RarityFilter";
-import TierBadge from "./TierBadge";
-import WinRateBar from "./WinRateBar";
+import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
+import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import SortHeader, { useSort } from "./SortHeader";
 
 // A build entry needs this many games behind it before it can be recommended

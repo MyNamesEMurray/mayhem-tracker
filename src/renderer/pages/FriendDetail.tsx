@@ -12,7 +12,7 @@ import ChampionIcon from "../components/ChampionIcon";
 import SummonerIcon from "../components/SummonerIcon";
 import MatchScoreboard from "../components/MatchScoreboard";
 import StatBars from "../components/StatBars";
-import WinRateBar from "../components/WinRateBar";
+import WinRateBar from "../../shared/ui/WinRateBar";
 import {
   formatDuration,
   formatTimeAgo,

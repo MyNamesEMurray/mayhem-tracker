@@ -1,7 +1,8 @@
-import { TIER_MIN_SAMPLE, type Tier } from "../../shared/score";
+import { TIER_MIN_SAMPLE, type Tier } from "../score";
 
 // The letter always carries the tier — color reinforces, never replaces it.
-// Same palette as the website's badge so a champion reads identically in both.
+// One palette for both surfaces: translucent .15 background, .6 border,
+// -300 text per tier hue.
 const tierStyle: Record<Tier, string> = {
   "S+": "bg-amber-400/15 text-amber-300 border-amber-400/60",
   S: "bg-orange-500/15 text-orange-300 border-orange-500/60",

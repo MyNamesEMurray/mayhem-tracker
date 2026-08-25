@@ -10,13 +10,13 @@ import {
 import type { AugmentStatsDetailed, ChampionStats } from "../lib/types";
 import AugmentIcon from "../components/AugmentIcon";
 import ChampionIcon from "../components/ChampionIcon";
-import WinRateBar from "../components/WinRateBar";
+import WinRateBar from "../../shared/ui/WinRateBar";
 import PatchSelect from "../components/PatchSelect";
 import QueueSelect from "../components/QueueSelect";
 import { QUEUE_LABELS } from "../../shared/queues";
 import RarityFilter, { type Rarity } from "../components/RarityFilter";
 import SortHeader, { useSort } from "../components/SortHeader";
-import TierBadge from "../components/TierBadge";
+import TierBadge from "../../shared/ui/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../../shared/score";
 import { formatWhole, kdaColor, kdaRatio } from "../lib/format";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";

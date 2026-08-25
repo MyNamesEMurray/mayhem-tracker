@@ -12,6 +12,14 @@
  * Tailwind reads @theme from an imported file the same as an inline one.
  */
 
+/* The shared components live outside both surfaces' own source trees, so
+ * neither build's automatic source detection finds them and every class they
+ * use — the tier palette, the rate meter, the tooltip — would be dropped from
+ * both bundles. Declared here rather than in each global.css so it cannot be
+ * added to one surface and forgotten on the other. Resolved relative to this
+ * file. */
+@source "./ui";
+
 @theme {
   --color-lol-dark: #0b0e14;
   --color-lol-card: #141924;

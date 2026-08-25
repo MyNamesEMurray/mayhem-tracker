@@ -1,6 +1,6 @@
 import { AUGMENT_DESCRIPTIONS } from "../../../src/shared/augment-descriptions.ts";
 import { augmentIconUrl, getAugmentName, type AugmentData } from "../lib/dragon";
-import { useTooltip } from "../lib/useTooltip";
+import { useTooltip } from "../../../src/shared/ui/useTooltip.tsx";
 
 const rarityBorder: Record<string, string> = {
   kSilver: "ring-1 ring-gray-400/60",

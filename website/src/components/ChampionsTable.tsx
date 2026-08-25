@@ -13,8 +13,8 @@ import {
 } from "../lib/stats";
 import ChampionIcon from "./ChampionIcon";
 import SearchInput from "./SearchInput";
-import TierBadge from "./TierBadge";
-import WinRateBar from "./WinRateBar";
+import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
+import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import { championSlug } from "../lib/slug";
 import SortHeader, { useSort } from "./SortHeader";
 import SortControl, { type SortOption } from "./SortControl";

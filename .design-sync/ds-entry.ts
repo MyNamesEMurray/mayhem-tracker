@@ -1,6 +1,7 @@
 // Design-sync bundle entry: the curated component surface synced to
-// claude.ai/design. Website components are the canonical brand set where
-// names overlap with the desktop renderer's.
+// claude.ai/design. Components in src/shared/ui are rendered by both
+// surfaces, so reviewing one here reviews both; the rest come from the
+// website (the canonical brand set) or the desktop renderer.
 
 // Website (MayhemStats.com)
 export { default as AugmentIcon } from "../website/src/components/AugmentIcon";
@@ -12,8 +13,11 @@ export { default as ItemIcon } from "../website/src/components/ItemIcon";
 export { default as PatchRangeSelect } from "../website/src/components/PatchRangeSelect";
 export { default as RarityFilter } from "../website/src/components/RarityFilter";
 export { default as SearchInput } from "../website/src/components/SearchInput";
-export { default as TierBadge } from "../website/src/components/TierBadge";
-export { default as WinRateBar } from "../website/src/components/WinRateBar";
+
+// Shared by both surfaces (src/shared/ui) — one component, not two copies,
+// so a design review here covers what the app and the site actually render
+export { default as TierBadge } from "../src/shared/ui/TierBadge";
+export { default as WinRateBar } from "../src/shared/ui/WinRateBar";
 
 // Desktop app (Mayhem Tracker renderer)
 export { default as MatchScoreboard } from "../src/renderer/components/MatchScoreboard";
