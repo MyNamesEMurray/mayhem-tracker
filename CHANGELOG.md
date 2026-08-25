@@ -18,6 +18,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.0 — 2026-08-25
+
+- **Hover an augment to see what it does.** Point at any augment icon — in match history, in a match's scoreboard, on a champion's page, on the Augments tab — and you get its name, its rarity and a one-line description of the augment. Hovering used to give you the name and nothing more, which is no help at all when you're looking at four icons you've never picked.
+- **Some numbers read as "?".** The augment list Riot publishes has names, icons and rarities but no description text anywhere in it, so the wording comes from the game's own text, which fills in each exact number from the game you're playing. With no game running there's nothing to fill in, so a "?" stands where the number goes — "Gain ?% Attack Damage". Two of the mode's augments have no description text at all and hover with just their name.
+
 ## v2.13.0 — 2026-08-24
 
 - **Your contributor ID is yours to keep.** Settings → Community stats now shows it, masked, with a copy button. It's the only handle you have on the games you've shared: enter it on a new machine and your contributions come with you. Without it, a fresh install counted as a new contributor and the old games could never be withdrawn — including if your PC died.

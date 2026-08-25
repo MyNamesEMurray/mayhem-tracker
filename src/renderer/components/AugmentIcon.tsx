@@ -1,5 +1,7 @@
-import { useAugmentData, getAugmentName } from "../hooks/useChampions";
+import { useAugmentData } from "../hooks/useChampions";
+import { useTooltip } from "../hooks/useTooltip";
 import { AUGMENT_ICON_BASE } from "../lib/constants";
+import { AUGMENT_DESCRIPTIONS } from "../../shared/augment-descriptions";
 
 interface AugmentIconProps {
   augmentId: number;
@@ -31,6 +33,28 @@ export function getAugmentRarityLabel(rarity: string): string {
 export default function AugmentIcon({ augmentId, size = 28, showName = false }: AugmentIconProps) {
   const augmentData = useAugmentData();
   const aug = augmentData[augmentId];
+  // Most icons are shown without a name — in a scoreboard cell, a match row,
+  // a champion's augment list — so the tooltip carries the name and rarity
+  // whether or not a description exists for the augment.
+  const description = AUGMENT_DESCRIPTIONS[augmentId];
+  const rarityLabel = aug ? getAugmentRarityLabel(aug.rarity) : "";
+  const nameColor = rarityTextColor[aug?.rarity ?? ""] || "text-lol-text-bright";
+
+  const { triggerProps, tooltip } = useTooltip<HTMLDivElement>(
+    aug && (
+      <>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className={`text-xs font-semibold ${nameColor}`}>{aug.name}</span>
+          {rarityLabel && <span className="text-[10px] text-lol-text">{rarityLabel}</span>}
+        </div>
+        {description && (
+          <p className="mt-1 text-[11px] leading-snug text-lol-text-bright whitespace-pre-line">
+            {description}
+          </p>
+        )}
+      </>
+    ),
+  );
 
   if (!aug) {
     return showName ? <span className="text-xs text-lol-text">Augment {augmentId}</span> : null;
@@ -43,10 +67,9 @@ export default function AugmentIcon({ augmentId, size = 28, showName = false }: 
     : "";
 
   const borderClass = rarityBorder[aug.rarity] || "";
-  const nameColor = rarityTextColor[aug.rarity] || "text-lol-text-bright";
 
   return (
-    <div className="flex items-center gap-1.5 min-w-0" title={aug.name}>
+    <div className="flex items-center gap-1.5 min-w-0" {...triggerProps}>
       {iconUrl && (
         <img
           src={iconUrl}
@@ -60,6 +83,7 @@ export default function AugmentIcon({ augmentId, size = 28, showName = false }: 
         />
       )}
       {showName && <span className={`text-xs truncate ${nameColor}`}>{aug.name}</span>}
+      {tooltip}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 {
   "name": "mayhem-tracker",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "description": "ARAM Mayhem match history tracker",
   "license": "MIT",
   "author": "MyNamesEMurray",
@@ -12,7 +12,8 @@
     "postinstall": "electron-builder install-app-deps",
     "rebuild": "electron-builder install-app-deps",
     "dist": "electron-vite build && electron-builder --win --publish never",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "gen:augments": "node scripts/gen-augment-descriptions.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
