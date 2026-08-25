@@ -45,3 +45,10 @@ Setting `AD_CLIENT` back to an empty string fully disables ads again.
 Any static host works. On Vercel: import the repository, set the project's
 **Root Directory** to `website`, and the defaults (Vite framework preset,
 `npm run build`, `dist` output) do the rest.
+
+The build reads a few modules from `../src/shared` — the scoring and tier
+maths, the augment descriptions, the design tokens — so that the site and the
+desktop app cannot disagree about them. It still builds *from* this directory;
+it just needs the repository checked out whole, which is what Cloudflare Pages
+and GitHub Actions do by default. On Vercel, keep **Include source files
+outside of the Root Directory** enabled.

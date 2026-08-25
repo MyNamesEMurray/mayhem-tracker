@@ -49,7 +49,7 @@ Uploads are tied to a random token generated on your machine (not derived from a
 
 ## Tech Stack
 
-Electron + React + TypeScript, built with electron-vite. Uses Tailwind CSS for styling, better-sqlite3 for local storage, and league-connect for LCU integration. The community backend is Supabase (Postgres + edge functions) and the website is a static Vite app in [`website/`](website/).
+Electron + React + TypeScript, built with electron-vite. Uses Tailwind CSS for styling, better-sqlite3 for local storage, and league-connect for LCU integration. The community backend is Supabase (Postgres + edge functions) and the website is a static Vite app in [`website/`](website/). Both surfaces import their scoring, formatting and design tokens from [`src/shared/`](src/shared/), so a number or a colour cannot mean one thing in the app and another on the site.
 
 ## Development
 

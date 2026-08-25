@@ -1,0 +1,123 @@
+/* The MayhemStats design tokens and base controls, shared by the desktop app
+ * and mayhemstats.com.
+ *
+ * Both surfaces used to declare all of this separately — the same eleven
+ * colour tokens, the same select and input, the same focus ring, the same
+ * scrollbar — and the copies had drifted: a control was 14px in the app and
+ * 13px on the site, with different horizontal padding. Import this instead,
+ * after `@import "tailwindcss"`, and add only what is genuinely local to a
+ * surface (window chrome for the app, the responsive stat tables for the
+ * site).
+ *
+ * Tailwind reads @theme from an imported file the same as an inline one.
+ */
+
+@theme {
+  --color-lol-dark: #0b0e14;
+  --color-lol-card: #141924;
+  --color-lol-card-hover: #1b2130;
+  --color-lol-border: #242c3d;
+  --color-lol-gold: #c89b3c;
+  --color-lol-gold-light: #f0e6d2;
+  --color-lol-win: #3ecf8e;
+  --color-lol-loss: #e5636e;
+  --color-lol-text: #94a0b8;
+  --color-lol-text-bright: #e8ecf4;
+  /* Window chrome (title bar + tab row). App-only, but a token costs nothing
+     and the palette is easier to read in one place. */
+  --color-lol-title-bar: #0d1119;
+}
+
+body {
+  background-color: var(--color-lol-dark);
+  background-image: radial-gradient(1100px 700px at 15% -10%, #151c2c 0%, transparent 60%);
+  background-attachment: fixed;
+  color: var(--color-lol-text);
+  font-family:
+    "Inter",
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  /* Selects are sized by their class, never by the option that happens to be
+     chosen — otherwise picking a filter nudges everything beside it. Pick the
+     size that fits the longest option; long values ellipsize instead of
+     widening the control. Any new dropdown on either surface follows this. */
+  .select {
+    appearance: none;
+    width: var(--select-w, 10rem);
+    text-overflow: ellipsis;
+    background-color: var(--color-lol-card);
+    border: 1px solid var(--color-lol-border);
+    border-radius: 0.5rem;
+    color: var(--color-lol-text-bright);
+    font-size: 13px;
+    line-height: 1.25rem;
+    padding: 0.375rem 1.75rem 0.375rem 0.625rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a0b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 0.875rem;
+    transition: border-color 150ms;
+  }
+
+  .select-sm {
+    --select-w: 7.5rem;
+  }
+
+  .select-lg {
+    --select-w: 12.5rem;
+  }
+
+  .input {
+    background-color: var(--color-lol-card);
+    border: 1px solid var(--color-lol-border);
+    border-radius: 0.5rem;
+    color: var(--color-lol-text-bright);
+    font-size: 13px;
+    line-height: 1.25rem;
+    padding: 0.375rem 0.625rem;
+    transition: border-color 150ms;
+  }
+
+  .input::placeholder {
+    color: color-mix(in srgb, var(--color-lol-text) 50%, transparent);
+  }
+
+  .select:focus,
+  .input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-lol-gold) 50%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lol-gold) 10%, transparent);
+  }
+
+  /* Reserve the scrollbar's space whether or not it's showing, so content
+     doesn't jump sideways when a list grows past the viewport. */
+  .scroll-stable {
+    scrollbar-gutter: stable;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-lol-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4457;
+}
