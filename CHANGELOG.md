@@ -27,6 +27,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it — a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.3 — 2026-08-28
+
+- **Hover text for patch 16.17's augments.** Ultra Hydra and Upgrade Death's Dance describe themselves now instead of hovering with just a name — they were added this patch, and the wording is generated from the game's own text, so it arrives a release behind the augment itself. Two more were reworded on Riot's end: Upgrade Infinity Edge no longer claims to grant Critical Strike Chance, because it no longer does, and Upgrade Ravenous Hydra now says it raises the item's own life steal rather than granting you some.
+
 ## v2.14.2 — 2026-08-28
 
 - **Look at more than one patch at a time.** The patch dropdown could show you a single patch or all of them, with nothing in between — so "how has this champion done since the rework two patches ago" was a question you couldn't ask here. Pick **Patch range…** and you get a start and an end. It's on the champions list, the augments list, champion pages and your match history, and it's the same control [MayhemStats.com](https://mayhemstats.com/) has had for a while, so a range you link from one opens the same way in the other.
