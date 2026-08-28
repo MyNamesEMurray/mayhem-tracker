@@ -5,6 +5,7 @@ import {
   fetchChampionItems,
   fetchChampionPurchases,
   fetchChampionStats,
+  fetchPatchSpans,
   type AugmentStatRow,
   type AugmentTotalRow,
   type ChampionStatRow,
@@ -22,7 +23,7 @@ import {
 } from "./lib/dragon";
 import {
   aggregateChampions,
-  availablePatches,
+  comparePatches,
   availableQueues,
   formatPatch,
   MIN_SAMPLE,
@@ -31,6 +32,7 @@ import {
   // that produces one from a selection
   patchParam as encodePatchParam,
   patchesIn,
+  MAYHEM_QUEUE_IDS,
   QUEUE_LABELS,
   type Filters,
 } from "./lib/stats";
@@ -40,6 +42,7 @@ import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
 import ChampionsTable from "./components/ChampionsTable";
 import PatchRangeSelect from "../../src/shared/ui/PatchRangeSelect";
+import QueueSelect from "../../src/shared/ui/QueueSelect";
 import { AD_SLOTS, loadAdSense } from "./lib/adsense";
 import { championSlug } from "./lib/slug";
 import { useUrlState } from "./lib/urlState";
@@ -80,6 +83,11 @@ const AUTO_WIDEN_MAX_PATCHES = 3;
 export default function App() {
   const [data, setData] = useState<LoadedData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Which patches exist, and which of them have been fetched. The second is
+  // what stops a widened range refetching rows already in memory.
+  const [patchList, setPatchList] = useState<string[]>([]);
+  const [loadedPatches, setLoadedPatches] = useState<Set<string>>(() => new Set());
+  const [loadingMore, setLoadingMore] = useState(false);
   const { path, params, setParam, navigate, replaceUrl } = useUrlState();
 
   // Champions tier list is the home tab; ?tab=champions from legacy links
@@ -140,16 +148,63 @@ export default function App() {
     loadAdSense();
   }, []);
 
+  // Loading runs in stages, because the board only ever renders a few patches
+  // and used to download all of them to do it.
+  //
+  //   1. the patch list, which is 21 rows and tells the picker what exists
+  //   2. the newest patch, which is what the default view shows -> paint
+  //   3. the next two, because AUTO_WIDEN_MAX_PATCHES never reaches further
+  //   4. anything else, only when a range or "All patches" asks for it
+  //
+  // Stage 2 is 12 KB gzipped where the old single fetch was 237 KB. Stage 3
+  // arrives behind it and only feeds the widening banner, which is a
+  // progressive enhancement rather than the primary render, so its latency is
+  // not felt as a spinner.
   useEffect(() => {
     let active = true;
     setError(null);
-    Promise.all([fetchChampionStats(), fetchAugmentTotals(), loadChampionData(), loadAugmentData()])
-      .then(([championRows, augmentRows, championData, augmentData]) => {
-        if (active) setData({ championRows, augmentRows, championData, augmentData });
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : String(err));
-      });
+
+    (async () => {
+      const spans = await fetchPatchSpans();
+      if (!active) return;
+      const newest = spans.map((s) => s.patch).sort((a, b) => comparePatches(b, a));
+      setPatchList(newest);
+
+      const first = newest.slice(0, 1);
+      const [championRows, augmentRows, championData, augmentData] = await Promise.all([
+        fetchChampionStats(first),
+        fetchAugmentTotals(first),
+        loadChampionData(),
+        loadAugmentData(),
+      ]);
+      if (!active) return;
+      setData({ championRows, augmentRows, championData, augmentData });
+      setLoadedPatches(new Set(first));
+
+      // Everything auto-widen can reach, so the banner never waits on a fetch
+      const widenReach = newest.slice(0, AUTO_WIDEN_MAX_PATCHES);
+      if (widenReach.length > first.length) {
+        const rest = widenReach.slice(first.length);
+        const [moreChamps, moreAugs] = await Promise.all([
+          fetchChampionStats(rest),
+          fetchAugmentTotals(rest),
+        ]);
+        if (!active) return;
+        setData((d) =>
+          d
+            ? {
+                ...d,
+                championRows: [...d.championRows, ...moreChamps],
+                augmentRows: [...d.augmentRows, ...moreAugs],
+              }
+            : d,
+        );
+        setLoadedPatches((prev) => new Set([...prev, ...widenReach]));
+      }
+    })().catch((err) => {
+      if (active) setError(err instanceof Error ? err.message : String(err));
+    });
+
     return () => {
       active = false;
     };
@@ -187,7 +242,46 @@ export default function App() {
     };
   }, [selectedChampion, championRows]);
 
-  const patches = useMemo(() => (data ? availablePatches(data.championRows) : []), [data]);
+  // From community_patch_spans (21 rows) rather than from the stat rows,
+  // because the stat rows are no longer every patch: deriving the picker's
+  // options from them would hide every patch not yet fetched.
+  const patches = useMemo(() => [...patchList].sort((a, b) => comparePatches(b, a)), [patchList]);
+
+  // Stage 4: a selection reaching past what is loaded fetches the difference
+  // once and keeps it. Widening a range twice does not refetch the overlap.
+  useEffect(() => {
+    if (!data || patchList.length === 0) return;
+    const wanted = patchesIn(parsePatchParam(patchParam, patches), patches) ?? patches;
+    const missing = wanted.filter((p) => !loadedPatches.has(p));
+    if (missing.length === 0) return;
+
+    let active = true;
+    setLoadingMore(true);
+    Promise.all([fetchChampionStats(missing), fetchAugmentTotals(missing)])
+      .then(([moreChamps, moreAugs]) => {
+        if (!active) return;
+        setData((d) =>
+          d
+            ? {
+                ...d,
+                championRows: [...d.championRows, ...moreChamps],
+                augmentRows: [...d.augmentRows, ...moreAugs],
+              }
+            : d,
+        );
+        setLoadedPatches((prev) => new Set([...prev, ...missing]));
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (active) setLoadingMore(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [patchParam, patches, patchList, data, loadedPatches]);
+
   const queues = useMemo(() => (data ? availableQueues(data.championRows) : []), [data]);
 
   // ARAM Mayhem is the default queue; ?queue=all widens to everything. The
@@ -212,6 +306,14 @@ export default function App() {
       : queue == null
         ? QUEUE_LABELS[DEFAULT_QUEUE]
         : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
+
+  // What the picker shows, which is not always what the tables filter on: the
+  // first rows have not landed on the very first paint, so `queues` is empty
+  // and `queue` resolves to undefined. Reading the parameter the way the
+  // label does keeps the control showing the default instead of blinking out
+  // of the header and back in a beat later.
+  const queueOptions = queues.length > 0 ? queues : MAYHEM_QUEUE_IDS;
+  const selectedQueue = queueParam === "all" ? undefined : (queue ?? DEFAULT_QUEUE);
 
   // Default view is the current patch; ?patch= also supports "all", a single
   // patch, or an inclusive "A-B" range
@@ -420,21 +522,20 @@ export default function App() {
               can't change anything shouldn't ask to be tried. */}
             {!onCommunityPage && (
               <div className="flex items-center gap-2 py-2 max-[1080px]:w-full max-[1080px]:pt-0 max-[1080px]:pb-2.5 max-[1080px]:flex-wrap">
-                <select
-                  className="select"
-                  value={queueParam ?? ""}
-                  onChange={(e) => setParam("queue", e.target.value || null)}
-                >
-                  <option value="">{QUEUE_LABELS[2400]}</option>
-                  {queues
-                    .filter((q) => q !== 2400)
-                    .map((q) => (
-                      <option key={q} value={q}>
-                        {QUEUE_LABELS[q] ?? `Queue ${q}`}
-                      </option>
-                    ))}
-                  <option value="all">All queues</option>
-                </select>
+                <QueueSelect
+                  queues={queueOptions}
+                  value={selectedQueue}
+                  onChange={(q) =>
+                    // The default queue is the empty parameter, so choosing it
+                    // takes ?queue= back out of the URL rather than spelling
+                    // out what no parameter already means.
+                    setParam(
+                      "queue",
+                      q === undefined ? "all" : q === DEFAULT_QUEUE ? null : String(q),
+                    )
+                  }
+                  size="sm"
+                />
                 <PatchRangeSelect
                   patches={patches}
                   selection={parsePatchParam(patchParam, patches)}
@@ -538,6 +639,11 @@ export default function App() {
                 </h1>
                 <span className="text-xs">
                   {patchLabel} · {totalGames.toLocaleString()} games
+                  {loadingMore && (
+                    // A widened range fetches the patches it added. Saying so
+                    // beats letting the count climb with no explanation.
+                    <span className="text-lol-text/70"> · loading older patches…</span>
+                  )}
                 </span>
               </div>
               <p className="text-[13px] mb-4">

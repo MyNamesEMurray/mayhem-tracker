@@ -14,15 +14,8 @@ import fs from "fs";
 import path from "path";
 import { getDataDir } from "./paths";
 import { MAYHEM_QUEUE_IDS } from "../shared/queues";
-
-const SUPABASE_URL = "https://lmzenzxbhotszvwsnhlm.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtemVuenhiaG90c3p2d3NuaGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMjU0NDcsImV4cCI6MjEwMTgwMTQ0N30.7FoFD7LFaV5Yin4OnjYjECAYZPa2I9xc6oQa4xPAKpA";
-
-// Long enough that opening the app repeatedly costs nothing, short enough
-// that a session's worth of new games shows up the same day
-const TTL_MS = 6 * 60 * 60 * 1000;
-const PAGE = 1000;
+import { fetchAllRows, patchFilter } from "../shared/supabase";
+import { comparePatches } from "../shared/patch";
 
 export interface CommunityChampionRow {
   patch: string;
@@ -133,49 +126,9 @@ function writeCache(cache: Cache): void {
   }
 }
 
-// PostgREST caps a response at 1000 rows, and the three views together are
-// ~29k - so paging them one after another was 30 sequential round trips
-// before the Champions tab could draw anything. The first request asks for
-// an exact count, and the rest of the pages then go out at once.
-async function fetchPage<T>(view: string, query: string, from: number, withCount: boolean) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      Range: `${from}-${from + PAGE - 1}`,
-      ...(withCount ? { Prefer: "count=exact" } : {}),
-    },
-  });
-  if (!res.ok) throw new Error(`${view} returned HTTP ${res.status}`);
-  const rows = (await res.json()) as T[];
-  // "0-999/13684" - the total is what lets the remaining pages be parallel
-  const total = Number(res.headers.get("content-range")?.split("/")[1]);
-  return { rows, total: Number.isFinite(total) ? total : null };
-}
-
-// The pages after the first go out together, so they only stitch back into one
-// list if the view hands rows back in a fixed order: every query below names
-// an order over a unique key of the view, which the rollups are indexed on.
-// Without one a page can repeat another's rows and drop the difference.
-async function fetchView<T>(view: string, query: string): Promise<T[]> {
-  const first = await fetchPage<T>(view, query, 0, true);
-  if (first.rows.length < PAGE) return first.rows;
-
-  if (first.total == null) {
-    // No count header: fall back to walking pages until one comes up short
-    const out = [...first.rows];
-    for (let from = PAGE; ; from += PAGE) {
-      const page = await fetchPage<T>(view, query, from, false);
-      out.push(...page.rows);
-      if (page.rows.length < PAGE) return out;
-    }
-  }
-
-  const offsets: number[] = [];
-  for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
-  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, query, from, false)));
-  return [...first.rows, ...rest.flatMap((p) => p.rows)];
-}
+// Long enough that opening the app repeatedly costs nothing, short enough
+// that a session's worth of new games shows up the same day
+const TTL_MS = 6 * 60 * 60 * 1000;
 
 // Only the columns the app actually reads. augment_stats carries per-augment
 // combat lines this never touches, and they dominate its payload.
@@ -208,13 +161,84 @@ export async function loadCommunity({ force = false } = {}): Promise<Cache> {
   return refresh(cached);
 }
 
+// How many patches a first launch fetches before the tab can draw. The board
+// defaults to the current patch and the filter never reaches past the newest
+// few without being asked, so the rest can arrive behind the first paint.
+const FIRST_PAINT_PATCHES = 3;
+
+// Newest first, from the patch list rather than from the stat rows, so this
+// costs 21 tiny rows rather than the thing it is trying to avoid fetching.
+async function recentPatches(): Promise<string[] | undefined> {
+  try {
+    const rows = await fetchAllRows<{ patch: string }>(
+      "community_patch_spans",
+      "select=patch&order=patch",
+    );
+    const sorted = rows.map((r) => r.patch).sort((a, b) => comparePatches(b, a));
+    return sorted.length > FIRST_PAINT_PATCHES ? sorted.slice(0, FIRST_PAINT_PATCHES) : undefined;
+  } catch {
+    // The view is missing or unreachable: fall back to fetching everything,
+    // which is what this did before and is never wrong, only slower.
+    return undefined;
+  }
+}
+
+// Fills in the patches the staged first fetch skipped. Runs detached: a
+// failure here leaves the partial cache in place, which is marked stale, so
+// the next call refetches rather than trusting three patches forever.
+async function completeInBackground(): Promise<void> {
+  try {
+    const [champions, augmentTotals] = await Promise.all([
+      fetchAllRows<CommunityChampionRow>("champion_stats", CHAMPION_QUERY),
+      fetchAllRows<CommunityAugmentTotalRow>("augment_totals", AUGMENT_TOTALS_QUERY),
+    ]);
+    writeCache({ version: CACHE_VERSION, fetchedAt: Date.now(), champions, augmentTotals });
+    detailCache.clear();
+    augmentChampionCache.clear();
+  } catch {
+    // Partial cache stands; it is already marked stale
+  }
+}
+
 function refresh(cached: Cache | null = readCache()): Promise<Cache> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
+      // A first launch has no cache, so it waits on this fetch before the
+      // Champions tab can draw anything. Fetching the newest few patches makes
+      // that wait 34 KB instead of 237 KB; the rest arrives behind it and the
+      // six-hour cache means later launches never pay either way.
+      if (!cached) {
+        const recent = await recentPatches();
+        if (recent) {
+          const [champions, augmentTotals] = await Promise.all([
+            fetchAllRows<CommunityChampionRow>(
+              "champion_stats",
+              CHAMPION_QUERY + patchFilter(recent),
+            ),
+            fetchAllRows<CommunityAugmentTotalRow>(
+              "augment_totals",
+              AUGMENT_TOTALS_QUERY + patchFilter(recent),
+            ),
+          ]);
+          // Marked partial so the next loadCommunity() refetches in full
+          // rather than treating three patches as the whole database for six
+          // hours.
+          const partial: Cache = {
+            version: CACHE_VERSION,
+            fetchedAt: 0,
+            champions,
+            augmentTotals,
+          };
+          writeCache(partial);
+          void completeInBackground();
+          return partial;
+        }
+      }
+
       const [champions, augmentTotals] = await Promise.all([
-        fetchView<CommunityChampionRow>("champion_stats", CHAMPION_QUERY),
-        fetchView<CommunityAugmentTotalRow>("augment_totals", AUGMENT_TOTALS_QUERY),
+        fetchAllRows<CommunityChampionRow>("champion_stats", CHAMPION_QUERY),
+        fetchAllRows<CommunityAugmentTotalRow>("augment_totals", AUGMENT_TOTALS_QUERY),
       ]);
       const cache: Cache = {
         version: CACHE_VERSION,
@@ -334,11 +358,11 @@ async function loadChampionDetail(championId: number): Promise<ChampionDetailCac
   if (hit && Date.now() - hit.fetchedAt < TTL_MS) return hit;
 
   const [augments, items] = await Promise.all([
-    fetchView<CommunityAugmentRow>(
+    fetchAllRows<CommunityAugmentRow>(
       "augment_stats",
       `${AUGMENT_QUERY}&champion_id=eq.${championId}`,
     ),
-    fetchView<CommunityItemRow>("item_stats", `${ITEM_QUERY}&champion_id=eq.${championId}`),
+    fetchAllRows<CommunityItemRow>("item_stats", `${ITEM_QUERY}&champion_id=eq.${championId}`),
   ]);
 
   const entry: ChampionDetailCache = { fetchedAt: Date.now(), augments, items };
@@ -439,7 +463,7 @@ export async function getCommunityAugmentChampions(
   const included = patchSet(patches);
   let hit = augmentChampionCache.get(augmentId);
   if (!hit || Date.now() - hit.fetchedAt >= TTL_MS) {
-    const rows = await fetchView<CommunityAugmentRow>(
+    const rows = await fetchAllRows<CommunityAugmentRow>(
       "augment_stats",
       `${AUGMENT_QUERY}&augment_id=eq.${augmentId}`,
     );

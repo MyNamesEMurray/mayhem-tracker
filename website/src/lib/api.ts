@@ -1,9 +1,7 @@
-// Read-only access to the community stats project. The key is the project's
-// public client credential: raw tables are locked behind row level security,
-// and these aggregate views are the only readable surface.
-const SUPABASE_URL = "https://lmzenzxbhotszvwsnhlm.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtemVuenhiaG90c3p2d3NuaGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMjU0NDcsImV4cCI6MjEwMTgwMTQ0N30.7FoFD7LFaV5Yin4OnjYjECAYZPa2I9xc6oQa4xPAKpA";
+// Read-only access to the community stats project. The connection details and
+// the paging loop live in src/shared/supabase.ts, which the desktop app reads
+// through too.
+import { fetchAllRows, patchFilter } from "../../../src/shared/supabase.ts";
 
 export interface ChampionStatRow {
   patch: string;
@@ -70,70 +68,23 @@ export interface ItemPurchaseRow {
   avg_first_buy_s: number;
 }
 
-// PostgREST caps a response at 1000 rows on this project - verified: asking
-// for 0-9999 comes back "content-range: 0-999/*" with a thousand rows. A
-// larger page size doesn't fetch more, it just makes the walk stop after the
-// first page and silently truncate every view. So pages stay at 1000 and the
-// first request asks for an exact count instead, which lets the rest of them
-// go out together rather than one after another.
-const PAGE = 1000;
-
-async function fetchPage<T>(
-  view: string,
-  query: string,
-  from: number,
-  withCount: boolean,
-): Promise<{ rows: T[]; total: number | null }> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${view}?${query}`, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      Range: `${from}-${from + PAGE - 1}`,
-      ...(withCount ? { Prefer: "count=exact" } : {}),
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to load ${view} (HTTP ${res.status})`);
-  }
-  const rows = (await res.json()) as T[];
-  // "0-999/3562" - the total is what lets the rest of the pages be parallel
-  const total = Number(res.headers.get("content-range")?.split("/")[1]);
-  return { rows, total: Number.isFinite(total) ? total : null };
+// Undefined means every patch, which is what "All patches" asks for and what
+// nothing else should. The board only ever renders a handful, so pulling the
+// rest is bytes nobody reads: 21 patches cost 237 KB gzipped against 12 KB for
+// the current one, and that gap widens by about 11 KB with every patch Riot
+// ships.
+export function fetchChampionStats(patches?: string[]): Promise<ChampionStatRow[]> {
+  return fetchAllRows<ChampionStatRow>(
+    "champion_stats",
+    `select=*&order=patch,queue_id,champion_id${patchFilter(patches)}`,
+  );
 }
 
-// Every page is its own query and the pages after the first go out together,
-// so a view that hands rows back in whatever order it likes can repeat one
-// page's rows in another and drop the difference. Each caller's query names an
-// order over a unique key of the view, which the rollups are indexed on.
-async function fetchAll<T>(view: string, query = "select=*"): Promise<T[]> {
-  const first = await fetchPage<T>(view, query, 0, true);
-  if (first.rows.length < PAGE) return first.rows;
-
-  if (first.total == null) {
-    // No count header: walk pages until one comes up short
-    const out = [...first.rows];
-    for (let from = PAGE; ; from += PAGE) {
-      const page = await fetchPage<T>(view, query, from, false);
-      out.push(...page.rows);
-      if (page.rows.length < PAGE) return out;
-    }
-  }
-
-  const offsets: number[] = [];
-  for (let from = PAGE; from < first.total; from += PAGE) offsets.push(from);
-  const rest = await Promise.all(offsets.map((from) => fetchPage<T>(view, query, from, false)));
-  return [...first.rows, ...rest.flatMap((p) => p.rows)];
-}
-
-export function fetchChampionStats(): Promise<ChampionStatRow[]> {
-  return fetchAll<ChampionStatRow>("champion_stats", "select=*&order=patch,queue_id,champion_id");
-}
-
-export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
+export async function fetchAugmentTotals(patches?: string[]): Promise<AugmentTotalRow[]> {
   try {
-    return await fetchAll<AugmentTotalRow>(
+    return await fetchAllRows<AugmentTotalRow>(
       "augment_totals",
-      "select=*&order=patch,queue_id,augment_id",
+      `select=*&order=patch,queue_id,augment_id${patchFilter(patches)}`,
     );
   } catch (err) {
     // The rollup is one migration behind the client during a deploy. An empty
@@ -148,21 +99,21 @@ export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
 // needs it opens. Filtering server-side keeps a champion page to a couple of
 // thousand rows instead of the half-million the full grain would cost.
 export function fetchChampionAugments(championId: number): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>(
+  return fetchAllRows<AugmentStatRow>(
     "augment_stats",
     `select=*&champion_id=eq.${championId}&order=patch,queue_id,augment_id`,
   );
 }
 
 export function fetchChampionItems(championId: number): Promise<ItemStatRow[]> {
-  return fetchAll<ItemStatRow>(
+  return fetchAllRows<ItemStatRow>(
     "item_stats",
     `select=*&champion_id=eq.${championId}&order=patch,queue_id,item_id`,
   );
 }
 
 export function fetchChampionPurchases(championId: number): Promise<ItemPurchaseRow[]> {
-  return fetchAll<ItemPurchaseRow>(
+  return fetchAllRows<ItemPurchaseRow>(
     "item_purchase_stats",
     `select=*&champion_id=eq.${championId}&order=patch,queue_id,item_id`,
   );
@@ -170,7 +121,7 @@ export function fetchChampionPurchases(championId: number): Promise<ItemPurchase
 
 // For an expanded augment row: which champions carry it
 export function fetchAugmentChampions(augmentId: number): Promise<AugmentStatRow[]> {
-  return fetchAll<AugmentStatRow>(
+  return fetchAllRows<AugmentStatRow>(
     "augment_stats",
     `select=*&augment_id=eq.${augmentId}&order=patch,queue_id,champion_id`,
   );
@@ -201,7 +152,7 @@ export interface PatchSpanRow {
 }
 
 export async function fetchCommunityTotals(): Promise<CommunityTotals> {
-  const rows = await fetchAll<CommunityTotals>("community_totals");
+  const rows = await fetchAllRows<CommunityTotals>("community_totals");
   return (
     rows[0] ?? {
       games: 0,
@@ -215,7 +166,7 @@ export async function fetchCommunityTotals(): Promise<CommunityTotals> {
 }
 
 export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
-  return fetchAll<GamesPerDayRow>("community_games_per_day", "select=*&order=day");
+  return fetchAllRows<GamesPerDayRow>("community_games_per_day", "select=*&order=day");
 }
 
 // Patch markers decorate the games chart; the chart is fine without them, so
@@ -223,7 +174,7 @@ export function fetchGamesPerDay(): Promise<GamesPerDayRow[]> {
 // the whole page down with an error.
 export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
   try {
-    return await fetchAll<PatchSpanRow>("community_patch_spans", "select=*&order=patch");
+    return await fetchAllRows<PatchSpanRow>("community_patch_spans", "select=*&order=patch");
   } catch {
     return [];
   }
@@ -239,7 +190,7 @@ export interface MatchupCoverage {
 
 export async function fetchMatchupCoverage(): Promise<MatchupCoverage | null> {
   try {
-    const rows = await fetchAll<MatchupCoverage>("matchup_coverage");
+    const rows = await fetchAllRows<MatchupCoverage>("matchup_coverage");
     return rows[0] ?? null;
   } catch {
     // The tile falls back to a dash rather than taking the page down with it

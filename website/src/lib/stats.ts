@@ -25,7 +25,7 @@ import { score } from "../../../src/shared/score.ts";
 import { comparePatches } from "../../../src/shared/patch.ts";
 import { KDA_RAMP, rampClass } from "../../../src/shared/format.ts";
 
-export { QUEUE_LABELS } from "../../../src/shared/queues.ts";
+export { MAYHEM_QUEUE_IDS, QUEUE_LABELS } from "../../../src/shared/queues.ts";
 export { comparePatches };
 export {
   formatPatch,

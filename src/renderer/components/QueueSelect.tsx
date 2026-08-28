@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { QUEUE_LABELS } from "../../shared/queues";
+import { useEffect, useState } from "react";
+import SharedQueueSelect, { queueLabel as sharedQueueLabel } from "../../shared/ui/QueueSelect";
 
-export function queueLabel(queueId: number): string {
-  return QUEUE_LABELS[queueId] ?? `Queue ${queueId}`;
+// The app's queue list comes over IPC from the local database, so resolving it
+// is what this does; the control is shared with the website.
+export function queueLabel(queueId: number | undefined): string {
+  return sharedQueueLabel(queueId);
 }
 
 export default function QueueSelect({
@@ -21,28 +23,12 @@ export default function QueueSelect({
     return unsub;
   }, []);
 
-  // Clear the selection if new data leaves it without any matching games
+  // Clear a selection new data leaves without any matching games
   useEffect(() => {
     if (value !== undefined && queues.length > 0 && !queues.includes(value)) {
       onChange(undefined);
     }
   }, [queues, value, onChange]);
 
-  // A queue dropdown is noise while the database only holds one queue
-  if (queues.length < 2) return null;
-
-  return (
-    <select
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-      className="select select-lg"
-    >
-      <option value="">All Queues</option>
-      {queues.map((q) => (
-        <option key={q} value={q}>
-          {queueLabel(q)}
-        </option>
-      ))}
-    </select>
-  );
+  return <SharedQueueSelect queues={queues} value={value} onChange={onChange} />;
 }
