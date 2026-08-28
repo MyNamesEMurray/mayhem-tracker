@@ -13,7 +13,7 @@
 // table doesn't carry. Augments missing from this map — a handful have no
 // description text anywhere in the string table — simply hover without one.
 //
-// Patch 16.16 · 604 of 640 augments.
+// Patch 16.17 · 606 of 642 augments.
 export const AUGMENT_DESCRIPTIONS: Record<number, string> = {
   // Accelerating Sorcery
   1: "Using Abilities grant you stacking Ability Haste.\nThis resets each round.",
@@ -828,7 +828,7 @@ export const AUGMENT_DESCRIPTIONS: Record<number, string> = {
   // Goldrend
   1335: "Damaging a champion with Attacks or Abilities deals additional magic damage, and grants you Gold and Movement Speed.",
   // Upgrade Infinity Edge
-  1336: "Gain ?% Critical Strike Chance and 500 Gold.\nHaving Infinity Edge allows your Critical Strike Chance to grant random Critical Strike Damage each Attack.",
+  1336: "Gain 500 Gold.\nHaving Infinity Edge allows your Critical Strike Chance to grant random Critical Strike Damage each Attack.",
   // King Me
   1337: "The first time you take the enemy transport with a Legendary Item you become Kinged, upgrading your item and gaining a random Prismatic Augment.",
   // Upgrade Hubris
@@ -1060,13 +1060,17 @@ export const AUGMENT_DESCRIPTIONS: Record<number, string> = {
   // Porcupine
   2139: "Taking damage from champions builds up a burst of needles that fly out of you, dealing damage and slowing nearby enemies.",
   // Upgrade Ravenous Hydra
-  2140: "Your spell hits trigger Cleave against enemy champions. Gain ? Life Steal on Ravenous.\nGain ? Gold.",
+  2140: "Your spell hits trigger Cleave against enemies. Increase Ravenous Hydra's Life Steal to ?\nGain ? Gold.",
+  // Ultra Hydra
+  2141: "Gain a Tiamat when completing a Hydra Item.\nQUEST:: Gain Ravenous Hydra, Profane Hydra and Titanic Hydra.\nREWARD:: Gain Ultra Hydra",
   // Upgrade Sundered Sky
   2143: "Reduce Sundered Sky's per target cooldown to ? seconds and heal you for ? of missing health.\nGain ? Gold.",
   // Bolstered
   2144: "Shields granted from ? are stronger and scaling with target's missing Health.",
   // Double Strike
   2148: "Master Yi occassionaly strikes twice.",
+  // Upgrade Death's Dance
+  2157: "Gain ?.\n? of damage taken is dealt to you over 3 seconds.\nHeal for ? instantly when scoring a takedown.",
   // Upgrade: Zz'Rot Portal
   7001: "Zz'Rot Portal spawns ? additional minion, plus an additional minion for every ? levels you have.\nMinions are also spawned when the portal is destroyed.",
   // Don't Stop Cleavin'
@@ -1273,4 +1277,4 @@ export const AUGMENT_DESCRIPTIONS: Record<number, string> = {
 };
 
 // The Data Dragon patch the text above was generated from.
-export const AUGMENT_DESCRIPTIONS_PATCH = "16.16";
+export const AUGMENT_DESCRIPTIONS_PATCH = "16.17";
