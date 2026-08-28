@@ -19,6 +19,11 @@ export function initDatabase() {
   const dbPath = getDbPath();
   db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
+  // The standard pairing with WAL. FULL fsyncs on every commit, which this
+  // workload does not need: the worst case at NORMAL is losing the last
+  // transaction if the machine loses power, never a corrupt database, and the
+  // last transaction is one game that the next sync re-reads from the client.
+  db.pragma("synchronous = NORMAL");
   db.pragma("foreign_keys = ON");
 
   createTables();
@@ -170,6 +175,14 @@ function createTables() {
     CREATE INDEX IF NOT EXISTS idx_item_events_game ON item_events(game_id);
 
     CREATE INDEX IF NOT EXISTS idx_games_creation ON games(game_creation DESC);
+
+    -- The two columns every filtered query narrows on, and neither was
+    -- indexed. applyPatchFilter emits game_version IN (...), applyQueueFilter
+    -- emits queue_id = ?, and getMatchFilterOptions runs SELECT DISTINCT over
+    -- game_version every time a filter bar loads. Before these, a player with
+    -- a long history scanned all of it to populate a dropdown.
+    CREATE INDEX IF NOT EXISTS idx_games_version ON games(game_version);
+    CREATE INDEX IF NOT EXISTS idx_games_queue ON games(queue_id);
     CREATE INDEX IF NOT EXISTS idx_player_stats_champion ON player_stats(champion_id);
     CREATE INDEX IF NOT EXISTS idx_game_augments_augment ON game_augments(augment_id);
     CREATE INDEX IF NOT EXISTS idx_participants_champion ON participants(champion_id);
