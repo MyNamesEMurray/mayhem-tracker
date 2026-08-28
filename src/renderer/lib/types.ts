@@ -83,7 +83,7 @@ export type MultikillType = "doubles" | "triples" | "quadras" | "pentas";
 
 export interface MatchFilters {
   championId?: number;
-  patch?: string;
+  patches?: string[];
   queue?: number;
   sort?: MatchSort;
   sortDir?: MatchSortDir;
@@ -343,43 +343,47 @@ export interface ElectronAPI {
     filters?: MatchFilters,
   ) => Promise<{ matches: MatchListItem[]; total: number }>;
   getMatchFilterOptions: (
-    filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
+    filters?: Pick<MatchFilters, "championId" | "patches" | "queue">,
   ) => Promise<MatchFilterOptions>;
   getMatchDetail: (gameId: number) => Promise<MatchDetail>;
   toggleFavorite: (gameId: number) => Promise<boolean>;
-  getChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
-  getAugmentStats: (championId?: number, patch?: string, queue?: number) => Promise<AugmentStats[]>;
-  getAugmentStatsDetailed: (patch?: string, queue?: number) => Promise<AugmentStatsDetailed[]>;
+  getChampionStats: (patches?: string[], queue?: number) => Promise<ChampionStats[]>;
+  getAugmentStats: (
+    championId?: number,
+    patches?: string[],
+    queue?: number,
+  ) => Promise<AugmentStats[]>;
+  getAugmentStatsDetailed: (patches?: string[], queue?: number) => Promise<AugmentStatsDetailed[]>;
   getDashboard: (
-    filters?: Pick<MatchFilters, "championId" | "patch" | "queue">,
+    filters?: Pick<MatchFilters, "championId" | "patches" | "queue">,
   ) => Promise<DashboardData>;
   getChampionMatchHistory: (
     championId: number,
     limit: number,
     offset: number,
-    patch?: string,
+    patches?: string[],
     queue?: number,
   ) => Promise<{ matches: MatchListItem[]; total: number }>;
   getChampionItemStats: (
     championId: number,
-    patch?: string,
+    patches?: string[],
     queue?: number,
   ) => Promise<ItemStats[]>;
   getTeammateStats: () => Promise<TeammateStats[]>;
   getTeammateDetail: (key: string) => Promise<TeammateDetail | null>;
-  getCommunityChampionStats: (patch?: string, queue?: number) => Promise<ChampionStats[]>;
+  getCommunityChampionStats: (patches?: string[], queue?: number) => Promise<ChampionStats[]>;
   getCommunityChampionDetail: (
     championId: number,
-    patch?: string,
+    patches?: string[],
     queue?: number,
   ) => Promise<{ augments: AugmentStats[]; items: ItemStats[] }>;
   getCommunityAugmentStats: (
-    patch?: string,
+    patches?: string[],
     queue?: number,
   ) => Promise<Omit<AugmentStatsDetailed, "champions">[]>;
   getCommunityAugmentChampions: (
     augmentId: number,
-    patch?: string,
+    patches?: string[],
     queue?: number,
   ) => Promise<{ champion_id: number; picks: number; wins: number }[]>;
   getContributorId: () => Promise<string | null>;

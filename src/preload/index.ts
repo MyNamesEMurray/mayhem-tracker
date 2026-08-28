@@ -6,7 +6,7 @@ const api = {
     offset: number,
     filters?: {
       championId?: number;
-      patch?: string;
+      patches?: string[];
       queue?: number;
       sort?: string;
       sortDir?: string;
@@ -14,32 +14,32 @@ const api = {
     },
   ) => ipcRenderer.invoke("db:match-history", limit, offset, filters),
 
-  getMatchFilterOptions: (filters?: { championId?: number; patch?: string; queue?: number }) =>
+  getMatchFilterOptions: (filters?: { championId?: number; patches?: string[]; queue?: number }) =>
     ipcRenderer.invoke("db:match-filters", filters),
 
   getMatchDetail: (gameId: number) => ipcRenderer.invoke("db:match-detail", gameId),
 
   toggleFavorite: (gameId: number) => ipcRenderer.invoke("db:toggle-favorite", gameId),
 
-  getChampionStats: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:champion-stats", patch, queue),
+  getChampionStats: (patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("db:champion-stats", patches, queue),
 
-  getAugmentStats: (championId?: number, patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:augment-stats", championId, patch, queue),
+  getAugmentStats: (championId?: number, patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("db:augment-stats", championId, patches, queue),
 
-  getAugmentStatsDetailed: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:augment-stats-detailed", patch, queue),
+  getAugmentStatsDetailed: (patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("db:augment-stats-detailed", patches, queue),
 
-  getDashboard: (filters?: { championId?: number; patch?: string; queue?: number }) =>
+  getDashboard: (filters?: { championId?: number; patches?: string[]; queue?: number }) =>
     ipcRenderer.invoke("db:dashboard", filters),
 
   getChampionMatchHistory: (
     championId: number,
     limit: number,
     offset: number,
-    patch?: string,
+    patches?: string[],
     queue?: number,
-  ) => ipcRenderer.invoke("db:champion-match-history", championId, limit, offset, patch, queue),
+  ) => ipcRenderer.invoke("db:champion-match-history", championId, limit, offset, patches, queue),
 
   refreshGames: () => ipcRenderer.invoke("lcu:refresh"),
 
@@ -72,23 +72,23 @@ const api = {
 
   getItemData: (patch?: string) => ipcRenderer.invoke("dragon:items", patch),
 
-  getChampionItemStats: (championId: number, patch?: string, queue?: number) =>
-    ipcRenderer.invoke("db:champion-item-stats", championId, patch, queue),
+  getChampionItemStats: (championId: number, patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("db:champion-item-stats", championId, patches, queue),
 
   getTeammateStats: () => ipcRenderer.invoke("db:teammate-stats"),
 
   getTeammateDetail: (key: string) => ipcRenderer.invoke("db:teammate-detail", key),
 
-  getCommunityChampionStats: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("community:champion-stats", patch, queue),
+  getCommunityChampionStats: (patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("community:champion-stats", patches, queue),
 
-  getCommunityChampionDetail: (championId: number, patch?: string, queue?: number) =>
-    ipcRenderer.invoke("community:champion-detail", championId, patch, queue),
+  getCommunityChampionDetail: (championId: number, patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("community:champion-detail", championId, patches, queue),
 
-  getCommunityAugmentStats: (patch?: string, queue?: number) =>
-    ipcRenderer.invoke("community:augment-stats", patch, queue),
-  getCommunityAugmentChampions: (augmentId: number, patch?: string, queue?: number) =>
-    ipcRenderer.invoke("community:augment-champions", augmentId, patch, queue),
+  getCommunityAugmentStats: (patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("community:augment-stats", patches, queue),
+  getCommunityAugmentChampions: (augmentId: number, patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("community:augment-champions", augmentId, patches, queue),
   getContributorId: () => ipcRenderer.invoke("contributor:get"),
   setContributorId: (token: string) => ipcRenderer.invoke("contributor:set", token),
   rotateContributorId: () => ipcRenderer.invoke("contributor:rotate"),

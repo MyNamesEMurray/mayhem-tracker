@@ -22,11 +22,19 @@ export {
 export type { Tier } from "../../../src/shared/score.ts";
 
 import { score } from "../../../src/shared/score.ts";
-import { comparePatches, toYearPatch } from "../../../src/shared/patch.ts";
+import { comparePatches } from "../../../src/shared/patch.ts";
 import { KDA_RAMP, rampClass } from "../../../src/shared/format.ts";
 
 export { QUEUE_LABELS } from "../../../src/shared/queues.ts";
 export { comparePatches };
+export {
+  formatPatch,
+  parsePatchParam,
+  patchesIn,
+  patchParam,
+  patchRange,
+} from "../../../src/shared/patch.ts";
+export type { PatchSelection } from "../../../src/shared/patch.ts";
 export { formatWhole, kdaRatio } from "../../../src/shared/format.ts";
 
 export interface Filters {
@@ -39,13 +47,6 @@ function rowMatches(row: { patch: string; queue_id: number }, f: Filters): boole
   if (f.patches && !f.patches.has(row.patch)) return false;
   if (f.queue != null && row.queue_id !== f.queue) return false;
   return true;
-}
-
-// Patches are stored year-based ("26.16") since the community database was
-// normalized; mapping again here is a harmless safety net for any stray
-// client-style value ("16.16"), since toYearPatch is idempotent.
-export function formatPatch(patch: string): string {
-  return toYearPatch(patch);
 }
 
 // Patches present in the data, newest first

@@ -1,8 +1,8 @@
-import { toYearPatch } from "../../shared/patch";
 import { KDA_RAMP, rampClass, SCORE_RAMP } from "../../shared/format";
 
 // Re-exported so call sites keep one formatting import
 export { formatWhole } from "../../shared/format";
+export { formatPatch } from "../../shared/patch";
 
 // Per-game averages. K/D/A-sized numbers carry one decimal — always, so a
 // column reads 13.6 / 12.5 / 14.0 rather than 13.6 / 12.5 / 14 — and the big
@@ -78,6 +78,3 @@ export function formatDateTime(timestamp: number): string {
 // Patches are stored year-based ("26.16") since the database migration;
 // mapping here again is a harmless safety net for any stray client-style
 // value ("16.16"), since toYearPatch is idempotent.
-export function formatPatch(patch: string): string {
-  return toYearPatch(patch);
-}

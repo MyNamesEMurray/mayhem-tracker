@@ -4,9 +4,10 @@ import type { MatchFilters, MatchListItem } from "../lib/types";
 const PAGE_SIZE = 20;
 
 export function useMatches(filters: MatchFilters = {}) {
-  const { championId, patch, queue, sort, sortDir, multikills } = filters;
+  const { championId, patches, queue, sort, sortDir, multikills } = filters;
   // Arrays are recreated each render; use a joined key for stable effect deps
   const multikillsKey = multikills?.join(",") ?? "";
+  const patchesKey = patches?.join(",") ?? "";
   const [matches, setMatches] = useState<MatchListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -19,7 +20,7 @@ export function useMatches(filters: MatchFilters = {}) {
       try {
         const result = await window.api.getMatchHistory(PAGE_SIZE, offset, {
           championId,
-          patch,
+          patches,
           queue,
           sort,
           sortDir,
@@ -36,7 +37,7 @@ export function useMatches(filters: MatchFilters = {}) {
         setLoading(false);
       }
     },
-    [championId, patch, queue, sort, sortDir, multikillsKey, matches.length],
+    [championId, patchesKey, queue, sort, sortDir, multikillsKey, matches.length],
   );
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export function useMatches(filters: MatchFilters = {}) {
 
     const unsub = window.api.onGamesUpdated(() => load(true));
     return unsub;
-  }, [championId, patch, queue, sort, sortDir, multikillsKey]);
+  }, [championId, patchesKey, queue, sort, sortDir, multikillsKey]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) load(false);

@@ -12,7 +12,7 @@ import type { AugmentStatsDetailed, ChampionStats } from "../lib/types";
 import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ChampionIcon from "../../shared/ui/ChampionIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
-import PatchSelect from "../components/PatchSelect";
+import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
 import QueueSelect from "../components/QueueSelect";
 import { QUEUE_LABELS } from "../../shared/queues";
 import RarityFilter, { type Rarity } from "../../shared/ui/RarityFilter";
@@ -22,26 +22,31 @@ import TierBadge from "../../shared/ui/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../../shared/score";
 import { formatWhole, kdaColor, kdaRatio } from "../lib/format";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
-import { useCommunityPatches } from "../hooks/useCommunityPatches";
+import { usePatchOptions } from "../hooks/usePatchOptions";
+import { patchesIn, patchLabel } from "../../shared/patch";
 
 type SortKey = "picks" | "winRate" | "name" | "pickRate" | "score" | "tier" | "kda" | "damage";
 
 export default function Augments() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
-  const { patch, setPatch, queue, setQueue } = useStatsFilters();
+  const { patchSelection, setPatchSelection, queue, setQueue } = useStatsFilters();
   const [source, setSource] = useStatsSource();
-  const communityPatches = useCommunityPatches(source);
+  const patchOptions = usePatchOptions(source);
+  const patches = useMemo(
+    () => patchesIn(patchSelection, patchOptions),
+    [patchSelection, patchOptions],
+  );
   // The community pool has no per-augment champion breakdown up front — that
   // grain is 341k rows — so those rows arrive per augment, on expand.
   const { data, error, refetch } = useIpc<AugmentStatsDetailed[]>(
     () =>
       source === "community"
         ? window.api
-            .getCommunityAugmentStats(patch, queue)
+            .getCommunityAugmentStats(patches, queue)
             .then((rows) => rows.map((r) => ({ ...r, champions: [] })))
-        : window.api.getAugmentStatsDetailed(patch, queue),
-    [patch, queue, source],
+        : window.api.getAugmentStatsDetailed(patches, queue),
+    [patches, queue, source],
   );
   // The denominator for both the header count and pick rate. Deriving it from
   // augment picks (÷4, one per augment slot) looked right and wasn't: it
@@ -52,9 +57,9 @@ export default function Augments() {
   const { data: championRows } = useIpc<ChampionStats[]>(
     () =>
       source === "community"
-        ? window.api.getCommunityChampionStats(patch, queue)
-        : window.api.getChampionStats(patch, queue),
-    [patch, queue, source],
+        ? window.api.getCommunityChampionStats(patches, queue)
+        : window.api.getChampionStats(patches, queue),
+    [patches, queue, source],
   );
 
   const [search, setSearch] = useState("");
@@ -104,7 +109,7 @@ export default function Augments() {
   // hides itself entirely while only one queue has data — in which case that
   // one queue is what's on screen
   const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
-  const patchLabel = patch ? `Patch ${patch}` : "All patches";
+  const label = patchLabel(patchSelection, patchOptions);
 
   // Ten champion slots per game
   const totalSlots = useMemo(
@@ -121,7 +126,7 @@ export default function Augments() {
   // A change of patch, queue or source invalidates anything already fetched
   useEffect(() => {
     setCommunityChampions({});
-  }, [patch, queue, source]);
+  }, [patches, queue, source]);
 
   const toggleExpand = (augmentId: number) => {
     setExpanded((prev) => {
@@ -132,7 +137,7 @@ export default function Augments() {
     });
     if (source === "community" && communityChampions[augmentId] === undefined) {
       window.api
-        .getCommunityAugmentChampions(augmentId, patch, queue)
+        .getCommunityAugmentChampions(augmentId, patches, queue)
         .then((rows) => setCommunityChampions((prev) => ({ ...prev, [augmentId]: rows })))
         .catch(() => setCommunityChampions((prev) => ({ ...prev, [augmentId]: [] })));
     }
@@ -217,7 +222,7 @@ export default function Augments() {
             {queueLabel} Augments Tier List
           </h1>
           <p className="text-xs text-lol-text mt-0.5">
-            {patchLabel} · {totalGames.toLocaleString()} games
+            {label} · {totalGames.toLocaleString()} games
           </p>
         </div>
       </div>
@@ -228,7 +233,11 @@ export default function Augments() {
         <span className="text-xs text-lol-text self-center ml-2">{sorted.length} augments</span>
         <div className="ml-auto flex items-center gap-2">
           <QueueSelect value={queue} onChange={setQueue} />
-          <PatchSelect value={patch} onChange={setPatch} options={communityPatches} />
+          <PatchRangeSelect
+            patches={patchOptions}
+            selection={patchSelection}
+            onChange={setPatchSelection}
+          />
         </div>
         <SearchField
           value={search}

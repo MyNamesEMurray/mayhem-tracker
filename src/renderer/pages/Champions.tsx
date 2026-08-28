@@ -8,8 +8,9 @@ import { useChampionData, getChampionName } from "../hooks/useChampions";
 import type { ChampionStats } from "../lib/types";
 import ChampionIcon from "../../shared/ui/ChampionIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
-import PatchSelect from "../components/PatchSelect";
-import { useCommunityPatches } from "../hooks/useCommunityPatches";
+import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
+import { usePatchOptions } from "../hooks/usePatchOptions";
+import { patchesIn, patchLabel, patchParam } from "../../shared/patch";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import TierBadge from "../../shared/ui/TierBadge";
 import { assignTiers, score, TIER_ORDER } from "../../shared/score";
@@ -37,15 +38,19 @@ export default function Champions() {
   const champData = useChampionData();
   // Wide windows get larger icons; the icon components size in pixels
   const wide = useMediaQuery("(min-width: 1500px)");
-  const { patch, setPatch, queue, setQueue } = useStatsFilters();
+  const { patchSelection, setPatchSelection, queue, setQueue } = useStatsFilters();
   const [source, setSource] = useStatsSource();
-  const communityPatches = useCommunityPatches(source);
+  const patchOptions = usePatchOptions(source);
+  const patches = useMemo(
+    () => patchesIn(patchSelection, patchOptions),
+    [patchSelection, patchOptions],
+  );
   const { data, error, refetch } = useIpc<ChampionStats[]>(
     () =>
       source === "community"
-        ? window.api.getCommunityChampionStats(patch, queue)
-        : window.api.getChampionStats(patch, queue),
-    [patch, queue, source],
+        ? window.api.getCommunityChampionStats(patches, queue)
+        : window.api.getChampionStats(patches, queue),
+    [patches, queue, source],
   );
   const [search, setSearch] = useState("");
   // Score-first, like the website: rank is the point of a tier list
@@ -64,7 +69,10 @@ export default function Champions() {
   const openChampion = (championId: number) => {
     const params = new URLSearchParams();
     if (source === "community") params.set("source", "community");
-    params.set("patch", patch ?? "all");
+    // Omitted means the current patch, so the champion page opens on the same
+    // selection this board is showing
+    const patchValue = patchParam(patchSelection, patchOptions);
+    if (patchValue) params.set("patch", patchValue);
     params.set("queue", queue == null ? "all" : String(queue));
     navigate(`/champions/${championId}?${params}`);
   };
@@ -92,7 +100,7 @@ export default function Champions() {
   // hides itself entirely while only one queue has data — in which case that
   // one queue is what's on screen
   const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
-  const patchLabel = patch ? `Patch ${patch}` : "All patches";
+  const label = patchLabel(patchSelection, patchOptions);
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -172,19 +180,23 @@ export default function Champions() {
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
         {/* Named the same way the website names it: the queue, the list, then
-            the slice the numbers cover — so a game count reads as this patch
-            of this queue rather than the size of the whole database */}
+            the slice the numbers cover — so a game count reads as the patches
+            in view for this queue rather than the size of the whole database */}
         <div>
           <h1 className="text-xl font-bold text-lol-text-bright">
             {queueLabel} Champions Tier List
           </h1>
           <p className="text-xs text-lol-text mt-0.5">
-            {patchLabel} · {totalGames.toLocaleString()} games
+            {label} · {totalGames.toLocaleString()} games
           </p>
         </div>
         <div className="flex items-center gap-2">
           <QueueSelect value={queue} onChange={setQueue} />
-          <PatchSelect value={patch} onChange={setPatch} options={communityPatches} />
+          <PatchRangeSelect
+            patches={patchOptions}
+            selection={patchSelection}
+            onChange={setPatchSelection}
+          />
           <SearchField
             value={search}
             onChange={setSearch}

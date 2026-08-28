@@ -27,7 +27,7 @@ export function registerIpcHandlers() {
       offset: number,
       filters?: {
         championId?: number;
-        patch?: string;
+        patches?: string[];
         queue?: number;
         sort?: string;
         sortDir?: string;
@@ -40,7 +40,7 @@ export function registerIpcHandlers() {
 
   ipcMain.handle(
     "db:match-filters",
-    (_event, filters?: { championId?: number; patch?: string; queue?: number }) => {
+    (_event, filters?: { championId?: number; patches?: string[]; queue?: number }) => {
       return db.getMatchFilterOptions(filters);
     },
   );
@@ -53,32 +53,39 @@ export function registerIpcHandlers() {
     return db.toggleFavorite(gameId);
   });
 
-  ipcMain.handle("db:champion-stats", (_event, patch?: string, queue?: number) => {
-    return db.getChampionStatsAll(patch, queue);
+  ipcMain.handle("db:champion-stats", (_event, patches?: string[], queue?: number) => {
+    return db.getChampionStatsAll(patches, queue);
   });
 
   ipcMain.handle(
     "db:augment-stats",
-    (_event, championId?: number, patch?: string, queue?: number) => {
-      return db.getAugmentStatsAll(championId, patch, queue);
+    (_event, championId?: number, patches?: string[], queue?: number) => {
+      return db.getAugmentStatsAll(championId, patches, queue);
     },
   );
 
-  ipcMain.handle("db:augment-stats-detailed", (_event, patch?: string, queue?: number) => {
-    return db.getAugmentStatsWithChampions(patch, queue);
+  ipcMain.handle("db:augment-stats-detailed", (_event, patches?: string[], queue?: number) => {
+    return db.getAugmentStatsWithChampions(patches, queue);
   });
 
   ipcMain.handle(
     "db:dashboard",
-    (_event, filters?: { championId?: number; patch?: string; queue?: number }) => {
+    (_event, filters?: { championId?: number; patches?: string[]; queue?: number }) => {
       return db.getDashboardData(filters);
     },
   );
 
   ipcMain.handle(
     "db:champion-match-history",
-    (_event, championId: number, limit: number, offset: number, patch?: string, queue?: number) => {
-      return db.getChampionMatchHistory(championId, limit, offset, patch, queue);
+    (
+      _event,
+      championId: number,
+      limit: number,
+      offset: number,
+      patches?: string[],
+      queue?: number,
+    ) => {
+      return db.getChampionMatchHistory(championId, limit, offset, patches, queue);
     },
   );
 
@@ -132,8 +139,8 @@ export function registerIpcHandlers() {
 
   ipcMain.handle(
     "db:champion-item-stats",
-    (_event, championId: number, patch?: string, queue?: number) => {
-      return db.getChampionItemStats(championId, patch, queue);
+    (_event, championId: number, patches?: string[], queue?: number) => {
+      return db.getChampionItemStats(championId, patches, queue);
     },
   );
 
@@ -149,25 +156,25 @@ export function registerIpcHandlers() {
 
   // Community stats: the same aggregates the website reads, cached locally so
   // a build lookup never needs the browser
-  ipcMain.handle("community:champion-stats", (_event, patch?: string, queue?: number) => {
-    return community.getCommunityChampionStats(patch, queue);
+  ipcMain.handle("community:champion-stats", (_event, patches?: string[], queue?: number) => {
+    return community.getCommunityChampionStats(patches, queue);
   });
 
   ipcMain.handle(
     "community:champion-detail",
-    (_event, championId: number, patch?: string, queue?: number) => {
-      return community.getCommunityChampionDetail(championId, patch, queue);
+    (_event, championId: number, patches?: string[], queue?: number) => {
+      return community.getCommunityChampionDetail(championId, patches, queue);
     },
   );
 
-  ipcMain.handle("community:augment-stats", (_e, patch?: string, queue?: number) =>
-    community.getCommunityAugmentStats(patch, queue),
+  ipcMain.handle("community:augment-stats", (_e, patches?: string[], queue?: number) =>
+    community.getCommunityAugmentStats(patches, queue),
   );
 
   ipcMain.handle(
     "community:augment-champions",
-    (_e, augmentId: number, patch?: string, queue?: number) =>
-      community.getCommunityAugmentChampions(augmentId, patch, queue),
+    (_e, augmentId: number, patches?: string[], queue?: number) =>
+      community.getCommunityAugmentChampions(augmentId, patches, queue),
   );
 
   ipcMain.handle("contributor:get", () => upload.getContributorId());

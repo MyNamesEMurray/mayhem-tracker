@@ -1,7 +1,8 @@
-import { PatchRangeSelect } from "mayhem-tracker";
+import { parsePatchParam, PatchRangeSelect } from "mayhem-tracker";
 
-// Newest first — patches[0] is the current patch
-const patches = ["16.15", "16.14", "16.13", "16.12", "16.11"];
+// Newest first — patches[0] is the current patch. Year-based names, which is
+// how patches have been stored since the community database was normalised.
+const patches = ["26.2", "26.1", "25.24", "25.23", "25.22"];
 
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
@@ -11,29 +12,38 @@ const canvas: React.CSSProperties = {
   width: "fit-content",
 };
 
-// Default view — no ?patch= param means current patch only
+// The control holds no state — each surface passes a selection in and gets one
+// back — so a preview names the state it wants through the same parser the
+// site uses on its ?patch= parameter.
+function Preview({ param }: { param: string | null }) {
+  return (
+    <div style={canvas}>
+      <PatchRangeSelect
+        patches={patches}
+        selection={parsePatchParam(param, patches)}
+        onChange={() => {}}
+      />
+    </div>
+  );
+}
+
+// The default on both surfaces: the newest patch, one dropdown
 export function CurrentPatch() {
-  return (
-    <div style={canvas}>
-      <PatchRangeSelect patches={patches} param={null} onChange={() => {}} />
-    </div>
-  );
+  return <Preview param={null} />;
 }
 
-// param="all" — every patch, single select
+// No patch filter at all
 export function AllPatches() {
-  return (
-    <div style={canvas}>
-      <PatchRangeSelect patches={patches} param="all" onChange={() => {}} />
-    </div>
-  );
+  return <Preview param="all" />;
 }
 
-// Range mode — from/to selects appear next to the mode dropdown
+// A span: the mode dropdown shrinks to "Range" and the two ends appear beside it
 export function RangeSelection() {
-  return (
-    <div style={canvas}>
-      <PatchRangeSelect patches={patches} param="16.13-16.15" onChange={() => {}} />
-    </div>
-  );
+  return <Preview param="25.24-26.2" />;
+}
+
+// One patch that isn't the newest — a range whose ends are equal, which is
+// also what an old single-patch link parses to
+export function SinglePatch() {
+  return <Preview param="25.23" />;
 }

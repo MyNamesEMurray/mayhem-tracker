@@ -7,6 +7,7 @@ import { toYearPatch } from "../shared/patch";
 import { getDataDir } from "./paths";
 import { getChampionClasses, getChampionDataVersion } from "./dragon";
 import { EXCLUDED_ITEM_IDS } from "../shared/items";
+import { applyPatchFilter } from "./patch-filter";
 
 let db: Database.Database;
 
@@ -935,7 +936,7 @@ export function getMatchHistory(
   offset: number,
   filters?: {
     championId?: number;
-    patch?: string;
+    patches?: string[];
     queue?: number;
     sort?: string;
     sortDir?: string;
@@ -948,10 +949,7 @@ export function getMatchHistory(
     where.push("ps.champion_id = ?");
     params.push(filters.championId);
   }
-  if (filters?.patch) {
-    where.push("g.game_version = ?");
-    params.push(filters.patch);
-  }
+  applyPatchFilter(where, params, filters?.patches);
   applyQueueFilter(where, params, filters?.queue);
   if (filters?.multikills && filters.multikills.length > 0) {
     const cols = filters.multikills
@@ -994,7 +992,7 @@ export function getMatchHistory(
 
 export function getMatchFilterOptions(filters?: {
   championId?: number;
-  patch?: string;
+  patches?: string[];
   queue?: number;
 }): {
   patches: string[];
@@ -1027,10 +1025,7 @@ export function getMatchFilterOptions(filters?: {
 
   const champWhere = ["1 = 1"];
   const champParams: any[] = [];
-  if (filters?.patch) {
-    champWhere.push("g.game_version = ?");
-    champParams.push(filters.patch);
-  }
+  applyPatchFilter(champWhere, champParams, filters?.patches);
   applyQueueFilter(champWhere, champParams, filters?.queue);
   const champRows = db
     .prepare(`
@@ -1048,10 +1043,7 @@ export function getMatchFilterOptions(filters?: {
     queueWhere.push("ps.champion_id = ?");
     queueParams.push(filters.championId);
   }
-  if (filters?.patch) {
-    queueWhere.push("g.game_version = ?");
-    queueParams.push(filters.patch);
-  }
+  applyPatchFilter(queueWhere, queueParams, filters?.patches);
   applyQueueFilter(queueWhere, queueParams, undefined);
   const queueRows = db
     .prepare(`
@@ -1164,13 +1156,10 @@ export function storeLiveEvents(
   tx();
 }
 
-export function getChampionStatsAll(patch?: string, queue?: number): any[] {
+export function getChampionStatsAll(patches?: string[], queue?: number): any[] {
   const where = ["g.is_remake = 0"];
   const params: any[] = [];
-  if (patch) {
-    where.push("g.game_version = ?");
-    params.push(patch);
-  }
+  applyPatchFilter(where, params, patches);
   applyQueueFilter(where, params, queue);
   return db
     .prepare(`
@@ -1199,17 +1188,14 @@ export function getChampionStatsAll(patch?: string, queue?: number): any[] {
     .all(...params);
 }
 
-export function getAugmentStatsAll(championId?: number, patch?: string, queue?: number): any[] {
+export function getAugmentStatsAll(championId?: number, patches?: string[], queue?: number): any[] {
   const where = ["g.is_remake = 0"];
   const params: any[] = [];
   if (championId !== undefined) {
     where.push("ps.champion_id = ?");
     params.push(championId);
   }
-  if (patch) {
-    where.push("g.game_version = ?");
-    params.push(patch);
-  }
+  applyPatchFilter(where, params, patches);
   applyQueueFilter(where, params, queue);
   return db
     .prepare(`
@@ -1228,7 +1214,7 @@ export function getAugmentStatsAll(championId?: number, patch?: string, queue?: 
 
 export function getDashboardData(filters?: {
   championId?: number;
-  patch?: string;
+  patches?: string[];
   queue?: number;
 }): any {
   const where: string[] = ["g.is_remake = 0"];
@@ -1237,10 +1223,7 @@ export function getDashboardData(filters?: {
     where.push("ps.champion_id = ?");
     params.push(filters.championId);
   }
-  if (filters?.patch) {
-    where.push("g.game_version = ?");
-    params.push(filters.patch);
-  }
+  applyPatchFilter(where, params, filters?.patches);
   applyQueueFilter(where, params, filters?.queue);
   const whereSql = `WHERE ${where.join(" AND ")}`;
 
@@ -1322,7 +1305,7 @@ export function getDashboardData(filters?: {
 }
 
 export function getAugmentStatsWithChampions(
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): {
   augment_id: number;
@@ -1336,10 +1319,7 @@ export function getAugmentStatsWithChampions(
 }[] {
   const where = ["g.is_remake = 0"];
   const params: any[] = [];
-  if (patch) {
-    where.push("g.game_version = ?");
-    params.push(patch);
-  }
+  applyPatchFilter(where, params, patches);
   applyQueueFilter(where, params, queue);
   const augments = db
     .prepare(`
@@ -1391,15 +1371,12 @@ export function getChampionMatchHistory(
   championId: number,
   limit: number,
   offset: number,
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): { matches: any[]; total: number } {
   const where = ["ps.champion_id = ?"];
   const params: any[] = [championId];
-  if (patch) {
-    where.push("g.game_version = ?");
-    params.push(patch);
-  }
+  applyPatchFilter(where, params, patches);
   applyQueueFilter(where, params, queue);
   const whereSql = `WHERE ${where.join(" AND ")}`;
   const total = db
@@ -1857,15 +1834,12 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
 
 export function getChampionItemStats(
   championId: number,
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): { item_id: number; picks: number; wins: number }[] {
   const extraWhere: string[] = [];
   const extraParams: any[] = [];
-  if (patch) {
-    extraWhere.push("g.game_version = ?");
-    extraParams.push(patch);
-  }
+  applyPatchFilter(extraWhere, extraParams, patches);
   applyQueueFilter(extraWhere, extraParams, queue);
   const extraSql = extraWhere.length > 0 ? ` AND ${extraWhere.join(" AND ")}` : "";
   const itemCols = ["item0", "item1", "item2", "item3", "item4", "item5", "item6"];

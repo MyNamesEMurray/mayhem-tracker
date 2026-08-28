@@ -239,9 +239,14 @@ function refresh(cached: Cache | null = readCache()): Promise<Cache> {
   return inFlight;
 }
 
-const matches = (row: { patch: string; queue_id: number }, patch?: string, queue?: number) =>
-  (patch == null || row.patch === patch) &&
+// `patches` undefined means every patch. A set rather than a list: this runs
+// once per row, and the champion grain is hundreds of thousands of them.
+const matches = (row: { patch: string; queue_id: number }, patches?: Set<string>, queue?: number) =>
+  (patches == null || patches.has(row.patch)) &&
   (queue == null ? MAYHEM_QUEUE_IDS.includes(row.queue_id) : row.queue_id === queue);
+
+// Callers hand in the list the renderer computed from the patch selection
+const patchSet = (patches?: string[]) => (patches ? new Set(patches) : undefined);
 
 export interface CommunityChampionStats {
   champion_id: number;
@@ -266,13 +271,14 @@ export interface CommunityChampionStats {
 // in the community aggregate, so they come back zero and the table hides the
 // column for this source.
 export async function getCommunityChampionStats(
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): Promise<CommunityChampionStats[]> {
+  const included = patchSet(patches);
   const { champions } = await loadCommunity();
   const byChampion = new Map<number, CommunityChampionStats>();
   for (const r of champions) {
-    if (!matches(r, patch, queue)) continue;
+    if (!matches(r, included, queue)) continue;
     let e = byChampion.get(r.champion_id);
     if (!e) {
       e = {
@@ -347,16 +353,17 @@ async function loadChampionDetail(championId: number): Promise<ChampionDetailCac
 
 export async function getCommunityChampionDetail(
   championId: number,
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): Promise<{
   augments: { augment_id: number; picks: number; wins: number }[];
   items: { item_id: number; picks: number; wins: number }[];
 }> {
+  const included = patchSet(patches);
   const { augments, items } = await loadChampionDetail(championId);
   const augTotals = new Map<number, { augment_id: number; picks: number; wins: number }>();
   for (const r of augments) {
-    if (r.champion_id !== championId || !matches(r, patch, queue)) continue;
+    if (r.champion_id !== championId || !matches(r, included, queue)) continue;
     const e = augTotals.get(r.augment_id) ?? { augment_id: r.augment_id, picks: 0, wins: 0 };
     e.picks += r.picks;
     e.wins += r.wins;
@@ -364,7 +371,7 @@ export async function getCommunityChampionDetail(
   }
   const itemTotals = new Map<number, { item_id: number; picks: number; wins: number }>();
   for (const r of items) {
-    if (r.champion_id !== championId || !matches(r, patch, queue)) continue;
+    if (r.champion_id !== championId || !matches(r, included, queue)) continue;
     const e = itemTotals.get(r.item_id) ?? { item_id: r.item_id, picks: 0, wins: 0 };
     e.picks += r.picks;
     e.wins += r.wins;
@@ -388,13 +395,14 @@ export interface CommunityAugmentStats {
 }
 
 export async function getCommunityAugmentStats(
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): Promise<CommunityAugmentStats[]> {
+  const included = patchSet(patches);
   const { augmentTotals } = await loadCommunity();
   const byAugment = new Map<number, CommunityAugmentStats>();
   for (const r of augmentTotals ?? []) {
-    if (!matches(r, patch, queue)) continue;
+    if (!matches(r, included, queue)) continue;
     let e = byAugment.get(r.augment_id);
     if (!e) {
       e = {
@@ -425,9 +433,10 @@ const augmentChampionCache = new Map<number, { fetchedAt: number; rows: Communit
 
 export async function getCommunityAugmentChampions(
   augmentId: number,
-  patch?: string,
+  patches?: string[],
   queue?: number,
 ): Promise<{ champion_id: number; picks: number; wins: number }[]> {
+  const included = patchSet(patches);
   let hit = augmentChampionCache.get(augmentId);
   if (!hit || Date.now() - hit.fetchedAt >= TTL_MS) {
     const rows = await fetchView<CommunityAugmentRow>(
@@ -442,7 +451,7 @@ export async function getCommunityAugmentChampions(
   }
   const byChampion = new Map<number, { champion_id: number; picks: number; wins: number }>();
   for (const r of hit.rows) {
-    if (!matches(r, patch, queue)) continue;
+    if (!matches(r, included, queue)) continue;
     const e = byChampion.get(r.champion_id) ?? { champion_id: r.champion_id, picks: 0, wins: 0 };
     e.picks += r.picks;
     e.wins += r.wins;

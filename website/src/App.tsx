@@ -26,6 +26,11 @@ import {
   availableQueues,
   formatPatch,
   MIN_SAMPLE,
+  parsePatchParam,
+  // The local `patchParam` here is the raw URL string; this is the function
+  // that produces one from a selection
+  patchParam as encodePatchParam,
+  patchesIn,
   QUEUE_LABELS,
   type Filters,
 } from "./lib/stats";
@@ -34,10 +39,7 @@ import CommunityPage from "./components/CommunityPage";
 import AugmentsTable from "./components/AugmentsTable";
 import ChampionDetail from "./components/ChampionDetail";
 import ChampionsTable from "./components/ChampionsTable";
-import PatchRangeSelect, {
-  parsePatchParam,
-  selectionPatchSet,
-} from "./components/PatchRangeSelect";
+import PatchRangeSelect from "../../src/shared/ui/PatchRangeSelect";
 import { AD_SLOTS, loadAdSense } from "./lib/adsense";
 import { championSlug } from "./lib/slug";
 import { useUrlState } from "./lib/urlState";
@@ -213,10 +215,11 @@ export default function App() {
 
   // Default view is the current patch; ?patch= also supports "all", a single
   // patch, or an inclusive "A-B" range
-  const patchSet = useMemo(
-    () => selectionPatchSet(parsePatchParam(patchParam, patches), patches),
-    [patchParam, patches],
-  );
+  const patchSet = useMemo(() => {
+    const included = patchesIn(parsePatchParam(patchParam, patches), patches);
+    // Undefined means every patch; the row filter reads that as no filtering
+    return included && new Set(included);
+  }, [patchParam, patches]);
   const filters: Filters = useMemo(() => ({ patches: patchSet, queue }), [patchSet, queue]);
 
   // Games available on a set of patches, for the whole board or one champion
@@ -434,8 +437,8 @@ export default function App() {
                 </select>
                 <PatchRangeSelect
                   patches={patches}
-                  param={patchParam}
-                  onChange={(v) => setParam("patch", v)}
+                  selection={parsePatchParam(patchParam, patches)}
+                  onChange={(next) => setParam("patch", encodePatchParam(next, patches))}
                 />
               </div>
             )}

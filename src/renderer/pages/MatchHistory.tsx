@@ -33,10 +33,11 @@ import {
   formatKDA,
   kdaRatio,
   kdaStringColor,
-  formatPatch,
   scoreRampColor,
 } from "../lib/format";
 import { queueLabel } from "../components/QueueSelect";
+import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
+import { patchesIn } from "../../shared/patch";
 
 // An empty list means something different depending on whether we're still
 // waiting on the client, mid-import, or genuinely out of games.
@@ -65,24 +66,34 @@ const SORT_OPTIONS: { value: MatchSort; label: string }[] = [
 ];
 
 // Widths are fixed per dropdown so changing a filter never reflows the row
-const SELECT_CLASS = "select";
 const SELECT_WIDE = "select select-lg";
 const SELECT_SMALL = "select select-sm";
 
 export default function MatchHistory() {
   const [championFilter, setChampionFilter] = useState<number | undefined>(undefined);
   const {
-    patch: patchFilter,
-    setPatch: setPatchFilter,
+    patchSelection,
+    setPatchSelection,
     queue: queueFilter,
     setQueue: setQueueFilter,
   } = useStatsFilters();
+  const [filterOptions, setFilterOptions] = useState<MatchFilterOptions>({
+    patches: [],
+    champions: [],
+    queues: [],
+  });
+  // The patches the selection covers, which is what every query below filters
+  // on. Undefined means every patch.
+  const patches = useMemo(
+    () => patchesIn(patchSelection, filterOptions.patches),
+    [patchSelection, filterOptions.patches],
+  );
   const [multikillFilter, setMultikillFilter] = useState<MultikillType[]>([]);
   const [sort, setSort] = useState<MatchSort | undefined>(undefined);
   const [sortDir, setSortDir] = useState<MatchSortDir>("desc");
   const { matches, loading, hasMore, loadMore, reload } = useMatches({
     championId: championFilter,
-    patch: patchFilter,
+    patches,
     queue: queueFilter,
     sort,
     sortDir,
@@ -99,16 +110,11 @@ export default function MatchHistory() {
     () =>
       window.api.getDashboard({
         championId: championFilter,
-        patch: patchFilter,
+        patches,
         queue: queueFilter,
       }),
-    [championFilter, patchFilter, queueFilter],
+    [championFilter, patches, queueFilter],
   );
-  const [filterOptions, setFilterOptions] = useState<MatchFilterOptions>({
-    patches: [],
-    champions: [],
-    queues: [],
-  });
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -147,7 +153,7 @@ export default function MatchHistory() {
       window.api
         .getMatchFilterOptions({
           championId: championFilter,
-          patch: patchFilter,
+          patches,
           queue: queueFilter,
         })
         .then(setFilterOptions);
@@ -159,7 +165,7 @@ export default function MatchHistory() {
       reload();
     });
     return unsub;
-  }, [championFilter, patchFilter, queueFilter, refetchDashboard, reload]);
+  }, [championFilter, patches, queueFilter, refetchDashboard, reload]);
 
   // Catch up on anything recorded while the app sat in the tray
   useOnWindowFocus(() => {
@@ -172,9 +178,6 @@ export default function MatchHistory() {
     if (filterOptions.champions.length === 0 && filterOptions.patches.length === 0) return;
     if (championFilter !== undefined && !filterOptions.champions.includes(championFilter)) {
       setChampionFilter(undefined);
-    }
-    if (patchFilter !== undefined && !filterOptions.patches.includes(patchFilter)) {
-      setPatchFilter(undefined);
     }
     if (queueFilter !== undefined && !filterOptions.queues.includes(queueFilter)) {
       setQueueFilter(undefined);
@@ -344,18 +347,11 @@ export default function MatchHistory() {
               </option>
             ))}
           </select>
-          <select
-            value={patchFilter ?? ""}
-            onChange={(e) => setPatchFilter(e.target.value === "" ? undefined : e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">All Patches</option>
-            {filterOptions.patches.map((p) => (
-              <option key={p} value={p}>
-                Patch {formatPatch(p)}
-              </option>
-            ))}
-          </select>
+          <PatchRangeSelect
+            patches={filterOptions.patches}
+            selection={patchSelection}
+            onChange={setPatchSelection}
+          />
           {(filterOptions.queues.length > 1 || queueFilter !== undefined) && (
             <select
               value={queueFilter ?? ""}
@@ -415,7 +411,7 @@ export default function MatchHistory() {
       {matches.length === 0 && !loading && (
         <div className={`${PANEL} p-8 text-center text-lol-text`}>
           {championFilter !== undefined ||
-          patchFilter !== undefined ||
+          patches !== undefined ||
           queueFilter !== undefined ||
           multikillFilter.length > 0
             ? "No games match the current filters."

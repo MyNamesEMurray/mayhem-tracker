@@ -7,7 +7,10 @@
 export { default as AugmentsTable } from "../website/src/components/AugmentsTable";
 export { default as ChampionDetail } from "../website/src/components/ChampionDetail";
 export { default as ChampionsTable } from "../website/src/components/ChampionsTable";
-export { default as PatchRangeSelect } from "../website/src/components/PatchRangeSelect";
+export { default as PatchRangeSelect } from "../src/shared/ui/PatchRangeSelect";
+// The patch picker holds no state, so a preview needs the parser that turns
+// a ?patch= value into the selection to hand it
+export { parsePatchParam } from "../src/shared/patch";
 export { default as SearchField } from "../src/shared/ui/SearchField";
 
 // Shared by both surfaces (src/shared/ui) — one component, not two copies,

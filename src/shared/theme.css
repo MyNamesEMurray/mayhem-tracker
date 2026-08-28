@@ -83,6 +83,16 @@ body {
     --select-w: 12.5rem;
   }
 
+  /* The fixed widths above overflow a phone once three of these sit in a row,
+     which the patch range picker does. This lets them share whatever width the
+     row has instead. */
+  .select-flex {
+    width: auto;
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 8.5rem;
+  }
+
   .input {
     background-color: var(--color-lol-card);
     border: 1px solid var(--color-lol-border);

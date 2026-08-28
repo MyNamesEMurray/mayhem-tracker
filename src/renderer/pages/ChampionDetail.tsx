@@ -32,8 +32,9 @@ import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import TierBadge from "../../shared/ui/TierBadge";
-import PatchSelect from "../components/PatchSelect";
-import { useCommunityPatches } from "../hooks/useCommunityPatches";
+import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
+import { usePatchOptions } from "../hooks/usePatchOptions";
+import { patchesIn } from "../../shared/patch";
 import QueueSelect from "../components/QueueSelect";
 
 // Same floors the website and the prerendered pages use
@@ -156,34 +157,37 @@ export default function ChampionDetail() {
   // The same give-to-get gate the switch enforces: a link asking for the
   // community pool doesn't get it while sharing is off
   const source: StatsSource = resolveSource(requested, sharing);
-  const { patch, setPatch, queue, setQueue } = useUrlStatsFilters();
-  const communityPatches = useCommunityPatches(source);
+  const patchOptions = usePatchOptions(source);
+  const { patchSelection, setPatchSelection, queue, setQueue } = useUrlStatsFilters(patchOptions);
+  const patches = useMemo(
+    () => patchesIn(patchSelection, patchOptions),
+    [patchSelection, patchOptions],
+  );
+  // Item art is versioned per patch, so the icons follow the newest patch in
+  // view rather than the whole filter
+  const assetPatch = patches?.[0];
 
   const champData = useChampionData();
   const augData = useAugmentData();
-  const itemData = useItemData(patch);
+  const itemData = useItemData(assetPatch);
   const [champions, setChampions] = useState<ChampionStats[] | null>(null);
   const [augments, setAugments] = useState<AugmentStats[] | null>(null);
   const [items, setItems] = useState<ItemStats[] | null>(null);
 
-  // The ordered patch list to reach back through — the community source knows
-  // patches this install has never played
-  const [localPatches, setLocalPatches] = useState<string[]>([]);
-  useEffect(() => {
-    if (source === "community") return;
-    window.api.getMatchFilterOptions().then((o) => setLocalPatches(o.patches));
-  }, [source]);
-  const patchList = source === "community" ? (communityPatches ?? []) : localPatches;
+  // The ordered list to reach back through when the selection is too thin.
+  // usePatchOptions already returns the community's patches or this install's
+  // own, whichever source is showing.
+  const patchList = patchOptions;
 
   // Set when the reader pins the view back to the single selected patch
   const [pinned, setPinned] = useState(false);
-  useEffect(() => setPinned(false), [championId, patch, queue, source]);
+  useEffect(() => setPinned(false), [championId, patches, queue, source]);
   const [widenedOver, setWidenedOver] = useState<string[] | null>(null);
   const [gamesOnSelected, setGamesOnSelected] = useState(0);
 
   useEffect(() => {
     let alive = true;
-    const fetchFor = async (p: string | undefined): Promise<Bundle> => {
+    const fetchFor = async (p: string[] | undefined): Promise<Bundle> => {
       if (source === "community") {
         const [all, detail] = await Promise.all([
           window.api.getCommunityChampionStats(p, queue),
@@ -203,15 +207,17 @@ export default function ChampionDetail() {
       b.champions.find((c) => c.champion_id === championId)?.games ?? 0;
 
     const load = async () => {
-      let acc = await fetchFor(patch);
+      let acc = await fetchFor(patches);
       if (!alive) return;
       const onSelected = gamesFor(acc);
-      const used = patch ? [patch] : [];
+      const used = patches ? [...patches] : [];
 
       // "All patches" is already as wide as it goes, and a pinned view was
-      // asked for explicitly
-      if (patch && !pinned) {
-        let i = patchList.indexOf(patch);
+      // asked for explicitly. Widening starts from the oldest patch already
+      // in view, so a range reaches back from its own far end rather than
+      // from wherever a single patch would have been.
+      if (patches && patches.length > 0 && !pinned) {
+        let i = patchList.indexOf(patches[patches.length - 1]);
         while (
           i >= 0 &&
           gamesFor(acc) < AUTO_WIDEN_MIN_GAMES &&
@@ -219,7 +225,7 @@ export default function ChampionDetail() {
           i + 1 < patchList.length
         ) {
           i += 1;
-          const older = await fetchFor(patchList[i]);
+          const older = await fetchFor([patchList[i]]);
           if (!alive) return;
           acc = mergeBundles(acc, older);
           used.push(patchList[i]);
@@ -237,7 +243,7 @@ export default function ChampionDetail() {
     return () => {
       alive = false;
     };
-  }, [championId, patch, queue, source, patchList, pinned]);
+  }, [championId, patches, queue, source, patchList, pinned]);
 
   const champ = champions?.find((c) => c.champion_id === championId) ?? null;
 
@@ -332,7 +338,11 @@ export default function ChampionDetail() {
       </button>
       <div className="flex items-center gap-2">
         <QueueSelect value={queue} onChange={setQueue} />
-        <PatchSelect value={patch} onChange={setPatch} options={communityPatches} />
+        <PatchRangeSelect
+          patches={patchOptions}
+          selection={patchSelection}
+          onChange={setPatchSelection}
+        />
       </div>
     </div>
   );
@@ -442,7 +452,7 @@ export default function ChampionDetail() {
                     title={`${itemData[i.item_id]?.name ?? `Item ${i.item_id}`} — ${i.picks} games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
-                      <ItemIcon itemId={i.item_id} size={44} patch={patch} />
+                      <ItemIcon itemId={i.item_id} size={44} patch={assetPatch} />
                     </span>
                     <span
                       className={`text-xs mt-1 ${low ? "text-lol-text" : "text-lol-text-bright"}`}
@@ -519,7 +529,7 @@ export default function ChampionDetail() {
           }
           rows={visibleItems.map((i) => ({
             key: i.item_id,
-            icon: <ItemIcon itemId={i.item_id} size={24} patch={patch} />,
+            icon: <ItemIcon itemId={i.item_id} size={24} patch={assetPatch} />,
             name: itemData[i.item_id]?.name ?? `Item ${i.item_id}`,
             picks: i.picks,
             wins: i.wins,

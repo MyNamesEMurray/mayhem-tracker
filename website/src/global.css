@@ -21,15 +21,6 @@ html {
       display: flex;
     }
   }
-
-  /* Fixed-width selects overflow a phone once three sit in a row (the patch
-     range picker); this lets them share whatever width the row has. */
-  .select-flex {
-    width: auto;
-    flex: 1 1 0%;
-    min-width: 0;
-    max-width: 8.5rem;
-  }
 }
 
 /* ── Unified-redesign responsive table behavior (ported from the design
