@@ -27,6 +27,16 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it - a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.5 - 2026-08-28
+
+- **See what to take while you're picking augments.** An **In game** tab appears while a game is running and ranks the augments the community wins with on the champion you're playing, split by rarity. Ones you've already taken drop off the list, so what's left is what you can still be offered. It opens itself when a game starts, unless you'd deliberately gone somewhere else in the app. What it can't do: the game doesn't tell the app which three augments it's offering you - nothing Riot publishes exposes that - so this is a board to glance at and match your offer against, not something that picks for you.
+- **Champion pages show who beats whom.** Every shared game has always recorded which champions faced each other across the two teams, and nothing ever read it. There's a **Matchups** panel now: who this champion is strong into, who it struggles against, and how many games each is drawn from. Click an opponent to open theirs. The website has it too.
+- **Augments that work together.** Expand an augment on the Augments tab and, next to the champions it's best on, you'll see what it pairs well with - and how far the pair beats the better of the two on its own, which is the part that isn't just "this augment is good on its own". Nobody else collects Mayhem augments at the grain this needs. Also on the website.
+- **Your record, next to everyone's.** A champion page reading community stats now puts your games on that champion under the community's - 41 games at 43.9% against 5,612 at 53.0% - and tells you how many of the games behind that community number are yours. Under twenty games of your own it says so rather than showing a difference, because a gap that thin is noise.
+- **The app works in half a window.** Drag it narrow and the tier lists fold into cards instead of squeezing the table, with a sort control where the clickable headers were. The window wouldn't go below 900px wide, which is more than half of most laptop screens; it goes to 720 now.
+- **The patch range you pick stays picked.** Opening a champion and coming back put the list back on the current patch, so a range had to be chosen again every single time. It's kept until you change it - through champion pages, and across the Champions and Augments tabs.
+- **The first launch draws sooner.** Opening the app for the first time downloaded every patch the community has ever recorded before the Champions tab could show anything. It fetches the newest few now and fills in the rest behind you.
+
 ## v2.14.4 - 2026-08-28
 
 - **Augment wording no longer waits for an update.** Hover descriptions used to be built into the app, so an augment reworded in a patch kept its old wording until a new version shipped and you downloaded it. They are fetched now, like champion names and item data always have been, so the next time you open the app the text is current. This is the last release the descriptions themselves will need.
