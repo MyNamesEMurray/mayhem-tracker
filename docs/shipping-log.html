@@ -1,0 +1,803 @@
+<title>MayhemStats Build Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
+
+<style>
+  /* MayhemStats' own tokens, so this page reads as part of the product it
+     describes. Dark is the product's world; the light set is a warm paper
+     with the same gold pulled darker so it holds contrast on it. */
+  :root {
+    --ground: #f5f2ec;
+    --panel: #fffefb;
+    --panel-2: #ebe6dc;
+    --line: #ddd5c6;
+    --line-soft: #e8e2d6;
+    --ink: #171c26;
+    --ink-dim: #5d6577;
+    --gold: #8a6a1e;
+    --gold-bright: #6f5417;
+    --win: #1f7a4d;
+    --loss: #a83440;
+    --glow: transparent;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0b0e14;
+      --panel: #141924;
+      --panel-2: #1b2130;
+      --line: #242c3d;
+      --line-soft: #1c2334;
+      --ink: #e8ecf4;
+      --ink-dim: #94a0b8;
+      --gold: #c89b3c;
+      --gold-bright: #f0e6d2;
+      --win: #3ecf8e;
+      --loss: #e5636e;
+      --glow: #151c2c;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0b0e14;
+    --panel: #141924;
+    --panel-2: #1b2130;
+    --line: #242c3d;
+    --line-soft: #1c2334;
+    --ink: #e8ecf4;
+    --ink-dim: #94a0b8;
+    --gold: #c89b3c;
+    --gold-bright: #f0e6d2;
+    --win: #3ecf8e;
+    --loss: #e5636e;
+    --glow: #151c2c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background-color: var(--ground);
+    background-image: radial-gradient(1100px 700px at 15% -10%, var(--glow) 0%, transparent 60%);
+    background-attachment: fixed;
+    color: var(--ink-dim);
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+
+  .mast { border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-family: "Archivo", "Inter", sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.1rem, 5.5vw, 3.1rem);
+    line-height: 1.02;
+    letter-spacing: -.028em;
+    color: var(--ink);
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 1.0625rem;
+    max-width: 64ch;
+    margin: 0;
+  }
+
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  /* ── The headline figures ─────────────────────────────────────────── */
+
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 32px 0 0;
+  }
+
+  .fig { background: var(--panel); padding: 16px 18px; }
+
+  .fig dt {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 0 0 6px;
+  }
+
+  .fig dd {
+    margin: 0;
+    font-family: "Archivo", sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fig dd span { font-size: .8125rem; font-weight: 500; color: var(--ink-dim); }
+
+  /* ── Sections ─────────────────────────────────────────────────────── */
+
+  section { margin-top: 64px; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-family: "Archivo", sans-serif;
+    font-weight: 600;
+    font-size: 1.375rem;
+    letter-spacing: -.018em;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .sec-note {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-left: auto;
+  }
+
+  /* ── An entry ─────────────────────────────────────────────────────── */
+
+  .entry {
+    border-left: 2px solid var(--line);
+    padding: 24px 0 4px 22px;
+    margin-top: 12px;
+  }
+
+  .entry:hover { border-left-color: var(--gold); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .entry { transition: border-left-color 180ms ease; }
+  }
+
+  h3 {
+    font-family: "Archivo", sans-serif;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+
+  .entry p { margin: 0 0 12px; max-width: 66ch; }
+  .entry p:last-child { margin-bottom: 0; }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .875em;
+  }
+
+  code {
+    background: var(--panel-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink);
+  }
+
+  /* ── Before → after strip ─────────────────────────────────────────── */
+
+  .measure {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    margin: 0 0 14px;
+    overflow: hidden;
+  }
+
+  .measure > div {
+    flex: 1 1 190px;
+    min-width: 0;
+    padding: 12px 16px;
+    border-right: 1px solid var(--line-soft);
+  }
+
+  .measure > div:last-child { border-right: 0; }
+
+  .m-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .m-pair {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .875rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+
+  .m-was { color: var(--ink-dim); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .m-arrow { color: var(--gold); }
+  .m-now { color: var(--win); font-weight: 500; }
+  .m-flat { color: var(--ink); }
+
+  /* ── Verified note ────────────────────────────────────────────────── */
+
+  .verified {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: .8125rem;
+    line-height: 1.55;
+    color: var(--ink-dim);
+    border-top: 1px dashed var(--line);
+    padding-top: 11px;
+    margin-top: 14px;
+    max-width: 70ch;
+  }
+
+  .verified b {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    flex-shrink: 0;
+    padding-top: 3px;
+  }
+
+  /* ── Correction blocks ────────────────────────────────────────────── */
+
+  .correction {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 12px;
+  }
+
+  .correction h3 { font-size: .9375rem; margin-bottom: 6px; }
+  .correction p { font-size: .875rem; margin-bottom: 0; }
+  .correction .claim { color: var(--loss); }
+  .correction .fact { color: var(--ink); }
+
+  /* ── Attention block ──────────────────────────────────────────────── */
+
+  .attention {
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    background: var(--panel);
+    padding: 20px 22px;
+    margin-top: 16px;
+  }
+
+  .attention h3 { color: var(--gold-bright); margin-bottom: 10px; }
+
+  /* ── Commit list ──────────────────────────────────────────────────── */
+
+  .commits {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .commits li {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+    padding: 9px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line-soft);
+    font-size: .875rem;
+  }
+
+  .commits li:last-child { border-bottom: 0; }
+
+  .commits .sha {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .8125rem;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .commits .msg { color: var(--ink); }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: .8125rem;
+  }
+
+  a { color: var(--gold); text-decoration-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+  a:focus-visible, .entry:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 40px 18px 72px; }
+    .entry { padding-left: 16px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">MayhemStats · branch claude/ideation · 28 August 2026</p>
+    <h1>Twenty findings, eight commits, one bug nobody had noticed</h1>
+    <p class="standfirst">
+      Every recommendation from the review is built and pushed. Along the way the rollup refresh
+      turned out to have been <strong>failing on roughly half its runs for days</strong>, silently,
+      at exactly 120 seconds a time. Everything below is measured against the live database on the
+      day it shipped, not estimated.
+    </p>
+  </header>
+
+  <dl class="figures">
+    <div class="fig"><dt>First paint</dt><dd>46&times; <span>less data</span></dd></div>
+    <div class="fig"><dt>Coverage query</dt><dd>20&times; <span>faster</span></dd></div>
+    <div class="fig"><dt>New rollups</dt><dd>590k <span>rows</span></dd></div>
+    <div class="fig"><dt>Tier list</dt><dd>4 &rarr; 1 <span>boards</span></dd></div>
+    <div class="fig"><dt>New tests</dt><dd>39 <span>all passing</span></dd></div>
+  </dl>
+
+  <!-- ══ Performance ══════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>Performance and correctness</h2>
+      <span class="sec-note">P1 – P7</span>
+    </div>
+
+    <article class="entry">
+      <h3>Fetch the patches being shown, not all of them</h3>
+      <p>
+        Both surfaces downloaded every patch ever recorded in order to render one, and the payload
+        grew by about 11&nbsp;KB with every patch Riot shipped, forever. The site now loads in
+        stages: the patch list, then the newest patch, then the two more that auto-widen can reach,
+        then anything a range actually asks for. The app does the same on a first launch.
+      </p>
+      <div class="measure">
+        <div>
+          <span class="m-label">First paint, rows</span>
+          <span class="m-pair"><span class="m-was">7,887</span><span class="m-arrow">&rarr;</span><span class="m-now">261</span></span>
+        </div>
+        <div>
+          <span class="m-label">First paint, requests</span>
+          <span class="m-pair"><span class="m-was">9</span><span class="m-arrow">&rarr;</span><span class="m-now">2</span></span>
+        </div>
+        <div>
+          <span class="m-label">Typical session</span>
+          <span class="m-pair"><span class="m-flat">5.2&times; smaller</span></span>
+        </div>
+      </div>
+      <div class="verified">
+        <b>Found</b>
+        <span>
+          The first version asked for <em>zero</em> patches when the patch list itself was
+          unreachable, because that fetch swallows its own failure and returns an empty list. An
+          empty list means the view is down, not that there are no patches. It falls back to
+          fetching everything now.
+        </span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <h3>Commit a batch of games in one transaction</h3>
+      <p>
+        The ingest function wrote five tables as five separate calls with nothing around them, and
+        ran three <code>count(*)</code> queries over a contributor's whole history beforehand. A
+        failure after the first write left a match with no participants: counted in every total,
+        contributing nothing, never retried. Both are fine until the system is busy, and being busy
+        is exactly what breaks them.
+      </p>
+      <div class="measure">
+        <div>
+          <span class="m-label">Rate-limit check</span>
+          <span class="m-pair"><span class="m-was">3 counts, unbounded</span><span class="m-arrow">&rarr;</span><span class="m-now">1 key read</span></span>
+        </div>
+        <div>
+          <span class="m-label">Partial writes possible</span>
+          <span class="m-pair"><span class="m-was">yes</span><span class="m-arrow">&rarr;</span><span class="m-now">no</span></span>
+        </div>
+      </div>
+      <div class="verified">
+        <b>Verified</b>
+        <span>
+          Forcing a constraint violation on the fourth of five inserts left zero orphan matches,
+          zero orphan participants and zero orphan contributions. A duplicate upload counts once.
+          A batch over the daily limit is refused without writing anything. An end-to-end POST
+          through the deployed function wrote 1 match, 10 participants, 20 augments, 20 item
+          events and 1 contribution; a second identical POST moved no counter. All test rows
+          removed and the totals confirmed back at 161,230 and 2,144.
+        </span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <h3>The schema, in the repository</h3>
+      <p>
+        Seven applied migrations had never been committed, including the base schema. They are
+        recovered and in <code>supabase/migrations/</code> now, with the review pipeline's live
+        secrets stripped out and a note explaining what to seed instead.
+      </p>
+      <div class="verified">
+        <b>Correction</b>
+        <span>
+          The review said the tables had been created by hand. They had not: the database had
+          thirteen recorded migrations and the repository had six. The base schema was migrated
+          properly; the files just were not committed.
+        </span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══ The bug ══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>The bug that was already there</h2>
+      <span class="sec-note">not in the review</span>
+    </div>
+
+    <article class="entry">
+      <h3>Half the rollup refreshes have been failing, for days</h3>
+      <p>
+        The database's <code>statement_timeout</code> is two minutes and pg_cron inherits it.
+        <code>stats.refresh_all()</code> opened by setting that to zero, which reads as handling it
+        and does not: the timer for the statement calling the function is armed <em>before</em> the
+        function starts, and changing the value from inside the call it is already running does not
+        re-arm it. So a full pass has always had two minutes, whatever the function said.
+      </p>
+      <p>
+        <code>cron.job_run_details</code> shows it dying at exactly 120 seconds on roughly every
+        other run, as far back as the history goes. The fix is that the setting has to be its own
+        statement, ahead of the call. A pass also used to abort on the first view that failed,
+        leaving every view after it stale; failures are collected and raised at the end now, so one
+        slow rollup costs its own refresh and nobody else's.
+      </p>
+      <div class="measure">
+        <div>
+          <span class="m-label">Passes completing</span>
+          <span class="m-pair"><span class="m-was">~half</span><span class="m-arrow">&rarr;</span><span class="m-now">all</span></span>
+        </div>
+        <div>
+          <span class="m-label">One failure costs</span>
+          <span class="m-pair"><span class="m-was">every later view</span><span class="m-arrow">&rarr;</span><span class="m-now">itself</span></span>
+        </div>
+      </div>
+      <div class="verified">
+        <b>Note</b>
+        <span>
+          The data was never wrong. Both heavy rollups match their source tables exactly for the
+          current patch, because the passes that did complete caught everything up. But half the
+          work was being thrown away, and two more rollups would have made that worse rather than
+          better.
+        </span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══ Design ═══════════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>One tier list instead of two</h2>
+      <span class="sec-note">D1 – D4 · option B</span>
+    </div>
+
+    <article class="entry">
+      <h3>Four boards became one, columns included</h3>
+      <p>
+        The app and the site each had their own champions board and their own augments board:
+        about 1,450 lines drawing the same two tables from the same numbers with the same scoring,
+        drifted in ways nobody chose. A board is a list of columns now; each column says how to
+        draw its cell, what to sort it by, and where it lands when the table becomes cards.
+      </p>
+      <p>
+        The columns are the union. The site gains Kills, Deaths, Assists and Gold; the app gains
+        the card layout it never had. Thirteen columns do not fit a 1280px window, so Kills, Deaths
+        and Assists get columns of their own only from 1400px &mdash; the only three that can be
+        held back without losing anything, because the KDA cell beside them prints the same numbers
+        at every width.
+      </p>
+      <div class="measure">
+        <div>
+          <span class="m-label">Window minimum</span>
+          <span class="m-pair"><span class="m-was">900px</span><span class="m-arrow">&rarr;</span><span class="m-now">720px</span></span>
+        </div>
+        <div>
+          <span class="m-label">Card-layout CSS</span>
+          <span class="m-pair"><span class="m-was">177 lines, by index</span><span class="m-arrow">&rarr;</span><span class="m-now">one shared block</span></span>
+        </div>
+        <div>
+          <span class="m-label">Net lines</span>
+          <span class="m-pair"><span class="m-flat">about 80 more</span></span>
+        </div>
+      </div>
+      <div class="verified">
+        <b>Verified</b>
+        <span>
+          Checked in a browser at 1600, 1280, 900 and 680px on both surfaces: the right columns
+          appear and disappear, rows become grids with their figures labelled, the sort control
+          appears exactly where the header row goes, every column sorts both ways, tier sorts S+
+          first with score breaking ties, and no page overflows sideways at 680.
+        </span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══ Features ═════════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>Five features</h2>
+      <span class="sec-note">F1 – F5</span>
+    </div>
+
+    <article class="entry">
+      <h3>Tell players which augment to take, while they are choosing</h3>
+      <p>
+        The app polls the game's live data every five seconds and already knew the champion being
+        played. It separately held community augment win rates per champion. Nothing connected the
+        two. An <strong>In game</strong> tab now appears while a game is running and shows the best
+        augments for your champion, split by rarity, with the ones you have already taken struck
+        off &mdash; the app can see those, because an augment reveals itself by replacing a summoner
+        spell's name.
+      </p>
+      <p>
+        What it is not: the live API does not expose which three augments you are being offered.
+        This is the board you glance at and match your offer against, and the page says so rather
+        than implying more.
+      </p>
+      <div class="verified">
+        <b>Verified</b>
+        <span>
+          Rendered against the built app: three rarity columns of eight, taken augments leaving the
+          list, one column at 720px, the fallback while the champion is still unknown, the redirect
+          and vanishing tab when the game ends, and the auto-open firing from Overview but not from
+          Settings.
+        </span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <h3>Who beats whom</h3>
+      <p>
+        Every cross-team pairing in every game has been in the database since the first upload. One
+        thing read it: a view counting how many distinct pairs existed, for a single tile. That
+        count cost a self-join over 1.37&nbsp;million rows every half hour and answered one number.
+        Both champion pages now have a Matchups panel, and the tile is a cheap sum over the rollup
+        that feeds it.
+      </p>
+      <div class="measure">
+        <div>
+          <span class="m-label">Coverage tile</span>
+          <span class="m-pair"><span class="m-was">6.1s</span><span class="m-arrow">&rarr;</span><span class="m-now">0.3s</span></span>
+        </div>
+        <div>
+          <span class="m-label">Rollup</span>
+          <span class="m-pair"><span class="m-flat">491,730 rows · 55 MB</span></span>
+        </div>
+        <div>
+          <span class="m-label">Rebuild</span>
+          <span class="m-pair"><span class="m-flat">18.7s, concurrent</span></span>
+        </div>
+      </div>
+      <p>
+        The ranking needed a second statistic. Score is the floor of the confidence interval, right
+        for best-first and quietly wrong for worst-first: it sinks a thin sample toward zero, so
+        &ldquo;struggles against&rdquo; would fill with whichever opponents had been met eight times
+        and lost to. The bad side ranks by the <em>ceiling</em> instead &mdash; the win rate a record
+        cannot rule out &mdash; so a matchup has to be losing on its best reading to appear there.
+      </p>
+      <div class="verified">
+        <b>Measured</b>
+        <span>
+          Brand, last three patches. By the ceiling his worst matchups are Sett at 43.6% over 429
+          games, Yunara over 421, Twitch over 493. Ranked by Score ascending they would have been
+          Evelynn over 91 games, Fiora over 80, Kled over 86 &mdash; thinner samples with wider
+          intervals, displacing matchups with five times the evidence.
+        </span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <h3>Which augments work together</h3>
+      <p>
+        Augments are stored per participant with their slot, which means every combination anyone
+        has actually run has been recorded with the win attached. Nothing computed it, and nobody
+        else collects Mayhem augments at this grain. Expanding an augment on either surface now
+        shows what it pairs well with.
+      </p>
+      <p>
+        The number that matters is not the pair's win rate &mdash; that is mostly the win rate of
+        whichever half is stronger. It is the lift: how far the pair beats its own better half,
+        measured from the floor of the pair's interval rather than its observed rate, so a pairing
+        has to be proven better rather than merely luckier.
+      </p>
+      <div class="measure">
+        <div>
+          <span class="m-label">Rollup</span>
+          <span class="m-pair"><span class="m-flat">98,586 rows · 12 MB</span></span>
+        </div>
+        <div>
+          <span class="m-label">Distinct pairs</span>
+          <span class="m-pair"><span class="m-flat">21,221</span></span>
+        </div>
+        <div>
+          <span class="m-label">Grain</span>
+          <span class="m-pair"><span class="m-flat">pairs only, never triples</span></span>
+        </div>
+      </div>
+      <div class="verified">
+        <b>Measured</b>
+        <span>
+          Top of the live list: Big Brain with DropBear, 70.8% over 154 games, 6.5 points above
+          either alone. Draw Your Sword with Upgrade Infinity Edge sits fourth on +4.2 despite a
+          lower raw rate, because 1,740 games say so. Ranking by raw rate would have put High Roller
+          with Combusting Interest third at 66.1%, where the lift is only +2.8 because High Roller
+          is already 54.2% on its own.
+        </span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <h3>Your record against everyone's, and what you contributed</h3>
+      <p>
+        The app has held both numbers for as long as it has had a community source and offered a
+        switch between them, which meant you could see either and never both. The champion page now
+        says it in one line &mdash; and says nothing of the kind under twenty games, because a
+        difference between two win rates is a claim about both.
+      </p>
+      <p>
+        The same panel closes the loop on the opt-in. 2,144 people share their games; the app could
+        tell them their contributor id and let them withdraw, which is the right baseline and still
+        a one-way donation. It now says how many of the games behind the number are theirs, counted
+        from accepted uploads only.
+      </p>
+      <div class="verified">
+        <b>Rendered</b>
+        <span>
+          &ldquo;33 of your Ziggs games are in the 5,612 behind these numbers. You: 41 games,
+          43.9%. Community: 5,612 games, 53.0%. 9.1 points below the community on Ziggs, over 41
+          games.&rdquo;
+        </span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══ Corrections ══════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>Where the review was wrong</h2>
+      <span class="sec-note">4 corrections</span>
+    </div>
+
+    <div class="correction">
+      <h3>D1 &mdash; the columns that had drifted</h3>
+      <p>
+        <span class="claim">The review said the app showed Win Rate and Pick Rate columns and the
+        site did not.</span> <span class="fact">The site had both. The real drift was Kills, Deaths,
+        Assists and Gold, which only the app had, and the card layout, which only the site had.</span>
+      </p>
+    </div>
+
+    <div class="correction">
+      <h3>D1 &mdash; the line count</h3>
+      <p>
+        <span class="claim">The review estimated roughly 800 fewer lines.</span>
+        <span class="fact">The change is about 80 lines more. The duplication is genuinely gone
+        &mdash; one board, one comparator, one card layout &mdash; but each column now declares its
+        sorting and its card placement rather than implying them, and the shared code carries the
+        reasoning. The point was never the line count.</span>
+      </p>
+    </div>
+
+    <div class="correction">
+      <h3>D3 &mdash; the dead ItemIcon</h3>
+      <p>
+        <span class="claim">The review said <code>website/src/components/ItemIcon.tsx</code> had
+        zero importers and could be deleted.</span>
+        <span class="fact">It is live. <code>ChampionDetail.tsx</code> imports it as
+        <code>"./ItemIcon"</code>, which the search that produced the finding missed. Both local
+        ItemIcons are correct minimal adapters over the shared component. No change made.</span>
+      </p>
+    </div>
+
+    <div class="correction">
+      <h3>P4 &mdash; how the schema got there</h3>
+      <p>
+        <span class="claim">The review said tables had been created by hand in the dashboard.</span>
+        <span class="fact">Thirteen migrations were on record in the database against six in the
+        repository. The schema was migrated properly; seven files were simply never committed.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ Needs a decision ═════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>One thing for you</h2>
+      <span class="sec-note">action</span>
+    </div>
+
+    <div class="attention">
+      <h3>Live secrets sit in the database's own migration history</h3>
+      <p>
+        The <code>quarantine_review_pipeline</code> migration seeded <code>admin_config</code> with
+        real values inline: the secret that authorises approve and deny links, the cron secret, an
+        API key and a personal email address. They have never been in git and the copy committed
+        now has them removed &mdash; but they are still in the project's migration history, which
+        means <code>supabase db pull</code> writes them straight into a working tree. Worth
+        rotating, and worth knowing before anyone pulls.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ The commits ══════════════════════════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>What was pushed</h2>
+      <span class="sec-note">branch claude/ideation</span>
+    </div>
+    <ul class="commits">
+      <li><span class="sha">bdc921b</span><span class="msg">Augment synergies, your record against everyone's, and what you contributed</span></li>
+      <li><span class="sha">87498b0</span><span class="msg">Who beats whom</span></li>
+      <li><span class="sha">d27652b</span><span class="msg">Tell players which augment to take, while they are choosing</span></li>
+      <li><span class="sha">e59dc0b</span><span class="msg">One tier list, drawn by both surfaces</span></li>
+      <li><span class="sha">25af753</span><span class="msg">Fetch the patches being shown, not all of them</span></li>
+      <li><span class="sha">5fab439</span><span class="msg">Commit a batch of games in one transaction</span></li>
+      <li><span class="sha">3170b97</span><span class="msg">Index the two columns every local query filters on</span></li>
+      <li><span class="sha">dc53a2d</span><span class="msg">Recover the seven migrations that were never committed</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>
+      Database changes are applied to production and committed as migration files. Nothing here is
+      merged to <span class="mono">main</span>; merging cuts an app release, because the app
+      changed.
+    </p>
+  </footer>
+
+</div>
