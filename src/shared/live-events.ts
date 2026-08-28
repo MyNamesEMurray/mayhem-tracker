@@ -19,22 +19,70 @@ interface PlayerTrack {
   knownSpells: Set<string>;
 }
 
+// Who is at the keyboard, and what they are playing. The active player is
+// named on its own object; the champion is only on the matching entry in
+// allPlayers, so the two have to be joined. Riot has spelled the name three
+// ways across client versions and all three still turn up in the wild, so
+// every one of them is tried before giving up.
+export function activePlayer(data: any): { riotId: string | null; championName: string | null } {
+  const a = data?.activePlayer;
+  const riotId: string | null =
+    a?.riotId ||
+    (a?.riotIdGameName && a?.riotIdTagLine ? `${a.riotIdGameName}#${a.riotIdTagLine}` : null) ||
+    a?.summonerName ||
+    null;
+  if (!riotId) return { riotId: null, championName: null };
+
+  const lower = riotId.toLowerCase();
+  for (const p of data?.allPlayers ?? []) {
+    const id: string = p?.riotId || p?.summonerName || "";
+    // A client that reports the active player without a tag still matches the
+    // tagged entry in allPlayers, which is the common shape on older builds
+    if (id.toLowerCase() === lower || id.split("#")[0].toLowerCase() === lower) {
+      return { riotId: id || riotId, championName: p?.championName ?? null };
+    }
+  }
+  return { riotId, championName: null };
+}
+
 export class LiveGameSession {
   readonly startedAt = Date.now();
   endedAt: number | null = null;
   gameMode: string | null = null;
   lastGameTime = 0;
   events: LiveItemEvent[] = [];
+  // The player at the keyboard, for the panel that recommends augments while
+  // a game is running. Kept from the first snapshot that names them.
+  activeRiotId: string | null = null;
+  activeChampion: string | null = null;
   private players = new Map<string, PlayerTrack>();
 
   get riotIds(): string[] {
     return [...this.players.keys()];
   }
 
+  // Augments this player has already picked up, in the order they appeared.
+  // Named rather than numbered: the live API reveals an augment by replacing
+  // a summoner spell's display name, and a name is all it gives.
+  takenAugments(riotId: string | null = this.activeRiotId): string[] {
+    if (!riotId) return [];
+    const out: string[] = [];
+    for (const e of this.events) {
+      if (e.action === "augment" && e.riotId === riotId && e.detail) out.push(e.detail);
+    }
+    return out;
+  }
+
   ingest(data: any): void {
     const gameTime: number = data?.gameData?.gameTime ?? 0;
     this.gameMode = data?.gameData?.gameMode ?? this.gameMode;
     this.lastGameTime = gameTime;
+
+    if (!this.activeChampion) {
+      const active = activePlayer(data);
+      this.activeRiotId = active.riotId ?? this.activeRiotId;
+      this.activeChampion = active.championName ?? this.activeChampion;
+    }
 
     for (const p of data?.allPlayers ?? []) {
       const riotId: string = p?.riotId || p?.summonerName;

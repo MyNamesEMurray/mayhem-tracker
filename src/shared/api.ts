@@ -146,6 +146,24 @@ export interface ChampionStats {
   penta_kills: number;
 }
 
+// A game in progress, for the panel that recommends augments while it runs.
+// inGame is false whenever there is nothing to show: no game, or build-order
+// tracking switched off in settings.
+export interface LiveGameState {
+  inGame: boolean;
+  // Riot's internal champion name ("Ziggs", "MonkeyKing"), which is what the
+  // Live Client Data API gives. Null for the moment between a game being
+  // detected and the first snapshot that names the player.
+  championName?: string | null;
+  gameMode?: string | null;
+  gameTime?: number;
+  // Augment display names, in pickup order. The live API never says which
+  // three augments are being offered - it only reveals one after it is taken,
+  // by replacing a summoner spell's name - so this is what to strike off the
+  // board, not what to choose between.
+  takenAugments?: string[];
+}
+
 // What the local cache of the shared database currently holds
 export interface CommunityMeta {
   fetchedAt: number;
@@ -424,6 +442,9 @@ export interface ElectronAPI {
   getItemData: (patch?: string) => Promise<ItemData>;
   onStatusChanged: (callback: (status: LcuStatus) => void) => () => void;
   onGamesUpdated: (callback: () => void) => () => void;
+
+  getLiveGame: () => Promise<LiveGameState>;
+  onLiveGame: (callback: (state: LiveGameState) => void) => () => void;
   getSetting: (key: string) => Promise<string | null>;
   setSetting: (key: string, value: string) => Promise<void>;
   exportData: () => Promise<{ success: boolean; path?: string }>;

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { ElectronAPI, LcuStatus } from "../shared/api";
+import type { ElectronAPI, LcuStatus, LiveGameState } from "../shared/api";
 
 // Declared as ElectronAPI rather than inferred, so the compiler checks this
 // object against the contract the renderer calls through. Without it the two
@@ -118,6 +118,14 @@ const api: ElectronAPI = {
     const handler = () => callback();
     ipcRenderer.on("lcu:games-updated", handler);
     return () => ipcRenderer.removeListener("lcu:games-updated", handler);
+  },
+
+  getLiveGame: () => ipcRenderer.invoke("live:get"),
+
+  onLiveGame: (callback: (state: LiveGameState) => void) => {
+    const handler = (_e: unknown, state: LiveGameState) => callback(state);
+    ipcRenderer.on("live:changed", handler);
+    return () => ipcRenderer.removeListener("live:changed", handler);
   },
 
   getSetting: (key: string) => ipcRenderer.invoke("settings:get", key),

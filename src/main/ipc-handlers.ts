@@ -220,6 +220,11 @@ export function registerIpcHandlers() {
     if (key === "live_tracking_enabled") liveWatcher.refreshLiveWatcher();
   });
 
+  // The game in progress, for the in-game augment panel. Answered from the
+  // watcher's current session; changes arrive on "live:changed" rather than
+  // by polling this.
+  ipcMain.handle("live:get", () => liveWatcher.getLiveGame());
+
   // Window controls (custom title bar)
   ipcMain.handle("window:minimize", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.minimize();

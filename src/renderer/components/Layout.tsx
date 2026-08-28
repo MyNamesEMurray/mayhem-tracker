@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useLcuStatus } from "../hooks/useLcuStatus";
+import { useLiveGame } from "../hooks/useLiveGame";
 import { useBackfill } from "../hooks/useBackfill";
 import type { UpdateInfo } from "../lib/types";
 import { recordGamesUpdated } from "../lib/eventTrace";
@@ -19,6 +20,23 @@ export default function Layout() {
 
   // Always-on tally for the diagnostics panel
   useEffect(() => window.api.onGamesUpdated(recordGamesUpdated), []);
+
+  // A game starting opens the augment panel, but only from Overview.
+  //
+  // The panel is worth nothing if you have to remember it exists, and the
+  // moment it is worth something is the moment a game begins. Overview is
+  // where the app sits when nobody has moved it, so arriving there is a
+  // reasonable read of "not busy with anything else"; someone who deliberately
+  // opened Matches or Settings is left where they put themselves.
+  const live = useLiveGame();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const wasInGame = useRef(false);
+  useEffect(() => {
+    const inGame = live?.inGame === true;
+    if (inGame && !wasInGame.current && pathname === "/") navigate("/live");
+    wasInGame.current = inGame;
+  }, [live?.inGame, pathname, navigate]);
 
   // Ctrl+Shift+D reveals (or hides) the developer tools in Settings. They
   // ship with every build but stay invisible to players who never ask.

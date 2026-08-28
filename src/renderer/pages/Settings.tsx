@@ -458,8 +458,8 @@ export default function Settings() {
             />
           </SettingRow>
           <SettingRow
-            name="Track build orders during games"
-            description="While you play, records the order every player buys items in (locally, from the game's own live data) and shows it in match details"
+            name="Watch games while you play"
+            description="Reads the game's own live data on this machine. Records the order every player buys items in, which shows up in match details, and opens the In game tab with the best augments for your champion"
           >
             <Toggle checked={liveTracking} onChange={handleLiveTrackingToggle} />
           </SettingRow>

@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { LcuStatus, UpdateInfo } from "../lib/types";
+import { useLiveGame } from "../hooks/useLiveGame";
 
 const tabs: { to: string; label: string }[] = [
   { to: "/", label: "Overview" },
@@ -33,8 +34,26 @@ export default function TabBar({
   update: UpdateInfo | null;
   onShowUpdate: () => void;
 }) {
+  const live = useLiveGame();
   return (
     <div className="shrink-0 flex items-center bg-lol-title-bar border-b border-lol-border/60 px-2">
+      {/* Only while a game is running. A tab that says "no game" for the
+          twenty-three hours a day nobody is in one is a tab in the way. */}
+      {live?.inGame && (
+        <NavLink
+          to="/live"
+          className={({ isActive }) =>
+            `flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-semibold transition-colors ${
+              isActive
+                ? "text-lol-gold-light shadow-[inset_0_-2px_0_var(--color-lol-gold)]"
+                : "text-lol-gold hover:text-lol-gold-light"
+            }`
+          }
+        >
+          <span className="w-[7px] h-[7px] rounded-full bg-lol-win animate-pulse" />
+          In game
+        </NavLink>
+      )}
       {tabs.map((tab) => (
         <NavLink
           key={tab.to}

@@ -1,5 +1,7 @@
 import { fetchLive } from "./live-debug";
 import { LiveGameSession, matchSessionToGame, type LiveItemEvent } from "../shared/live-events";
+import type { LiveGameState } from "../shared/api";
+import { getMainWindow } from "./window-ref";
 import * as db from "./db";
 
 // Build-order tracking: while a game runs, snapshots of the Live Client
@@ -31,6 +33,33 @@ export function setGameEndedHandler(fn: () => void) {
   gameEndedHandler = fn;
 }
 
+// What the renderer needs to draw the in-game augment panel. Derived from the
+// same session the build-order tracking already keeps, so a running game
+// costs nothing extra: this is the snapshot it was taking anyway, read a
+// second way.
+export function getLiveGame(): LiveGameState {
+  if (!session || !enabled()) return { inGame: false };
+  return {
+    inGame: true,
+    championName: session.activeChampion,
+    gameMode: session.gameMode,
+    gameTime: session.lastGameTime,
+    takenAugments: session.takenAugments(),
+  };
+}
+
+// Pushed rather than polled: the watcher already wakes every POLL_MS, and a
+// panel that has to poll for a thing that changes three times a game is a
+// timer nobody needs. Only sent when something the panel draws has changed.
+let lastPushed = "";
+function pushLiveGame() {
+  const state = getLiveGame();
+  const key = JSON.stringify([state.inGame, state.championName, state.takenAugments?.length ?? 0]);
+  if (key === lastPushed) return;
+  lastPushed = key;
+  getMainWindow()?.webContents.send("live:changed", state);
+}
+
 function endSession() {
   if (pollTimer) {
     clearInterval(pollTimer);
@@ -41,6 +70,7 @@ function endSession() {
     if (session.events.length > 0) pending.push(session);
     console.log(`Live watcher: game ended, ${session.events.length} events captured`);
     session = null;
+    pushLiveGame();
     gameEndedHandler?.();
   }
   const cutoff = Date.now() - PENDING_TTL;
@@ -55,6 +85,7 @@ async function poll() {
     failures = 0;
     if (!session) session = new LiveGameSession();
     session.ingest(data);
+    pushLiveGame();
   } catch {
     if (++failures >= MAX_FAILURES) endSession();
   } finally {
@@ -69,6 +100,7 @@ async function probe() {
     session = new LiveGameSession();
     session.ingest(data);
     failures = 0;
+    pushLiveGame();
     pollTimer = setInterval(poll, POLL_MS);
     console.log("Live watcher: game detected, tracking build orders");
   } catch {
@@ -90,6 +122,7 @@ export function refreshLiveWatcher() {
     probeTimer = null;
     endSession();
     pending.length = 0;
+    pushLiveGame();
   }
 }
 
