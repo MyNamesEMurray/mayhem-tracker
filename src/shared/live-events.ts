@@ -55,6 +55,10 @@ export class LiveGameSession {
   // a game is running. Kept from the first snapshot that names them.
   activeRiotId: string | null = null;
   activeChampion: string | null = null;
+  // Which Mayhem queue this game is. Not in the Live Client Data payload, so
+  // it is filled in from the client by whoever owns the session; null until
+  // then, and null when it could not be established.
+  queueId: number | null = null;
   private players = new Map<string, PlayerTrack>();
 
   get riotIds(): string[] {

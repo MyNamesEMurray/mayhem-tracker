@@ -23,6 +23,7 @@ import TierBadge from "../../shared/ui/TierBadge";
 import { formatPatch, patchesIn, patchLabel } from "../../shared/patch";
 import { formatWhole } from "../lib/format";
 import { championIdFromLiveName, augmentIdsFromNames } from "../../shared/live-lookup";
+import { QUEUE_LABELS, statsQueue } from "../../shared/queues";
 import { buildCandidates, splitByHeld, type LiveBuild } from "../../shared/live-build";
 
 // What to take and what to buy, while there is still time to act on either.
@@ -85,7 +86,27 @@ export default function Live() {
   const champData = useChampionData();
   const augmentData = useAugmentData();
   const patchOptions = usePatchOptions("community");
-  const { patchSelection, setPatchSelection, queue } = useStatsFilters();
+  const { patchSelection, setPatchSelection, queue: boardQueue } = useStatsFilters();
+
+  // Icons and the component flag come from the newest patch, which is the one
+  // being played. The champion page keys this by the patch a game was played
+  // on; a game in progress has only one answer.
+  const itemData = useItemData(null);
+
+  // The queue this panel reads, which is the one being played rather than the
+  // one the tier list happens to be set to.
+  //
+  // This has to resolve to a single queue and never to "every queue". ARAM
+  // Mayhem and Mayhem Classic have all but disjoint item pools - Classic's are
+  // a separate 77xxxx range of the same items - so a board reading both offers
+  // a Classic Rabadon's for a Mayhem game. The shared filter store starts
+  // undefined while it reads its default, and undefined means every queue, so
+  // an in-game panel wired straight to it mixed the two pools on every first
+  // paint and permanently whenever the board was set to All.
+  //
+  // The client is asked which queue the game is in; failing that the board's
+  // choice is a reasonable guess, and failing that the app's own default.
+  const liveQueue = statsQueue(live?.queueId, boardQueue);
 
   const championId = useMemo(
     () => championIdFromLiveName(champData, live?.championName),
@@ -101,13 +122,25 @@ export default function Live() {
     () =>
       championId == null
         ? Promise.resolve({ augments: [], items: [] })
-        : window.api.getCommunityChampionDetail(championId, selected, queue),
-    [championId, selected, queue],
+        : window.api.getCommunityChampionDetail(championId, selected, liveQueue),
+    [championId, selected, liveQueue],
   );
 
   // A thin patch is worse than an old one. If the newest patch has not seen
-  // this champion enough to rank anything, reach back and say so.
-  const thin = (data?.augments ?? []).reduce((n, a) => n + a.picks, 0) < MIN_SAMPLE * 4;
+  // this champion enough to rank what the panel draws, reach back and say so.
+  //
+  // Both halves are measured, because a patch can carry an augment board and
+  // still not fill a build: augments repeat across every game, while the six
+  // slots of a core each need their own games behind them. They come out of
+  // the same call either way, so this is one decision - widening the augments
+  // while leaving the build on the newest patch would put two different patch
+  // ranges under one heading.
+  const augmentPicks = (data?.augments ?? []).reduce((n, a) => n + a.picks, 0);
+  const rankableItems = buildCandidates(data?.items ?? [], itemData).filter(
+    (i) => i.picks >= ITEM_MIN_PICKS,
+  ).length;
+  const thin = augmentPicks < MIN_SAMPLE * 4 || rankableItems < CORE_SIZE;
+
   const widened = useMemo(
     () => (thin ? patchOptions.slice(0, AUTO_WIDEN_PATCHES) : undefined),
     [thin, patchOptions],
@@ -116,14 +149,14 @@ export default function Live() {
     () =>
       championId == null || !widened?.length
         ? Promise.resolve({ augments: [], items: [] })
-        : window.api.getCommunityChampionDetail(championId, widened, queue),
-    [championId, widened, queue],
+        : window.api.getCommunityChampionDetail(championId, widened, liveQueue),
+    [championId, widened, liveQueue],
   );
 
-  // One decision for both halves. The widened read is the same call, so items
-  // reach back exactly when augments do and the patch line above says so once
-  // rather than being true of one panel and not the other.
-  const showingWider = thin && (wide?.augments.length ?? 0) > 0;
+  // Either half having more to say is reason enough to show the wider read.
+  // Gating this on the augments alone left the build on a thin patch whenever
+  // the wider patches had items but no augments to add.
+  const showingWider = thin && ((wide?.augments.length ?? 0) > 0 || (wide?.items.length ?? 0) > 0);
   const detail = showingWider ? wide! : data;
   const augments = detail?.augments ?? [];
   const items = detail?.items ?? [];
@@ -136,11 +169,6 @@ export default function Live() {
   // The bag, as ids. Trinkets and consumables come through here too; they
   // simply never match anything in the core, so there is nothing to filter.
   const held = useMemo(() => new Set(live?.heldItems ?? []), [live?.heldItems]);
-
-  // Icons and the component flag come from the newest patch, which is the one
-  // being played. The champion page keys this by the patch a game was played
-  // on; a game in progress has only one answer.
-  const itemData = useItemData(null);
   // Components out, then ranked by the same call the champion page makes, then
   // split by what is already bought. Only the first and last steps are this
   // panel's: the ranking in the middle is the shared one, so the two screens
@@ -202,6 +230,11 @@ export default function Live() {
               {showingWider
                 ? `${widenedLabel(widened ?? [])} · widened, this patch is thin`
                 : patchLabel(patchSelection, patchOptions)}
+              {" · "}
+              {/* Named because this panel reads the queue being played rather
+                  than the one the tier list is set to, and the two modes have
+                  all but separate item pools. */}
+              {QUEUE_LABELS[liveQueue] ?? `Queue ${liveQueue}`}
               {" · "}
               {formatWhole(totalPicks)} picks · community
             </p>

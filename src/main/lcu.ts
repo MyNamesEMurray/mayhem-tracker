@@ -615,6 +615,26 @@ export async function fetchNewGames(
   return { newGames: newGamesCount, totalGames: dashboard.totalGames };
 }
 
+// The queue the game in progress is being played in.
+//
+// The in-game panel needs this because ARAM Mayhem and Mayhem Classic have
+// all but disjoint item pools - Classic's are a separate 77xxxx range, so a
+// board reading both queues puts a Classic Rabadon's in a Mayhem build. The
+// Live Client Data API the panel is otherwise driven by does not expose the
+// queue, but the client does.
+//
+// Null when the queue cannot be established or is not a Mayhem one, which the
+// caller reads as "fall back", never as "every queue".
+export async function fetchCurrentQueueId(): Promise<number | null> {
+  try {
+    const session = (await lcuRequest("/lol-gameflow/v1/session")) as any;
+    const id = session?.gameData?.queue?.id;
+    return typeof id === "number" && MAYHEM_QUEUE_IDS.includes(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 async function isInGame(): Promise<boolean> {
   try {
     // The endpoint returns a bare JSON string, e.g. "InProgress"

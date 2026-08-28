@@ -27,6 +27,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it - a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.7 - 2026-08-28
+
+- <!--fixes:v2.14.6--> **The in-game build no longer mixes in Mayhem Classic items.** ARAM Mayhem and Mayhem Classic use almost entirely separate items - Classic has its own copy of nearly every one - and the In game panel was reading both at once, so a Classic Rabadon's could sit in a Mayhem build next to the real one. It now reads the queue you are actually in, asking the client which one that is rather than following whatever the Champions tab was last set to, and it says which queue it is showing. If you play Mayhem Classic you get Mayhem Classic builds and augments.
+- **The in-game build reaches back when the patch is thin.** The augment board already widened to the last few patches when the newest one had too little on your champion to rank; the build now counts too. A patch that has enough augments but not enough games to fill six item slots widens, and both halves always show the same patch range.
+
 ## v2.14.6 - 2026-08-28
 
 - **The In game tab now says what to buy, too.** Under the augment board there's a core build for the champion you're playing: the six items the community wins most with, ranked the same way the champion page ranks them. What makes it worth reading mid-game rather than beforehand is that it reads your inventory - items you've already bought move out of the recommendation and sit to one side as bought, so what's left on the list is what you can still buy. Sell something and it comes back. Components you're holding mid-combine don't count as the item they build into.

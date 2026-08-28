@@ -4,9 +4,16 @@ import { initDatabase, getSetting, checkScoreBackfill } from "./db";
 import { loadCommunity } from "./community";
 import { registerIpcHandlers, attachWindowEvents } from "./ipc-handlers";
 import { setMainWindow, getMainWindow } from "./window-ref";
-import { startPolling, stopPolling, getStatus, fetchNewGames, captureFinishedGame } from "./lcu";
+import {
+  startPolling,
+  stopPolling,
+  getStatus,
+  fetchNewGames,
+  captureFinishedGame,
+  fetchCurrentQueueId,
+} from "./lcu";
 import { refreshLiveDebug } from "./live-debug";
-import { refreshLiveWatcher, setGameEndedHandler } from "./live-watcher";
+import { refreshLiveWatcher, setGameEndedHandler, setQueueLookup } from "./live-watcher";
 import { isUpdating } from "./update-state";
 import { refreshStartupPath, startedHidden } from "./startup";
 import { uploadPendingGames } from "./upload";
@@ -160,7 +167,9 @@ app.whenReady().then(async () => {
   // Live game debug recorder (no-op unless enabled in Settings)
   refreshLiveDebug();
 
-  // Build-order tracking during games (on by default)
+  // Build-order tracking during games (on by default). The queue lookup is
+  // registered first so a game already running when the app starts gets one.
+  setQueueLookup(fetchCurrentQueueId);
   refreshLiveWatcher();
 
   // Riot publishes a finished match to the client a few seconds after the

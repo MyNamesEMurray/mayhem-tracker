@@ -166,6 +166,12 @@ export interface LiveGameState {
   // what is left to buy rather than recommending what is already in the bag.
   // Unordered: it is the contents of six slots, not a purchase history.
   heldItems?: number[];
+  // Which Mayhem queue is being played, read from the client rather than from
+  // the Live Client Data API, which does not expose it. The panel must filter
+  // on this: ARAM Mayhem and Mayhem Classic have all but disjoint item pools,
+  // so a board reading both puts a Classic item in a Mayhem build. Null while
+  // it is still being read, and when the client could not answer.
+  queueId?: number | null;
 }
 
 // What the local cache of the shared database currently holds

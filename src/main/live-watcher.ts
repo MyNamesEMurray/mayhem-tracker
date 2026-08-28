@@ -33,6 +33,28 @@ export function setGameEndedHandler(fn: () => void) {
   gameEndedHandler = fn;
 }
 
+// Which Mayhem queue the game in progress is. The Live Client Data API does
+// not say, so it is read from the client once per game - registered from the
+// app entry point for the same reason the handler above is, to keep this
+// module free of a cycle back into lcu.ts.
+let queueLookup: (() => Promise<number | null>) | null = null;
+
+export function setQueueLookup(fn: () => Promise<number | null>) {
+  queueLookup = fn;
+}
+
+// Once per game, not per poll: the queue cannot change mid-match, and the
+// panel only needs it before it reads any stats.
+async function resolveQueue(forSession: LiveGameSession) {
+  if (!queueLookup) return;
+  const id = await queueLookup();
+  // The game may have ended while this was in flight, and the answer belongs
+  // to the session that asked for it rather than to whatever is running now
+  if (id == null || session !== forSession) return;
+  forSession.queueId = id;
+  pushLiveGame();
+}
+
 // What the renderer needs to draw the in-game panel: who is being played,
 // which augments are already taken, and what is in the bag. Derived from the
 // same session the build-order tracking already keeps, so a running game costs
@@ -46,6 +68,7 @@ export function getLiveGame(): LiveGameState {
     gameTime: session.lastGameTime,
     takenAugments: session.takenAugments(),
     heldItems: session.heldItems(),
+    queueId: session.queueId,
   };
 }
 
@@ -62,6 +85,7 @@ function pushLiveGame() {
   const key = JSON.stringify([
     state.inGame,
     state.championName,
+    state.queueId,
     state.takenAugments?.length ?? 0,
     [...(state.heldItems ?? [])].sort((a, b) => a - b),
   ]);
@@ -93,9 +117,11 @@ async function poll() {
   try {
     const data = await fetchLive();
     failures = 0;
+    const fresh = !session;
     if (!session) session = new LiveGameSession();
     session.ingest(data);
     pushLiveGame();
+    if (fresh) void resolveQueue(session);
   } catch {
     if (++failures >= MAX_FAILURES) endSession();
   } finally {
@@ -111,6 +137,7 @@ async function probe() {
     session.ingest(data);
     failures = 0;
     pushLiveGame();
+    void resolveQueue(session);
     pollTimer = setInterval(poll, POLL_MS);
     console.log("Live watcher: game detected, tracking build orders");
   } catch {
