@@ -1,6 +1,12 @@
 // Champion and augment names/icons from the same public sources the desktop
 // app uses. Cached in localStorage for a day so repeat visits skip the fetch.
 
+import {
+  applyDescriptions,
+  AUGMENT_DESCRIPTIONS_PATH,
+  parseDescriptions,
+} from "../../../src/shared/augment-descriptions.ts";
+
 export interface ChampionInfo {
   name: string;
 }
@@ -63,11 +69,19 @@ export async function loadAugmentData(): Promise<AugmentData> {
   const cached = readCache<AugmentData>("augment-data");
   if (cached) return cached;
 
-  const data = await (
-    await fetch(
+  // The list and the hover text come from different places and neither needs
+  // the other, so they overlap. The text is ours, served from this origin.
+  const [data, descriptions] = await Promise.all([
+    fetch(
       "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json",
-    )
-  ).json();
+    ).then((r) => r.json()),
+    fetch(AUGMENT_DESCRIPTIONS_PATH)
+      .then((r) => r.json())
+      .then((raw) => parseDescriptions(raw)?.descriptions ?? null)
+      // A failure leaves the icons hovering with a name and no description,
+      // which is what an augment with no text in the string table does anyway
+      .catch(() => null),
+  ]);
 
   const out: AugmentData = {};
   if (Array.isArray(data)) {
@@ -80,6 +94,7 @@ export async function loadAugmentData(): Promise<AugmentData> {
       };
     }
   }
+  if (descriptions) applyDescriptions(out, descriptions);
   writeCache("augment-data", out);
   return out;
 }

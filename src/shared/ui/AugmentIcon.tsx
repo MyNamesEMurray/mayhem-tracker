@@ -1,4 +1,3 @@
-import { AUGMENT_DESCRIPTIONS } from "../augment-descriptions";
 import { augmentIconUrl } from "../cdn";
 import { useAugments } from "./GameData";
 import { RARITY_LABEL, RARITY_RING, RARITY_TEXT } from "./rarity";
@@ -21,7 +20,11 @@ export default function AugmentIcon({
   // Icons are usually drawn without a name — a scoreboard cell, a match row, a
   // champion's best-augments list — so the tooltip carries the name and rarity
   // whether or not a description exists for the augment.
-  const description = AUGMENT_DESCRIPTIONS[augmentId];
+  //
+  // The text arrives on the augment itself, filled in by whichever surface
+  // built this map. It used to be a compiled-in map imported here, which meant
+  // an augment reworded in a patch kept its old wording until the next release.
+  const description = aug?.desc;
   const rarityLabel = aug ? (RARITY_LABEL[aug.rarity] ?? "") : "";
   const nameColor = RARITY_TEXT[aug?.rarity ?? ""] || "text-lol-text-bright";
 

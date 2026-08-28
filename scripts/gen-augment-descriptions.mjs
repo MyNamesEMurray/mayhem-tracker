@@ -29,7 +29,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // website/ as its root, but the repository is checked out whole, so the
 // import up into src/shared resolves in the build and the dev server alike.
 // This used to write a second, byte-identical copy under website/src/lib.
-const OUTPUT = path.resolve(__dirname, "../src/shared/augment-descriptions.ts");
+// Published as a static file on mayhemstats.com rather than compiled into
+// either surface. Both fetch it at runtime, so a patch rewording an augment
+// reaches players when this file is merged — the site at its next deploy, the
+// app at its next launch — instead of waiting for a release someone has to cut
+// and everyone has to download. It also keeps this generator's output out of
+// the paths the release workflow watches, so refreshing text is not an app
+// change.
+const OUTPUT = path.resolve(__dirname, "../website/public/augment-descriptions.json");
 
 const AUGMENTS_URL =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json";
@@ -218,43 +225,17 @@ const lines = described.map(
   ([id, name, text]) => `  // ${name}\n  ${id}: ${JSON.stringify(text)},`,
 );
 
-const contents = `// GENERATED FILE — do not edit by hand.
-//
-// Short augment descriptions, pulled out of the game's string table by
-// scripts/gen-augment-descriptions.mjs and shipped with the app and the site so
-// hovering an augment icon costs nothing at runtime. Regenerate after a patch
-// changes the augment pool:
-//
-//   npm run gen:augments
-//
-// It writes src/shared/augment-descriptions.ts, which both surfaces import.
-//
-// A "?" stands in for a number the game fills from live spell data the string
-// table doesn't carry. Augments missing from this map — a handful have no
-// description text anywhere in the string table — simply hover without one.
-//
-// Patch ${patch} · ${described.length} of ${described.length + undescribed.length} augments.
-export const AUGMENT_DESCRIPTIONS: Record<number, string> = {
-${lines.join("\n")}
-};
+// Sorted by id so a regeneration diffs as the augments that actually changed
+// rather than as whatever order upstream returned them in.
+const descriptions = Object.fromEntries(
+  described.map(([id, , text]) => [id, text]).sort((a, b) => Number(a[0]) - Number(b[0])),
+);
 
-// The Data Dragon patch the text above was generated from.
-export const AUGMENT_DESCRIPTIONS_PATCH = ${JSON.stringify(patch)};
-`;
+// Two spaces and a trailing newline, so the file reads in a browser and diffs
+// a line at a time rather than as one enormous line.
+const contents = `${JSON.stringify({ patch, descriptions }, null, 2)}\n`;
 
 writeFileSync(OUTPUT, contents);
-// The repo's formatter owns quote style and line wrapping, so the generated
-// file lands already formatted rather than showing up as a diff the next time
-// anyone runs `npm run format`
-try {
-  execFileSync(path.resolve(__dirname, "../node_modules/.bin/oxfmt"), [OUTPUT], {
-    stdio: "ignore",
-  });
-} catch {
-  console.warn(
-    "Could not run oxfmt on the generated file — run `npm run format` before committing",
-  );
-}
 
 console.log(
   `Wrote ${described.length} descriptions (patch ${patch}) to ${path.relative(

@@ -3,6 +3,11 @@ import fs from "fs";
 import path from "path";
 import { getDataDir } from "./paths";
 import { toClientPatch } from "../shared/patch";
+import {
+  applyDescriptions,
+  AUGMENT_DESCRIPTIONS_URL,
+  parseDescriptions,
+} from "../shared/augment-descriptions";
 
 let championCache: Record<number, { name: string; key: string; class?: string }> = {};
 // Data Dragon version the champion cache came from ("none" until any data
@@ -46,6 +51,7 @@ function fetchJson(url: string): Promise<any> {
 }
 
 const championCacheFile = () => path.join(getDataDir(), "champion-cache.json");
+const augmentCacheFile = () => path.join(getDataDir(), "augment-cache.json");
 
 // Last successfully fetched champion data, so offline startups still have
 // names and classes (and scoring stays consistent with the previous run).
@@ -92,12 +98,45 @@ export function loadChampionData() {
   return championReady;
 }
 
+// Last successfully fetched augment list and hover text. The list had no
+// cache at all before, so an offline start showed "Augment 2141" where a name
+// belongs — and the descriptions were compiled in, so they were the one part
+// that did survive. Now both do, from here.
+function hydrateAugmentCacheFromDisk() {
+  try {
+    const cached = JSON.parse(fs.readFileSync(augmentCacheFile(), "utf8"));
+    if (cached?.augments && Object.keys(cached.augments).length > 0) {
+      augmentCache = cached.augments;
+    }
+  } catch {
+    // No cache yet, or unreadable — the network load below will write one
+  }
+}
+
+// The hover text, published by the site rather than compiled in here. A
+// failure leaves whatever the augment list gave us, which is an empty string,
+// and the icons hover with a name and no description — the same as an augment
+// the string table has no text for.
+async function fetchDescriptions(): Promise<Record<string, string> | null> {
+  try {
+    return parseDescriptions(await fetchJson(AUGMENT_DESCRIPTIONS_URL))?.descriptions ?? null;
+  } catch (err) {
+    console.error("Failed to load augment descriptions:", err);
+    return null;
+  }
+}
+
 export function loadAugmentData() {
   augmentReady = (async () => {
+    hydrateAugmentCacheFromDisk();
     try {
-      const data = await fetchJson(
-        "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json",
-      );
+      // Both come off a CDN and neither depends on the other, so they overlap
+      const [data, descriptions] = await Promise.all([
+        fetchJson(
+          "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json",
+        ),
+        fetchDescriptions(),
+      ]);
       augmentCache = {};
 
       // cherry-augments.json is an array of augment objects
@@ -125,7 +164,18 @@ export function loadAugmentData() {
         }
       }
 
-      console.log(`Loaded ${Object.keys(augmentCache).length} augments from CommunityDragon`);
+      if (descriptions) applyDescriptions(augmentCache, descriptions);
+
+      try {
+        fs.writeFileSync(augmentCacheFile(), JSON.stringify({ augments: augmentCache }));
+      } catch (err) {
+        console.error("Could not write the augment cache:", err);
+      }
+
+      const described = Object.values(augmentCache).filter((a) => a.desc).length;
+      console.log(
+        `Loaded ${Object.keys(augmentCache).length} augments from CommunityDragon, ${described} with descriptions`,
+      );
     } catch (err) {
       console.error("Failed to load augment data:", err);
     }
