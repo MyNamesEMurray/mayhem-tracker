@@ -1,6 +1,6 @@
 # Migrations
 
-Thirteen migrations have been applied to the community stats project. Until
+Sixteen migrations have been applied to the community stats project. Until
 2026-08-28 only six of them were in this repository, and the seven missing ones
 included the base schema: every table, every foreign key, the row level
 security posture, and the withdrawal function. They existed only inside the
@@ -8,7 +8,8 @@ Supabase project's own history.
 
 They have now been recovered by reading
 `supabase_migrations.schema_migrations` out of the live database, and are
-committed here verbatim except where noted below.
+committed here verbatim except where noted below. The three from 2026-08-28
+were written here as they were applied.
 
 ## Two things to know before running anything
 
@@ -49,3 +50,15 @@ Applying these in filename order against an empty project reproduces the
 schema, minus the `admin_config` rows, which are seeded out of band per the
 comment in `20260809222856`. The digest function returns quietly when they are
 absent, so an unseeded environment simply never sends a digest.
+
+## The 2026-08-28 three
+
+`contributor_stats_counters` adds the per-token counter row.
+`atomic_ingest_games` adds `ingest_games()`, and `fix_ingest_counter_update`
+replaces its counter update with a single readable statement. The last one is
+what is running; the middle one is kept because the database's ledger records
+it, and because applying the pair in order is what reproduces the live
+function.
+
+The function body in `fix_ingest_counter_update` is byte-identical to
+`pg_proc.prosrc` in production, checked by SHA-256.

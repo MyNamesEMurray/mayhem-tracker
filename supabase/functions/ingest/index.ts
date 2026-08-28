@@ -267,35 +267,6 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Rate shape: unrestricted first-sync burst, then a steady daily cap no
-  // human play schedule exceeds.
-  const lifetime = await supabase
-    .from("contributions")
-    .select("*", { count: "exact", head: true })
-    .eq("contributor_token", token);
-  if (lifetime.error) return json({ error: "rate limit check failed" }, 500);
-  if ((lifetime.count ?? 0) + games.length > BURST_LIFETIME) {
-    const since = new Date(Date.now() - 86_400_000).toISOString();
-    const daily = await supabase
-      .from("contributions")
-      .select("*", { count: "exact", head: true })
-      .eq("contributor_token", token)
-      .gte("created_at", since);
-    if (daily.error) return json({ error: "rate limit check failed" }, 500);
-    if ((daily.count ?? 0) + games.length > MAX_GAMES_PER_DAY_STEADY) {
-      return json({ error: "daily contribution limit reached, try again tomorrow" }, 429);
-    }
-  }
-
-  // Pending-quarantine count for this token, for the flood cap
-  const pendingQ = await supabase
-    .from("quarantine")
-    .select("*", { count: "exact", head: true })
-    .eq("contributor_token", token)
-    .eq("status", "pending");
-  if (pendingQ.error) return json({ error: "quarantine check failed" }, 500);
-  let pendingCount = pendingQ.count ?? 0;
-
   const accepted: number[] = [];
   const quarantined: number[] = [];
   const rejected: { gameId: number | null; reason: string }[] = [];
@@ -325,19 +296,13 @@ Deno.serve(async (req: Request) => {
 
     const flags = plausibilityFlags(g);
     if (flags.length > 0) {
-      if (pendingCount >= MAX_PENDING_QUARANTINE) {
-        rejected.push({ gameId: g.gameId, reason: "too many games pending review" });
-        continue;
-      }
-      pendingCount++;
       quarantineRows.push({
-        contributor_token: token,
         platform: g.platform,
         game_id: g.gameId,
         payload: sanitizeGame(g),
         reasons: flags,
       });
-      // Report as accepted so the uploader marks it done and doesn't retry;
+      // Reported as accepted so the uploader marks it done and doesn't retry;
       // it only enters the stats tables if approved in review.
       accepted.push(g.gameId);
       quarantined.push(g.gameId);
@@ -406,46 +371,51 @@ Deno.serve(async (req: Request) => {
         });
       }
     }
-    contribRows.push({ contributor_token: token, platform: g.platform, game_id: g.gameId });
+    contribRows.push({ platform: g.platform, game_id: g.gameId });
     accepted.push(g.gameId);
   }
 
-  if (quarantineRows.length > 0) {
-    const q = await supabase.from("quarantine").upsert(quarantineRows, {
-      onConflict: "contributor_token,platform,game_id",
-      ignoreDuplicates: true,
-    });
-    if (q.error) return json({ error: "storing quarantine failed" }, 500);
-  }
+  // One transaction for the whole batch.
+  //
+  // This used to be five sequential upserts with nothing around them, plus
+  // three count(*) queries beforehand for the rate limit. A failure after the
+  // first upsert left a match with no participants: counted in every total,
+  // contributing nothing, and never retried, because the client had already
+  // been told it was accepted. ingest_games() commits all five together and
+  // maintains the rate-limit counters in the same transaction, so they cannot
+  // drift from what was actually written.
+  const { data, error } = await supabase.rpc("ingest_games", {
+    p_token: token,
+    p_payload: {
+      matches: matchRows,
+      participants: partRows,
+      augments: augRows,
+      item_events: itemEventRows,
+      contributions: contribRows,
+      quarantine: quarantineRows,
+    },
+    p_burst_lifetime: BURST_LIFETIME,
+    p_daily_steady: MAX_GAMES_PER_DAY_STEADY,
+    p_max_pending_quarantine: MAX_PENDING_QUARANTINE,
+  });
 
-  if (matchRows.length > 0) {
-    const m = await supabase
-      .from("matches")
-      .upsert(matchRows, { onConflict: "platform,game_id", ignoreDuplicates: true });
-    if (m.error) return json({ error: "storing matches failed" }, 500);
-    const p = await supabase
-      .from("match_participants")
-      .upsert(partRows, { onConflict: "platform,game_id,participant_id", ignoreDuplicates: true });
-    if (p.error) return json({ error: "storing participants failed" }, 500);
-    if (augRows.length > 0) {
-      const a = await supabase.from("match_participant_augments").upsert(augRows, {
-        onConflict: "platform,game_id,participant_id,slot",
-        ignoreDuplicates: true,
-      });
-      if (a.error) return json({ error: "storing augments failed" }, 500);
+  if (error) return json({ error: "storing games failed" }, 500);
+  if (data?.rate_limited) return json({ error: data.error }, 429);
+
+  // Games past the quarantine flood cap were not stored, so they must not be
+  // reported accepted: the client would mark them done and never send them
+  // again. Told to retry later instead, once the queue has been reviewed.
+  const deferred: number[] = Array.isArray(data?.deferred) ? data.deferred.map(Number) : [];
+  if (deferred.length > 0) {
+    const deferredSet = new Set(deferred);
+    for (const id of deferred) {
+      rejected.push({ gameId: id, reason: "too many games pending review" });
     }
-    if (itemEventRows.length > 0) {
-      const e = await supabase.from("match_item_events").upsert(itemEventRows, {
-        onConflict: "platform,game_id,participant_id,seq",
-        ignoreDuplicates: true,
-      });
-      if (e.error) return json({ error: "storing item events failed" }, 500);
-    }
-    const c = await supabase.from("contributions").upsert(contribRows, {
-      onConflict: "contributor_token,platform,game_id",
-      ignoreDuplicates: true,
+    return json({
+      accepted: accepted.filter((id) => !deferredSet.has(id)),
+      rejected,
+      quarantined: quarantined.filter((id) => !deferredSet.has(id)),
     });
-    if (c.error) return json({ error: "storing contributions failed" }, 500);
   }
 
   return json({ accepted, rejected, quarantined });
