@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import { PANEL } from "../../shared/ui/primitives";
 import { useIpc } from "../hooks/useIpc";
 import { useStatsFilters } from "../hooks/useStatsFilters";
 import {
@@ -9,23 +8,20 @@ import {
   getAugmentName,
 } from "../hooks/useChampions";
 import type { AugmentStatsDetailed, ChampionStats } from "../lib/types";
-import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ChampionIcon from "../../shared/ui/ChampionIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
-import QueueSelect from "../components/QueueSelect";
-import { QUEUE_LABELS } from "../../shared/queues";
+import QueueSelect, { queueLabel } from "../components/QueueSelect";
 import RarityFilter, { type Rarity } from "../../shared/ui/RarityFilter";
-import SortHeader, { useSort } from "../../shared/ui/SortHeader";
+import { useSort } from "../../shared/ui/SortHeader";
 import SearchField from "../../shared/ui/SearchField";
-import TierBadge from "../../shared/ui/TierBadge";
-import { assignTiers, score, TIER_ORDER } from "../../shared/score";
-import { formatWhole, kdaColor, kdaRatio } from "../lib/format";
+import StatBoard, { SortControl, sortOptions, sortRows } from "../../shared/ui/StatBoard";
+import { augmentColumns, type AugmentSortKey } from "../../shared/ui/boardColumns";
+import { assignTiers, score, type Tier } from "../../shared/score";
+import { formatWhole } from "../lib/format";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
 import { usePatchOptions } from "../hooks/usePatchOptions";
 import { patchesIn, patchLabel } from "../../shared/patch";
-
-type SortKey = "picks" | "winRate" | "name" | "pickRate" | "score" | "tier" | "kda" | "damage";
 
 export default function Augments() {
   const champData = useChampionData();
@@ -63,8 +59,7 @@ export default function Augments() {
   );
 
   const [search, setSearch] = useState("");
-  const { sort, toggle } = useSort<SortKey>("score");
-  const { key: sortKey, dir: sortDir } = sort;
+  const { sort, toggle } = useSort<AugmentSortKey>("score");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [rarityFilter, setRarityFilter] = useState<Rarity>("all");
 
@@ -77,11 +72,8 @@ export default function Augments() {
   // stronger than Silvers, so one global ranking would just sort by rarity.
   // Assigned over the unfiltered list so searching never reshuffles a badge.
   const tiers = useMemo(() => {
-    if (!data)
-      return new Map<
-        number,
-        ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never
-      >();
+    const all = new Map<number, Tier>();
+    if (!data) return all;
     const byRarity = new Map<string, typeof data>();
     for (const a of data) {
       const r = augmentData[a.augment_id]?.rarity ?? "unknown";
@@ -89,10 +81,6 @@ export default function Augments() {
       group.push(a);
       byRarity.set(r, group);
     }
-    const all = new Map<
-      number,
-      ReturnType<typeof assignTiers> extends Map<number, infer T> ? T : never
-    >();
     for (const group of byRarity.values()) {
       for (const [id, tier] of assignTiers(
         group,
@@ -105,10 +93,6 @@ export default function Augments() {
     return all;
   }, [data, augmentData]);
 
-  // The app's queue dropdown treats an empty selection as every queue, and
-  // hides itself entirely while only one queue has data - in which case that
-  // one queue is what's on screen
-  const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
   const label = patchLabel(patchSelection, patchOptions);
 
   // Ten champion slots per game
@@ -143,54 +127,37 @@ export default function Augments() {
     }
   };
 
+  const columns = useMemo(
+    () =>
+      augmentColumns({
+        tiers,
+        totalSlots,
+        name: (id) => getAugmentName(augmentData, id),
+        expander: (a) => (
+          <span
+            className={`inline-block transition-transform ${
+              expanded.has(a.augment_id) ? "rotate-90" : ""
+            }`}
+          >
+            ▶
+          </span>
+        ),
+      }),
+    [tiers, totalSlots, augmentData, expanded],
+  );
+
   const sorted = useMemo(() => {
     if (!data) return [];
-    let filtered = data.filter((a) => {
-      const aug = augmentData[a.augment_id];
-      const name = getAugmentName(augmentData, a.augment_id).toLowerCase();
-      if (!name.includes(search.toLowerCase())) return false;
-      if (rarityFilter !== "all" && aug?.rarity !== rarityFilter) return false;
+    const q = search.toLowerCase();
+    const filtered = data.filter((a) => {
+      if (!getAugmentName(augmentData, a.augment_id).toLowerCase().includes(q)) return false;
+      if (rarityFilter !== "all" && augmentData[a.augment_id]?.rarity !== rarityFilter) {
+        return false;
+      }
       return true;
     });
-
-    filtered.sort((a, b) => {
-      let av: number, bv: number;
-      if (sortKey === "name") {
-        const nameA = getAugmentName(augmentData, a.augment_id);
-        const nameB = getAugmentName(augmentData, b.augment_id);
-        const cmp = nameA.localeCompare(nameB);
-        return sortDir === "asc" ? cmp : -cmp;
-      } else if (sortKey === "score") {
-        av = score(a.wins, a.picks);
-        bv = score(b.wins, b.picks);
-      } else if (sortKey === "tier") {
-        const at = TIER_ORDER.indexOf(tiers.get(a.augment_id)!);
-        const bt = TIER_ORDER.indexOf(tiers.get(b.augment_id)!);
-        if (at !== bt) return sortDir === "desc" ? at - bt : bt - at;
-        av = score(a.wins, a.picks);
-        bv = score(b.wins, b.picks);
-      } else if (sortKey === "kda") {
-        av = (a.kills + a.assists) / Math.max(a.deaths, 1);
-        bv = (b.kills + b.assists) / Math.max(b.deaths, 1);
-      } else if (sortKey === "damage") {
-        av = a.picks > 0 ? a.damage / a.picks : 0;
-        bv = b.picks > 0 ? b.damage / b.picks : 0;
-      } else if (sortKey === "pickRate") {
-        // Picks over a fixed total, so this is the picks order
-        av = a.picks;
-        bv = b.picks;
-      } else if (sortKey === "winRate") {
-        av = a.picks > 0 ? a.wins / a.picks : 0;
-        bv = b.picks > 0 ? b.wins / b.picks : 0;
-      } else {
-        av = a.picks;
-        bv = b.picks;
-      }
-      return sortDir === "desc" ? bv - av : av - bv;
-    });
-
-    return filtered;
-  }, [data, tiers, search, sortKey, sortDir, augmentData, rarityFilter]);
+    return sortRows(filtered, columns, sort);
+  }, [data, columns, search, sort, augmentData, rarityFilter]);
 
   // A rejected fetch used to leave "Loading..." on screen forever, which is
   // indistinguishable from a slow one. Say what happened and offer a retry.
@@ -212,150 +179,83 @@ export default function Augments() {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;
   }
 
-  const sortProps = { sort, onSort: toggle };
-
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-lol-text-bright">
-            {queueLabel} Augments Tier List
-          </h1>
-          <p className="text-xs text-lol-text mt-0.5">
-            {label} · {totalGames.toLocaleString()} games
-          </p>
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-lol-text-bright">
+          {queueLabel(queue)} Augments Tier List
+        </h1>
+        <p className="text-xs text-lol-text mt-0.5">
+          {label} · {totalGames.toLocaleString()} games
+        </p>
       </div>
 
-      {/* Rarity Filter + Search */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <RarityFilter value={rarityFilter} onChange={setRarityFilter} />
         <span className="text-xs text-lol-text self-center ml-2">{sorted.length} augments</span>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
           <QueueSelect value={queue} onChange={setQueue} />
           <PatchRangeSelect
             patches={patchOptions}
             selection={patchSelection}
             onChange={setPatchSelection}
           />
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder="Search augment..."
+            width={192}
+          />
         </div>
-        <SearchField
-          value={search}
-          onChange={setSearch}
-          placeholder="Search augment..."
-          width={192}
-        />
       </div>
 
       <SourceSwitch source={source} onChange={setSource} />
 
-      <div className={`${PANEL} overflow-hidden`}>
-        <table className="w-full">
-          <thead className="bg-lol-dark/50">
-            <tr>
-              <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-8"></th>
-              <SortHeader label="Augment" field="name" naturalDir="asc" {...sortProps} />
-              <SortHeader label="Tier" field="tier" className="w-16" {...sortProps} />
-              <SortHeader label="Score" field="score" {...sortProps} />
-              <SortHeader label="Win Rate" field="winRate" className="w-32" {...sortProps} />
-              <SortHeader label="Picks" field="picks" {...sortProps} />
-              <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
-              <SortHeader label="KDA" field="kda" {...sortProps} />
-              <SortHeader label="Damage" field="damage" {...sortProps} />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((a) => {
-              const isExpanded = expanded.has(a.augment_id);
-              const pickRate = totalSlots > 0 ? ((a.picks / totalSlots) * 100).toFixed(1) : "0.0";
-              return (
-                <>
-                  <tr
-                    key={a.augment_id}
-                    onClick={() => toggleExpand(a.augment_id)}
-                    className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
-                  >
-                    <td className="px-3 py-1.5 text-xs text-lol-text">
-                      <span
-                        className={`inline-block transition-transform ${isExpanded ? "rotate-90" : ""}`}
+      {/* Only visible once the window is narrow enough to drop the header row */}
+      <SortControl options={sortOptions(columns)} sort={sort} onSort={toggle} />
+
+      <StatBoard
+        columns={columns}
+        rows={sorted}
+        rowKey={(a) => a.augment_id}
+        onRowClick={(a) => toggleExpand(a.augment_id)}
+        sort={sort}
+        onSort={toggle}
+        minWidth={960}
+        empty="No augments found"
+        renderAfterRow={(a) =>
+          expanded.has(a.augment_id) ? (
+            <tr className="board-expansion border-t border-lol-border/30 bg-lol-dark/40">
+              <td colSpan={columns.length} className="px-4 py-3">
+                <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">
+                  Best with
+                </p>
+                <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
+                  {(source === "community" ? (communityChampions[a.augment_id] ?? []) : a.champions)
+                    .slice(0, 9)
+                    .map((c) => (
+                      <div
+                        key={c.champion_id}
+                        className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
                       >
-                        ▶
-                      </span>
-                    </td>
-                    <td className="px-3 py-1.5">
-                      <AugmentIcon augmentId={a.augment_id} showName />
-                    </td>
-                    <td className="px-3 py-1.5">
-                      {tiers.get(a.augment_id) && (
-                        <TierBadge tier={tiers.get(a.augment_id)!} games={a.picks} />
-                      )}
-                    </td>
-                    <td className="px-3 py-1.5 text-sm font-semibold text-lol-text-bright">
-                      {score(a.wins, a.picks).toFixed(1)}
-                    </td>
-                    <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
-                      <WinRateBar wins={a.wins} total={a.picks} />
-                    </td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text-bright">
-                      {formatWhole(a.picks)}
-                    </td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text">{pickRate}%</td>
-                    <td
-                      className={`px-3 py-1.5 text-sm ${kdaColor(
-                        (a.kills + a.assists) / Math.max(a.deaths, 1),
-                      )}`}
-                    >
-                      {kdaRatio(a.kills, a.deaths, a.assists)}
-                    </td>
-                    <td className="px-3 py-1.5 text-sm text-lol-text">
-                      {formatWhole(a.picks > 0 ? a.damage / a.picks : 0)}
-                    </td>
-                  </tr>
-                  {isExpanded &&
-                    (source === "community"
-                      ? (communityChampions[a.augment_id] ?? []).slice(0, 12)
-                      : a.champions
-                    ).map((c) => (
-                      <tr
-                        key={`${a.augment_id}-${c.champion_id}`}
-                        className="border-t border-lol-border/30 bg-lol-dark/30"
-                      >
-                        <td></td>
-                        <td className="px-3 py-1.5 pl-8">
-                          <div className="flex items-center gap-2">
-                            <ChampionIcon championId={c.champion_id} size={22} />
-                            <span className="text-xs text-lol-text">
-                              {getChampionName(champData, c.champion_id)}
-                            </span>
-                          </div>
-                        </td>
-                        <td></td>
-                        <td className="px-3 py-1.5 text-sm text-lol-text">
-                          {score(c.wins, c.picks).toFixed(1)}
-                        </td>
-                        <td className="px-3 py-1.5 w-32 min-[1500px]:w-72">
+                        <ChampionIcon championId={c.champion_id} size={22} />
+                        <span className="text-xs text-lol-text-bright w-[100px] truncate">
+                          {getChampionName(champData, c.champion_id)}
+                        </span>
+                        <span className="text-xs text-lol-text w-14 shrink-0">
+                          {formatWhole(c.picks)} picks
+                        </span>
+                        <div className="flex-1 min-w-16">
                           <WinRateBar wins={c.wins} total={c.picks} />
-                        </td>
-                        <td className="px-3 py-1.5 text-xs text-lol-text">
-                          {formatWhole(c.picks)}
-                        </td>
-                        {/* Pick rate, KDA and damage aren't broken out per
-                            champion - the columns stay empty rather than
-                            repeating the augment's own numbers */}
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">No augments found</div>
-        )}
-      </div>
+                </div>
+              </td>
+            </tr>
+          ) : null
+        }
+      />
     </div>
   );
 }

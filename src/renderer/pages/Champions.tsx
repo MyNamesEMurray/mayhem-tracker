@@ -1,38 +1,20 @@
 import { useState, useMemo, useEffect } from "react";
-import { PANEL } from "../../shared/ui/primitives";
 import { useNavigate } from "react-router-dom";
 import { useIpc } from "../hooks/useIpc";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useStatsFilters } from "../hooks/useStatsFilters";
 import { useChampionData, getChampionName } from "../hooks/useChampions";
 import type { ChampionStats } from "../lib/types";
-import ChampionIcon from "../../shared/ui/ChampionIcon";
-import WinRateBar from "../../shared/ui/WinRateBar";
 import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
 import { usePatchOptions } from "../hooks/usePatchOptions";
 import { patchesIn, patchLabel, patchParam } from "../../shared/patch";
 import SourceSwitch, { useStatsSource } from "../components/SourceSwitch";
-import TierBadge from "../../shared/ui/TierBadge";
-import { assignTiers, score, TIER_ORDER } from "../../shared/score";
-import SortHeader, { useSort } from "../../shared/ui/SortHeader";
+import { assignTiers, score } from "../../shared/score";
+import { useSort } from "../../shared/ui/SortHeader";
 import SearchField from "../../shared/ui/SearchField";
-import QueueSelect from "../components/QueueSelect";
-import { QUEUE_LABELS } from "../../shared/queues";
-import { formatAvg, formatWhole, kdaRatio, kdaColor } from "../lib/format";
-
-type SortKey =
-  | "score"
-  | "name"
-  | "games"
-  | "wins"
-  | "avg_kills"
-  | "avg_deaths"
-  | "avg_assists"
-  | "kda"
-  | "avg_damage"
-  | "avg_gold"
-  | "tier"
-  | "pickRate";
+import QueueSelect, { queueLabel } from "../components/QueueSelect";
+import StatBoard, { SortControl, sortOptions, sortRows } from "../../shared/ui/StatBoard";
+import { championColumns, type ChampionSortKey } from "../../shared/ui/boardColumns";
 
 export default function Champions() {
   const champData = useChampionData();
@@ -54,8 +36,7 @@ export default function Champions() {
   );
   const [search, setSearch] = useState("");
   // Score-first, like the website: rank is the point of a tier list
-  const { sort, toggle } = useSort<SortKey>("score");
-  const { key: sortKey, dir: sortDir } = sort;
+  const { sort, toggle } = useSort<ChampionSortKey>("score");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,56 +77,27 @@ export default function Champions() {
   const totalSlots = useMemo(() => (data ? data.reduce((sum, c) => sum + c.games, 0) : 0), [data]);
   // Ten champion slots per game
   const totalGames = Math.round(totalSlots / 10);
-  // The app's queue dropdown treats an empty selection as every queue, and
-  // hides itself entirely while only one queue has data - in which case that
-  // one queue is what's on screen
-  const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
   const label = patchLabel(patchSelection, patchOptions);
+
+  const columns = useMemo(
+    () =>
+      championColumns({
+        tiers,
+        totalSlots,
+        name: (id) => getChampionName(champData, id),
+        iconSize: wide ? 36 : 28,
+      }),
+    [tiers, totalSlots, champData, wide],
+  );
 
   const sorted = useMemo(() => {
     if (!data) return [];
-    let filtered = data.filter((c) => {
-      const name = getChampionName(champData, c.champion_id).toLowerCase();
-      return name.includes(search.toLowerCase());
-    });
-
-    filtered.sort((a, b) => {
-      let av: number, bv: number;
-      if (sortKey === "tier") {
-        // S+ first descending. A tier holds a big slice of the roster, so
-        // score breaks the ties and the order inside a tier still means
-        // something.
-        const at = TIER_ORDER.indexOf(tiers.get(a.champion_id)!);
-        const bt = TIER_ORDER.indexOf(tiers.get(b.champion_id)!);
-        if (at !== bt) return sortDir === "desc" ? at - bt : bt - at;
-        av = score(a.wins, a.games);
-        bv = score(b.wins, b.games);
-      } else if (sortKey === "pickRate") {
-        // Games over a fixed slot total, so this is the games order
-        av = a.games;
-        bv = b.games;
-      } else if (sortKey === "wins") {
-        av = a.games > 0 ? a.wins / a.games : 0;
-        bv = b.games > 0 ? b.wins / b.games : 0;
-      } else if (sortKey === "score") {
-        av = score(a.wins, a.games);
-        bv = score(b.wins, b.games);
-      } else if (sortKey === "name") {
-        const an = getChampionName(champData, a.champion_id);
-        const bn = getChampionName(champData, b.champion_id);
-        return sortDir === "desc" ? bn.localeCompare(an) : an.localeCompare(bn);
-      } else if (sortKey === "kda") {
-        av = a.deaths > 0 ? (a.kills + a.assists) / a.deaths : Infinity;
-        bv = b.deaths > 0 ? (b.kills + b.assists) / b.deaths : Infinity;
-      } else {
-        av = (a as any)[sortKey];
-        bv = (b as any)[sortKey];
-      }
-      return sortDir === "desc" ? bv - av : av - bv;
-    });
-
-    return filtered;
-  }, [data, search, sortKey, sortDir, champData, tiers]);
+    const q = search.toLowerCase();
+    const filtered = data.filter((c) =>
+      getChampionName(champData, c.champion_id).toLowerCase().includes(q),
+    );
+    return sortRows(filtered, columns, sort);
+  }, [data, columns, search, sort, champData]);
 
   // A rejected fetch used to leave "Loading..." on screen forever, which is
   // indistinguishable from a slow one. Say what happened and offer a retry.
@@ -167,30 +119,21 @@ export default function Champions() {
     return <div className="text-lol-text text-center mt-20">Loading...</div>;
   }
 
-  // This table carries twelve columns where the others carry five, so its
-  // headers take the same wider gutter its cells now use rather than the
-  // shared default - otherwise the header and the value under it don't line up
-  const sortProps = {
-    sort,
-    onSort: toggle,
-    thClass: "px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] select-none",
-  };
-
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         {/* Named the same way the website names it: the queue, the list, then
             the slice the numbers cover - so a game count reads as the patches
             in view for this queue rather than the size of the whole database */}
         <div>
           <h1 className="text-xl font-bold text-lol-text-bright">
-            {queueLabel} Champions Tier List
+            {queueLabel(queue)} Champions Tier List
           </h1>
           <p className="text-xs text-lol-text mt-0.5">
             {label} · {totalGames.toLocaleString()} games
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <QueueSelect value={queue} onChange={setQueue} />
           <PatchRangeSelect
             patches={patchOptions}
@@ -208,82 +151,22 @@ export default function Champions() {
 
       <SourceSwitch source={source} onChange={setSource} />
 
-      <div className={`${PANEL} overflow-hidden`}>
-        <table className="w-full">
-          <thead className="bg-lol-dark/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em] w-12">
-                #
-              </th>
-              <SortHeader label="Champion" field="name" naturalDir="asc" {...sortProps} />
-              <SortHeader label="Tier" field="tier" className="w-16" {...sortProps} />
-              <SortHeader label="Score" field="score" {...sortProps} />
-              <SortHeader label="Win Rate" field="wins" {...sortProps} />
-              <SortHeader label="Games" field="games" {...sortProps} />
-              <SortHeader label="Pick Rate" field="pickRate" {...sortProps} />
-              <SortHeader label="Kills" field="avg_kills" {...sortProps} />
-              <SortHeader label="Deaths" field="avg_deaths" {...sortProps} />
-              <SortHeader label="Assists" field="avg_assists" {...sortProps} />
-              <SortHeader label="KDA" field="kda" {...sortProps} />
-              <SortHeader label="Damage" field="avg_damage" {...sortProps} />
-              <SortHeader label="Gold" field="avg_gold" {...sortProps} />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((c, i) => (
-              <tr
-                key={c.champion_id}
-                onClick={() => openChampion(c.champion_id)}
-                className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
-              >
-                <td className="px-4 py-1.5 text-xs text-lol-text">{i + 1}</td>
-                <td className="px-4 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <ChampionIcon championId={c.champion_id} size={wide ? 36 : 28} />
-                    <span className="text-sm text-lol-text-bright">
-                      {getChampionName(champData, c.champion_id)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-1.5">
-                  {tiers.get(c.champion_id) && (
-                    <TierBadge tier={tiers.get(c.champion_id)!} games={c.games} />
-                  )}
-                </td>
-                <td className="px-4 py-1.5 text-sm font-semibold text-lol-text-bright">
-                  {score(c.wins, c.games).toFixed(1)}
-                </td>
-                <td className="px-4 py-1.5 w-32 min-[1500px]:w-72">
-                  <WinRateBar wins={c.wins} total={c.games} />
-                </td>
-                <td className="px-4 py-1.5 text-sm text-lol-text-bright">{formatWhole(c.games)}</td>
-                <td className="px-4 py-1.5 text-sm text-lol-text">
-                  {totalSlots > 0 ? ((c.games / totalSlots) * 100).toFixed(1) : "0.0"}%
-                </td>
-                <td className="px-4 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_kills)}</td>
-                <td className="px-4 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_deaths)}</td>
-                <td className="px-4 py-1.5 text-sm text-lol-text">{formatAvg(c.avg_assists)}</td>
-                <td
-                  className={`px-4 py-1.5 text-sm ${kdaColor(c.deaths > 0 ? (c.kills + c.assists) / c.deaths : Infinity)}`}
-                >
-                  {kdaRatio(c.kills, c.deaths, c.assists)}
-                </td>
-                <td className="px-4 py-1.5 text-sm text-lol-text">{formatWhole(c.avg_damage)}</td>
-                <td className="px-4 py-1.5 text-sm text-lol-text-bright">
-                  {formatWhole(c.avg_gold)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">
-            {source === "community"
-              ? "No champions in the community data for these filters"
-              : "No champions found"}
-          </div>
-        )}
-      </div>
+      {/* Only visible once the window is narrow enough to drop the header row */}
+      <SortControl options={sortOptions(columns)} sort={sort} onSort={toggle} />
+
+      <StatBoard
+        columns={columns}
+        rows={sorted}
+        rowKey={(c) => c.champion_id}
+        onRowClick={(c) => openChampion(c.champion_id)}
+        sort={sort}
+        onSort={toggle}
+        empty={
+          source === "community"
+            ? "No champions in the community data for these filters"
+            : "No champions found"
+        }
+      />
     </div>
   );
 }

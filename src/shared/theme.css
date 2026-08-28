@@ -122,6 +122,126 @@ body {
   }
 }
 
+/* The stat board's narrow-window layout, shared by the app and the site.
+   Above 700px a board is a table; below it, each row becomes a card. Cells
+   place themselves from data-area, and the figures under the fold label
+   themselves from data-label, so adding or reordering a column cannot
+   silently relabel the one after it - which is what keying this off
+   nth-child used to do. */
+
+/* Sorting has to survive the header row disappearing. Kept in step with the
+   breakpoint below. */
+.sort-mobile {
+  display: none;
+}
+
+/* Columns held back until the window can hold them. Thirteen columns is the
+   union of what the two boards used to draw, and thirteen does not fit a
+   1280px window without squeezing every one of them. Only the separate
+   Kills, Deaths and Assists columns drop out, and the KDA column beside them
+   prints the same three numbers at every width, so no figure leaves the
+   board - it just stops having a column of its own. */
+@media (max-width: 1399px) {
+  .stat-board .board-detail {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .sort-mobile {
+    display: flex;
+  }
+
+  .stat-board {
+    min-width: 0 !important;
+    display: block;
+  }
+  .stat-board thead {
+    display: none;
+  }
+  .stat-board tbody {
+    display: block;
+  }
+  .stat-board tbody tr {
+    display: grid !important;
+    /* Four columns so the labelled figures flow four-up underneath; the
+       named areas span them. The name gets a line to itself apart from rank
+       and score, because sharing one with the tier badge let a longer
+       champion push into the badge, and wrapping the name to fix that looked
+       worse than the overlap. */
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-areas:
+      "rank name name score"
+      "tier bar  bar  bar";
+    align-items: center;
+    gap: 6px 10px;
+    padding: 10px 12px;
+  }
+  /* A board with no rank column gives the row's first column to the name */
+  .stat-board[data-rank="no"] tbody tr {
+    grid-template-columns: 1fr 1fr auto auto;
+    grid-template-areas:
+      "name name name score"
+      "tier bar  bar  bar";
+  }
+  .stat-board tbody td {
+    padding: 0 !important;
+  }
+  .stat-board td[data-area="rank"] {
+    grid-area: rank;
+  }
+  .stat-board td[data-area="name"] {
+    grid-area: name;
+    min-width: 0;
+  }
+  /* A grid item will not shrink below its content without this. The ellipsis
+     is a last resort for a name longer than the row can hold; no champion
+     reaches it today, but "Tank It Or Leave It" gets close. */
+  .stat-board td[data-area="name"] > * {
+    min-width: 0;
+  }
+  .stat-board td[data-area="name"] a,
+  .stat-board td[data-area="name"] span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stat-board td[data-area="tier"] {
+    grid-area: tier;
+  }
+  .stat-board td[data-area="score"] {
+    grid-area: score;
+  }
+  .stat-board td[data-area="bar"] {
+    grid-area: bar;
+  }
+  /* Table-only cells: the expander caret has nothing to point at once the
+     whole row is tappable. */
+  .stat-board td[data-area="none"] {
+    display: none;
+  }
+  .stat-board td[data-label] {
+    white-space: normal !important;
+  }
+  .stat-board td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-lol-text);
+    font-weight: 500;
+  }
+  /* An expanded row's contents span the card rather than joining its grid */
+  .stat-board tbody tr.board-expansion {
+    display: block !important;
+    padding: 0;
+  }
+  .stat-board tbody tr.board-expansion td {
+    display: block;
+    padding: 10px 12px !important;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

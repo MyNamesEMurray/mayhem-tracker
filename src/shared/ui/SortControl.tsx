@@ -1,15 +1,11 @@
-import type { SortDir, SortState } from "../../../src/shared/ui/SortHeader.tsx";
+import type { SortDir, SortOption, SortState } from "./sortState";
 
-export interface SortOption<K extends string> {
-  key: K;
-  label: string;
-  naturalDir?: SortDir;
-}
+export type { SortOption };
 
-// Sorting for the card layout. Below 700px the stat tables drop their header
-// row and become stacked cards - which left the phone with no way to sort at
-// all, since every sort control on this site lived in a <th>. This is the
-// same sort state, driven from a control that survives the card layout.
+// Sorting for the card layout. Below 700px a stat board drops its header row
+// and becomes stacked cards, which leaves no way to sort at all, since every
+// sort control lives in a <th>. This is the same sort state driven from a
+// control that survives the card layout.
 export default function SortControl<K extends string>({
   options,
   sort,

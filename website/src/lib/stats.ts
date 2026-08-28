@@ -67,6 +67,9 @@ export interface ChampionAgg {
   deaths: number;
   assists: number;
   damage: number;
+  // Summed for the board's Gold column, which the desktop app has always had
+  // and the site did not
+  gold: number;
   pentas: number;
 }
 
@@ -86,6 +89,7 @@ export function aggregateChampions(rows: ChampionStatRow[], f: Filters): Champio
           deaths: 0,
           assists: 0,
           damage: 0,
+          gold: 0,
           pentas: 0,
         }),
       );
@@ -96,6 +100,7 @@ export function aggregateChampions(rows: ChampionStatRow[], f: Filters): Champio
     e.deaths += r.deaths;
     e.assists += r.assists;
     e.damage += r.damage;
+    e.gold += r.gold;
     e.pentas += r.pentas;
   }
   return Array.from(map.values());

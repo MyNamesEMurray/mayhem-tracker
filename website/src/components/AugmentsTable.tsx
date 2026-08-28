@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { PANEL } from "../../../src/shared/ui/primitives.tsx";
 import { fetchAugmentChampions, type AugmentStatRow, type AugmentTotalRow } from "../lib/api";
 import type { AugmentData, ChampionData } from "../lib/dragon";
 import { getAugmentName, getChampionName } from "../lib/dragon";
@@ -8,27 +7,22 @@ import {
   assignTiers,
   augmentChampionBreakdown,
   formatWhole,
-  kdaRampClass,
-  kdaRatio,
   score,
   type Filters,
   type Tier,
 } from "../lib/stats";
-import AugmentIcon from "../../../src/shared/ui/AugmentIcon.tsx";
 import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
 import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import SearchField from "../../../src/shared/ui/SearchField.tsx";
-import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
 import { championSlug } from "../lib/slug";
-import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
-import SortControl, { type SortOption } from "./SortControl";
-import { TIER_ORDER } from "../lib/stats";
-
-// Every column carries data, so every column sorts. Pick rate is picks over a
-// fixed total, so it orders identically to picks - it's here because a header
-// that looks clickable and isn't is worse than a redundant one.
-type SortKey = "score" | "picks" | "winRate" | "kda" | "damage" | "name" | "tier" | "pickRate";
+import { useSort } from "../../../src/shared/ui/SortHeader.tsx";
+import StatBoard, {
+  SortControl,
+  sortOptions,
+  sortRows,
+} from "../../../src/shared/ui/StatBoard.tsx";
+import { augmentColumns, type AugmentSortKey } from "../../../src/shared/ui/boardColumns.tsx";
 
 export default function AugmentsTable({
   rows,
@@ -47,8 +41,7 @@ export default function AugmentsTable({
 }) {
   const [search, setSearch] = useState("");
   const [rarity, setRarity] = useState<Rarity>("all");
-  const { sort, toggle } = useSort<SortKey>("score");
-  const { key: sortKey, dir: sortDir } = sort;
+  const { sort, toggle } = useSort<AugmentSortKey>("score");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   // Tiers rank each augment against its own rarity - Prismatics are strictly
@@ -76,6 +69,16 @@ export default function AugmentsTable({
     return { list, tiers };
   }, [rows, filters, augmentData]);
 
+  const columns = useMemo(
+    () =>
+      augmentColumns({
+        tiers,
+        totalSlots,
+        name: (id) => getAugmentName(augmentData, id),
+      }),
+    [tiers, totalSlots, augmentData],
+  );
+
   const sorted = useMemo(() => {
     // Tier assignment above still sees the full cohort - hiding low-sample
     // rows must not promote what remains
@@ -89,63 +92,8 @@ export default function AugmentsTable({
     if (rarity !== "all") {
       filtered = filtered.filter((a) => augmentData[a.augment_id]?.rarity === rarity);
     }
-    const result = [...filtered];
-    result.sort((a, b) => {
-      if (sortKey === "name") {
-        const cmp = getAugmentName(augmentData, a.augment_id).localeCompare(
-          getAugmentName(augmentData, b.augment_id),
-        );
-        return sortDir === "asc" ? cmp : -cmp;
-      }
-      let av: number, bv: number;
-      if (sortKey === "score") {
-        av = score(a.wins, a.picks);
-        bv = score(b.wins, b.picks);
-      } else if (sortKey === "tier") {
-        // Tiers rank within a rarity, so an S+ Silver and an S+ Prismatic are
-        // both S+. Sorting groups them by letter and orders each group by
-        // score, which is the only tiebreak that means anything here.
-        const at = TIER_ORDER.indexOf(tiers.get(a.augment_id)!);
-        const bt = TIER_ORDER.indexOf(tiers.get(b.augment_id)!);
-        if (at !== bt) return sortDir === "desc" ? at - bt : bt - at;
-        av = score(a.wins, a.picks);
-        bv = score(b.wins, b.picks);
-      } else if (sortKey === "pickRate") {
-        av = a.picks;
-        bv = b.picks;
-      } else if (sortKey === "winRate") {
-        av = a.picks > 0 ? a.wins / a.picks : 0;
-        bv = b.picks > 0 ? b.wins / b.picks : 0;
-      } else if (sortKey === "kda") {
-        av = kdaRatio(a.kills, a.deaths, a.assists);
-        bv = kdaRatio(b.kills, b.deaths, b.assists);
-      } else if (sortKey === "damage") {
-        av = a.picks > 0 ? a.damage / a.picks : 0;
-        bv = b.picks > 0 ? b.damage / b.picks : 0;
-      } else {
-        av = a.picks;
-        bv = b.picks;
-      }
-      return sortDir === "desc" ? bv - av : av - bv;
-    });
-    return result;
-  }, [list, tiers, search, rarity, sortKey, sortDir, augmentData]);
-
-  const th =
-    "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";
-  const sortProps = { sort, onSort: toggle, thClass: th };
-
-  // Same columns as the header row, for the card layout that has no header row
-  const sortOptions: SortOption<SortKey>[] = [
-    { key: "score", label: "Score" },
-    { key: "name", label: "Augment", naturalDir: "asc" },
-    { key: "tier", label: "Tier" },
-    { key: "winRate", label: "Win rate" },
-    { key: "picks", label: "Picks" },
-    { key: "pickRate", label: "Pick rate" },
-    { key: "kda", label: "KDA" },
-    { key: "damage", label: "Damage" },
-  ];
+    return sortRows(filtered, columns, sort);
+  }, [list, columns, search, rarity, sort, augmentData]);
 
   return (
     <div className="space-y-3">
@@ -154,7 +102,7 @@ export default function AugmentsTable({
         <span className="text-xs self-center ml-1">
           {sorted.length} augment{sorted.length === 1 ? "" : "s"}
         </span>
-        <SortControl options={sortOptions} sort={sort} onSort={toggle} />
+        <SortControl options={sortOptions(columns)} sort={sort} onSort={toggle} />
         <div className="ml-auto">
           <SearchField
             value={search}
@@ -165,76 +113,47 @@ export default function AugmentsTable({
         </div>
       </div>
 
-      <div className={`${PANEL} overflow-x-auto`}>
-        <table className="atbl table-fixed w-full min-w-[960px] border-collapse">
-          <thead className="bg-lol-dark/50">
-            <tr>
-              <SortHeader label="Augment" field="name" naturalDir="asc" {...sortProps} />
-              <SortHeader label="Tier" field="tier" className="w-16" {...sortProps} />
-              <SortHeader label="Score" field="score" className="w-[84px]" {...sortProps} />
-              <SortHeader label="Win rate" field="winRate" className="w-[150px]" {...sortProps} />
-              <SortHeader label="Picks" field="picks" className="w-[76px]" {...sortProps} />
-              <SortHeader label="Pick rate" field="pickRate" className="w-[84px]" {...sortProps} />
-              <SortHeader label="KDA" field="kda" className="w-[76px]" {...sortProps} />
-              <SortHeader label="Damage" field="damage" className="w-[84px]" {...sortProps} />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((a) => {
-              const expanded = expandedId === a.augment_id;
-              return (
-                <AugmentRow
-                  key={a.augment_id}
-                  aug={a}
-                  tier={tiers.get(a.augment_id)!}
-                  scoreValue={score(a.wins, a.picks)}
-                  kda={kdaRatio(a.kills, a.deaths, a.assists)}
-                  avgDamage={a.picks > 0 ? a.damage / a.picks : 0}
-                  pickRate={totalSlots > 0 ? ((a.picks / totalSlots) * 100).toFixed(1) : "0.0"}
-                  expanded={expanded}
-                  onToggle={() => setExpandedId(expanded ? null : a.augment_id)}
-                  filters={filters}
-                  championData={championData}
-                  onSelectChampion={onSelectChampion}
-                />
-              );
-            })}
-          </tbody>
-        </table>
-        {sorted.length === 0 && (
-          <div className="py-8 text-center text-sm text-lol-text">"No augments found"</div>
-        )}
-      </div>
-      <p className="text-xs text-lol-text/70">
-        Score is the win rate the record supports, out of 100 - the floor of a 95% confidence
-        interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
-        each augment against others of its rarity. * fewer than 20 games - treat with caution.
-      </p>
+      <StatBoard
+        columns={columns}
+        rows={sorted}
+        rowKey={(a) => a.augment_id}
+        onRowClick={(a) => setExpandedId(expandedId === a.augment_id ? null : a.augment_id)}
+        sort={sort}
+        onSort={toggle}
+        minWidth={960}
+        empty="No augments found"
+        renderAfterRow={(a) =>
+          expandedId === a.augment_id ? (
+            <AugmentChampions
+              augmentId={a.augment_id}
+              colSpan={columns.length}
+              filters={filters}
+              championData={championData}
+              onSelectChampion={onSelectChampion}
+            />
+          ) : null
+        }
+        footnote={
+          <>
+            Score is the win rate the record supports, out of 100 - the floor of a 95% confidence
+            interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
+            each augment against others of its rarity. * fewer than 20 games - treat with caution.
+          </>
+        }
+      />
     </div>
   );
 }
 
-function AugmentRow({
-  aug,
-  tier,
-  scoreValue,
-  kda,
-  avgDamage,
-  pickRate,
-  expanded,
-  onToggle,
+function AugmentChampions({
+  augmentId,
+  colSpan,
   filters,
   championData,
   onSelectChampion,
 }: {
-  aug: { augment_id: number; picks: number; wins: number };
-  tier: Tier;
-  scoreValue: number;
-  kda: number;
-  avgDamage: number;
-  pickRate: string;
-  expanded: boolean;
-  onToggle: () => void;
+  augmentId: number;
+  colSpan: number;
   filters: Filters;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
@@ -243,9 +162,8 @@ function AugmentRow({
   // Holding all of it for every augment is 341k rows; one augment is ~2k.
   const [rows, setRows] = useState<AugmentStatRow[] | null>(null);
   useEffect(() => {
-    if (!expanded || rows) return;
     let active = true;
-    fetchAugmentChampions(aug.augment_id)
+    fetchAugmentChampions(augmentId)
       .then((r) => {
         if (active) setRows(r);
       })
@@ -255,75 +173,47 @@ function AugmentRow({
     return () => {
       active = false;
     };
-  }, [expanded, rows, aug.augment_id]);
+  }, [augmentId]);
 
   const breakdown = useMemo(
-    () =>
-      expanded && rows ? augmentChampionBreakdown(rows, filters, aug.augment_id).slice(0, 9) : [],
-    [expanded, rows, filters, aug.augment_id],
+    () => (rows ? augmentChampionBreakdown(rows, filters, augmentId).slice(0, 9) : []),
+    [rows, filters, augmentId],
   );
 
   return (
-    <>
-      <tr
-        onClick={onToggle}
-        className="border-t border-lol-border/50 hover:bg-lol-card-hover cursor-pointer transition-colors"
-      >
-        <td className="px-3 py-[9px]">
-          <AugmentIcon augmentId={aug.augment_id} size={26} showName />
-        </td>
-        <td className="px-3 py-[9px]">
-          <TierBadge tier={tier} games={aug.picks} />
-        </td>
-        <td className="px-3 py-[9px] text-[13px] font-semibold text-lol-text-bright">
-          {scoreValue.toFixed(1)}
-        </td>
-        <td className="px-3 py-[9px]">
-          <WinRateBar wins={aug.wins} total={aug.picks} />
-        </td>
-        <td className="px-3 py-[9px] text-[13px] text-lol-text-bright">{formatWhole(aug.picks)}</td>
-        <td className="px-3 py-[9px] text-[13px] text-lol-text">{pickRate}%</td>
-        <td className={`px-3 py-[9px] text-[13px] font-semibold ${kdaRampClass(kda)}`}>
-          {kda.toFixed(2)}
-        </td>
-        <td className="px-3 py-[9px] text-[13px] text-lol-text">{formatWhole(avgDamage)}</td>
-      </tr>
-      {expanded && (
-        <tr className="xrow border-t border-lol-border/30 bg-lol-dark/40">
-          <td colSpan={8} className="px-4 py-3">
-            <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">Best with</p>
-            <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
-              {breakdown.map((c) => (
-                <div
-                  key={c.champion_id}
-                  className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
-                >
-                  <a
-                    href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onSelectChampion(c.champion_id);
-                    }}
-                    className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
-                  >
-                    <ChampionIcon championId={c.champion_id} size={22} />
-                    <span className="text-xs text-lol-text-bright w-[100px] truncate text-left hover:text-lol-gold">
-                      {getChampionName(championData, c.champion_id)}
-                    </span>
-                  </a>
-                  <span className="text-xs text-lol-text w-14 shrink-0">
-                    {formatWhole(c.picks)} picks
-                  </span>
-                  <div className="flex-1 min-w-16">
-                    <WinRateBar wins={c.wins} total={c.picks} />
-                  </div>
-                </div>
-              ))}
+    <tr className="board-expansion border-t border-lol-border/30 bg-lol-dark/40">
+      <td colSpan={colSpan} className="px-4 py-3">
+        <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">Best with</p>
+        <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
+          {breakdown.map((c) => (
+            <div
+              key={c.champion_id}
+              className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
+            >
+              <a
+                href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onSelectChampion(c.champion_id);
+                }}
+                className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
+              >
+                <ChampionIcon championId={c.champion_id} size={22} />
+                <span className="text-xs text-lol-text-bright w-[100px] truncate text-left hover:text-lol-gold">
+                  {getChampionName(championData, c.champion_id)}
+                </span>
+              </a>
+              <span className="text-xs text-lol-text w-14 shrink-0">
+                {formatWhole(c.picks)} picks
+              </span>
+              <div className="flex-1 min-w-16">
+                <WinRateBar wins={c.wins} total={c.picks} />
+              </div>
             </div>
-          </td>
-        </tr>
-      )}
-    </>
+          ))}
+        </div>
+      </td>
+    </tr>
   );
 }

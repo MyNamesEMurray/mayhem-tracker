@@ -170,7 +170,12 @@ export default function App() {
       const newest = spans.map((s) => s.patch).sort((a, b) => comparePatches(b, a));
       setPatchList(newest);
 
-      const first = newest.slice(0, 1);
+      // fetchPatchSpans swallows its own failure and returns an empty list, so
+      // an empty list here means "the view is unreachable", not "there are no
+      // patches". Asking for no patches would fetch nothing and render an
+      // empty board; fetching everything is what this did before staging and
+      // is never wrong, only slower.
+      const first = newest.length > 0 ? newest.slice(0, 1) : undefined;
       const [championRows, augmentRows, championData, augmentData] = await Promise.all([
         fetchChampionStats(first),
         fetchAugmentTotals(first),
@@ -179,11 +184,12 @@ export default function App() {
       ]);
       if (!active) return;
       setData({ championRows, augmentRows, championData, augmentData });
-      setLoadedPatches(new Set(first));
+      // Everything that came back is loaded, whichever way it was asked for
+      setLoadedPatches(new Set(first ?? championRows.map((r) => r.patch)));
 
       // Everything auto-widen can reach, so the banner never waits on a fetch
       const widenReach = newest.slice(0, AUTO_WIDEN_MAX_PATCHES);
-      if (widenReach.length > first.length) {
+      if (first && widenReach.length > first.length) {
         const rest = widenReach.slice(first.length);
         const [moreChamps, moreAugs] = await Promise.all([
           fetchChampionStats(rest),

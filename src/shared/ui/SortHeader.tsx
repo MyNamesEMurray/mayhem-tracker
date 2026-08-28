@@ -1,24 +1,10 @@
-import { useState } from "react";
+import { useSort, type SortDir, type SortState } from "./sortState";
 
-export type SortDir = "asc" | "desc";
-
-export interface SortState<K extends string> {
-  key: K;
-  dir: SortDir;
-}
-
-// Column sorting for a data table, shared by the desktop app and
-// mayhemstats.com. Clicking a new column sorts it by its natural direction -
-// descending for numbers, ascending for names - and clicking the active
-// column reverses it.
-export function useSort<K extends string>(initialKey: K, initialDir: SortDir = "desc") {
-  const [sort, setSort] = useState<SortState<K>>({ key: initialKey, dir: initialDir });
-  const toggle = (key: K, naturalDir: SortDir = "desc") =>
-    setSort((s) =>
-      s.key === key ? { key, dir: s.dir === "desc" ? "asc" : "desc" } : { key, dir: naturalDir },
-    );
-  return { sort, toggle };
-}
+// The sortable column header itself. The state it drives lives in
+// sortState.ts, and is re-exported here so the call sites that have always
+// imported both from this file keep working.
+export { useSort };
+export type { SortDir, SortState };
 
 const TH_BASE =
   "px-3 py-[9px] text-left text-[11px] font-medium uppercase tracking-[.08em] select-none";

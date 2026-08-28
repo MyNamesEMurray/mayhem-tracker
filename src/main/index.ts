@@ -41,7 +41,13 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
-    minWidth: 900,
+    // 900 until the tier lists learned to become cards. A tracker is used
+    // beside a game, which means half a screen, and half a 1366-wide laptop
+    // is 683px - under the old floor, so the window simply refused. The
+    // content area is the window less 40px of padding, so 720 lands at 680
+    // and the boards are past their 700px card breakpoint at the narrowest
+    // the window goes.
+    minWidth: 720,
     minHeight: 640,
     icon: iconPath,
     frame: false,
