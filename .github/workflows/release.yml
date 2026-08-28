@@ -51,6 +51,11 @@ jobs:
       release: ${{ steps.decide.outputs.release }}
       version: ${{ steps.decide.outputs.version }}
       bump: ${{ steps.decide.outputs.bump }}
+      # The commit this push is measured against, and the paths that count as
+      # the app. The release job generates notes from the same range and the
+      # same filter the gate used to decide there was anything to release.
+      base: ${{ steps.decide.outputs.base }}
+      appPaths: ${{ steps.decide.outputs.appPaths }}
     defaults:
       run:
         shell: bash
@@ -155,6 +160,8 @@ jobs:
             echo "release=true"
             echo "version=$VERSION"
             echo "bump=$BUMP"
+            echo "base=$BASE"
+            echo "appPaths=$APP"
           } >> "$GITHUB_OUTPUT"
 
           if [ "$BUMP" = "true" ]; then
@@ -178,36 +185,33 @@ jobs:
 
           # Does this version have anything to tell players?
           #
-          # An empty body is a legitimate outcome and this never blocks one -
-          # most auto-cut patch releases are a refactor or a build fix and
-          # should not put commit subjects in front of anyone. But v2.14.5
-          # shipped the largest set of player-visible changes in months with no
-          # section, so it published empty and the app's update window skipped
-          # it: nobody on the previous version was told any of it existed. That
-          # was discovered days later, by someone opening the release page.
-          #
-          # Saying so here puts it in front of whoever merged, at the moment
-          # they merged, while the notes can still be written before anyone
-          # looks for them.
+          # v2.14.5 shipped the largest set of player-visible changes in months
+          # with no section, so it published empty and the app's update window
+          # skipped it: nobody on the previous version was told any of it
+          # existed, and it was found days later by someone opening the release
+          # page. The release job now writes a section from the commit subjects
+          # when there isn't one, so a release is never silently empty - but a
+          # generated section is a floor, not a finish, and saying so here is
+          # what gets it rewritten before anyone reads it.
           if [ "$(node .github/scripts/changelog-section.mts "v$VERSION" --check)" = "missing" ]; then
-            echo "::warning title=No release notes for v$VERSION::CHANGELOG.md has no v$VERSION section, so this publishes with an empty body and the app's update window skips it."
+            echo "::warning title=v$VERSION has no written release notes::A section will be generated from commit subjects. Rewrite it in player language - commit subjects are written for whoever reads the diff, not for someone deciding whether to update."
             {
               echo
               echo "> [!WARNING]"
-              echo "> **No \`CHANGELOG.md\` section for v$VERSION.**"
+              echo "> **No \`CHANGELOG.md\` section for v$VERSION, so one will be generated.**"
               echo ">"
-              echo "> This will publish with an empty body, and the app's update window skips a"
-              echo "> release with nothing in it - so nobody running an older version will be"
-              echo "> told this one exists."
+              echo "> It is built from the commit subjects above and committed to \`main\`"
+              echo "> alongside the version bump, so this release will not publish empty."
               echo ">"
-              echo "> That is the right outcome for a refactor or a build fix. If any of the"
-              echo "> changes above are worth telling a player about, add a \`## v$VERSION\`"
-              echo "> section to \`CHANGELOG.md\` and paste it into the release."
+              echo "> Commit subjects are written for whoever reads the diff next, not for"
+              echo "> someone deciding whether to click Update. Rewrite the section in"
+              echo "> \`CHANGELOG.md\` and paste it over the release body - it is marked as"
+              echo "> generated until somebody does."
             } >> "$GITHUB_STEP_SUMMARY"
           else
             {
               echo
-              echo "Release notes: the \`## v$VERSION\` section of \`CHANGELOG.md\`."
+              echo "Release notes: the \`## v$VERSION\` section of \`CHANGELOG.md\`, written by hand."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -268,6 +272,28 @@ jobs:
       - name: Scoring tests
         run: npm test
 
+      # A release should never publish empty by accident. When nobody wrote a
+      # section for this version, one is built from the subjects of the commits
+      # that actually touched the app - website work, Supabase work, release
+      # commits and merges are left out, because players cannot see them.
+      #
+      # A hand-written section always wins: this only ever fills a gap. Only on
+      # main, because it is committed there in the same commit as the version
+      # bump - a tag push or a run off another branch takes whatever the
+      # changelog already says.
+      - name: Write release notes if there are none
+        id: notes_generated
+        if: github.ref == 'refs/heads/main' && needs.gate.outputs.base != ''
+        run: |
+          RESULT=$(node .github/scripts/generate-changelog.mts \
+            "$VERSION" "${{ needs.gate.outputs.base }}" '${{ needs.gate.outputs.appPaths }}')
+          echo "Notes for v$VERSION: $RESULT"
+          if [ "${RESULT% *}" = "generated" ]; then
+            echo "generated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # The version is written and pushed before the build, so the tag lands on
       # exactly the tree the executables came from rather than on a commit that
       # only caught up to it afterwards.
@@ -279,14 +305,27 @@ jobs:
         if: env.BUMP == 'true' && github.ref != 'refs/heads/main'
         run: npm version "$VERSION" --no-git-tag-version --allow-same-version
 
+      # One commit carries both, because they belong to the same release: the
+      # version it ships as and the notes it ships with. Runs when either has
+      # something to say, so a version already set by hand in package.json
+      # still gets its generated notes committed.
       - name: Set the version on main
         id: commit
-        if: env.BUMP == 'true' && github.ref == 'refs/heads/main'
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (env.BUMP == 'true' || steps.notes_generated.outputs.generated == 'true')
         run: |
-          npm version "$VERSION" --no-git-tag-version --allow-same-version
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
+
+          if [ "$BUMP" = "true" ]; then
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            git add package.json package-lock.json
+          fi
+          if [ "${{ steps.notes_generated.outputs.generated }}" = "true" ]; then
+            git add CHANGELOG.md
+          fi
+
           git commit -m "Release v$VERSION" \
             -m "Cut by .github/workflows/release.yml from ${GITHUB_SHA:0:7}."
 
@@ -311,9 +350,10 @@ jobs:
       - run: npm run dist
 
       # Notes come from this version's CHANGELOG.md section so they read like
-      # notes for players. No section means no body: the update window skips a
-      # release with nothing in it, which is the right outcome for a build that
-      # changed nothing anyone can see.
+      # notes for players. By now the step above has filled that section if it
+      # was empty, so reaching the no-body branch means even the commits had
+      # nothing player-visible in them - which is the right outcome for a build
+      # that changed nothing anyone can see, and which the update window skips.
       - name: Extract release notes
         id: notes
         run: |
