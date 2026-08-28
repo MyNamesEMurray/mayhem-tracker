@@ -27,6 +27,11 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it - a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.4 - 2026-08-28
+
+- **Augment wording no longer waits for an update.** Hover descriptions used to be built into the app, so an augment reworded in a patch kept its old wording until a new version shipped and you downloaded it. They are fetched now, like champion names and item data always have been, so the next time you open the app the text is current. This is the last release the descriptions themselves will need.
+- **Augment names survive going offline.** Open the app with no connection and augments used to show as "Augment 2141", because the list they come from is fetched fresh each launch and there was nothing to fall back on. It is kept on disk now, so anything you have loaded once stays readable, descriptions included.
+
 ## v2.14.3 - 2026-08-28
 
 - **Hover text for patch 16.17's augments.** Ultra Hydra and Upgrade Death's Dance describe themselves now instead of hovering with just a name - they were added this patch, and the wording is generated from the game's own text, so it arrives a release behind the augment itself. Two more were reworded on Riot's end: Upgrade Infinity Edge no longer claims to grant Critical Strike Chance, because it no longer does, and Upgrade Ravenous Hydra now says it raises the item's own life steal rather than granting you some.
