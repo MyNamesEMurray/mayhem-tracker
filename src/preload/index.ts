@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { ElectronAPI, LcuStatus } from "../shared/api";
 
-const api = {
+// Declared as ElectronAPI rather than inferred, so the compiler checks this
+// object against the contract the renderer calls through. Without it the two
+// were written freehand against each other and could disagree silently — a
+// mismatch that surfaces as a call failing at runtime, not as a build error.
+//
+// Every method here returns ipcRenderer.invoke(...), which is Promise<any>, so
+// the annotation is what gives call sites their real return types too.
+const api: ElectronAPI = {
   getMatchHistory: (
     limit: number,
     offset: number,
@@ -100,8 +108,8 @@ const api = {
 
   getAllSummonerPuuids: () => ipcRenderer.invoke("db:all-summoner-puuids"),
 
-  onStatusChanged: (callback: (status: string) => void) => {
-    const handler = (_event: any, status: string) => callback(status);
+  onStatusChanged: (callback: (status: LcuStatus) => void) => {
+    const handler = (_event: unknown, status: LcuStatus) => callback(status);
     ipcRenderer.on("lcu:status-changed", handler);
     return () => ipcRenderer.removeListener("lcu:status-changed", handler);
   },

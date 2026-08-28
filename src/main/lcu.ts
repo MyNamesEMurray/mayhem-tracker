@@ -12,9 +12,10 @@ import { tryAttachLiveEvents } from "./live-watcher";
 import { uploadPendingGames } from "./upload";
 import { getMainWindow } from "./window-ref";
 import { MAYHEM_QUEUE_IDS } from "../shared/queues";
+import type { LcuStatus } from "../shared/api";
 
 let credentials: Credentials | null = null;
-let status: "disconnected" | "connecting" | "connected" = "disconnected";
+let status: LcuStatus = "disconnected";
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let connectTimer: ReturnType<typeof setInterval> | null = null;
 
