@@ -60,7 +60,7 @@ const SORT_LABELS: Record<SortBy, string> = {
 };
 
 const SCORE_HINT =
-  "The win rate this record supports, out of 100 — the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";
+  "The win rate this record supports, out of 100 - the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";
 
 function sortRows<T extends { picks: number; wins: number }>(rows: T[], by: SortBy): T[] {
   const value = (r: T) =>
@@ -262,7 +262,7 @@ export default function ChampionDetail() {
   // Components sit out of the build lists: they are what a finished item was
   // on the way to, not something anyone set out to build. An id the item data
   // doesn't know is treated as finished, so a gap in what loaded never hides
-  // real data — and the lists fill in rather than flashing empty.
+  // real data - and the lists fill in rather than flashing empty.
   const finishedItems = useMemo(
     () => (items ?? []).filter((i) => itemData[i.item_id]?.completed !== false),
     [items, itemData],
@@ -427,7 +427,7 @@ export default function ChampionDetail() {
         </div>
         {lowSample && (
           <p className="text-[11px] text-lol-text mt-3">
-            Under {MIN_SAMPLE} games — read this as directional rather than settled.
+            Under {MIN_SAMPLE} games - read this as directional rather than settled.
           </p>
         )}
       </div>
@@ -449,7 +449,7 @@ export default function ChampionDetail() {
                   <div
                     key={i.item_id}
                     className="flex flex-col items-center w-[52px]"
-                    title={`${itemData[i.item_id]?.name ?? `Item ${i.item_id}`} — ${i.picks} games`}
+                    title={`${itemData[i.item_id]?.name ?? `Item ${i.item_id}`} - ${i.picks} games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemId={i.item_id} size={44} patch={assetPatch} />
@@ -516,7 +516,7 @@ export default function ChampionDetail() {
                 type="button"
                 onClick={() => setShowComponents((v) => !v)}
                 aria-pressed={showComponents}
-                title="Components — Ruby Crystal, Boots, Recurve Bow — carry a win rate from sitting in an inventory, not from being built on purpose"
+                title="Components - Ruby Crystal, Boots, Recurve Bow - carry a win rate from sitting in an inventory, not from being built on purpose"
                 className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors cursor-pointer ${
                   showComponents
                     ? "bg-lol-gold/20 text-lol-gold-light"
@@ -554,11 +554,11 @@ export default function ChampionDetail() {
       </div>
 
       <p className="text-[11px] text-lol-text">
-        Lists hide anything under {LIST_MIN_PICKS} picks — too thin to rank. Entries marked * fall
+        Lists hide anything under {LIST_MIN_PICKS} picks - too thin to rank. Entries marked * fall
         under {MIN_SAMPLE} games. Score is the win rate the record supports, out of 100: the floor
         of a 95% confidence interval, so 100% over 5 games scores below 60% over 2,600. Champions,
-        items and augments all rank by it. Components are left out of the build lists — items that
-        transform, like Manamune, are not components — and the same method runs on mayhemstats.com.
+        items and augments all rank by it. Components are left out of the build lists - items that
+        transform, like Manamune, are not components - and the same method runs on mayhemstats.com.
       </p>
     </div>
   );

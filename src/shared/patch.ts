@@ -20,7 +20,7 @@ export function toClientPatch(patch: string): string {
 
 // How a patch is written wherever one is shown. Community rows have been
 // stored year-based since the database was normalised, so this is a safety net
-// for a stray client-style value rather than a routine conversion — and
+// for a stray client-style value rather than a routine conversion - and
 // toYearPatch is idempotent, so applying it twice costs nothing.
 export function formatPatch(patch: string): string {
   return toYearPatch(patch);
@@ -73,7 +73,7 @@ export function parsePatchParam(
 }
 
 // The inverse. Null means "leave the parameter off", which reads as the
-// default — so a link to the current patch stays a bare URL.
+// default - so a link to the current patch stays a bare URL.
 export function patchParam(selection: PatchSelection, patches: string[]): string | null {
   const latest = patches[0] ?? "";
   if (selection.mode === "current") return null;
@@ -84,8 +84,8 @@ export function patchParam(selection: PatchSelection, patches: string[]): string
   return `${from}-${to}`;
 }
 
-// The patches a selection covers. Undefined means no filtering — every patch
-// — which is what both the in-memory community filter and the database query
+// The patches a selection covers. Undefined means no filtering - every patch
+// - which is what both the in-memory community filter and the database query
 // take as "leave this out of the WHERE clause".
 export function patchesIn(selection: PatchSelection, patches: string[]): string[] | undefined {
   if (selection.mode === "all" || patches.length === 0) return undefined;

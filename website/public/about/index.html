@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>About MayhemStats — How the Stats Work</title>
+    <title>About MayhemStats - How the Stats Work</title>
     <meta
       name="description"
       content="What MayhemStats is, where the data comes from, and how scores, tiers, and ideal builds are calculated for ARAM Mayhem."
@@ -23,7 +23,7 @@
         MayhemStats shows community-powered tier lists, win rates, and ideal builds for
         <strong>ARAM Mayhem</strong>, the limited-time League of Legends game mode where every
         player drafts augments at level breakpoints on the Howling Abyss. The numbers here are not
-        scraped or estimated — every game in the database was contributed voluntarily and
+        scraped or estimated - every game in the database was contributed voluntarily and
         anonymously by players running the free, open-source
         <a href="/download/">MayhemStats Tracker</a>
         desktop app.
@@ -31,7 +31,7 @@
 
       <h2>Why this exists</h2>
       <p>
-        Riot's public API doesn't expose ARAM Mayhem's match data — augment picks in particular are
+        Riot's public API doesn't expose ARAM Mayhem's match data - augment picks in particular are
         simply absent from the match API. The major stats sites bridge the gap with proxy data: item
         stats borrowed from regular ARAM and augment stats borrowed from Arena. Those are different
         modes with different balance, pacing, and augment pools, so none of those numbers actually
@@ -42,7 +42,7 @@
         MayhemStats is the community's answer: crowdsource the real thing. The tracker reads matches
         from each player's own client, and everyone who opts in pools anonymized games into a shared
         database. Every number on this site comes from actual ARAM Mayhem games contributed by
-        players — there is no other source, which is also why
+        players - there is no other source, which is also why
         <a href="/download/">running the tracker</a> and opting in directly makes the stats better
         for everyone.
       </p>
@@ -52,15 +52,15 @@
         MayhemStats Tracker records your matches locally by connecting to your own League client. If
         you opt in to community stats (it is off by default), the app uploads an anonymous record of
         each game: the champions, augments, items, and combat stat lines of all ten players, plus
-        the match's queue, patch, duration, and region. Nothing that identifies a player — no
-        summoner names, Riot IDs, or account identifiers — is ever uploaded, and the server's
+        the match's queue, patch, duration, and region. Nothing that identifies a player - no
+        summoner names, Riot IDs, or account identifiers - is ever uploaded, and the server's
         database has no columns to store identity even if it were sent. Games are deduplicated, so
         two friends contributing the same match count it once.
       </p>
 
       <h2>How Score is calculated</h2>
       <p>
-        Raw win rates are misleading at small sample sizes — an augment that went 3–0 is not better
+        Raw win rates are misleading at small sample sizes - an augment that went 3–0 is not better
         than one that went 120–80. Score answers a different question: not what the win rate was,
         but how much of it the games behind it will support. It is the lower bound of the
         <a
@@ -76,7 +76,7 @@
         <p>
           Read it as "the true win rate is at least this". A 75% win rate over 4 games scores 30.1,
           because four games cannot rule out a coin flip. A 60% win rate over 200 games scores 53.1,
-          and the same 60% over 2,000 games scores 57.8 — the identical rate scoring higher purely
+          and the same 60% over 2,000 games scores 57.8 - the identical rate scoring higher purely
           because more games stand behind it. Nothing arrives at the top of a list and slides down;
           it climbs as it earns the place.
         </p>
@@ -89,7 +89,7 @@
 
       <h2>How tiers work</h2>
       <p>
-        Tiers (S+ through D) rank entries by Score within the currently filtered data — the top 5%
+        Tiers (S+ through D) rank entries by Score within the currently filtered data - the top 5%
         earn S+, the next 10% S, and so on. Two details worth knowing:
       </p>
       <ul>
@@ -108,7 +108,7 @@
       <h2>Ideal builds</h2>
       <p>
         Each champion's page ranks items and augments by the same Score, requiring a minimum sample
-        — 3 games — and a record that is not losing before an entry can lead the build. Nothing
+        - 3 games - and a record that is not losing before an entry can lead the build. Nothing
         fills the gap when too little qualifies: a list that falls short says so, because an item
         that has never won is not a recommendation however often it was built.
       </p>
@@ -117,7 +117,7 @@
         because they sat in an inventory at the final whistle, not because they were anyone's plan;
         the test is whether an item builds into something, which keeps the ones that only look like
         components, since Manamune and Archangel's Staff transform into Muramana and Seraph's
-        Embrace rather than building into them. The free starting item Poro-Snax is excluded too —
+        Embrace rather than building into them. The free starting item Poro-Snax is excluded too -
         everyone gets it, so it carries no information.
       </p>
 
@@ -130,17 +130,17 @@
       </p>
       <p>
         <strong>Can anyone see my games or name?</strong> No. Contributions carry no identity, and
-        the public site can only read aggregate counts — never individual matches. See the
+        the public site can only read aggregate counts - never individual matches. See the
         <a href="/privacy/">privacy policy</a> for the full details.
       </p>
       <p>
-        <strong>Can I remove my data?</strong> Yes — Settings → Community Stats → Delete my
+        <strong>Can I remove my data?</strong> Yes - Settings → Community Stats → Delete my
         contributions removes everything your install has shared. Matches nobody else contributed
         are deleted entirely.
       </p>
       <p>
         <strong>Why do some entries have so few games?</strong> The community is growing. Every
-        contributor makes the numbers sharper — that's the whole idea.
+        contributor makes the numbers sharper - that's the whole idea.
       </p>
       <p>
         <strong>Is this affiliated with Riot Games?</strong> No. MayhemStats is a fan project under

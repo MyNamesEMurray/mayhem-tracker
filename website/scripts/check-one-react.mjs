@@ -4,13 +4,13 @@
 // resolve react from the repository root's node_modules while everything under
 // src/ resolves it from website/node_modules. vite.config.ts pins both to one
 // copy with resolve.dedupe; without it the bundle carries two React instances,
-// the second of which has its own hook dispatcher — the shared useTooltip
+// the second of which has its own hook dispatcher - the shared useTooltip
 // would register against the wrong one and its hooks would misbehave at
 // runtime, with nothing failing at build time to say so.
 //
 // React embeds its version string, so two installs at different versions show
 // up as two versions in one bundle. That is what this checks. It cannot see a
-// duplicate when both installs happen to be at the same version — dedupe is
+// duplicate when both installs happen to be at the same version - dedupe is
 // what prevents the bug; this is the backstop that noticed it once already.
 
 import { readdirSync, readFileSync } from "fs";

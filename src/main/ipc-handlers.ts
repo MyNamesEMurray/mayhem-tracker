@@ -11,7 +11,7 @@ import * as liveDebug from "./live-debug";
 import * as liveWatcher from "./live-watcher";
 import * as startup from "./startup";
 
-// Handlers are window-agnostic (registered once for the app's lifetime) —
+// Handlers are window-agnostic (registered once for the app's lifetime) -
 // the main window is destroyed while idling in the tray and rebuilt on
 // demand, so anything window-shaped resolves at call time.
 let registered = false;
@@ -351,7 +351,7 @@ export function registerIpcHandlers() {
   });
 }
 
-// Per-window listeners — re-attached each time the window is rebuilt
+// Per-window listeners - re-attached each time the window is rebuilt
 export function attachWindowEvents(win: BrowserWindow) {
   win.on("maximize", () => win.webContents.send("window:maximized-changed", true));
   win.on("unmaximize", () => win.webContents.send("window:maximized-changed", false));

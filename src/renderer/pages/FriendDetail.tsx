@@ -138,7 +138,7 @@ export default function FriendDetail() {
               <div
                 className={`text-xl font-bold ${avgScore != null ? scoreRampColor(avgScore) : "text-lol-text"}`}
               >
-                {avgScore != null ? avgScore.toFixed(1) : "—"}
+                {avgScore != null ? avgScore.toFixed(1) : "-"}
               </div>
               <div className="text-xs text-lol-text mt-1">
                 {mvps} MVP · {aces} ACE
@@ -154,8 +154,8 @@ export default function FriendDetail() {
             </span>
             <span className="text-[11px] text-lol-text">{player.champions.length}</span>
           </div>
-          {/* Sets the height of the whole top block — the stat card stretches
-              to match it — then scrolls */}
+          {/* Sets the height of the whole top block - the stat card stretches
+              to match it - then scrolls */}
           <div className="max-h-44 overflow-y-auto divide-y divide-lol-border/40">
             {player.champions.map((c) => (
               <ChampionRow key={c.champion_id} champ={c} champData={champData} />

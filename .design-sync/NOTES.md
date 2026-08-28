@@ -1,8 +1,8 @@
-# design-sync notes — mayhem-tracker
+# design-sync notes - mayhem-tracker
 
 - App repo, not a packaged library: the bundle entry is the hand-authored
   `.design-sync/ds-entry.ts` (passed via `--entry`). Most of what it exports
-  now lives in `src/shared/ui/` — one component rendered by both the site and
+  now lives in `src/shared/ui/` - one component rendered by both the site and
   the desktop app, so reviewing it here reviews both. Names no longer collide
   across trees; what remains outside `src/shared/ui/` is the site's own tables
   and champion page, and the desktop scoreboard and its parts.
@@ -13,7 +13,7 @@
 - Card canvas: the emitted preview cards are white; MayhemStats is a
   dark-canvas system, so every authored preview wraps its content in a
   `background: var(--color-lol-dark)` container. Keep doing this for new
-  previews — unwrapped small components look washed out.
+  previews - unwrapped small components look washed out.
 - Sandbox quirk (this managed environment only): chromium hangs on external
   CDN requests (Data Dragon / CommunityDragon champion, item, augment,
   profile icons) because there's no direct network. Fix: point
@@ -23,10 +23,10 @@
   normal machine with internet this wrapper is unnecessary (icons will
   actually render in captures).
 - Because of the above, review sheets in this sandbox show broken/blank
-  champion, item, augment, and profile icon images. That's environmental —
+  champion, item, augment, and profile icon images. That's environmental -
   the URLs are correct and load in the claude.ai/design runtime. Grade the
   non-image parts.
-- Playwright: ESM import needs `playwright` resolvable from `.ds-sync/` —
+- Playwright: ESM import needs `playwright` resolvable from `.ds-sync/` -
   symlink the global install (`ln -sfn /opt/node22/lib/node_modules/playwright
 .ds-sync/node_modules/playwright`, plus `playwright-core` from its
   node_modules) on this machine; a normal machine can just `npm i playwright`
@@ -34,7 +34,7 @@
 
 ## Authoring recipes (folded from the first-sync waves)
 
-- Icons (`src/renderer/components/icons.tsx`): no `size` prop — they spread
+- Icons (`src/renderer/components/icons.tsx`): no `size` prop - they spread
   `SVGProps<SVGSVGElement>` with defaults `width/height="1em"`,
   `stroke="currentColor"`. Size with `width={n} height={n}`; color via CSS
   `color` on an ancestor.
@@ -52,24 +52,24 @@
 - Capture viewport is fixed 900x700. Wide/tall flagship views fit via
   in-preview `zoom` (AugmentsTable 0.85, MatchScoreboard 0.82) and
   ChampionDetail's fixed-height shifted-window cells. The config alternative
-  (`overrides.<Name>.viewport`) is grade-keyed — switching to it invalidates
+  (`overrides.<Name>.viewport`) is grade-keyed - switching to it invalidates
   those grades, so keep the workarounds unless re-grading anyway.
 - ChampionDetail mocks need a 12+ champion cohort (tier badge ranks within
-  the cohort — subject-only rows grade D); AugmentsTable tiers are
+  the cohort - subject-only rows grade D); AugmentsTable tiers are
   per-rarity (a 3-4 augment rarity can never show S); rankForBuild's 20-game
-  50% prior can rank hot 3-pick entries above 20-pick ones — keep low-sample
+  50% prior can rank hot 3-pick entries above 20-pick ones - keep low-sample
   mock win rates near 50%.
 - CDN-image components: use `showName` and data-miss fallbacks ("Item N",
   ringed placeholder slots) so cells stay gradable offline; keep real
   CommunityDragon iconPaths so production captures show real art.
-- RarityFilter returns a fragment — the canvas must supply `display:flex`.
+- RarityFilter returns a fragment - the canvas must supply `display:flex`.
 
 ## Known render warns
 
-- (retired) icon components RENDER_THIN/BLANK on floor cards — resolved by
+- (retired) icon components RENDER_THIN/BLANK on floor cards - resolved by
   authored previews sizing them explicitly on the dark canvas.
 - ChampionDetail: `bad` with `firstErr: TypeError: Failed to fetch` in the
-  offline sandbox — its internal `loadItemData()` fetches Data Dragon
+  offline sandbox - its internal `loadItemData()` fetches Data Dragon
   items.json at mount. The page renders complete (item names fall back to
   "Item <id>"); on a networked machine the errors disappear. Triaged
   environmental, not a defect.
@@ -77,14 +77,14 @@
 ## Re-sync risks
 
 - `ds-entry.ts` is hand-curated: a new component does NOT appear
-  automatically — add it to the entry AND `componentSrcMap`.
+  automatically - add it to the entry AND `componentSrcMap`.
 - Comments in `src/shared/ui/` are scanned by Tailwind like any other text, so
   a bare utility word in prose ("ring", "inline") mints a real rule in both
   bundles. `test/shared-ui.test.mts` guards the words that have caused it.
 - Mock data in `.design-sync/previews/*.tsx` mirrors the live row shapes
   (`ChampionStatRow` with `patch`/`queue_id`, `Filters` with `patches?: Set`).
   If `website/src/lib/api.ts` or `stats.ts` shapes change, previews compile
-  but may render wrong — re-check grades after schema changes.
+  but may render wrong - re-check grades after schema changes.
 - The compiled Tailwind CSS only contains classes actually used in the two
   app trees + previews; the design agent cannot invent new utility classes.
   Conventions header documents this.

@@ -3,7 +3,7 @@ import path from "path";
 
 // Where the app keeps its database, settled once at startup.
 //
-// Electron names userData from package.json's top-level "name" — not from
+// Electron names userData from package.json's top-level "name" - not from
 // electron-builder's build.productName, which only labels the exe and the
 // installer. So every build through v2.9.3 stored data in
 // %APPDATA%\mayhem-tracker. v2.10.0 pinned userData to "Mayhem Tracker"
@@ -13,7 +13,7 @@ import path from "path";
 // Settle on one folder named after the product and move whichever previous
 // folder actually holds a database into it. A rename is a single atomic
 // operation within %APPDATA%, so there is no window where the data is half
-// copied — and nothing is ever deleted. If Windows has the old folder
+// copied - and nothing is ever deleted. If Windows has the old folder
 // locked (antivirus, an open Explorer window), fall back to reading it
 // where it sits and try the move again next launch.
 export const DATA_DIR_NAME = "MayhemStats Tracker";

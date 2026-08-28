@@ -7,7 +7,7 @@ export interface SortOption<K extends string> {
 }
 
 // Sorting for the card layout. Below 700px the stat tables drop their header
-// row and become stacked cards — which left the phone with no way to sort at
+// row and become stacked cards - which left the phone with no way to sort at
 // all, since every sort control on this site lived in a <th>. This is the
 // same sort state, driven from a control that survives the card layout.
 export default function SortControl<K extends string>({
@@ -46,8 +46,8 @@ export default function SortControl<K extends string>({
         aria-label={sort.dir === "desc" ? "Sort ascending" : "Sort descending"}
         title={
           sort.dir === "desc"
-            ? `${active?.label ?? ""}, highest first — tap for lowest first`
-            : `${active?.label ?? ""}, lowest first — tap for highest first`
+            ? `${active?.label ?? ""}, highest first - tap for lowest first`
+            : `${active?.label ?? ""}, lowest first - tap for highest first`
         }
         className="shrink-0 px-2.5 py-1.5 rounded-lg border border-lol-border bg-lol-card text-lol-text hover:border-lol-gold/40 hover:text-lol-gold text-xs leading-none"
       >

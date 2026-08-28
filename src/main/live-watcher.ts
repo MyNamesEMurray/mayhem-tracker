@@ -77,7 +77,7 @@ async function probe() {
 }
 
 function enabled(): boolean {
-  // Default on — "false" is the only opt-out value
+  // Default on - "false" is the only opt-out value
   return db.getSetting("live_tracking_enabled") !== "false";
 }
 

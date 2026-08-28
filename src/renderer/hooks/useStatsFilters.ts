@@ -6,7 +6,7 @@ import { parsePatchParam, patchParam, type PatchSelection } from "../../shared/p
 // App-wide default filters, matching the website: the current patch and the
 // ARAM Mayhem queue.
 //
-// The patch default needs no lookup — "current" resolves against whatever
+// The patch default needs no lookup - "current" resolves against whatever
 // patch list the page is showing, which is the community's on a community
 // board and this install's own on a local one. Only the queue default has to
 // be read from the database, since it degrades to All when there are no ARAM
@@ -35,8 +35,8 @@ export function useStatsFilters() {
 
 // URL-param variant (the champion page): filters live in the URL so back links
 // restore the same view, and a range can be linked to. The patch parameter
-// uses the same grammar as the website's — absent for the current patch,
-// "all", a single patch, or "A-B" — so the two surfaces read each other's
+// uses the same grammar as the website's - absent for the current patch,
+// "all", a single patch, or "A-B" - so the two surfaces read each other's
 // links.
 export function useUrlStatsFilters(patches: string[]) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,7 +76,7 @@ export function useUrlStatsFilters(patches: string[]) {
   const setPatchSelection = (s: PatchSelection) => setParam("patch", patchParam(s, patches));
   const setQueue = (q: number | undefined) => setParam("queue", q == null ? null : String(q));
 
-  // Raw params for carrying the current filters to a sibling page — keeps an
+  // Raw params for carrying the current filters to a sibling page - keeps an
   // explicit "all" explicit instead of collapsing it back to the default
   const filterQuery = useMemo(() => {
     const params = new URLSearchParams();

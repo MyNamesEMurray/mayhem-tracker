@@ -75,7 +75,7 @@ export default function MatchScoreboard({
 }
 
 // Timeline of item purchases per player, captured live while the game was
-// played — only present on games recorded by the build-order watcher
+// played - only present on games recorded by the build-order watcher
 function BuildOrders({
   events,
   participants,
@@ -169,7 +169,7 @@ function TeamScoreboard({
         className={`px-3 py-[7px] border-b border-lol-border/60 ${isWin ? "bg-lol-win/[0.08]" : "bg-lol-loss/[0.08]"}`}
       >
         <span className={`text-xs font-bold ${isWin ? "text-lol-win" : "text-lol-loss"}`}>
-          Team {teamId === 100 ? "1" : "2"} — {isWin ? "Victory" : "Defeat"}
+          Team {teamId === 100 ? "1" : "2"} - {isWin ? "Victory" : "Defeat"}
         </span>
       </div>
 

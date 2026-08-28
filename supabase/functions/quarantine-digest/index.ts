@@ -5,7 +5,7 @@
 // which plausibility limits they tripped, and a link to the review queue where
 // they can be approved in bulk. It used to carry a full ten-player scoreboard
 // per game with per-game approve/deny links, which worked for a trickle and
-// fell apart the first time a backfill quarantined hundreds of games at once —
+// fell apart the first time a backfill quarantined hundreds of games at once -
 // twenty per email, one email every six hours.
 //
 // The queue link carries an expiring key derived from review_secret, in the
@@ -103,7 +103,7 @@ Deno.serve(async (req: Request) => {
   const fresh = rows.filter((q: any) => q.notified_at === null);
 
   // Silence unless something new has arrived. The backlog alone shouldn't
-  // generate an identical email every six hours — the queue page is where a
+  // generate an identical email every six hours - the queue page is where a
   // backlog gets worked, and it doesn't need a reminder to still exist.
   if (fresh.length === 0 && !preview) {
     return json({ sent: false, reason: rows.length === 0 ? "nothing pending" : "nothing new" });
@@ -156,7 +156,7 @@ Deno.serve(async (req: Request) => {
 
   const oldest = rows[0]?.created_at
     ? String(rows[0].created_at).slice(0, 16).replace("T", " ") + " UTC"
-    : "—";
+    : "-";
 
   const html = `
     <div style="font-family:'Segoe UI',system-ui,sans-serif;background:#0b0e14;color:#e2e8f0;padding:24px;border-radius:16px;max-width:560px">
@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
       ${
         blocked > 0
           ? `<div style="background:#3b2b12;border-radius:8px;padding:10px 12px;font-size:13px;color:#fbbf24;margin-bottom:16px">
-              ${blocked} contributor${blocked === 1 ? " has" : "s have"} ${MAX_PENDING_QUARANTINE}+ games pending —
+              ${blocked} contributor${blocked === 1 ? " has" : "s have"} ${MAX_PENDING_QUARANTINE}+ games pending -
               their uploads are being rejected until this clears.
             </div>`
           : ""
@@ -193,7 +193,7 @@ Deno.serve(async (req: Request) => {
       <div style="color:#94a0b8;font-size:12px;line-height:1.6;margin-top:16px">
         Approve or deny them in bulk, or one at a time, from that page. Nothing
         happens until you press a button there.<br/>
-        The link works until ${esc(expiresOn)} and is the credential itself —
+        The link works until ${esc(expiresOn)} and is the credential itself -
         treat it like a password. To revoke it, change <span style="font-family:Consolas,monospace">review_secret</span>.
       </div>
     </div>`;
@@ -220,8 +220,8 @@ Deno.serve(async (req: Request) => {
     return json({ sent: false, reason: `resend error ${send.status}`, detail: errText }, 502);
   }
 
-  // Everything pending is covered by this email — the link opens the whole
-  // queue, not a page of it — so nothing is left to ride the next digest.
+  // Everything pending is covered by this email - the link opens the whole
+  // queue, not a page of it - so nothing is left to ride the next digest.
   const upd = await supabase
     .from("quarantine")
     .update({ notified_at: new Date().toISOString() })

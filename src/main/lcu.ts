@@ -48,7 +48,7 @@ export function friendlyErrorMessage(err: unknown): string {
     return "League client is not running";
   }
   if (err instanceof ClientElevatedPermsError) {
-    return "League client is running as administrator — run MayhemStats Tracker as administrator to connect";
+    return "League client is running as administrator - run MayhemStats Tracker as administrator to connect";
   }
   const message = err instanceof Error ? err.message : String(err);
   if (/ECONNREFUSED|ECONNRESET|socket hang up|EPIPE/i.test(message)) {
@@ -95,7 +95,7 @@ async function fetchGameDetails(gameId: number): Promise<any> {
 
 // The client's post-game screen knows the game id immediately, while the
 // match *list* can lag several minutes behind. Reading the id here lets a
-// finished game be stored right away — the game itself is still fetched
+// finished game be stored right away - the game itself is still fetched
 // through the canonical endpoint, so nothing about its shape changes.
 async function fetchEndOfGameId(): Promise<number | null> {
   try {
@@ -119,7 +119,7 @@ export async function captureFinishedGame(): Promise<boolean> {
   try {
     game = await fetchGameDetails(gameId);
   } catch {
-    // Details not served yet — the caller retries, and the poll backs it up
+    // Details not served yet - the caller retries, and the poll backs it up
     return false;
   }
   if (!game || !MAYHEM_QUEUE_IDS.includes(game.queueId) || !Array.isArray(game.participants)) {
@@ -152,7 +152,7 @@ export async function captureFinishedGame(): Promise<boolean> {
 // but ignored by the backend, so paging it just returns the same 20 over and
 // over. The client itself gets its ids from Riot's player-platform service
 // instead, which does honour startIndex/count and reaches back years. We use
-// the same endpoint to get ids, then hydrate each one through the LCU — that
+// the same endpoint to get ids, then hydrate each one through the LCU - that
 // still returns full detail for arbitrary old games, in the shape we parse.
 
 const SGP_HOSTS = [
@@ -213,7 +213,7 @@ function notifyGamesUpdated(_win?: BrowserWindow | null) {
     w.webContents.send("lcu:games-updated");
     syncTrace.lastNotifyAt = Date.now();
   } else {
-    // No window to tell — the renderer catches up when it next mounts or
+    // No window to tell - the renderer catches up when it next mounts or
     // regains focus
     syncTrace.notifySkippedNoWindow++;
   }
@@ -256,7 +256,7 @@ async function readDetail(response: Response): Promise<string> {
 
 // The session token is a JWT whose subject is the account it was minted for;
 // SGP only serves a player their own history, so a token/account mismatch is
-// its own flavour of 403. Compares locally — the token itself is never logged
+// its own flavour of 403. Compares locally - the token itself is never logged
 // or included in any message.
 function tokenMatchesAccount(token: string, puuid: string): boolean | null {
   try {
@@ -271,7 +271,7 @@ function tokenMatchesAccount(token: string, puuid: string): boolean | null {
 async function fetchSgpToken(): Promise<string> {
   const token = await lcuRequest("/lol-league-session/v1/league-session-token");
   if (typeof token !== "string" || !token) {
-    throw new Error("League client hasn't finished signing in — try again in a moment");
+    throw new Error("League client hasn't finished signing in - try again in a moment");
   }
   return token;
 }
@@ -306,7 +306,7 @@ async function resolveSgpHost(
   }
 
   const candidates = guess ? [guess, ...SGP_HOSTS.filter((h) => h !== guess)] : SGP_HOSTS;
-  // Every shard turning us away is a credentials problem, not a routing one —
+  // Every shard turning us away is a credentials problem, not a routing one -
   // worth saying so, since the fix is restarting the client rather than
   // waiting for a service to come back. Each shard's verdict rides along in
   // the message: "all four refused" and "none answered" need different fixes,
@@ -368,7 +368,7 @@ async function fetchAllMatchIds(
         throw new SgpAuthError(response.status, detail);
       }
       throw new Error(
-        `Match history service returned ${response.status}${detail ? ` — ${detail}` : ""}`,
+        `Match history service returned ${response.status}${detail ? ` - ${detail}` : ""}`,
       );
     }
 
@@ -408,7 +408,7 @@ export type BackfillResult = {
   cancelled: boolean;
 };
 
-// The shard we cached can go stale — accounts change region, Riot re-shards —
+// The shard we cached can go stale - accounts change region, Riot re-shards -
 // and the league-session token can expire part-way through a long walk. Both
 // come back as 401/403 on every page, and because the bad shard was cached,
 // every later run failed the same way with no way out but wiping settings.
@@ -527,7 +527,7 @@ export async function backfillHistory(win?: BrowserWindow | null): Promise<Backf
       db.setSetting(completedKey, "1");
     } else {
       // Neither outcome sets the completion flag, so without this the poll would
-      // relaunch the whole walk a minute later — including right after the user
+      // relaunch the whole walk a minute later - including right after the user
       // deliberately cancelled it. Resumes on next launch, or from Settings.
       autoBackfillPausedUntil = Infinity;
     }
@@ -626,7 +626,7 @@ async function isInGame(): Promise<boolean> {
 }
 
 // An account that has never been walked gets the full history on its first
-// connect — that import is the whole point of the app, and it's a superset of
+// connect - that import is the whole point of the app, and it's a superset of
 // the recent-games sync. Every later tick takes the cheap LCU path instead: the
 // pvp.net service is only touched while an account still needs its first walk.
 // Deferred while a game is in progress so we aren't hammering the client
@@ -692,7 +692,7 @@ export function startPolling(firstAttempt = true) {
         }
       }, 60000);
     } catch {
-      // Client not found yet — after first attempt, show disconnected
+      // Client not found yet - after first attempt, show disconnected
       if (firstAttempt) {
         firstAttempt = false;
         setStatus("disconnected", win);

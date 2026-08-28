@@ -1,7 +1,7 @@
 import { MatchScoreboard } from "mayhem-tracker";
 
 // The renderer's AugmentIcon/ItemIcon load metadata over the Electron bridge
-// (window.api). The preview sandbox has no bridge, so shim just enough of it —
+// (window.api). The preview sandbox has no bridge, so shim just enough of it -
 // otherwise the effects throw and unmount the whole scoreboard.
 const AUGMENTS: Record<number, any> = {
   12: {
@@ -143,7 +143,7 @@ function player(
 // A 25-minute ARAM Mayhem bloodbath: blue side wins 60-44, Katarina pentas,
 // Veigar out-damages everyone in the loss (ACE material).
 const roster = [
-  // Team 1 — Victory
+  // Team 1 - Victory
   player(
     1,
     100,
@@ -224,7 +224,7 @@ const roster = [
     [3111, 6333, 3071, 3053, 3156, 0, 2052],
     [44, 81, 18, 61],
   ),
-  // Team 2 — Defeat
+  // Team 2 - Defeat
   player(
     6,
     200,
@@ -341,12 +341,12 @@ const canvas: React.CSSProperties = {
 // The full post-game scoreboard: both teams, OP-style scores with MVP/ACE
 // badges, KDA, damage bars normalized to the lobby best, gold, heal, items,
 // augments. The viewer's row (BratCannon) is gold-highlighted via puuids.
-// NOTE: champion/item/augment art comes from CDN — offline captures show
+// NOTE: champion/item/augment art comes from CDN - offline captures show
 // placeholder boxes; layout and numbers are what's under review.
 // Two sandbox-only shims (no effect on the real app):
 // - failed CDN imgs get display:none from their onError handlers, and a
 //   display:none grid item generates no box, shifting every row cell one
-//   track left — the !important override keeps broken imgs in their tracks
+//   track left - the !important override keeps broken imgs in their tracks
 //   so the capture shows the production layout;
 // - the capture viewport is 900px and the grid's natural width is ~1020px,
 //   so the wrapper zooms to fit.

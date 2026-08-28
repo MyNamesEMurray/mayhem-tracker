@@ -1,8 +1,8 @@
 // The shared formatting layer: the numbers and colours that have to read the
 // same in the desktop app and on mayhemstats.com.
 //
-// The performance ramp used to be written out three times — kdaColor and
-// scoreRampColor in the app, kdaRampClass on the site — as three chains of
+// The performance ramp used to be written out three times - kdaColor and
+// scoreRampColor in the app, kdaRampClass on the site - as three chains of
 // the same four class names against two sets of thresholds. It is one
 // function now, and these tests pin the boundaries each caller depends on.
 
@@ -45,7 +45,7 @@ describe("the performance ramp", () => {
     assert.equal(rampClass(Infinity, KDA_RAMP), AMBER);
   });
 
-  // NaN fails every >= comparison, which lands on the muted token — the right
+  // NaN fails every >= comparison, which lands on the muted token - the right
   // answer for a value that isn't one, and the same thing the three original
   // if-chains did.
   test("NaN falls through to muted rather than picking a colour", () => {
@@ -53,7 +53,7 @@ describe("the performance ramp", () => {
     assert.equal(rampClass(NaN, SCORE_RAMP), MUTED);
   });
 
-  test("gold is never a performance colour — it means brand and interaction", () => {
+  test("gold is never a performance colour - it means brand and interaction", () => {
     for (const t of [KDA_RAMP, SCORE_RAMP]) {
       for (let v = -5; v <= 15; v += 0.25) {
         assert.ok(!rampClass(v, t).includes("gold"), `rampClass(${v}) returned a gold token`);
@@ -83,9 +83,9 @@ describe("shared number formatting", () => {
 describe("patch names", () => {
   test("client versions map to the year-based names we store and show", () => {
     assert.equal(toYearPatch("16.16"), "26.16");
-    assert.equal(toYearPatch("26.16"), "26.16", "already year-based — idempotent");
+    assert.equal(toYearPatch("26.16"), "26.16", "already year-based - idempotent");
     assert.equal(toClientPatch("26.16"), "16.16");
-    assert.equal(toClientPatch("16.16"), "16.16", "already client-style — idempotent");
+    assert.equal(toClientPatch("16.16"), "16.16", "already client-style - idempotent");
   });
 
   test("anything that isn't a patch name passes through untouched", () => {

@@ -22,7 +22,7 @@ import SortControl, { type SortOption } from "./SortControl";
 import { TIER_ORDER } from "../lib/stats";
 
 // Every column carries data, so every column sorts. Pick rate is games over a
-// fixed total, so it orders identically to games — it's here because a header
+// fixed total, so it orders identically to games - it's here because a header
 // that looks clickable and isn't is worse than a redundant one.
 type SortKey = "score" | "games" | "winRate" | "kda" | "damage" | "name" | "tier" | "pickRate";
 
@@ -44,7 +44,7 @@ export default function ChampionsTable({
   const { key: sortKey, dir: sortDir } = sort;
 
   // Tiers are ranked across ALL champions under the current filter, before
-  // search narrows the list — searching "teemo" must not make Teemo S+
+  // search narrows the list - searching "teemo" must not make Teemo S+
   const { list, tiers } = useMemo(() => {
     const list = aggregateChampions(rows, filters);
     const tiers = assignTiers(
@@ -56,7 +56,7 @@ export default function ChampionsTable({
   }, [rows, filters]);
 
   const sorted = useMemo(() => {
-    // Tier assignment above still sees the full cohort — hiding low-sample
+    // Tier assignment above still sees the full cohort - hiding low-sample
     // rows must not promote what remains
     let filtered = list;
     if (search) {
@@ -78,8 +78,8 @@ export default function ChampionsTable({
         av = score(a.wins, a.games);
         bv = score(b.wins, b.games);
       } else if (sortKey === "tier") {
-        // S+ first descending. Tiers are wide — a third of the roster is one
-        // letter — so score breaks the ties and the order inside a tier still
+        // S+ first descending. Tiers are wide - a third of the roster is one
+        // letter - so score breaks the ties and the order inside a tier still
         // means something.
         const at = TIER_ORDER.indexOf(tiers.get(a.champion_id)!);
         const bt = TIER_ORDER.indexOf(tiers.get(b.champion_id)!);
@@ -225,9 +225,9 @@ export default function ChampionsTable({
         )}
       </div>
       <p className="text-xs text-lol-text/70">
-        Score is the win rate the record supports, out of 100 — the floor of a 95% confidence
+        Score is the win rate the record supports, out of 100 - the floor of a 95% confidence
         interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
-        Score across the current filter. * fewer than 20 games — treat with caution.
+        Score across the current filter. * fewer than 20 games - treat with caution.
       </p>
     </div>
   );

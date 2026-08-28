@@ -1,6 +1,6 @@
 import { TIER_MIN_SAMPLE, type Tier } from "../score";
 
-// The letter always carries the tier — color reinforces, never replaces it.
+// The letter always carries the tier - color reinforces, never replaces it.
 // One palette for both surfaces: translucent .15 background, .6 border,
 // -300 text per tier hue.
 const tierStyle: Record<Tier, string> = {
@@ -19,7 +19,7 @@ export default function TierBadge({ tier, games }: { tier: Tier; games: number }
       className={`inline-flex items-center justify-center min-w-[30px] px-1.5 py-0.5 rounded-md border text-xs font-bold ${tierStyle[tier]} ${
         lowSample ? "opacity-40" : ""
       }`}
-      title={lowSample ? `Only ${games} game(s) — tier is provisional` : undefined}
+      title={lowSample ? `Only ${games} game(s) - tier is provisional` : undefined}
     >
       {tier}
     </span>

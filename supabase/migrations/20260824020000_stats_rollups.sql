@@ -15,7 +15,7 @@
 
 -- ---------------------------------------------------------------------------
 -- The Augments tab's grain: one row per augment per patch, rolled up across
--- champions — 4k rows rather than the 341k of stats.augment_stats. The site
+-- champions - 4k rows rather than the 341k of stats.augment_stats. The site
 -- loads this whole view for the tier list; the per-champion grain stays a
 -- per-champion request from the champion page.
 --
@@ -75,7 +75,7 @@ grant select on public.matchup_coverage to anon, authenticated, service_role;
 -- Indexes for the per-champion filters, which is what a champion page sends.
 --
 -- Not urgent: the existing group-key indexes already lead with patch, and
--- Postgres scans one of those for a bare champion_id filter — measured at 24ms
+-- Postgres scans one of those for a bare champion_id filter - measured at 24ms
 -- for 2,533 augment rows and 14ms for 1,416 item rows, nowhere near the 3s
 -- statement timeout. These make it an ordinary index lookup instead, which
 -- matters more as the item grain grows past its current 240k rows.

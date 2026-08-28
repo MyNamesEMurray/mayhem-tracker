@@ -28,7 +28,7 @@
 }
 
 @import "tailwindcss";
-/* Tokens, base controls and scrollbar — shared with the website */
+/* Tokens, base controls and scrollbar - shared with the website */
 @import "../shared/theme.css";
 
 #root {
@@ -44,7 +44,7 @@ body {
 @layer components {
   /* Match-detail scoreboard grid. Column templates come straight from the
      design spec (icon · player · score · KDA · damage · taken · gold · heal ·
-     items · augments — heal is an app-only extra kept for parity with the old
+     items · augments - heal is an app-only extra kept for parity with the old
      scoreboard). Narrow windows shed Taken, then Gold + Heal. */
   .scoreboard-grid {
     display: grid;

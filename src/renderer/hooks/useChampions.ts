@@ -40,8 +40,8 @@ export function useAugmentData() {
 
 // Item data is keyed by patch so icons come from the same patch as the game.
 // Loads notify every mounted subscriber (not just the instance that started
-// the fetch), and an empty result — the main process returns {} on network
-// failure — is retried a few times instead of sticking until remount.
+// the fetch), and an empty result - the main process returns {} on network
+// failure - is retried a few times instead of sticking until remount.
 const itemListeners = new Map<string, Set<(d: ItemData) => void>>();
 
 function loadItems(key: string, patch?: string | null): void {

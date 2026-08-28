@@ -27,7 +27,7 @@ export interface Tooltip<T extends HTMLElement> {
     onFocus: () => void;
     onBlur: () => void;
   };
-  // Render anywhere inside the trigger's component — it portals out to the
+  // Render anywhere inside the trigger's component - it portals out to the
   // document, so it isn't clipped by a scrolling list or a table cell
   tooltip: ReactNode;
 }
@@ -50,7 +50,7 @@ export function useTooltip<T extends HTMLElement>(content: ReactNode): Tooltip<T
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [open, setOpen] = useState(false);
-  // Null until the bubble has been measured — it renders hidden for that one
+  // Null until the bubble has been measured - it renders hidden for that one
   // frame so it can't be seen in the corner on its way to the trigger
   const [at, setAt] = useState<{ left: number; top: number } | null>(null);
 
@@ -78,7 +78,7 @@ export function useTooltip<T extends HTMLElement>(content: ReactNode): Tooltip<T
     const { width, height } = bubble.getBoundingClientRect();
 
     // Above by preference, below when the trigger is near the top of the
-    // window — the app's densest augment rows sit under a pinned header
+    // window - the app's densest augment rows sit under a pinned header
     const above = anchor.top - height - GAP;
     const below = Math.min(anchor.bottom + GAP, window.innerHeight - height - EDGE);
     const top = Math.max(EDGE, above >= EDGE ? above : below);
@@ -86,7 +86,7 @@ export function useTooltip<T extends HTMLElement>(content: ReactNode): Tooltip<T
     const left = Math.min(Math.max(EDGE, centered), window.innerWidth - width - EDGE);
 
     // Measuring places the bubble, which re-renders it, which would measure
-    // again — so the position is only written once it stops moving
+    // again - so the position is only written once it stops moving
     setAt((current) =>
       current && current.left === left && current.top === top ? current : { left, top },
     );

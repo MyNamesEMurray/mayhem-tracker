@@ -55,7 +55,7 @@ const championData = {
 
 const totalSlots = rows.reduce((s, r) => s + r.games, 0);
 
-// MayhemStats components live on the site's dark canvas — previews carry it
+// MayhemStats components live on the site's dark canvas - previews carry it
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",

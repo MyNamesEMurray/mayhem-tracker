@@ -18,7 +18,7 @@ const CHART_DAYS = 45;
 const LABEL_MIN_SPAN = 4;
 
 // The impact of the crowdsourced database: every number here exists because
-// players opted in — there is no other source of ARAM Mayhem data.
+// players opted in - there is no other source of ARAM Mayhem data.
 export default function CommunityPage() {
   const [totals, setTotals] = useState<CommunityTotals | null>(null);
   const [perDay, setPerDay] = useState<GamesPerDayRow[]>([]);
@@ -44,7 +44,7 @@ export default function CommunityPage() {
 
   // Bar chart over the last 45 days (gaps filled with zero-game days).
   // community_games_per_day buckets by game_creation, so a game shows on the
-  // day it was played — a backlog uploaded today lands on its own dates.
+  // day it was played - a backlog uploaded today lands on its own dates.
   const chart = useMemo(() => {
     if (!perDay.length) return [];
     const byDay = new Map(perDay.map((r) => [r.day, r.games]));
@@ -98,7 +98,7 @@ export default function CommunityPage() {
   }
 
   // Every unordered pair of the champions that have appeared, mirror matchups
-  // (Lux vs Lux) included — that is what the observed count counts too
+  // (Lux vs Lux) included - that is what the observed count counts too
   const possibleMatchups = coverage ? (coverage.champions * (coverage.champions + 1)) / 2 : 0;
   const matchupPct =
     coverage && possibleMatchups > 0
@@ -129,12 +129,12 @@ export default function CommunityPage() {
       <div className="grid grid-cols-2 min-[881px]:grid-cols-4 gap-4">
         <StatTile
           label="Contributors"
-          value={totals ? totals.contributors.toLocaleString() : "—"}
+          value={totals ? totals.contributors.toLocaleString() : "-"}
           sub="players sharing their games"
         />
         <StatTile
           label="Games analyzed"
-          value={totals ? totals.games.toLocaleString() : "—"}
+          value={totals ? totals.games.toLocaleString() : "-"}
           sub={`${performances.toLocaleString()} player performances`}
         />
         <StatTile
@@ -142,13 +142,13 @@ export default function CommunityPage() {
           value={
             totals
               ? `${hours >= 100 ? Math.round(hours).toLocaleString() : hours.toFixed(1)} h`
-              : "—"
+              : "-"
           }
           sub="of ARAM Mayhem, end to end"
         />
         <StatTile
           label="Champion matchups"
-          value={coverage ? coverage.matchups.toLocaleString() : "—"}
+          value={coverage ? coverage.matchups.toLocaleString() : "-"}
           sub={
             coverage
               ? `${matchupPct}% of the ${possibleMatchups.toLocaleString()} possible`
@@ -158,7 +158,7 @@ export default function CommunityPage() {
       </div>
 
       <div className={`${PANEL} p-[18px]`}>
-        <p className={`${LABEL} mb-3`}>Games played — last 45 days</p>
+        <p className={`${LABEL} mb-3`}>Games played - last 45 days</p>
         {chart.length === 0 ? (
           <p className="text-sm text-lol-text">No data yet.</p>
         ) : (
@@ -211,7 +211,7 @@ export default function CommunityPage() {
         )}
       </div>
 
-      {/* Copy plus the action it asks for — the panel is full width, so the
+      {/* Copy plus the action it asks for - the panel is full width, so the
           button anchors the empty half instead of leaving dead space */}
       <div
         className={`${PANEL} p-[18px] flex flex-col gap-4 min-[861px]:flex-row min-[861px]:items-center min-[861px]:gap-6`}
@@ -220,7 +220,7 @@ export default function CommunityPage() {
           <p className={`${LABEL} mb-2`}>Every game counts</p>
           <p className="text-[13px] text-lol-text leading-relaxed max-w-[80ch]">
             Each contributed game adds all ten players' champions, augments, items, and combat lines
-            to the pool — anonymously, with duplicates counted once. The more players opt in, the
+            to the pool - anonymously, with duplicates counted once. The more players opt in, the
             sharper the tier lists get, especially early in a patch. Install the tracker and flip on
             Community Stats in Settings to be part of it, or read{" "}
             <a href="/about/" className="text-lol-gold hover:text-lol-gold-light">

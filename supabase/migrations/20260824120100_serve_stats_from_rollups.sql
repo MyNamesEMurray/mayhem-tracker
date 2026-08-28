@@ -1,7 +1,7 @@
 -- Repoint the public API surface at the rollups from 20260824120000 and put
 -- their rebuild on a schedule. Column names, types and ordering are unchanged,
 -- so the website, the prerender script and the desktop app all keep working
--- against the same view names — they just stop paying for the aggregation.
+-- against the same view names - they just stop paying for the aggregation.
 --
 -- Apply this only once stats.refresh_all() has populated the rollups, or the
 -- views will read as empty until the first refresh lands.

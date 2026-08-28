@@ -91,7 +91,7 @@ export default function Friends() {
               <SortHeader label="Games" field="games" {...sortProps} />
               <SortHeader label="Win Rate" field="winRate" {...sortProps} />
               <SortHeader label="Their KDA" field="kda" {...sortProps} />
-              {/* A row of champion icons, not a value — there is no order to
+              {/* A row of champion icons, not a value - there is no order to
                   put them in */}
               <th className="px-3 py-2 text-left text-[11px] font-medium text-lol-text uppercase tracking-[0.08em]">
                 Top Champions

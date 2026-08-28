@@ -2,8 +2,8 @@
 #
 # Git's default on Windows hands the working tree CRLF, and oxfmt counts that
 # as a formatting difference: `npm run format:check` reports all 184 files as
-# unformatted on a fresh Windows clone, and the release job — which builds the
-# executables on a Windows runner — failed on its formatting step for the same
+# unformatted on a fresh Windows clone, and the release job - which builds the
+# executables on a Windows runner - failed on its formatting step for the same
 # reason, before it had built anything.
 #
 # Nothing is renormalised by this: every file is already stored with LF, so

@@ -48,7 +48,7 @@ export default function OnboardingWizard() {
             </h2>
             <p className="text-[13px] text-lol-text mt-2 leading-relaxed">
               Your ARAM Mayhem match history, recorded automatically. Keep the tracker running while
-              you play — every game, augment pick, and build is saved the moment the match ends. No
+              you play - every game, augment pick, and build is saved the moment the match ends. No
               account, no setup.
             </p>
           </div>
@@ -59,7 +59,7 @@ export default function OnboardingWizard() {
             <h2 className="text-[17px] font-extrabold text-lol-gold-light mb-4">How it works</h2>
             <div className="flex flex-col gap-3.5">
               <Row icon={<RefreshIcon width={18} height={18} />}>
-                The tracker connects to your League client on its own — the dot in the top-right
+                The tracker connects to your League client on its own - the dot in the top-right
                 shows when it's linked. Games record automatically as you finish them.
               </Row>
               <Row icon={<SwordsIcon width={18} height={18} />}>
@@ -67,7 +67,7 @@ export default function OnboardingWizard() {
                 imports every ARAM Mayhem game the client still remembers.
               </Row>
               <Row icon={<UsersIcon width={18} height={18} />}>
-                Explore your stats in the tabs above — matches, champions, augments, the friends you
+                Explore your stats in the tabs above - matches, champions, augments, the friends you
                 queue with, and community-wide rankings.
               </Row>
             </div>
@@ -82,7 +82,7 @@ export default function OnboardingWizard() {
             <p className="text-[13px] text-lol-text leading-relaxed">
               Riot's API doesn't expose Mayhem match data, so other sites substitute ARAM item stats
               and Arena augment stats. The tier lists on mayhemstats.com come from real Mayhem games
-              instead — powered entirely by players who share theirs. Contributions are anonymous —
+              instead - powered entirely by players who share theirs. Contributions are anonymous -
               champions, augments, items, and combat stats only.{" "}
               <b className="text-lol-text-bright">
                 Never summoner names, Riot IDs, or anything that identifies you.
@@ -95,7 +95,7 @@ export default function OnboardingWizard() {
                   Share match data with mayhemstats.com
                 </p>
                 <p className="text-xs text-lol-text mt-0.5">
-                  {shareEnabled ? "Thanks for contributing!" : "Off — your games stay local"}
+                  {shareEnabled ? "Thanks for contributing!" : "Off - your games stay local"}
                 </p>
               </div>
               <Toggle checked={shareEnabled} onChange={toggleShare} />
@@ -108,8 +108,8 @@ export default function OnboardingWizard() {
             <GlobeIcon width={40} height={40} className="mx-auto text-lol-gold" />
             <h2 className="text-[20px] font-extrabold text-lol-gold-light mt-4">You're all set</h2>
             <p className="text-[13px] text-lol-text mt-2 leading-relaxed">
-              Games record automatically from here on. And when you want the big picture — tier
-              lists, win rates, and the best builds from every contributed game — the community site
+              Games record automatically from here on. And when you want the big picture - tier
+              lists, win rates, and the best builds from every contributed game - the community site
               has it all.
             </p>
             <Button

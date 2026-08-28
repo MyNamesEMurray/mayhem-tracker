@@ -1,8 +1,8 @@
 import { MIN_SAMPLE } from "../score";
 
 // The rate meter, shared by the desktop app and mayhemstats.com: a 6px bar on
-// a translucent loss track. Fill and label both carry outcome colours — green
-// at 50% and above, red below — so a losing record reads as one at a glance.
+// a translucent loss track. Fill and label both carry outcome colours - green
+// at 50% and above, red below - so a losing record reads as one at a glance.
 // Small samples mute the label (with a "*") and halve the fill's opacity, so a
 // lucky 3-0 never wears a confident green.
 export default function WinRateBar({
@@ -24,7 +24,7 @@ export default function WinRateBar({
   return (
     <div
       className="flex items-center gap-2"
-      title={lowSample ? `Only ${total} game${total === 1 ? "" : "s"} — small sample` : undefined}
+      title={lowSample ? `Only ${total} game${total === 1 ? "" : "s"} - small sample` : undefined}
     >
       {/* The track floors at 32px rather than 64: flex-1 gives it the room
           wherever there is any, and the wider floor overflowed the narrower

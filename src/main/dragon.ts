@@ -63,7 +63,7 @@ function hydrateChampionCacheFromDisk() {
       championDataVersion = cached.version;
     }
   } catch {
-    // No cache yet, or unreadable — network load will populate it
+    // No cache yet, or unreadable - network load will populate it
   }
 }
 
@@ -100,7 +100,7 @@ export function loadChampionData() {
 
 // Last successfully fetched augment list and hover text. The list had no
 // cache at all before, so an offline start showed "Augment 2141" where a name
-// belongs — and the descriptions were compiled in, so they were the one part
+// belongs - and the descriptions were compiled in, so they were the one part
 // that did survive. Now both do, from here.
 function hydrateAugmentCacheFromDisk() {
   try {
@@ -109,13 +109,13 @@ function hydrateAugmentCacheFromDisk() {
       augmentCache = cached.augments;
     }
   } catch {
-    // No cache yet, or unreadable — the network load below will write one
+    // No cache yet, or unreadable - the network load below will write one
   }
 }
 
 // The hover text, published by the site rather than compiled in here. A
 // failure leaves whatever the augment list gave us, which is an empty string,
-// and the icons hover with a name and no description — the same as an augment
+// and the icons hover with a name and no description - the same as an augment
 // the string table has no text for.
 async function fetchDescriptions(): Promise<Record<string, string> | null> {
   try {
@@ -195,7 +195,7 @@ export type ItemInfo = {
 };
 
 // An item is finished when it builds into nothing and costs enough to be a
-// real purchase — which keeps the ones that only look like components, since
+// real purchase - which keeps the ones that only look like components, since
 // Manamune and Archangel's Staff transform into Muramana and Seraph's
 // Embrace, modelled as separate items rather than a recipe. Mode-specific
 // prismatics (six-digit ids) count whatever they cost. Tier-2 boots do build

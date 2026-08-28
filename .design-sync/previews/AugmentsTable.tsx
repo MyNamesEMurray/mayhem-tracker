@@ -187,7 +187,7 @@ const championData = {
 // realistic 0.5-10% band
 const totalSlots = 2400;
 
-// MayhemStats components live on the site's dark canvas — previews carry it.
+// MayhemStats components live on the site's dark canvas - previews carry it.
 // The table is min-w-[960px]; the capture viewport is 900x700, so a mild
 // zoom keeps every column (through KDA / DMG) and all 15 rows in frame
 // without touching the component.

@@ -3,9 +3,9 @@ import { itemIconSources } from "../cdn";
 
 // An item's artwork, and its name when asked for.
 //
-// The caller resolves the item — which mapping to look it up in differs by
+// The caller resolves the item - which mapping to look it up in differs by
 // surface, since the app wants the CommunityDragon branch matching the patch a
-// game was played on and the site only ever needs the latest — and hands over
+// game was played on and the site only ever needs the latest - and hands over
 // what it found. Everything after that is shared: which URLs are worth trying,
 // walking them on error, the size, the rim, and the placeholder that holds its
 // space when nothing loads.
@@ -19,8 +19,8 @@ export default function ItemIcon({
   wrap = false,
 }: {
   itemId: number;
-  // From the item mapping. Absent — an unknown id, or a mapping still loading
-  // — falls straight through to the legacy mirror and then the placeholder.
+  // From the item mapping. Absent - an unknown id, or a mapping still loading
+  // - falls straight through to the legacy mirror and then the placeholder.
   iconPath?: string;
   // The CommunityDragon branch the path came from. Defaults to "latest".
   branch?: string;

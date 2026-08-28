@@ -48,7 +48,7 @@ function emptyStateMessage(
   if (backfill.running) {
     const p = backfill.progress;
     return p && p.total > 0
-      ? `Importing your match history — ${p.current} of ${p.total} games checked...`
+      ? `Importing your match history - ${p.current} of ${p.total} games checked...`
       : "Importing your match history...";
   }
   if (status !== "connected") {

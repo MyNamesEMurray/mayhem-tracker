@@ -1,6 +1,6 @@
 import { WinRateBar } from "mayhem-tracker";
 
-// MayhemStats components live on the site's dark canvas — previews carry it
+// MayhemStats components live on the site's dark canvas - previews carry it
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",

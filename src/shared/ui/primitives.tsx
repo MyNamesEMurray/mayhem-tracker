@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 // None of these existed. PANEL and LABEL were declared as string constants in
 // three files with identical values, the panel's classes were written out in
 // sixteen more places, and the gold button was hand-written eight times with
-// the values pulling apart as it went — border at /50, /30 or /25, background
+// the values pulling apart as it went - border at /50, /30 or /25, background
 // at /15 or /10, hover at /25 or /20, radius lg or md, text xs or 13px, and
 // five different padding pairs.
 
@@ -29,7 +29,7 @@ export function Panel({
   );
 }
 
-// Gold means brand, interaction and "you" — never performance, which is what
+// Gold means brand, interaction and "you" - never performance, which is what
 // the amber/sky/emerald ramp is for, and never an outcome, which is win green
 // and loss red. One size, because the eight it had grown were not deliberate.
 const BUTTON_BASE =
@@ -48,7 +48,7 @@ const BUTTON_SIZE = {
   lg: "px-5 py-2 text-[13px]",
 } as const;
 
-// The same look for an element that is a link rather than a button — the
+// The same look for an element that is a link rather than a button - the
 // site's two download calls to action are anchors.
 export function buttonClass(
   tone: keyof typeof BUTTON_TONE = "gold",
@@ -90,7 +90,7 @@ export function StatTile({
   label: string;
   value: string | number;
   sub?: string;
-  // For a value that carries meaning — a win rate, a performance ramp
+  // For a value that carries meaning - a win rate, a performance ramp
   valueClassName?: string;
   className?: string;
 }) {

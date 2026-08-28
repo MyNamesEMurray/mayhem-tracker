@@ -1,5 +1,5 @@
 @import "tailwindcss";
-/* Tokens, base controls and scrollbar — shared with the desktop app */
+/* Tokens, base controls and scrollbar - shared with the desktop app */
 @import "../../src/shared/theme.css";
 
 html {
@@ -25,7 +25,7 @@ html {
 
 /* ── Unified-redesign responsive table behavior (ported from the design
    handoff's helmet CSS). Below 700px the stat tables become card rows:
-   thead hidden, each row a labeled grid. Column indices are load-bearing —
+   thead hidden, each row a labeled grid. Column indices are load-bearing -
    keep them in sync with ChampionsTable (.ctbl) and AugmentsTable (.atbl). */
 @media (max-width: 700px) {
   .ctbl {
@@ -41,7 +41,7 @@ html {
   .ctbl tbody tr {
     display: grid !important;
     /* The name gets a line to itself apart from rank and score. Sharing it
-       with the tier badge meant a longer champion pushed into the badge —
+       with the tier badge meant a longer champion pushed into the badge -
        and wrapping the name to fix that looked worse than the overlap. */
     /* Four columns so the stat cells below still flow four-up; the named
        areas span them. */
@@ -66,7 +66,7 @@ html {
   /* The name shares its line with nothing that can crowd it, so it stays on
      one line at any length. A grid item still won't shrink below its content
      without this, and the ellipsis is a last resort for a name longer than
-     the row can hold — it is not reached by any champion today. */
+     the row can hold - it is not reached by any champion today. */
   .ctbl td:nth-child(2) > * {
     min-width: 0;
   }

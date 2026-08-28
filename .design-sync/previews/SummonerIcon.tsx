@@ -23,7 +23,7 @@ const cell: React.CSSProperties = {
 };
 
 // Profile icon at the sizes the app uses (28 is the teammates-list default).
-// NOTE: images come from the CommunityDragon CDN — offline the component
+// NOTE: images come from the CommunityDragon CDN - offline the component
 // falls back to its neutral circle, which is what a sandbox capture shows.
 export function Sizes() {
   return (

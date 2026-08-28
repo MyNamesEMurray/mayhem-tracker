@@ -4,7 +4,7 @@
 // src/renderer/lib/format.ts.
 
 // Whole numbers carry a thousands separator, everywhere, on both surfaces.
-// The site used to render "50.6k", which is shorter and reads as an estimate —
+// The site used to render "50.6k", which is shorter and reads as an estimate -
 // and disagreed with the app, which has always shown 50,580.
 export function formatWhole(value: number | null | undefined): string {
   return Math.round(value ?? 0).toLocaleString();
@@ -16,12 +16,12 @@ export function kdaRatio(kills: number, deaths: number, assists: number): number
   return (kills + assists) / Math.max(deaths, 1);
 }
 
-// The performance ramp — design rule 3. Amber, then sky, then emerald, then
+// The performance ramp - design rule 3. Amber, then sky, then emerald, then
 // the muted text token. Gold is never used here: gold means brand,
 // interaction, and "you".
 //
 // One ramp, two sets of thresholds. It reads the same whether the number is a
-// KDA ratio or a 1-10 match score, which is the point — a colour means the
+// KDA ratio or a 1-10 match score, which is the point - a colour means the
 // same thing wherever it appears.
 const RAMP = ["text-amber-400", "text-sky-400", "text-emerald-400"] as const;
 const MUTED = "text-lol-text";

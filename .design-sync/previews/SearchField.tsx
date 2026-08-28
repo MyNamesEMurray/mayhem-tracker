@@ -1,6 +1,6 @@
 import { SearchField } from "mayhem-tracker";
 
-// MayhemStats components live on the site's dark canvas — previews carry it
+// MayhemStats components live on the site's dark canvas - previews carry it
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",
@@ -9,7 +9,7 @@ const canvas: React.CSSProperties = {
   width: "fit-content",
 };
 
-// Empty state — the placeholder tells you what the box filters
+// Empty state - the placeholder tells you what the box filters
 export function EmptyWithPlaceholder() {
   return (
     <div style={canvas}>
@@ -27,7 +27,7 @@ export function FilledWithClear() {
   );
 }
 
-// Augments-page variant — same control, different placeholder copy
+// Augments-page variant - same control, different placeholder copy
 export function AugmentSearch() {
   return (
     <div style={canvas}>

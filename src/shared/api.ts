@@ -3,7 +3,7 @@
 //
 // It sits in shared rather than under src/renderer because both ends need it.
 // The renderer used to own it alone, and src/preload/index.ts built its object
-// freehand against nothing — so the two could disagree, and did: widening the
+// freehand against nothing - so the two could disagree, and did: widening the
 // patch filter to a list left the renderer still describing a single string,
 // and nothing failed. The preload now declares `const api: ElectronAPI`, which
 // makes the compiler check one against the other.
@@ -171,7 +171,7 @@ export interface AugmentStatsDetailed {
   picks: number;
   wins: number;
   // Combat sums across every pick of the augment, for the KDA and damage
-  // columns — the same ones the website's augment table shows
+  // columns - the same ones the website's augment table shows
   kills: number;
   deaths: number;
   assists: number;
@@ -225,7 +225,7 @@ export interface ItemData {
 }
 
 export interface TeammateStats {
-  // Stable id for routing — the teammate's puuid, or their name when unknown
+  // Stable id for routing - the teammate's puuid, or their name when unknown
   key: string;
   name: string;
   puuid: string | null;

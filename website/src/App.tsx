@@ -66,7 +66,7 @@ interface ChampionRows {
 }
 
 // A fresh patch has almost nothing in it for the first day or two, and the
-// default view is that patch alone — so the tier list a first-time visitor
+// default view is that patch alone - so the tier list a first-time visitor
 // lands on is its emptiest. When the newest patch can't support the view,
 // reach back a patch at a time until it can, then say so and leave the
 // widened range in the filter for the reader to override.
@@ -74,7 +74,7 @@ const AUTO_WIDEN_MIN_GAMES = 50;
 // Champion pages get the site's own confidence floor: below this a win rate
 // renders muted everywhere else, so it shouldn't headline a build page
 const AUTO_WIDEN_MIN_CHAMPION_GAMES = MIN_SAMPLE;
-// Never reach back further than this — old patches are a different mode
+// Never reach back further than this - old patches are a different mode
 const AUTO_WIDEN_MAX_PATCHES = 3;
 
 export default function App() {
@@ -108,7 +108,7 @@ export default function App() {
   }, [championSlugFromPath, legacyChampion, data]);
 
   // The prerendered static block is a fallback for readers who arrive before
-  // the bundle has data — a crawler, or a slow connection. It goes as soon as
+  // the bundle has data - a crawler, or a slow connection. It goes as soon as
   // React has something to show in its place: live data, an error message, or
   // the community page, which loads its own totals and never waits on `data`.
   // Tying it to `data` alone meant an API failure left the static block
@@ -257,7 +257,7 @@ export default function App() {
       to: patches[0],
       onLatest: gamesOn(new Set([patches[0]]), selectedChampion),
       widened: count,
-      // False when even the full reach-back fell short — the banner says so
+      // False when even the full reach-back fell short - the banner says so
       // rather than claiming the numbers are now solid
       reached: count >= target,
     };
@@ -265,7 +265,7 @@ export default function App() {
 
   // A champion page's patch selection is scoped to that page: whatever the
   // board was showing is restored on the way back out. Widening for one thin
-  // champion shouldn't quietly change what the tier list shows afterwards —
+  // champion shouldn't quietly change what the tier list shows afterwards -
   // and neither should a range the reader picked while looking at that
   // champion, since they chose it to read one page, not to change the site.
   const boardPatch = useRef<string | null>(null);
@@ -277,7 +277,7 @@ export default function App() {
   const widenedFor = useRef<string | null>(null);
   // The range this widened to. Without it the effect below sees the param it
   // just wrote, reads it as the reader's own choice, and clears the banner on
-  // the very next render — so the range moved with nothing explaining why.
+  // the very next render - so the range moved with nothing explaining why.
   const appliedParam = useRef<string | null>(null);
   const [autoWiden, setAutoWiden] = useState<typeof autoWidenTo>(null);
   useEffect(() => {
@@ -383,7 +383,7 @@ export default function App() {
               claimed a whole extra row once the filters wrapped */}
             <a
               href="/download/"
-              title="Download the MayhemStats Tracker desktop app — play, track, and contribute your games"
+              title="Download the MayhemStats Tracker desktop app - play, track, and contribute your games"
               className={buttonClass(
                 "gold",
                 "md",
@@ -415,7 +415,7 @@ export default function App() {
               })}
             </nav>
             {/* The Community page reads its own totals and its own per-day
-              series — neither takes a patch or a queue — so the filters sat
+              series - neither takes a patch or a queue - so the filters sat
               there doing nothing. Hidden rather than disabled: a control that
               can't change anything shouldn't ask to be tried. */}
             {!onCommunityPage && (
@@ -471,7 +471,7 @@ export default function App() {
                   : `${autoWiden.onLatest} game${autoWiden.onLatest === 1 ? "" : "s"}`}{" "}
                 {selectedChampion != null ? "on this champion" : "so far"}.
                 {!autoWiden.reached &&
-                  ` Still thin at ${autoWiden.widened.toLocaleString()} — read as directional.`}
+                  ` Still thin at ${autoWiden.widened.toLocaleString()} - read as directional.`}
               </p>
             </div>
           )}
@@ -616,7 +616,7 @@ export default function App() {
                 MayhemStats Tracker
               </a>{" "}
               players who opted in. Contributions contain champions, augments, items, and combat
-              stats only — never summoner names, Riot IDs, or anything that identifies a player.
+              stats only - never summoner names, Riot IDs, or anything that identifies a player.
               Want your games counted? Install the tracker and flip on{" "}
               <span className="text-lol-text">Settings → Community Stats</span>.
             </p>

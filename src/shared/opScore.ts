@@ -1,6 +1,6 @@
 // Shared between the main process (insert-time scoring + migration backfill)
 // and the renderer (full-scoreboard scoring). Bump SCORE_FORMULA_VERSION when
-// the formula changes — stored scores are recomputed from raw_json on startup
+// the formula changes - stored scores are recomputed from raw_json on startup
 // (the backfill key also includes the champion data version, so class changes
 // trigger a recompute too).
 export const SCORE_FORMULA_VERSION = 2;
@@ -42,14 +42,14 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 // lands near 6, ~5% of player-games reach 9+, and perfect 10s are ~0.6%.
 // Component weights sum to 11.0 (9.8 class components + multikill + win) and
 // SCALE stretches the top end, so a 10 doesn't require maxing every single
-// category — a dominant low-death carry game gets there.
+// category - a dominant low-death carry game gets there.
 const CURVE = 1.3;
 const SCALE = 1.04;
 
 // Per-class component weights so champions are graded on their job: tanks on
 // soaking damage, supports on healing and participation, assassins/mages/
 // marksmen on damage output. Every row sums to 9.8 (matching DEFAULT_WEIGHTS)
-// so the score distribution stays comparable across classes — per-class
+// so the score distribution stays comparable across classes - per-class
 // medians land within 5.6-6.2 on the calibration sample.
 interface ClassWeights {
   kda: number;

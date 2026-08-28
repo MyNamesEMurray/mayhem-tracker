@@ -63,8 +63,8 @@ export default function Champions() {
     return unsub;
   }, [refetch]);
 
-  // Clicking a champion opens the full page — tier, score, core build, best
-  // augments per rarity — rather than a three-column strip inside the row.
+  // Clicking a champion opens the full page - tier, score, core build, best
+  // augments per rarity - rather than a three-column strip inside the row.
   // The filters ride along so the page opens on what you were looking at.
   const openChampion = (championId: number) => {
     const params = new URLSearchParams();
@@ -78,7 +78,7 @@ export default function Champions() {
   };
 
   // Tier is a rank within everything under the current filters, so it is
-  // computed before the search narrows the list — searching for one champion
+  // computed before the search narrows the list - searching for one champion
   // must not make it S+ by default.
   const tiers = useMemo(
     () =>
@@ -97,7 +97,7 @@ export default function Champions() {
   // Ten champion slots per game
   const totalGames = Math.round(totalSlots / 10);
   // The app's queue dropdown treats an empty selection as every queue, and
-  // hides itself entirely while only one queue has data — in which case that
+  // hides itself entirely while only one queue has data - in which case that
   // one queue is what's on screen
   const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
   const label = patchLabel(patchSelection, patchOptions);
@@ -169,7 +169,7 @@ export default function Champions() {
 
   // This table carries twelve columns where the others carry five, so its
   // headers take the same wider gutter its cells now use rather than the
-  // shared default — otherwise the header and the value under it don't line up
+  // shared default - otherwise the header and the value under it don't line up
   const sortProps = {
     sort,
     onSort: toggle,
@@ -180,7 +180,7 @@ export default function Champions() {
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
         {/* Named the same way the website names it: the queue, the list, then
-            the slice the numbers cover — so a game count reads as the patches
+            the slice the numbers cover - so a game count reads as the patches
             in view for this queue rather than the size of the whole database */}
         <div>
           <h1 className="text-xl font-bold text-lol-text-bright">

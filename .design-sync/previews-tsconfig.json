@@ -1,5 +1,5 @@
 {
-  // The previews import from "mayhem-tracker" — the bundle design-sync builds
+  // The previews import from "mayhem-tracker" - the bundle design-sync builds
   // from ds-entry.ts. Nothing generates that package locally, so the path
   // below points the compiler straight at the entry instead. That makes the
   // previews typecheck against the real component APIs.

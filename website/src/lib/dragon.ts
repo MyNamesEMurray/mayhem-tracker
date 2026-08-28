@@ -42,7 +42,7 @@ function writeCache(key: string, data: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify({ at: Date.now(), data }));
   } catch {
-    // Storage full or unavailable — caching is best-effort
+    // Storage full or unavailable - caching is best-effort
   }
 }
 
@@ -112,7 +112,7 @@ export function getAugmentName(data: AugmentData, id: number): string {
 export interface ItemInfo {
   name: string;
   iconPath: string;
-  // Builds into nothing and isn't a consumable — a finished purchase, so
+  // Builds into nothing and isn't a consumable - a finished purchase, so
   // build paths can skip components and potions
   completed?: boolean;
 }
@@ -145,11 +145,11 @@ export function loadItemData(): Promise<ItemData> {
         const price: number = item.priceTotal ?? 0;
         // Mode-specific prismatics (six-digit ids) count regardless of price.
         // Tier-2 boots upgrade into tier-3, so they build into something while
-        // still being a real build step — include them by price instead.
+        // still being a real build step - include them by price instead.
         const builtFrom = Array.isArray(item.from) ? item.from.length : 0;
         // Tier-2 boots upgrade into tier-3, so they build into something while
         // still being a real purchase. What separates them from the 300g
-        // Boots everyone starts with is that they are built *from* it —
+        // Boots everyone starts with is that they are built *from* it -
         // price alone dropped Ionian Boots of Lucidity, at 900g, off the list.
         const completed =
           (buildsInto === 0 &&
@@ -176,8 +176,8 @@ export function getItemName(data: ItemData, id: number): string {
   return data[id]?.name || `Item ${id}`;
 }
 
-// Whether an item belongs in a build list. Components — Recurve Bow, Giant's
-// Belt, Ruby Crystal — carry a win rate because they sat in someone's
+// Whether an item belongs in a build list. Components - Recurve Bow, Giant's
+// Belt, Ruby Crystal - carry a win rate because they sat in someone's
 // inventory at the final whistle, not because anyone set out to build them,
 // and they crowd out the items that were the plan.
 //

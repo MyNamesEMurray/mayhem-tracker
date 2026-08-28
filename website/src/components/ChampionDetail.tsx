@@ -35,7 +35,7 @@ import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
 import SearchField from "../../../src/shared/ui/SearchField.tsx";
 
 // A build entry needs this many games behind it before it can be recommended
-// at all — below that a win rate is noise, however good it looks
+// at all - below that a win rate is noise, however good it looks
 const ITEM_MIN_GAMES = 3;
 const AUGMENT_MIN_PICKS = 3;
 
@@ -46,7 +46,7 @@ const RARITIES: { key: string; label: string; color: string }[] = [
 ];
 
 // Build-path slots read as their purchase position ("1st", "2nd", ...)
-// rather than a clock time — 11th–13th take "th" against the usual rule.
+// rather than a clock time - 11th–13th take "th" against the usual rule.
 function ordinal(n: number): string {
   const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
   return `${n}${suffix}`;
@@ -102,7 +102,7 @@ export default function ChampionDetail({
     () => championItemBreakdown(itemRows, filters, championId),
     [itemRows, filters, championId],
   );
-  // Components sit out of the build lists by default — they are what a
+  // Components sit out of the build lists by default - they are what a
   // finished item was on the way to, not something anyone set out to build.
   // Until the item data arrives every id looks finished, so the lists fill in
   // rather than flashing empty.
@@ -117,7 +117,7 @@ export default function ChampionDetail({
   );
 
   // Live-tracked purchase timings, narrowed to finished items and ordered by
-  // when they're typically bought — only games recorded by the desktop app's
+  // when they're typically bought - only games recorded by the desktop app's
   // build-order watcher feed this, so it can be empty
   const buildPath = useMemo(() => {
     const all = championBuildPath(purchaseRows, filters, championId);
@@ -248,7 +248,7 @@ export default function ChampionDetail({
                   <div
                     key={i.item_id}
                     className="flex flex-col items-center w-[52px]"
-                    title={`${getItemName(itemData, i.item_id)} — ${formatWhole(i.picks)} games`}
+                    title={`${getItemName(itemData, i.item_id)} - ${formatWhole(i.picks)} games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemData={itemData} itemId={i.item_id} size={44} />
@@ -307,7 +307,7 @@ export default function ChampionDetail({
         </div>
       </div>
 
-      {/* Typical build path — from live build-order tracking; hidden until
+      {/* Typical build path - from live build-order tracking; hidden until
           tracked games exist for this champion */}
       {buildPath.length >= 2 && (
         <div className={`${PANEL} p-5`}>
@@ -332,7 +332,7 @@ export default function ChampionDetail({
                   )}
                   <div
                     className="flex flex-col items-center w-[56px]"
-                    title={`${getItemName(itemData, e.item_id)} — ${ordinal(i + 1)} item, bought in ${formatWhole(e.picks)} tracked games`}
+                    title={`${getItemName(itemData, e.item_id)} - ${ordinal(i + 1)} item, bought in ${formatWhole(e.picks)} tracked games`}
                   >
                     <span className="rounded-md overflow-hidden leading-none">
                       <ItemIcon itemData={itemData} itemId={e.item_id} size={40} />
@@ -360,7 +360,7 @@ export default function ChampionDetail({
               <ToggleChip
                 active={showComponents}
                 onClick={() => setShowComponents((v) => !v)}
-                title="Components — Ruby Crystal, Boots, Recurve Bow — carry a win rate from sitting in an inventory, not from being built on purpose"
+                title="Components - Ruby Crystal, Boots, Recurve Bow - carry a win rate from sitting in an inventory, not from being built on purpose"
               >
                 Components
               </ToggleChip>
@@ -521,8 +521,8 @@ export default function ChampionDetail({
       <p className="text-xs text-lol-text/70">
         Score is the win rate the record supports, out of 100: the floor of a 95% confidence
         interval, so 100% over 5 games scores below 60% over 2,600. Everything on the site ranks by
-        it. Components are left out of the build lists — Manamune and Archangel's Staff stay, since
-        they transform rather than build into anything. * fewer than 20 games — treat with caution.
+        it. Components are left out of the build lists - Manamune and Archangel's Staff stay, since
+        they transform rather than build into anything. * fewer than 20 games - treat with caution.
       </p>
     </div>
   );
@@ -530,11 +530,11 @@ export default function ChampionDetail({
 
 // Table columns are fixed-width so the numbers line up down the page, which
 // leaves the name column whatever is left over. On a phone that was not
-// enough and names came back as "Overlord'..." — so the number columns give
+// enough and names came back as "Overlord'..." - so the number columns give
 // up their padding and some width below `sm`, and names wrap to a second line
 // instead of being cut.
-// The two long-tail panels hold the same shape of row — a thing, its picks
-// and its record — so they sort through one comparator. Default is Score,
+// The two long-tail panels hold the same shape of row - a thing, its picks
+// and its record - so they sort through one comparator. Default is Score,
 // which is the order the panels are meant to be read in.
 type PanelSortKey = "name" | "picks" | "score" | "winRate";
 
@@ -567,7 +567,7 @@ const COL_SCORE = "w-[54px] sm:w-[68px]";
 const COL_RATE = "w-[84px] sm:w-[140px]";
 
 const SCORE_HINT =
-  "The win rate this record supports, out of 100 — the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";
+  "The win rate this record supports, out of 100 - the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";
 
 // The score carries no win/loss color: it is a confidence-adjusted number, and
 // coloring it green at 50 would say something the win rate already says.

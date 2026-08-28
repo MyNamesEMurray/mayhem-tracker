@@ -17,7 +17,7 @@ export default function TitleBar({ version }: { version: string }) {
       <span className="flex items-center gap-[7px] px-3.5 text-[13px] font-extrabold tracking-[0.03em] text-lol-gold-light">
         <SwordsIcon className="w-[15px] h-[15px] shrink-0 text-lol-gold" strokeWidth={2.4} />
         {/* Reads as the website's logo with a word added: MAYHEM beige, STATS
-            gold — the site's split — and TRACKER gold and heavier, which is
+            gold - the site's split - and TRACKER gold and heavier, which is
             what marks this as the app rather than the site. The weight only
             lands because the font is declared 100–900; at 400–700 it clamped
             to the same 700 as its neighbours. */}

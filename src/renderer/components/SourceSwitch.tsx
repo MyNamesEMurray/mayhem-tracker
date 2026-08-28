@@ -4,8 +4,8 @@ import type { CommunityMeta } from "../lib/types";
 // Which pool of games a stats page is reading.
 //
 // This exists because the two were previously told apart only by which tab
-// you were on, and people read "no Braum games yet" — true of their own
-// twenty matches — as a statement about the mode. Naming the source in the
+// you were on, and people read "no Braum games yet" - true of their own
+// twenty matches - as a statement about the mode. Naming the source in the
 // page, and letting it be switched in place, is the fix.
 export type StatsSource = "mine" | "community";
 
@@ -52,11 +52,11 @@ export function useStatsSource(): [StatsSource, (s: StatsSource) => void] {
 
 // Give-to-get: the community pool is readable in the app while you are
 // contributing to it. Off, the switch stays visible but inert and says where
-// to turn it on — and where to read the same numbers without doing so.
+// to turn it on - and where to read the same numbers without doing so.
 const SHARING_KEY = "sharing-enabled";
 
 // Asking the main process is a round trip, and until it answers the switch
-// would be unlocked — long enough to fire one community fetch for someone who
+// would be unlocked - long enough to fire one community fetch for someone who
 // isn't contributing. Remembering the last answer makes the first render right
 // in every case except the very first launch, and the real value still
 // overwrites it a moment later.
@@ -129,7 +129,7 @@ export default function SourceSwitch({
   const sharing = useSharingEnabled();
   const locked = sharing === false;
 
-  // Sharing can be turned off while the community source is selected — from
+  // Sharing can be turned off while the community source is selected - from
   // Settings, or on a machine where it was never on and the choice came from
   // a previous install's stored preference
   useEffect(() => {
@@ -181,19 +181,19 @@ export default function SourceSwitch({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="flex items-center gap-0.5 rounded-lg border border-lol-border/60 bg-lol-card p-0.5">
-        {option("mine", "My performance", "Your own match history — how these have gone for you")}
+        {option("mine", "My performance", "Your own match history - how these have gone for you")}
         {option(
           "community",
           "Community",
           locked
             ? "Enable data sharing in Settings, or view on MayhemStats.com"
-            : "Every contributed game in the shared database — the same numbers as mayhemstats.com",
+            : "Every contributed game in the shared database - the same numbers as mayhemstats.com",
           locked,
         )}
       </div>
       {locked && (
         <span className="text-[11px] text-lol-text">
-          Community stats unlock while you're contributing —{" "}
+          Community stats unlock while you're contributing -{" "}
           <button
             onClick={() => window.api.openUrl("https://mayhemstats.com/")}
             className="text-lol-gold hover:text-lol-gold-light cursor-pointer"

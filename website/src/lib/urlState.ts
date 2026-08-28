@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 // Path + query state without pulling in a router. setParam tweaks the query
-// in place (replaceState — filters don't create history entries) while
-// navigate changes the path (pushState — page changes do), carrying the
+// in place (replaceState - filters don't create history entries) while
+// navigate changes the path (pushState - page changes do), carrying the
 // current filters along.
 export function useUrlState(): {
   path: string;

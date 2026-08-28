@@ -83,7 +83,7 @@ export async function downloadAndInstall(
   }
 
   // Best-effort sweep of temp dirs left by earlier updates (the installed
-  // path can't clean up after itself — nothing outlives the process)
+  // path can't clean up after itself - nothing outlives the process)
   try {
     const tmpRoot = os.tmpdir();
     for (const entry of fs.readdirSync(tmpRoot)) {
@@ -136,7 +136,7 @@ export async function downloadAndInstall(
     return { success: false, error: `Download failed: ${err.message}` };
   }
 
-  // Installed build: run the downloaded one-click installer directly —
+  // Installed build: run the downloaded one-click installer directly -
   // it's a GUI executable, so no console window appears. /S installs
   // per-user without UI, --force-run relaunches the app when it finishes,
   // and the installer itself waits out (or kills) a still-running app, so

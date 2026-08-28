@@ -1,7 +1,7 @@
 /* Inter, self-hosted.
  *
  * Shipped rather than linked from a CDN so the site and the desktop app render
- * identically, offline and on any OS — the system stacks they used before gave
+ * identically, offline and on any OS - the system stacks they used before gave
  * Segoe UI on Windows, San Francisco on macOS, and whatever `sans-serif`
  * resolved to on Linux, each with different numeral widths in the stat tables.
  *

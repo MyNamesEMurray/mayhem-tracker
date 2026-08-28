@@ -17,11 +17,11 @@ export function Paddings() {
   return (
     <div style={canvas}>
       <Panel className="p-4">
-        <p className={`${LABEL} mb-1`}>Compact — p-4</p>
+        <p className={`${LABEL} mb-1`}>Compact - p-4</p>
         <p className="text-sm text-lol-text-bright">A stat block or a single figure.</p>
       </Panel>
       <Panel className="p-5">
-        <p className={`${LABEL} mb-1`}>Section — p-5</p>
+        <p className={`${LABEL} mb-1`}>Section - p-5</p>
         <p className="text-sm text-lol-text-bright">A titled group of controls or rows.</p>
       </Panel>
       <Panel className="p-8 text-center text-sm">No games match these filters.</Panel>

@@ -1,6 +1,6 @@
 // Where augment hover text comes from, for both surfaces.
 //
-// The text is not in the augment list Riot publishes — that carries names,
+// The text is not in the augment list Riot publishes - that carries names,
 // icons and rarities, and its description field is always empty. The only
 // place it exists is the game's own string table, which is ~33 MB, so
 // scripts/gen-augment-descriptions.mjs resolves it once and writes the result
@@ -10,7 +10,7 @@
 // augment list, the champion list and the item data. It used to be compiled
 // into each instead, which meant a patch rewording an augment reached players
 // only when someone cut a release and everyone downloaded a hundred megabytes
-// — for a few sentences of text. The app already showed a new augment's name,
+// - for a few sentences of text. The app already showed a new augment's name,
 // icon and rarity the day it appeared, because those are fetched; only the
 // description waited.
 
@@ -45,7 +45,7 @@ export function parseDescriptions(raw: unknown): AugmentDescriptions | null {
 }
 
 // Fills in the desc field on an augment map already built from the augment
-// list. Augments with no text — a handful genuinely have none — keep whatever
+// list. Augments with no text - a handful genuinely have none - keep whatever
 // they had, which is the empty string upstream gave them, and hover without a
 // description.
 export function applyDescriptions<T extends { desc?: string }>(

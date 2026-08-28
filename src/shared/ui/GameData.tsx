@@ -3,14 +3,14 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 // Augment names and rarities, for the components that draw them.
 //
 // The app and the site fetch this from the same CommunityDragon endpoint but
-// by different routes — the app through its main process over IPC, with a
+// by different routes - the app through its main process over IPC, with a
 // cache on disk; the site with fetch and localStorage. Both are right for
 // their runtime, so the transport stays where it is and only the result is
 // shared. A component asks the context; each surface fills it once, at its
 // root, from whatever it already had.
 //
 // This replaced the app's icons reaching for window.api in a mount effect,
-// which is also what made them impossible to render outside Electron — the
+// which is also what made them impossible to render outside Electron - the
 // design-sync previews needed a hand-written window.api shim to draw a
 // scoreboard.
 

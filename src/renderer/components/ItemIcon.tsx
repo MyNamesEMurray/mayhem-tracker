@@ -19,7 +19,7 @@ export default function ItemIcon({
 }) {
   const itemData = useItemData(patch);
   // Latest-patch data is almost always cached already, so it fills the gap
-  // while the per-patch mapping loads (or when that load keeps failing) —
+  // while the per-patch mapping loads (or when that load keeps failing) -
   // item icons rarely change between patches.
   const latestItems = useItemData(null);
   const item = itemData[itemId] ?? (patch ? latestItems[itemId] : undefined);

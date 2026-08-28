@@ -1,7 +1,7 @@
 import { AugmentIcon, GameDataProvider } from "mayhem-tracker";
 
 // Real-flavored ARAM Mayhem augments across all three rarities.
-// Icon paths are CommunityDragon asset paths — icons render at runtime.
+// Icon paths are CommunityDragon asset paths - icons render at runtime.
 const augments = {
   11: {
     name: "Eureka",
@@ -50,7 +50,7 @@ function Canvas({ children, width }: { children: React.ReactNode; width?: number
   );
 }
 
-// One augment per rarity — the name takes the rarity color
+// One augment per rarity - the name takes the rarity color
 export function AllRarities() {
   return (
     <Canvas>

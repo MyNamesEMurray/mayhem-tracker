@@ -5,7 +5,7 @@ export * from "../../shared/api";
 import type { ElectronAPI } from "../../shared/api";
 
 // window.api only exists in the renderer, so the global belongs here rather
-// than in the shared contract — the website compiles that tree too.
+// than in the shared contract - the website compiles that tree too.
 declare global {
   interface Window {
     api: ElectronAPI;

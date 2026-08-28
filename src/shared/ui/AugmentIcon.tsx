@@ -17,8 +17,8 @@ export default function AugmentIcon({
   wrap?: boolean;
 }) {
   const aug = useAugments()[augmentId];
-  // Icons are usually drawn without a name — a scoreboard cell, a match row, a
-  // champion's best-augments list — so the tooltip carries the name and rarity
+  // Icons are usually drawn without a name - a scoreboard cell, a match row, a
+  // champion's best-augments list - so the tooltip carries the name and rarity
   // whether or not a description exists for the augment.
   //
   // The text arrives on the augment itself, filled in by whichever surface

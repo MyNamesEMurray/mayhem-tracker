@@ -1,7 +1,7 @@
 // The scoring methodology, shared by the desktop app and mayhemstats.com.
 //
-// This used to exist twice — src/renderer/lib/champStats.ts and
-// website/src/lib/stats.ts — each with a comment asking the next person to
+// This used to exist twice - src/renderer/lib/champStats.ts and
+// website/src/lib/stats.ts - each with a comment asking the next person to
 // keep the copies in step. The site publishes what these numbers mean as a
 // promise ("the floor of a 95% confidence interval"), and a champion that is
 // A-tier on one surface and B on the other, both citing the same method, is
@@ -9,7 +9,7 @@
 // test/stats.test.mts holds it to the figures the site publishes.
 
 // Score: the one number every ranking here and on the site is built from, out
-// of 100. It is the lower bound of the Wilson interval at 95% — read it as
+// of 100. It is the lower bound of the Wilson interval at 95% - read it as
 // "the win rate this record supports".
 //
 // A perfect 5-0 scores 56.6, because five games cannot rule out a coin flip;
@@ -72,8 +72,8 @@ export function assignTiers<T>(
 
 // A build entry has to earn its place twice: a workable sample, and a record
 // that isn't losing. Ranked by confidence score, so an entry overtakes a lucky
-// 5-0 once its sample makes the rate defensible — 60.1% over 2,635 games does
-// it, while 58% needs a few thousand. No popularity filler — an item that has
+// 5-0 once its sample makes the rate defensible - 60.1% over 2,635 games does
+// it, while 58% needs a few thousand. No popularity filler - an item that has
 // never won is not a recommendation, however many times it was built.
 export function rankForBuild<T>(
   list: T[],

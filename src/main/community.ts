@@ -2,13 +2,13 @@
 //
 // The website reads three aggregate views straight from Supabase; so does
 // this, once, into a local cache. That's what lets someone look up a build
-// without leaving the tracker — and it's the difference between the
+// without leaving the tracker - and it's the difference between the
 // Champions tab showing "no Braum games yet" (true of your own history) and
 // showing what everyone's games say about Braum.
 //
 // The rows are the same public aggregates the site reads: counts grouped by
 // patch, queue, champion, augment, and item. No individual games, no
-// identity — there is nothing else readable behind the anon key.
+// identity - there is nothing else readable behind the anon key.
 import { gunzipSync, gzipSync } from "zlib";
 import fs from "fs";
 import path from "path";
@@ -49,7 +49,7 @@ export interface CommunityAugmentRow {
   wins: number;
 }
 
-// One row per augment per patch, rolled up across champions — the grain the
+// One row per augment per patch, rolled up across champions - the grain the
 // augment list reads. The per-champion grain behind it is 341k rows and is
 // fetched for one augment at a time, when a row is expanded.
 export interface CommunityAugmentTotalRow {
@@ -73,13 +73,13 @@ export interface CommunityItemRow {
   wins: number;
 }
 
-// Only the champion grain is cached wholesale — 3.5k rows. The augment and
+// Only the champion grain is cached wholesale - 3.5k rows. The augment and
 // item grains are per (patch, queue, champion, thing) and run to well over
 // half a million rows between them, so those are fetched for one champion at
 // a time, when a champion page asks.
 // Bump when the cached shape changes. Without this, a cache written by an
 // older build is read back as the current shape and whatever it lacks reads
-// as undefined — v2.12.7 added augmentTotals, and a v2.12.6 cache that was
+// as undefined - v2.12.7 added augmentTotals, and a v2.12.6 cache that was
 // still inside its six hours left the augment list waiting forever on a
 // promise that had already rejected.
 const CACHE_VERSION = 3;
@@ -101,7 +101,7 @@ interface ChampionDetailCache {
 }
 
 // Champion pages get revisited constantly while comparing builds; holding the
-// last handful in memory makes going back and forth free. Not persisted —
+// last handful in memory makes going back and forth free. Not persisted -
 // it's a session convenience, not the app's data.
 const detailCache = new Map<number, ChampionDetailCache>();
 const DETAIL_LIMIT = 24;
@@ -113,12 +113,12 @@ function readCache(): Cache | null {
   try {
     const raw = gunzipSync(fs.readFileSync(cacheFile())).toString("utf8");
     const parsed = JSON.parse(raw) as Cache;
-    // An older shape is not stale data, it is the wrong data — refetch
+    // An older shape is not stale data, it is the wrong data - refetch
     if (parsed.version !== CACHE_VERSION) return null;
     memory = parsed;
     return memory;
   } catch {
-    // No cache yet, or an unreadable one — refetch rather than fail
+    // No cache yet, or an unreadable one - refetch rather than fail
     return null;
   }
 }
@@ -134,7 +134,7 @@ function writeCache(cache: Cache): void {
 }
 
 // PostgREST caps a response at 1000 rows, and the three views together are
-// ~29k — so paging them one after another was 30 sequential round trips
+// ~29k - so paging them one after another was 30 sequential round trips
 // before the Champions tab could draw anything. The first request asks for
 // an exact count, and the rest of the pages then go out at once.
 async function fetchPage<T>(view: string, query: string, from: number, withCount: boolean) {
@@ -148,7 +148,7 @@ async function fetchPage<T>(view: string, query: string, from: number, withCount
   });
   if (!res.ok) throw new Error(`${view} returned HTTP ${res.status}`);
   const rows = (await res.json()) as T[];
-  // "0-999/13684" — the total is what lets the remaining pages be parallel
+  // "0-999/13684" - the total is what lets the remaining pages be parallel
   const total = Number(res.headers.get("content-range")?.split("/")[1]);
   return { rows, total: Number.isFinite(total) ? total : null };
 }
@@ -191,7 +191,7 @@ const ITEM_QUERY =
   "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
-// stale data if the network is unavailable — an offline client should still
+// stale data if the network is unavailable - an offline client should still
 // show the numbers it had rather than an error.
 export async function loadCommunity({ force = false } = {}): Promise<Cache> {
   const cached = readCache();
@@ -228,7 +228,7 @@ function refresh(cached: Cache | null = readCache()): Promise<Cache> {
       return cache;
     } catch (err) {
       if (cached) {
-        console.warn(`community: refresh failed (${(err as Error).message}) — serving cache`);
+        console.warn(`community: refresh failed (${(err as Error).message}) - serving cache`);
         return cached;
       }
       throw err;
@@ -313,7 +313,7 @@ export async function getCommunityChampionStats(
   // Rounded here, matching the ROUND() in the local getChampionStats query
   // (db.ts): a K/D/A to one decimal, damage and gold whole. Doing it at the
   // source keeps both sources identical without every render site having to
-  // remember — the raw quotient reached the table as 10.633333333333333.
+  // remember - the raw quotient reached the table as 10.633333333333333.
   const oneDp = (n: number) => Math.round(n * 10) / 10;
   for (const e of byChampion.values()) {
     const n = Math.max(e.games, 1);
@@ -460,7 +460,7 @@ export async function getCommunityAugmentChampions(
   return [...byChampion.values()].sort((a, b) => b.picks - a.picks);
 }
 
-// Patches present in the community data, newest first — the app's patch
+// Patches present in the community data, newest first - the app's patch
 // filter offers these when the community source is selected, since the local
 // database's patch list can be a subset (or, on a fresh install, empty)
 export async function getCommunityMeta(): Promise<{

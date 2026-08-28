@@ -8,7 +8,7 @@
 // Why a generated file instead of a fetch at runtime: the augment list the app
 // already loads (CommunityDragon's cherry-augments.json) carries names, icons
 // and rarities but no description text at all. The only place that text exists
-// is the game's own string table, and that file is ~33 MB — far too much to
+// is the game's own string table, and that file is ~33 MB - far too much to
 // pull down on every launch for a hover tooltip. So the text is resolved once,
 // here, and shipped as a small map keyed by augment id.
 //
@@ -31,8 +31,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // This used to write a second, byte-identical copy under website/src/lib.
 // Published as a static file on mayhemstats.com rather than compiled into
 // either surface. Both fetch it at runtime, so a patch rewording an augment
-// reaches players when this file is merged — the site at its next deploy, the
-// app at its next launch — instead of waiting for a release someone has to cut
+// reaches players when this file is merged - the site at its next deploy, the
+// app at its next launch - instead of waiting for a release someone has to cut
 // and everyone has to download. It also keeps this generator's output out of
 // the paths the release workflow watches, so refreshing text is not an app
 // change.
@@ -71,11 +71,11 @@ const SUFFIXES = ["_summary", "_tooltip", "_desc", "_description"];
 const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 // A trailing "Damage Dealt: 1234" readout is a live in-game counter, not part
-// of the description — with no game running it cleans up to a dangling label.
+// of the description - with no game running it cleans up to a dangling label.
 const COUNTER = /^[A-Z][A-Za-z '-]{2,34}:\s*\??$/;
 
 // `{{Cherry_SoulSiphon_Summary}}` is the string table pointing at another of
-// its own entries — often the whole description. Following it once or twice
+// its own entries - often the whole description. Following it once or twice
 // turns those into real text; anything still unresolved becomes a placeholder.
 function resolveReferences(raw, entries, depth = 0) {
   if (depth > 2 || !raw.includes("{{")) return raw;
@@ -136,7 +136,7 @@ function buildIndex(entries) {
     const prefix = PREFIXES.filter((p) => p && stem.startsWith(p)).sort(
       (a, b) => b.length - a.length,
     )[0];
-    // Only the mode-data namespaces — otherwise an augment named after an item
+    // Only the mode-data namespaces - otherwise an augment named after an item
     // ("Tempest's Gauntlet") matches that item's shop text instead.
     if (!prefix && !/^[a-z0-9_]+$/.test(stem)) continue;
     // The mode prefix is sometimes doubled up with the mode's own augment

@@ -26,7 +26,7 @@ import SortControl, { type SortOption } from "./SortControl";
 import { TIER_ORDER } from "../lib/stats";
 
 // Every column carries data, so every column sorts. Pick rate is picks over a
-// fixed total, so it orders identically to picks — it's here because a header
+// fixed total, so it orders identically to picks - it's here because a header
 // that looks clickable and isn't is worse than a redundant one.
 type SortKey = "score" | "picks" | "winRate" | "kda" | "damage" | "name" | "tier" | "pickRate";
 
@@ -51,7 +51,7 @@ export default function AugmentsTable({
   const { key: sortKey, dir: sortDir } = sort;
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  // Tiers rank each augment against its own rarity — Prismatics are strictly
+  // Tiers rank each augment against its own rarity - Prismatics are strictly
   // stronger than Silvers, so a global ranking would just sort by rarity.
   // Computed before search/rarity narrowing so filtering never reshuffles.
   const { list, tiers } = useMemo(() => {
@@ -77,7 +77,7 @@ export default function AugmentsTable({
   }, [rows, filters, augmentData]);
 
   const sorted = useMemo(() => {
-    // Tier assignment above still sees the full cohort — hiding low-sample
+    // Tier assignment above still sees the full cohort - hiding low-sample
     // rows must not promote what remains
     let filtered = list;
     if (search) {
@@ -206,9 +206,9 @@ export default function AugmentsTable({
         )}
       </div>
       <p className="text-xs text-lol-text/70">
-        Score is the win rate the record supports, out of 100 — the floor of a 95% confidence
+        Score is the win rate the record supports, out of 100 - the floor of a 95% confidence
         interval, so a thin sample scores well below the rate it happened to produce. Tiers rank
-        each augment against others of its rarity. * fewer than 20 games — treat with caution.
+        each augment against others of its rarity. * fewer than 20 games - treat with caution.
       </p>
     </div>
   );

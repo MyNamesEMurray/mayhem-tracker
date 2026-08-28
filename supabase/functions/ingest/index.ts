@@ -28,10 +28,10 @@ const MAX_GAMES_PER_REQUEST = 50;
 // that it is capped at a humanly-playable daily volume.
 const BURST_LIFETIME = 800;
 const MAX_GAMES_PER_DAY_STEADY = 60;
-// Cap on unreviewed quarantined games per token — bounds both digest email
+// Cap on unreviewed quarantined games per token - bounds both digest email
 // size and quarantine-flooding abuse.
 const MAX_PENDING_QUARANTINE = 25;
-// ARAM Mayhem didn't exist before 2025 — nothing older can be real
+// ARAM Mayhem didn't exist before 2025 - nothing older can be real
 const MIN_GAME_CREATION = 1735689600000;
 // Build-order bounds: no real participant buys/sells this much
 const MAX_ITEM_EVENTS_PER_PARTICIPANT = 120;
@@ -41,7 +41,7 @@ const MAX_ITEM_EVENTS_PER_GAME = 800;
 // they're meant to sit above rather than from what ARAM looks like. Mayhem's
 // augments routinely multiply tanking, sustain and burst several times over,
 // and the first limits here were tuned before there was data to tune against:
-// they flagged 0.53% of games — one in every two hundred — which is a queue
+// they flagged 0.53% of games - one in every two hundred - which is a queue
 // nobody works, not an exception report.
 //
 // Measured over 136k games / 1.37M participants, per second of game time:
@@ -54,8 +54,8 @@ const MAX_ITEM_EVENTS_PER_GAME = 800;
 //
 // That's 27 games flagged out of 136k (0.02%). A fabricated game has to stay
 // inside the top hundredth of a percent of real values to pass, and the
-// structural checks below — 5v5, one winner, multikill hierarchy, spree
-// within kills — are what actually make fabrication hard.
+// structural checks below - 5v5, one winner, multikill hierarchy, spree
+// within kills - are what actually make fabrication hard.
 const MAX_DAMAGE_TAKEN_PER_S = 400;
 const MAX_DAMAGE_DEALT_PER_S = 300;
 const MAX_HEAL_PER_S = 300;
@@ -176,7 +176,7 @@ function validateStructural(g: any): string | null {
 }
 
 // Plausibility checks: duration-scaled ceilings real games essentially never
-// exceed — but an extraordinary real game could. Flags quarantine the game
+// exceed - but an extraordinary real game could. Flags quarantine the game
 // for manual review instead of rejecting it.
 function plausibilityFlags(g: any): string[] {
   const dur = g.gameDuration;
@@ -210,7 +210,7 @@ function plausibilityFlags(g: any): string[] {
 
 // Rebuild the game from known fields only, so the stored quarantine payload
 // can't carry anything the schema doesn't define. Item events are dropped
-// here — a quarantined game approved later keeps its core stats only.
+// here - a quarantined game approved later keeps its core stats only.
 function sanitizeGame(g: any) {
   return {
     platform: g.platform,

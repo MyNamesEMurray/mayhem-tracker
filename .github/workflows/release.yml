@@ -5,7 +5,7 @@ name: Release
 #
 # It happens three ways:
 #
-#   - a merge into main that touches the app — the usual path, and fully
+#   - a merge into main that touches the app - the usual path, and fully
 #     automatic: no version to bump by hand, no tag to push;
 #   - pushing a v* tag, which must match package.json;
 #   - a manual run, which releases v<package.json version> from the chosen
@@ -16,7 +16,7 @@ name: Release
 # an app release. The gate job below decides, and says why in the run summary
 # either way.
 #
-# The version is a patch bump per app merge — see .github/scripts/next-version.mts
+# The version is a patch bump per app merge - see .github/scripts/next-version.mts
 # for the exact rule and test/next-version.test.mts for what it guarantees. To
 # ship a minor or a major instead, set it in package.json and merge; a version
 # that has never been tagged is taken as deliberate and released as written.
@@ -85,7 +85,7 @@ jobs:
           # between them. What sits on the far side depends on why this ran.
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             # Someone pressed Run workflow, which means "ship what is sitting
-            # here unreleased" — so compare against the newest release, not
+            # here unreleased" - so compare against the newest release, not
             # against one push. This is how app changes that landed before this
             # workflow existed, or during a spell when it was failing, get out.
             BASE=$(node .github/scripts/next-version.mts --highest)
@@ -98,13 +98,13 @@ jobs:
                 echo "version=${NEXT% *}"
                 echo "bump=${NEXT#* }"
               } >> "$GITHUB_OUTPUT"
-              echo "Releasing v${NEXT% *} — the first release of this app." >> "$GITHUB_STEP_SUMMARY"
+              echo "Releasing v${NEXT% *} - the first release of this app." >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
           else
             # A push to main: compare against what main was before it. A
             # force-push or a first push leaves no usable "before", so fall back
-            # to the first parent — for a merge commit that is main's previous
+            # to the first parent - for a merge commit that is main's previous
             # tip, which is the same answer.
             if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
                || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
@@ -122,8 +122,8 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE" "$GITHUB_SHA")
 
           # What the desktop app is built from. Everything else in the
-          # repository — website/, supabase/, .design-sync/, .design-canvas/,
-          # the workflows and their scripts, the README — ships without a new
+          # repository - website/, supabase/, .design-sync/, .design-canvas/,
+          # the workflows and their scripts, the README - ships without a new
           # executable.
           APP='^(src/|assets/|scripts/|package\.json$|package-lock\.json$|electron\.vite\.config\.ts$|tsconfig[^/]*\.json$)'
           APP_CHANGED=$(printf '%s\n' "$CHANGED" | grep -E "$APP" || true)
@@ -131,7 +131,7 @@ jobs:
           if [ -z "$APP_CHANGED" ]; then
             echo "release=false" >> "$GITHUB_OUTPUT"
             {
-              echo "### No release — the app has not changed"
+              echo "### No release - the app has not changed"
               echo
               echo "Nothing $SINCE touched a file the desktop app is built from, so the existing v$PKG build still matches what is here."
               echo
@@ -164,7 +164,7 @@ jobs:
           {
             echo "### Releasing v$VERSION"
             echo
-            echo "The app changed $SINCE, so this ships as v$VERSION — $WHY."
+            echo "The app changed $SINCE, so this ships as v$VERSION - $WHY."
             echo
             echo "<details><summary>App files changed $SINCE</summary>"
             echo
@@ -222,7 +222,7 @@ jobs:
 
       # The same checks CI runs, before anything is published under a version
       # number people will install. None of them depend on the version, so they
-      # run before it is written — a failure here leaves main untouched.
+      # run before it is written - a failure here leaves main untouched.
       - name: Formatting
         run: npm run format:check
 
@@ -237,7 +237,7 @@ jobs:
       # only caught up to it afterwards.
       #
       # A tag push, or a manual run off some other branch, still needs the
-      # version in place for electron-builder to stamp into the executables —
+      # version in place for electron-builder to stamp into the executables -
       # just not committed to a branch it did not come from.
       - name: Set the version for the build
         if: env.BUMP == 'true' && github.ref != 'refs/heads/main'
@@ -286,7 +286,7 @@ jobs:
           if [ -s notes.md ]; then
             echo "args=--notes-file notes.md" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::No CHANGELOG.md section for $TAG — publishing with an empty body, which the app's update window skips."
+            echo "::notice::No CHANGELOG.md section for $TAG - publishing with an empty body, which the app's update window skips."
             echo 'args=--notes ""' >> "$GITHUB_OUTPUT"
           fi
 

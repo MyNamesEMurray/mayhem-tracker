@@ -8,7 +8,7 @@
 //
 // The list below is deliberately short: utilities that are also plain words a
 // comment might reach for, and which have a natural synonym. Words with no
-// good alternative in technical prose — border, flex, grid, table — are left
+// good alternative in technical prose - border, flex, grid, table - are left
 // out on purpose, because a guard that cries wolf gets deleted.
 
 import { describe, test } from "node:test";
@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 // fileURLToPath, not .pathname: on Windows a file:// URL's pathname is
 // "/D:/a/..." with a leading slash, and joining that against the working
-// directory produces "D:\D:\a\..." — which is how this first ran on a Windows
+// directory produces "D:\D:\a\..." - which is how this first ran on a Windows
 // runner, and only there, since the app is built on one but tested on Linux.
 const SHARED_UI = fileURLToPath(new URL("../src/shared/ui/", import.meta.url));
 const THEME = fileURLToPath(new URL("../src/shared/theme.css", import.meta.url));
@@ -73,7 +73,7 @@ describe("shared component comments do not mint CSS rules", () => {
         found.length
           ? `${path.basename(file)}: a comment uses ${found
               .map((w) => `"${w}" (try ${SUGGEST[w]})`)
-              .join(", ")} — Tailwind reads comments, so this ships a real rule`
+              .join(", ")} - Tailwind reads comments, so this ships a real rule`
           : "",
       );
     });

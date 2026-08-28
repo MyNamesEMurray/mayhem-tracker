@@ -345,7 +345,7 @@ function createTables() {
     setSetting("augment_slots", String(AUGMENT_SLOTS));
   }
 
-  // Imported games never upload to community stats — only games fetched
+  // Imported games never upload to community stats - only games fetched
   // from the player's own client are trusted as authentic (data-poisoning
   // hardening; imports remain fully usable locally).
   {
@@ -599,13 +599,13 @@ function extractParticipants(raw: any): ParticipantRow[] {
   });
 }
 
-// Extended fields exist only in the LCU shape — NULL (not zero) when absent
+// Extended fields exist only in the LCU shape - NULL (not zero) when absent
 function num(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
 // Score every participant in place with the current formula and champion
-// classes. Not called for remakes — their scores stay null.
+// classes. Not called for remakes - their scores stay null.
 function scoreParticipants(rows: ParticipantRow[]) {
   const scores = computeMatchScores(
     rows.map((r) => ({
@@ -727,7 +727,7 @@ function replaceParticipantRows(gameId: number, rows: ParticipantRow[]) {
 }
 
 // One-time migration: fill the participants tables from every stored
-// raw_json. Scores are left null — the startup score backfill computes them
+// raw_json. Scores are left null - the startup score backfill computes them
 // once champion class data is available.
 function backfillParticipants() {
   const games = db
@@ -778,7 +778,7 @@ export function checkScoreBackfill(): boolean {
 }
 
 // Recompute every stored score (all participants plus the owner's
-// player_stats row) from the participants tables — no raw_json parsing.
+// player_stats row) from the participants tables - no raw_json parsing.
 function backfillScores() {
   const games = db
     .prepare(`
@@ -1420,7 +1420,7 @@ export function gameExists(gameId: number): boolean {
   return !!row;
 }
 
-// Every game id we've already made a decision about — stored or deliberately
+// Every game id we've already made a decision about - stored or deliberately
 // skipped. One query beats a lookup per id when a backfill checks hundreds.
 export function getKnownGameIds(): Set<number> {
   const rows = db
@@ -1535,7 +1535,7 @@ export function getAllPuuids(): string[] {
   return rows.map((r) => r.puuid);
 }
 
-// Someone we queued with once is a stranger, not a friend — the list only
+// Someone we queued with once is a stranger, not a friend - the list only
 // counts players we've shared at least this many games with.
 const MIN_SHARED_GAMES = 2;
 
@@ -1549,7 +1549,7 @@ function participantDisplayName(row: {
   return `Player ${row.participant_id}`;
 }
 
-// The id the Friends list keys a teammate on — puuid when we know it, so name
+// The id the Friends list keys a teammate on - puuid when we know it, so name
 // changes don't split a player in two.
 function teammateKey(entry: { puuid: string | null; name: string }): string {
   return entry.puuid || entry.name;
@@ -1755,7 +1755,7 @@ export function getTeammateDetail(key: string): { player: any; matches: any[] } 
     });
     const entry = { puuid: row.f_puuid as string | null, name };
     // Older games can be missing puuids; once we know who we're looking at,
-    // match those on name too — the same merge the Friends list does.
+    // match those on name too - the same merge the Friends list does.
     const isMatch =
       teammateKey(entry) === key ||
       (player.games > 0 && entry.puuid == null && entry.name === player.name);
@@ -1914,7 +1914,7 @@ export interface PendingUploadGame {
 }
 
 // The next batch of games for the anonymous community upload. Identity
-// columns (puuid, names, icons) are deliberately never selected here — this
+// columns (puuid, names, icons) are deliberately never selected here - this
 // is the complete set of data that leaves the machine.
 export function getPendingUploadGames(limit: number): PendingUploadGame[] {
   const games = db
@@ -2008,7 +2008,7 @@ export function getUploadCounts(): { uploaded: number; rejected: number; pending
   return { uploaded: uploaded.c, rejected: rejected.c, pending: pending.c };
 }
 
-// Forget what was uploaded, so a future opt-in starts a fresh full upload —
+// Forget what was uploaded, so a future opt-in starts a fresh full upload -
 // used after the user deletes their remote contributions.
 export function clearUploadMarks(): void {
   db.prepare("DELETE FROM uploaded_games").run();
@@ -2164,7 +2164,7 @@ function rebuildDerivedStats(): number {
   });
   tx();
 
-  // Stamp the startup-backfill keys — the rebuild just did their work
+  // Stamp the startup-backfill keys - the rebuild just did their work
   setSetting("score_formula_version", scoreFormulaKey());
   setSetting("augment_slots", String(AUGMENT_SLOTS));
   setSetting("participants_version", PARTICIPANTS_SCHEMA_VERSION);
@@ -2213,7 +2213,7 @@ export function repairPuuids(): {
   // Step 2: Sort puuids by frequency (most games first)
   const sortedPuuids = Array.from(puuidToGames.entries()).sort((a, b) => b[1].size - a[1].size);
 
-  // Step 3: Greedily identify user accounts — a puuid is a user account if it
+  // Step 3: Greedily identify user accounts - a puuid is a user account if it
   // never co-occurs in the same game as an already-identified user account.
   // This filters out friends (who always appear alongside a user account)
   // while correctly identifying alt accounts (which never share a game).

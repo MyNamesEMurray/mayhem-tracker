@@ -12,7 +12,7 @@ export const PROFILE_ICON_URL = (id: number): string =>
 export const AUGMENT_ICON_BASE = "https://raw.communitydragon.org/latest/game/";
 
 // A CommunityDragon game-data icon path (as it appears in items.json or
-// cherry-augments.json) as a raw asset URL on the given branch — "latest",
+// cherry-augments.json) as a raw asset URL on the given branch - "latest",
 // "pbe", or a client patch like "16.14".
 export const CDRAGON_ASSET_URL = (branch: string, iconPath: string): string =>
   `https://raw.communitydragon.org/${branch}/game/${iconPath

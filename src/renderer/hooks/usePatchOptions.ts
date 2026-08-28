@@ -10,7 +10,7 @@ import type { StatsSource } from "../components/SourceSwitch";
 // This used to live inside the old single-patch dropdown, which fetched the
 // local list itself and took the community one as a prop. The range picker is
 // shared with the website and holds no state, so the list is the page's to
-// supply — and the page is where the source is known anyway.
+// supply - and the page is where the source is known anyway.
 export function usePatchOptions(source: StatsSource): string[] {
   const [patches, setPatches] = useState<string[]>([]);
 

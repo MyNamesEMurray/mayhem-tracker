@@ -1,14 +1,14 @@
 // The scoring methodology, under test.
 //
 // Two things are checked here. First, that the formula still produces the
-// numbers the source comments and the website's /about/ page promise readers —
+// numbers the source comments and the website's /about/ page promise readers -
 // Score is the floor of a 95% Wilson interval, and the whole point of it is
 // that sample size moves the number on its own.
 //
 // Second, that the site still reaches for this module rather than a copy of
 // it. The maths lived in two files until src/shared/score.ts merged them, and
 // the last suite asserts website/src/lib/stats.ts re-exports these exact
-// functions — identity, not equality — so a re-fork fails here rather than
+// functions - identity, not equality - so a re-fork fails here rather than
 // shipping as a champion that is A-tier on one surface and B on the other.
 
 import { describe, test } from "node:test";
@@ -41,7 +41,7 @@ const RECORDS: [wins: number, games: number][] = [
   [1584, 2635],
 ];
 
-describe("score — the Wilson lower bound", () => {
+describe("score - the Wilson lower bound", () => {
   // Both figures are quoted in the source comments and on the site.
   test("a perfect 5-0 scores 56.6, because five games cannot rule out a coin flip", () => {
     assert.equal(score(5, 5).toFixed(1), "56.6");
@@ -68,7 +68,7 @@ describe("score — the Wilson lower bound", () => {
     }
   });
 
-  test("never exceeds the raw win rate — it is a floor, not an estimate", () => {
+  test("never exceeds the raw win rate - it is a floor, not an estimate", () => {
     for (const [wins, games] of RECORDS) {
       if (games <= 0) continue;
       const rate = (wins / games) * 100;
@@ -83,13 +83,13 @@ describe("score — the Wilson lower bound", () => {
     }
   });
 
-  test("an even record scores below 50 — a coin flip proves nothing", () => {
+  test("an even record scores below 50 - a coin flip proves nothing", () => {
     assert.ok(score(50, 100) < 50);
     assert.ok(score(5000, 10000) < 50);
   });
 });
 
-describe("assignTiers — rank percentiles within a cohort", () => {
+describe("assignTiers - rank percentiles within a cohort", () => {
   // 20 champions, descending strength, deliberately out of order on input.
   const cohort = Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
@@ -142,7 +142,7 @@ describe("assignTiers — rank percentiles within a cohort", () => {
 
   // The top cutoff is the 5th percentile, so the best entry only reaches S+
   // when 1/n <= 0.05. This is why a rarity holding three or four augments
-  // never shows an S+ — noted in .design-sync/NOTES.md against AugmentsTable.
+  // never shows an S+ - noted in .design-sync/NOTES.md against AugmentsTable.
   test("a cohort smaller than twenty has no S+ at all", () => {
     for (const n of [3, 12, 19]) {
       const small = Array.from({ length: n }, (_, i) => ({ id: i, wins: 300 - i, games: 500 }));
@@ -163,7 +163,7 @@ describe("assignTiers — rank percentiles within a cohort", () => {
   });
 });
 
-describe("rankForBuild — what a build entry has to earn", () => {
+describe("rankForBuild - what a build entry has to earn", () => {
   const items = [
     { id: 1, picks: 5, wins: 5 }, // perfect, but thin
     { id: 2, picks: 300, wins: 174 }, // 58% over hundreds
@@ -189,11 +189,11 @@ describe("rankForBuild — what a build entry has to earn", () => {
     assert.ok(!rank(5, 10).includes(3));
   });
 
-  test("keeps an exactly-even record — the test is 'not losing'", () => {
+  test("keeps an exactly-even record - the test is 'not losing'", () => {
     assert.ok(rank(5, 10).includes(5));
   });
 
-  // Ranking is by Score, not by raw rate — but Score is a confidence floor, so
+  // Ranking is by Score, not by raw rate - but Score is a confidence floor, so
   // "more evidence wins" only holds once the evidence is genuinely decisive.
   // A perfect 5-0 scores 56.6; 58% does not overtake it until roughly 4,500
   // games. These two tests pin both halves of that, so a future change to the
@@ -217,7 +217,7 @@ describe("rankForBuild — what a build entry has to earn", () => {
     const ranked = rank(5, 10);
     assert.ok(
       ranked.indexOf(1) < ranked.indexOf(2),
-      "58% over 300 scores 52.4 against the 5-0's 56.6 — it needs ~4,500 games to overtake it",
+      "58% over 300 scores 52.4 against the 5-0's 56.6 - it needs ~4,500 games to overtake it",
     );
   });
 

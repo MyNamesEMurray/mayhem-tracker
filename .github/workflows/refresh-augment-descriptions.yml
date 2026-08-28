@@ -14,7 +14,7 @@ name: Refresh augment descriptions
 #
 # So this runs the generator daily and opens a pull request on the days the
 # text actually changes, which in practice means a patch moved the augment
-# pool. It deliberately doesn't push to main on its own — the text is player-
+# pool. It deliberately doesn't push to main on its own - the text is player-
 # visible and comes from an upstream nobody here controls, so a human reads the
 # diff first. Quiet days finish in under a minute having done nothing.
 #
@@ -82,7 +82,7 @@ jobs:
           # titled "refresh" is the kind that gets merged unread, so a collapse
           # fails the run instead of becoming a diff to review.
           if [ "$NOW_COUNT" -lt $((WAS_COUNT * 4 / 5)) ]; then
-            echo "::error::Described augments fell from $WAS_COUNT to $NOW_COUNT. Refusing to open a pull request — re-run once the upstream data has settled."
+            echo "::error::Described augments fell from $WAS_COUNT to $NOW_COUNT. Refusing to open a pull request - re-run once the upstream data has settled."
             exit 1
           fi
 
@@ -95,7 +95,7 @@ jobs:
 
           if git diff --quiet -- "$FILE"; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Descriptions are unchanged on patch $NOW_PATCH — nothing to do."
+            echo "Descriptions are unchanged on patch $NOW_PATCH - nothing to do."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi

@@ -1,12 +1,12 @@
 import type { AugmentStatRow, AugmentTotalRow, ChampionStatRow } from "./api";
 
 // Score, tiers and the sample-size floors live in src/shared/score.ts, which
-// the desktop app imports from too — the site's build root is website/, but
+// the desktop app imports from too - the site's build root is website/, but
 // the repository is checked out whole, so the import resolves in dev, in the
 // production build, and in the prerender pass alike. Re-exported here so the
 // call sites below and in components/ keep importing from one place.
 //
-// Written with the .ts extension so plain Node resolves it too — Vite and tsc
+// Written with the .ts extension so plain Node resolves it too - Vite and tsc
 // are happy either way, but test/stats.test.mts loads this file directly to
 // check the re-export still points at the shared module.
 export {
@@ -160,7 +160,7 @@ export function augmentChampionBreakdown(
 // Per-augment breakdown of one champion (for expanded champion rows)
 // These breakdowns rank by confidence score, not by how often something was
 // built. Sorting by picks put the most *popular* entry at the top of a list
-// that reads as "what works" — a different question, and one the pick count
+// that reads as "what works" - a different question, and one the pick count
 // in each row already answers.
 export function championAugmentBreakdown(
   rows: AugmentStatRow[],
@@ -201,7 +201,7 @@ export function championItemBreakdown(
 const EXCLUDED_ITEM_IDS = new Set([2052, 220013]);
 
 // Typical build path: items merged across the filtered patches with a
-// picks-weighted average first-buy time — sorting by that time reads as the
+// picks-weighted average first-buy time - sorting by that time reads as the
 // order the champion usually builds in.
 export function championBuildPath(
   rows: import("./api").ItemPurchaseRow[],

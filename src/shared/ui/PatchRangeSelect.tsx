@@ -1,8 +1,8 @@
 import { comparePatches, formatPatch, type PatchSelection } from "../patch";
 
 // The patch filter both surfaces use: current patch, every patch, or a span
-// between two of them. It holds no state of its own — the site keeps its
-// selection in the URL so a range can be linked to, the app keeps its own —
+// between two of them. It holds no state of its own - the site keeps its
+// selection in the URL so a range can be linked to, the app keeps its own -
 // so both hand in a selection and get one back.
 //
 // Patches arrive newest first, as availablePatches and getMatchFilterOptions
@@ -22,7 +22,7 @@ export default function PatchRangeSelect({
 
   // A shared link, or a local database that has since dropped a patch, can
   // name an end that is not in this list. A dropdown whose value matches no
-  // option renders blank, so show the nearest end that does exist — which is
+  // option renders blank, so show the nearest end that does exist - which is
   // also the end the filter itself resolves to.
   const shown = (patch: string, fallback: string) => (patches.includes(patch) ? patch : fallback);
 
@@ -45,8 +45,8 @@ export default function PatchRangeSelect({
   };
 
   // Three controls on one row is the whole trick. The mode dropdown shrinks to
-  // "Range" once a range is live — its long label only matters while you are
-  // choosing — which buys back the width for the two patch dropdowns to sit
+  // "Range" once a range is live - its long label only matters while you are
+  // choosing - which buys back the width for the two patch dropdowns to sit
   // beside it at phone widths rather than wrapping onto a row of their own.
   return (
     <div className={`flex items-center gap-1.5 min-w-0 ${isRange ? "max-[560px]:w-full" : ""}`}>

@@ -44,8 +44,8 @@ function SettingRow({
 
 // Contributor ID: the only handle a person has on what they've shared.
 //
-// It is a bearer credential — whoever holds it can withdraw those games or
-// contribute under them — so it's masked until asked for, revealed for a
+// It is a bearer credential - whoever holds it can withdraw those games or
+// contribute under them - so it's masked until asked for, revealed for a
 // short while, and copyable without ever being shown. A streamer shouldn't
 // have to think about it.
 function ContributorId() {
@@ -89,7 +89,7 @@ function ContributorId() {
     }
     setEntry("");
     setShowEntry(false);
-    setStatus("ID restored — this install's games will re-upload under it.");
+    setStatus("ID restored - this install's games will re-upload under it.");
     refresh();
   };
 
@@ -98,7 +98,7 @@ function ContributorId() {
       "Generate a new contributor ID?\n\n" +
         "Everything you've contributed will be withdrawn from the community " +
         "database first, then re-uploaded under the new ID. The old ID stops " +
-        "working — anyone holding it can no longer touch your games.\n\n" +
+        "working - anyone holding it can no longer touch your games.\n\n" +
         "This can take a few minutes if you've contributed a lot.",
     );
     if (!ok) return;
@@ -132,12 +132,12 @@ function ContributorId() {
     <>
       <SettingRow
         name="Contributor ID"
-        description="Your only handle on the games you've shared — save it somewhere. Entering it on another machine carries your contributions across; without it, a new install counts as a new contributor and your old games can't be withdrawn."
+        description="Your only handle on the games you've shared - save it somewhere. Entering it on another machine carries your contributions across; without it, a new install counts as a new contributor and your old games can't be withdrawn."
       >
         <div className="flex items-center gap-2">
           <button
             onClick={() => setRevealed((v) => !v)}
-            title={revealed ? "Hide" : "Click to reveal — treat it like a password"}
+            title={revealed ? "Hide" : "Click to reveal - treat it like a password"}
             className="font-mono text-[12px] px-2.5 py-1.5 rounded-lg border border-lol-border bg-lol-dark text-lol-text-bright hover:border-lol-gold/40 cursor-pointer min-w-[290px] text-left"
           >
             {revealed ? id : masked}
@@ -301,7 +301,7 @@ export default function Settings() {
       `end-of-game id seen: ${snap.sync.lastEogGameId || "none"}`,
       `last UI notify ${ago(snap.sync.lastNotifyAt)}; skipped with no window: ${snap.sync.notifySkippedNoWindow}`,
       `this window received ${eventTrace.gamesUpdated} update event(s), last ${ago(eventTrace.lastAt)}`,
-      `uploads: ${snap.upload.uploaded} done, ${snap.upload.pending} pending${snap.upload.lastError ? ` — ${snap.upload.lastError}` : ""}`,
+      `uploads: ${snap.upload.uploaded} done, ${snap.upload.pending} pending${snap.upload.lastError ? ` - ${snap.upload.lastError}` : ""}`,
       `stored games: ${snap.storage.totalGames} (owner ${String(snap.storage.ownerPuuid).slice(0, 8)}…)`,
       ...snap.storage.newest.map(
         (g: any) =>
@@ -447,7 +447,7 @@ export default function Settings() {
             name="Start with Windows"
             description={
               startup?.supported === false
-                ? "Available in the installed and portable builds — not when running from source"
+                ? "Available in the installed and portable builds - not when running from source"
                 : "Launch MayhemStats Tracker to the tray when you sign in, so games are recorded without opening it first"
             }
           >
@@ -481,7 +481,7 @@ export default function Settings() {
         <Panel label="Community stats">
           <SettingRow
             name="Share match data with mayhemstats.com"
-            description="Opt in to the community database behind the global augment and champion stats — only champions, augments, items, and combat stat lines are sent, nothing that identifies a player"
+            description="Opt in to the community database behind the global augment and champion stats - only champions, augments, items, and combat stat lines are sent, nothing that identifies a player"
           >
             <Toggle
               checked={uploadStatus?.enabled ?? false}
@@ -496,7 +496,7 @@ export default function Settings() {
                 : `${uploadStatus.uploaded} game(s) contributed${
                     uploadStatus.pending > 0 ? `, ${uploadStatus.pending} pending` : ""
                   }`}
-              {uploadStatus.lastError ? ` — ${uploadStatus.lastError}` : ""}
+              {uploadStatus.lastError ? ` - ${uploadStatus.lastError}` : ""}
             </p>
           )}
           <SettingRow
@@ -515,7 +515,7 @@ export default function Settings() {
       <Panel label="Data">
         <SettingRow
           name="Backfill match history"
-          description="Pull your older Mayhem games from Riot and add any that aren't stored yet — runs automatically the first time an account connects"
+          description="Pull your older Mayhem games from Riot and add any that aren't stored yet - runs automatically the first time an account connects"
         >
           <button onClick={handleBackfill} disabled={backfilling} className={BUTTON_PRIMARY}>
             {backfilling ? "Working..." : "Backfill"}
@@ -555,7 +555,7 @@ export default function Settings() {
         <Panel label="Developer">
           <SettingRow
             name="Sync diagnostics"
-            description="What the app has actually recorded and announced — useful when games seem to be missing"
+            description="What the app has actually recorded and announced - useful when games seem to be missing"
           >
             <button onClick={handleDiagnostics} className={BUTTON_SECONDARY}>
               {diagnostics ? "Refresh" : "Show"}
@@ -576,7 +576,7 @@ export default function Settings() {
           )}
           <SettingRow
             name="Record live game data"
-            description="While enabled, polls the League client's live-data API every 2 seconds during games and saves raw snapshots to local files — debug only, nothing is uploaded"
+            description="While enabled, polls the League client's live-data API every 2 seconds during games and saves raw snapshots to local files - debug only, nothing is uploaded"
           >
             <Toggle
               checked={liveDebug?.enabled ?? false}
@@ -602,7 +602,7 @@ export default function Settings() {
           </SettingRow>
           <SettingRow
             name="Hide developer options"
-            description="Tuck this panel away again — Ctrl+Shift+D brings it back"
+            description="Tuck this panel away again - Ctrl+Shift+D brings it back"
           >
             <button
               onClick={async () => {

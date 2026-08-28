@@ -1,8 +1,8 @@
 import { ItemIcon } from "mayhem-tracker";
 
 // The component takes a resolved item rather than a lookup table: each surface
-// resolves it differently — the app against the patch a game was played on,
-// the site against the latest — and the drawing is what they share. Icon paths
+// resolves it differently - the app against the patch a game was played on,
+// the site against the latest - and the drawing is what they share. Icon paths
 // are real CommunityDragon paths, so the art loads at runtime.
 const RABADONS = {
   itemId: 3089,

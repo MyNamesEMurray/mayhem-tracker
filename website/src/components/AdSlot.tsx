@@ -18,7 +18,7 @@ export default function AdSlot({ slot }: { slot: string }) {
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
-      // Blocked or not yet loaded — the unit simply stays empty
+      // Blocked or not yet loaded - the unit simply stays empty
     }
   }, [slot]);
 

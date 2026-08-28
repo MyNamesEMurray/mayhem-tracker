@@ -9,7 +9,7 @@ import { getSetting } from "./db";
 // Debug recorder for Riot's Live Client Data API. While enabled it probes
 // https://127.0.0.1:2999 (only up during an active game) and, once a game is
 // found, snapshots the full /allgamedata payload every couple of seconds
-// into a gzipped JSONL file. Raw and local-only — nothing derived, nothing
+// into a gzipped JSONL file. Raw and local-only - nothing derived, nothing
 // uploaded. The point is to capture everything the API exposes for a real
 // game so item purchase order (and whatever else shows up, e.g. augment
 // state) can be designed against actual data.
@@ -113,7 +113,7 @@ async function probe() {
     const data = await fetchLive();
     startRecording(data);
   } catch {
-    // No game running — keep probing
+    // No game running - keep probing
   }
 }
 

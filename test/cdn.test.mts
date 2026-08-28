@@ -25,7 +25,7 @@ describe("asset paths", () => {
     );
   });
 
-  test("the branch is whatever the caller resolved — a patch, pbe or latest", () => {
+  test("the branch is whatever the caller resolved - a patch, pbe or latest", () => {
     const path = "/lol-game-data/assets/ASSETS/Items/Icons2D/3153.png";
     assert.ok(CDRAGON_ASSET_URL("16.14", path).includes("/16.14/game/"));
     assert.ok(CDRAGON_ASSET_URL("pbe", path).includes("/pbe/game/"));

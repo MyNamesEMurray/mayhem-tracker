@@ -1,7 +1,7 @@
 name: Test Build
 
 # Builds the Windows exes from any branch and uploads them as workflow
-# artifacts — no release, no tag, invisible to the in-app updater. For
+# artifacts - no release, no tag, invisible to the in-app updater. For
 # trying out dev branches before merging.
 on:
   workflow_dispatch: {}

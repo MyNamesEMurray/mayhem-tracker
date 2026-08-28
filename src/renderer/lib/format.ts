@@ -4,8 +4,8 @@ import { KDA_RAMP, rampClass, SCORE_RAMP } from "../../shared/format";
 export { formatWhole } from "../../shared/format";
 export { formatPatch } from "../../shared/patch";
 
-// Per-game averages. K/D/A-sized numbers carry one decimal — always, so a
-// column reads 13.6 / 12.5 / 14.0 rather than 13.6 / 12.5 / 14 — and the big
+// Per-game averages. K/D/A-sized numbers carry one decimal - always, so a
+// column reads 13.6 / 12.5 / 14.0 rather than 13.6 / 12.5 / 14 - and the big
 // ones (damage, gold) are whole with separators.
 //
 // Both stat sources round at the source (SQL ROUND in db.ts, and the same
@@ -24,7 +24,7 @@ export function kdaRatio(kills: number, deaths: number, assists: number): string
   return ((kills + assists) / deaths).toFixed(2);
 }
 
-// The performance ramp, from src/shared/format.ts — the same one the site
+// The performance ramp, from src/shared/format.ts - the same one the site
 // colours its KDA column with.
 export function kdaColor(ratio: number): string {
   return rampClass(ratio, KDA_RAMP);

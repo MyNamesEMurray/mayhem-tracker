@@ -1,6 +1,6 @@
 name: Checks
 
-# Typechecks the desktop app, runs the scoring tests, and builds the website —
+# Typechecks the desktop app, runs the scoring tests, and builds the website -
 # on every push and pull request. Before this existed, only the website was
 # verified: its build runs `tsc --noEmit` with unused-symbol checks on, while
 # the app's `electron-vite build` transpiles through esbuild and never
@@ -8,10 +8,10 @@ name: Checks
 # renderer page without anything noticing.
 #
 # The formatting check covers the whole repository, the website and the
-# Supabase edge functions included — nothing else builds those, so this is the
+# Supabase edge functions included - nothing else builds those, so this is the
 # only thing that looks at them at all.
 #
-# Deliberately does NOT build the Windows executables — that costs a Windows
+# Deliberately does NOT build the Windows executables - that costs a Windows
 # runner and several minutes, and `test-build` already does it on demand.
 on:
   push:
@@ -27,12 +27,12 @@ concurrency:
 
 jobs:
   # On both platforms, because the app ships on Windows. Testing it only on
-  # Linux let a test build a path by concatenating a file:// URL's pathname —
+  # Linux let a test build a path by concatenating a file:// URL's pathname -
   # fine everywhere except the one operating system anyone runs this on, where
   # it produced "D:\D:\a\...". The release job builds on Windows and would
   # eventually have caught it, but failing a release is a slow way to hear it.
   app:
-    name: App — format, typecheck & tests (${{ matrix.os }})
+    name: App - format, typecheck & tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -66,7 +66,7 @@ jobs:
         run: npm test
 
   website:
-    name: Website — typecheck & build
+    name: Website - typecheck & build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

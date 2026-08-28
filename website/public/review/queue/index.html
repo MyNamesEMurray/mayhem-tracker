@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="referrer" content="no-referrer" />
-    <title>Review queue — MayhemStats</title>
+    <title>Review queue - MayhemStats</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <style>
@@ -200,7 +200,7 @@
         });
       }
 
-      // "381k damage taken in 1365s" — the number is per game, so group by the
+      // "381k damage taken in 1365s" - the number is per game, so group by the
       // limit that tripped rather than by the exact reason string
       function category(reason) {
         if (reason.indexOf("damage taken") >= 0) return "damage taken";
@@ -399,8 +399,8 @@
           if (list.length === 0) {
             ptext.innerHTML =
               failures.length === 0
-                ? '<span class="ok">Done — ' + okCount + " " + decision + "d.</span>"
-                : '<span class="warn">Done — ' +
+                ? '<span class="ok">Done - ' + okCount + " " + decision + "d.</span>"
+                : '<span class="warn">Done - ' +
                   okCount +
                   " " +
                   decision +
@@ -423,7 +423,7 @@
               okCount += (d.ok || []).length;
               (d.failed || []).forEach(function (f) {
                 failures.push(f);
-                log("failed " + f.id.slice(0, 8) + "… — " + f.error, "err");
+                log("failed " + f.id.slice(0, 8) + "… - " + f.error, "err");
               });
               if ((d.skipped || []).length > 0) {
                 log(d.skipped.length + " already handled, skipped");
@@ -433,7 +433,7 @@
               batch.forEach(function (b) {
                 failures.push({ id: b.id, error: err.message });
               });
-              log("batch failed — " + err.message, "err");
+              log("batch failed - " + err.message, "err");
             })
             .then(function () {
               done += batch.length;

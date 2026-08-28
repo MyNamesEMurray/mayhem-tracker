@@ -144,10 +144,10 @@ export default function Overview() {
   const totalGames = dashboard?.totalGames ?? 0;
   const wins = dashboard?.wins ?? 0;
   const losses = totalGames - wins;
-  const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) + "%" : "—";
+  const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) + "%" : "-";
   const kda = dashboard
     ? kdaRatio(dashboard.totalKills, dashboard.totalDeaths, dashboard.totalAssists)
-    : "—";
+    : "-";
   const avg = (total: number) => (totalGames > 0 ? (total / totalGames).toFixed(1) : "0");
 
   // Ticks the minute counter below while the window stays open
@@ -281,7 +281,7 @@ function RecentMatchRow({
     >
       <ChampionIcon championId={m.champion_id} size={38} />
       {/* 130px cut the line short at every window size, and what it cut was
-          always the end — when the game was played. Sized to fit that line and
+          always the end - when the game was played. Sized to fit that line and
           allowed to grow with the window, with the full text on hover as a
           backstop for the rare long form (a game from a previous year). */}
       <div className="w-[clamp(245px,16vw,270px)] shrink-0">
@@ -331,7 +331,7 @@ function RecentMatchRow({
             <span className="text-[11px] text-lol-text"> / 10</span>
           </>
         ) : (
-          <span className="text-[11px] text-lol-text">{isRemake ? "Remake" : "—"}</span>
+          <span className="text-[11px] text-lol-text">{isRemake ? "Remake" : "-"}</span>
         )}
       </div>
     </button>

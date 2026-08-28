@@ -3,11 +3,11 @@
 // Two ways in, one pipeline:
 //
 //   * Per-game links in the digest email. Each link carries an action-bound
-//     key — sha256(review_secret:id:action) — so it authorizes exactly one
+//     key - sha256(review_secret:id:action) - so it authorizes exactly one
 //     action on one game and nothing else. Unchanged.
 //   * A review queue at mayhemstats.com/review/queue/, for working through a
 //     backlog the digest would take weeks to walk 20 games at a time. It
-//     authenticates with an expiring key — sha256(review_secret:admin:exp) —
+//     authenticates with an expiring key - sha256(review_secret:admin:exp) -
 //     minted by hand and good until the exp it was minted with.
 //
 // The review_secret never leaves the server in either case. Every action is
@@ -199,7 +199,7 @@ async function approveRows(supabase: any, rows: any[]) {
       };
   }
 
-  // Only after every row is safely stored — a quarantine row still marked
+  // Only after every row is safely stored - a quarantine row still marked
   // pending can be retried, one marked approved without its data cannot.
   if (ok.length > 0) {
     const upd = await supabase

@@ -1,9 +1,9 @@
 /* The MayhemStats design tokens and base controls, shared by the desktop app
  * and mayhemstats.com.
  *
- * Both surfaces used to declare all of this separately — the same eleven
+ * Both surfaces used to declare all of this separately - the same eleven
  * colour tokens, the same select and input, the same focus halo, the same
- * scrollbar — and the copies had drifted: a control was 14px in the app and
+ * scrollbar - and the copies had drifted: a control was 14px in the app and
  * 13px on the site, with different horizontal padding. Import this instead,
  * after `@import "tailwindcss"`, and add only what is genuinely local to a
  * surface (window chrome for the app, the responsive stat tables for the
@@ -14,7 +14,7 @@
 
 /* The shared components live outside both surfaces' own source trees, so
  * neither build's automatic source detection finds them and every class they
- * use — the tier palette, the rate meter, the tooltip — would be dropped from
+ * use - the tier palette, the rate meter, the tooltip - would be dropped from
  * both bundles. Declared here rather than in each global.css so it cannot be
  * added to one surface and forgotten on the other. Resolved relative to this
  * file. */
@@ -54,7 +54,7 @@ body {
 
 @layer components {
   /* Selects are sized by their class, never by the option that happens to be
-     chosen — otherwise picking a filter nudges everything beside it. Pick the
+     chosen - otherwise picking a filter nudges everything beside it. Pick the
      size that fits the longest option; long values ellipsize instead of
      widening the control. Any new dropdown on either surface follows this. */
   .select {

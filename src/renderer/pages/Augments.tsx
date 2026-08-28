@@ -37,8 +37,8 @@ export default function Augments() {
     () => patchesIn(patchSelection, patchOptions),
     [patchSelection, patchOptions],
   );
-  // The community pool has no per-augment champion breakdown up front — that
-  // grain is 341k rows — so those rows arrive per augment, on expand.
+  // The community pool has no per-augment champion breakdown up front - that
+  // grain is 341k rows - so those rows arrive per augment, on expand.
   const { data, error, refetch } = useIpc<AugmentStatsDetailed[]>(
     () =>
       source === "community"
@@ -52,7 +52,7 @@ export default function Augments() {
   // augment picks (÷4, one per augment slot) looked right and wasn't: it
   // counts participant slots rather than games, and undercounts even those,
   // because a player who took three augments contributes three picks. Reading
-  // the champion rows — exactly what the Champions tab sums — makes the two
+  // the champion rows - exactly what the Champions tab sums - makes the two
   // tabs agree by construction instead of by coincidence.
   const { data: championRows } = useIpc<ChampionStats[]>(
     () =>
@@ -73,7 +73,7 @@ export default function Augments() {
     return unsub;
   }, [refetch]);
 
-  // Tiers rank each augment against its own rarity — Prismatics are strictly
+  // Tiers rank each augment against its own rarity - Prismatics are strictly
   // stronger than Silvers, so one global ranking would just sort by rarity.
   // Assigned over the unfiltered list so searching never reshuffles a badge.
   const tiers = useMemo(() => {
@@ -106,7 +106,7 @@ export default function Augments() {
   }, [data, augmentData]);
 
   // The app's queue dropdown treats an empty selection as every queue, and
-  // hides itself entirely while only one queue has data — in which case that
+  // hides itself entirely while only one queue has data - in which case that
   // one queue is what's on screen
   const queueLabel = queue == null ? "All Queues" : (QUEUE_LABELS[queue] ?? `Queue ${queue}`);
   const label = patchLabel(patchSelection, patchOptions);
@@ -340,7 +340,7 @@ export default function Augments() {
                           {formatWhole(c.picks)}
                         </td>
                         {/* Pick rate, KDA and damage aren't broken out per
-                            champion — the columns stay empty rather than
+                            champion - the columns stay empty rather than
                             repeating the augment's own numbers */}
                         <td></td>
                         <td></td>

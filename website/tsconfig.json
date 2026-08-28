@@ -13,7 +13,7 @@
 
     // The shared components in ../src/shared/ui sit outside this package, so
     // their `import ... from "react"` resolves by walking up from src/shared/
-    // to the repository root — where node_modules only exists on a machine
+    // to the repository root - where node_modules only exists on a machine
     // that has also installed the desktop app. Cloudflare Pages and the
     // website CI job install website/ alone, so without these mappings every
     // shared component fails to typecheck there while building fine locally.

@@ -35,8 +35,8 @@ export interface AugmentStatRow {
 }
 
 // The Augments tab's grain: one row per augment per patch, rolled up across
-// champions. The per-champion rows are 341k and growing — two orders of
-// magnitude more than this — so they are fetched per champion, on demand.
+// champions. The per-champion rows are 341k and growing - two orders of
+// magnitude more than this - so they are fetched per champion, on demand.
 export interface AugmentTotalRow {
   patch: string;
   queue_id: number;
@@ -70,7 +70,7 @@ export interface ItemPurchaseRow {
   avg_first_buy_s: number;
 }
 
-// PostgREST caps a response at 1000 rows on this project — verified: asking
+// PostgREST caps a response at 1000 rows on this project - verified: asking
 // for 0-9999 comes back "content-range: 0-999/*" with a thousand rows. A
 // larger page size doesn't fetch more, it just makes the walk stop after the
 // first page and silently truncate every view. So pages stay at 1000 and the
@@ -96,7 +96,7 @@ async function fetchPage<T>(
     throw new Error(`Failed to load ${view} (HTTP ${res.status})`);
   }
   const rows = (await res.json()) as T[];
-  // "0-999/3562" — the total is what lets the rest of the pages be parallel
+  // "0-999/3562" - the total is what lets the rest of the pages be parallel
   const total = Number(res.headers.get("content-range")?.split("/")[1]);
   return { rows, total: Number.isFinite(total) ? total : null };
 }
@@ -138,7 +138,7 @@ export async function fetchAugmentTotals(): Promise<AugmentTotalRow[]> {
   } catch (err) {
     // The rollup is one migration behind the client during a deploy. An empty
     // augment tab is a bad half-hour; taking the champion tier list down with
-    // it — which is what letting this reject would do — is worse.
+    // it - which is what letting this reject would do - is worse.
     console.warn(`augment_totals unavailable: ${err instanceof Error ? err.message : err}`);
     return [];
   }
@@ -230,7 +230,7 @@ export async function fetchPatchSpans(): Promise<PatchSpanRow[]> {
 }
 
 // How many distinct champion-vs-champion matchups the database has seen, and
-// how many champions have appeared — the denominator (every unordered pair,
+// how many champions have appeared - the denominator (every unordered pair,
 // mirror matchups included) is derived from the second.
 export interface MatchupCoverage {
   matchups: number;

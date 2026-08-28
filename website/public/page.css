@@ -1,4 +1,4 @@
-/* The prose pages — about, download, guide, privacy.
+/* The prose pages - about, download, guide, privacy.
  *
  * These are hand-written HTML served straight from public/, with no build step
  * to run Tailwind over, so they cannot import the token file the app and the
@@ -8,8 +8,8 @@
  * same body, heading, link and footer rules.
  *
  * The names here match src/shared/theme.css exactly, so a colour is spelled
- * one way across the whole project. Anything genuinely local to a page — the
- * download buttons, the guide's tables — stays inline on that page.
+ * one way across the whole project. Anything genuinely local to a page - the
+ * download buttons, the guide's tables - stays inline on that page.
  */
 
 :root {

@@ -6,7 +6,7 @@
 //
 // Two rules keep these pages from reading as auto-generated filler:
 //   * a champion is only indexed (robots + sitemap) once its sample is big
-//     enough to say something — below that the page still exists and still
+//     enough to say something - below that the page still exists and still
 //     works, it just tells the truth and stays out of search;
 //   * no line is printed from a sample too small to mean anything, so the
 //     page never claims "100% win rate over 1 pick".
@@ -80,7 +80,7 @@ async function fetchAllRows(view, order) {
   }
 }
 
-// Mirrors src/lib/slug.ts — keep in sync
+// Mirrors src/lib/slug.ts - keep in sync
 const championSlug = (name) =>
   name
     .toLowerCase()
@@ -88,7 +88,7 @@ const championSlug = (name) =>
     .replace(/^-+|-+$/g, "");
 
 // Mirrors src/lib/stats.ts score(): the win rate a record supports, out of
-// 100 — the floor of a 95% Wilson interval. Everything ranks by it, so a 5-0
+// 100 - the floor of a 95% Wilson interval. Everything ranks by it, so a 5-0
 // item lands below a 60% one with hundreds of games.
 const score = (wins, games) => {
   if (games <= 0) return 0;
@@ -319,16 +319,16 @@ async function main() {
     for (const f of STAT_FIELDS) perGame[f] = agg[f] / agg.games;
     const pickRate = totalMatches ? (agg.games / totalMatches) * 100 : 0;
 
-    const title = `${name} Build — ARAM Mayhem Augments, Items & Win Rate | MayhemStats`;
+    const title = `${name} Build - ARAM Mayhem Augments, Items & Win Rate | MayhemStats`;
     const description = indexable
       ? `Best ${name} build for ARAM Mayhem: top augments, core items, and win rates from ${agg.games} community games. ${name} wins ${wr}% with a ${kda} KDA.`
-      : `${name} in ARAM Mayhem: what ${plural(agg.games, "community game")} show so far — items, augments, and combat averages, with the sample size stated up front.`;
+      : `${name} in ARAM Mayhem: what ${plural(agg.games, "community game")} show so far - items, augments, and combat averages, with the sample size stated up front.`;
     const iconUrl = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${id}.png`;
 
     const buildList = coreBuild
       .map(
         (i) =>
-          `<li><strong>${esc(itemName(i.key))}</strong> — ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")} (score ${score(i.wins, i.picks).toFixed(1)})</li>`,
+          `<li><strong>${esc(itemName(i.key))}</strong> - ${pct(i.wins, i.picks)}% win rate over ${plural(i.picks, "game")} (score ${score(i.wins, i.picks).toFixed(1)})</li>`,
       )
       .join("\n            ");
 
@@ -343,7 +343,7 @@ async function main() {
         const lis = best
           .map(
             (a) =>
-              `<li><strong>${esc(augmentName(a.key))}</strong> — ${pct(a.wins, a.picks)}% over ${plural(a.picks, "pick")}</li>`,
+              `<li><strong>${esc(augmentName(a.key))}</strong> - ${pct(a.wins, a.picks)}% over ${plural(a.picks, "pick")}</li>`,
           )
           .join("\n              ");
         return `<h3>${label}</h3>\n            <ul>\n              ${lis}\n            </ul>`;
@@ -385,7 +385,7 @@ async function main() {
 
     const confidence = indexable
       ? `Over ${plural(agg.games, "game")} that win rate carries a 95% margin of error of roughly ±${moe} points, so read it as a range (${(Number(wr) - Number(moe)).toFixed(1)}–${(Number(wr) + Number(moe)).toFixed(1)}%) rather than a fixed number.`
-      : `That is only ${plural(agg.games, "game")} — far too few to call a win rate. The numbers below are here for completeness, this page is kept out of search until the sample is worth reading, and the fastest way to fix that is more contributors: <a href="/download/">run the tracker</a> and opt in.`;
+      : `That is only ${plural(agg.games, "game")} - far too few to call a win rate. The numbers below are here for completeness, this page is kept out of search until the sample is worth reading, and the fastest way to fix that is more contributors: <a href="/download/">run the tracker</a> and opt in.`;
 
     const html = `<!doctype html>
 <html lang="en">
@@ -395,7 +395,7 @@ async function main() {
     <title>${esc(title)}</title>
     <meta name="description" content="${esc(description)}" />
 ${indexable ? "" : '    <meta name="robots" content="noindex, follow" />\n'}    <link rel="canonical" href="${SITE}/champion/${slug}/" />
-    <meta property="og:title" content="${esc(`${name} — ARAM Mayhem Build`)}" />
+    <meta property="og:title" content="${esc(`${name} - ARAM Mayhem Build`)}" />
     <meta property="og:description" content="${esc(description)}" />
     <meta property="og:url" content="${SITE}/champion/${slug}/" />
     <meta property="og:type" content="website" />
@@ -413,8 +413,8 @@ ${PAGE_STYLE}
     <div id="root"></div>
     <section id="prerender">
       <p><a href="/">← MayhemStats: all champions</a></p>
-      <h1><img src="${iconUrl}" alt="" width="40" height="40" loading="lazy" />${esc(name)} — ARAM Mayhem Build &amp; Stats</h1>
-      <p>${esc(name)} wins <strong>${wr}%</strong> of ${plural(agg.games, "community game")} in ARAM Mayhem, with an average KDA of ${kda}${pickRate >= 1 ? `, appearing in ${pickRate.toFixed(1)}% of tracked matches` : ""}. All numbers come from anonymized games contributed by players running the free <a href="/download/">MayhemStats Tracker</a> app — never from ARAM or Arena stand-ins.</p>
+      <h1><img src="${iconUrl}" alt="" width="40" height="40" loading="lazy" />${esc(name)} - ARAM Mayhem Build &amp; Stats</h1>
+      <p>${esc(name)} wins <strong>${wr}%</strong> of ${plural(agg.games, "community game")} in ARAM Mayhem, with an average KDA of ${kda}${pickRate >= 1 ? `, appearing in ${pickRate.toFixed(1)}% of tracked matches` : ""}. All numbers come from anonymized games contributed by players running the free <a href="/download/">MayhemStats Tracker</a> app - never from ARAM or Arena stand-ins.</p>
       <p class="note">${confidence}</p>
       <h2>How ${esc(name)} plays in Mayhem</h2>
       <p>Per game, ${esc(name)}:</p>
@@ -430,7 +430,7 @@ ${PAGE_STYLE}
             ${raritySection || `<p>No augment has a winning record over ${AUGMENT_MIN_PICKS}+ picks on ${esc(name)} yet, so there is nothing worth recommending here.</p>`}
       <h2>Most-built items</h2>
       ${itemRowsHtml ? `<table>\n        <thead><tr><th>Item</th><th>Games</th><th>Score</th><th>Win rate</th></tr></thead>\n        <tbody>\n              ${itemRowsHtml}\n        </tbody>\n      </table>` : `<p>Item counts appear once an item reaches ${ITEM_MIN_PICKS} games on ${esc(name)}.</p>`}
-      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all. Score is the win rate the record supports out of 100 — the floor of a 95% confidence interval — so a perfect record over a handful of games ranks below a solid one over hundreds. Components are left out; items that transform, like Manamune, are not components.</em></p>
+      <p><em>Updated ${buildDate} · data through patch ${formatPatch(latestPatch)} · entries under ${ITEM_MIN_PICKS} games, or with a losing record, are not shown at all. Score is the win rate the record supports out of 100 - the floor of a 95% confidence interval - so a perfect record over a handful of games ranks below a solid one over hundreds. Components are left out; items that transform, like Manamune, are not components.</em></p>
       <p>More champions: ${crossLinks}</p>
       <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>
@@ -450,7 +450,7 @@ ${PAGE_STYLE}
   }
 
   // /community/ is a real route, but with no file on disk Cloudflare served
-  // index.html for it — carrying index.html's canonical, so Google read the
+  // index.html for it - carrying index.html's canonical, so Google read the
   // page as a copy of the homepage. Give it its own file and canonical, the
   // same way champion pages work: real content for crawlers, SPA on top.
   try {
@@ -471,12 +471,12 @@ ${PAGE_STYLE}
     }
     const possibleMatchups = coverage ? (coverage.champions * (coverage.champions + 1)) / 2 : 0;
     const matchupLine = coverage
-      ? `<li><strong>${Number(coverage.matchups).toLocaleString()}</strong> unique champion matchups seen — ${((coverage.matchups / possibleMatchups) * 100).toFixed(1)}% of the ${possibleMatchups.toLocaleString()} possible</li>`
+      ? `<li><strong>${Number(coverage.matchups).toLocaleString()}</strong> unique champion matchups seen - ${((coverage.matchups / possibleMatchups) * 100).toFixed(1)}% of the ${possibleMatchups.toLocaleString()} possible</li>`
       : "";
     const hours = Math.round(totals.total_seconds / 3600).toLocaleString();
     const games = Number(totals.games).toLocaleString();
     const contributors = Number(totals.contributors).toLocaleString();
-    const cTitle = "Community Impact — ARAM Mayhem Games Contributed | MayhemStats";
+    const cTitle = "Community Impact - ARAM Mayhem Games Contributed | MayhemStats";
     const cDesc = `${games} ARAM Mayhem games contributed by ${contributors} players, covering ${hours} hours of gameplay across ${totals.patches} patches. Every statistic on MayhemStats comes from these games.`;
     const communityHtml = `<!doctype html>
 <html lang="en">
@@ -486,7 +486,7 @@ ${PAGE_STYLE}
     <title>${esc(cTitle)}</title>
     <meta name="description" content="${esc(cDesc)}" />
     <link rel="canonical" href="${SITE}/community/" />
-    <meta property="og:title" content="MayhemStats — Community Impact" />
+    <meta property="og:title" content="MayhemStats - Community Impact" />
     <meta property="og:description" content="${esc(cDesc)}" />
     <meta property="og:url" content="${SITE}/community/" />
     <meta property="og:type" content="website" />
@@ -509,11 +509,11 @@ ${PAGE_STYLE}
       <h2>The running total</h2>
       <ul>
         <li><strong>${contributors}</strong> contributors sharing their games</li>
-        <li><strong>${games}</strong> games analyzed — ${(totals.games * 10).toLocaleString()} player performances</li>
+        <li><strong>${games}</strong> games analyzed - ${(totals.games * 10).toLocaleString()} player performances</li>
         <li><strong>${hours} hours</strong> of ARAM Mayhem, end to end</li>
         ${matchupLine}
       </ul>
-      <p>Each contributed game adds all ten players' champions, augments, items, and combat lines to the pool — anonymously, with duplicates counted once. The more players opt in, the sharper the tier lists get, especially early in a patch. Champions under ${INDEX_MIN_GAMES} games are deliberately kept out of search results until their sample says something.</p>
+      <p>Each contributed game adds all ten players' champions, augments, items, and combat lines to the pool - anonymously, with duplicates counted once. The more players opt in, the sharper the tier lists get, especially early in a patch. Champions under ${INDEX_MIN_GAMES} games are deliberately kept out of search results until their sample says something.</p>
       <p><em>Updated ${buildDate}.</em></p>
       <p><a href="/guide/">ARAM Mayhem guide</a> · <a href="/about/">How these stats work</a> · <a href="/download/">Download the tracker</a> · <a href="/privacy/">Privacy</a></p>
       <p style="font-size:0.75rem">MayhemStats isn't endorsed by Riot Games. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.</p>
@@ -553,5 +553,5 @@ ${sitemapUrls
 }
 
 main().catch((err) => {
-  console.warn(`prerender skipped: ${err.message} — deploying as plain SPA`);
+  console.warn(`prerender skipped: ${err.message} - deploying as plain SPA`);
 });

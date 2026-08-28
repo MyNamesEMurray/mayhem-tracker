@@ -40,7 +40,7 @@ export function refreshStartupPath(): void {
   if (!supported() || !process.env.PORTABLE_EXECUTABLE_FILE) return;
   const current = app.getLoginItemSettings({ path: exePath(), args: [HIDDEN_FLAG] });
   if (!current.openAtLogin && app.getLoginItemSettings().openAtLogin) {
-    // An entry exists for some other path — point it at this exe
+    // An entry exists for some other path - point it at this exe
     app.setLoginItemSettings({ openAtLogin: false });
     setStartupEnabled(true);
   }

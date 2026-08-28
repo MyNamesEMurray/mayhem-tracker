@@ -12,7 +12,7 @@ export interface ReleaseSummary {
 // Whether that's worth telling someone depends on where they're coming from.
 // A player on v2.10.0 hit the bug and wants to know it's gone. A player
 // jumping from v2.9.3 straight past it never saw it, so the note is noise
-// about a version they never ran — and reads alarmingly, since it describes
+// about a version they never ran - and reads alarmingly, since it describes
 // data loss they never experienced.
 //
 // This can't be inferred: nothing in "Fixed X" says which release broke X.
@@ -21,7 +21,7 @@ export interface ReleaseSummary {
 const FIXES_MARKER = /<!--\s*fixes:\s*v?(\d+(?:\.\d+)*)\s*-->/i;
 
 // Notes for every release between what someone is running and what they're
-// about to install — not just the newest one, which is all they used to see
+// about to install - not just the newest one, which is all they used to see
 // when skipping versions.
 export function buildReleaseNotes(
   releases: ReleaseSummary[],

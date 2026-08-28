@@ -21,7 +21,7 @@
       "x": 1880,
       "y": 770,
       "w": 300,
-      "text": "Every value here is the one each surface actually shipped — not an approximation."
+      "text": "Every value here is the one each surface actually shipped - not an approximation."
     }
   ],
   "launch": { "view": "canvas" }

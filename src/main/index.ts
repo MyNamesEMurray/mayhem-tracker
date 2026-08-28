@@ -13,7 +13,7 @@ import { uploadPendingGames } from "./upload";
 import { loadChampionData, loadAugmentData, waitForChampionData } from "./dragon";
 import { resolveDataHome } from "./user-data";
 
-// Must run before anything reads userData — including Electron's own
+// Must run before anything reads userData - including Electron's own
 // single-instance lock file, which lives there. See user-data.ts for why the
 // folder needs resolving at all.
 if (app.isPackaged) {
@@ -63,7 +63,7 @@ function createWindow() {
   attachWindowEvents(mainWindow);
 
   // Close behavior: minimize to tray (default) or quit. In the tray the
-  // window is destroyed outright — the renderer's ~100MB+ goes back to the
+  // window is destroyed outright - the renderer's ~100MB+ goes back to the
   // OS while the main process keeps recording games; the tray rebuilds the
   // window on demand.
   mainWindow.on("close", (event) => {
@@ -172,7 +172,7 @@ app.whenReady().then(async () => {
           const result = await fetchNewGames(getMainWindow());
           if (result && "newGames" in result && result.newGames > 0) return;
         } catch {
-          // Client closed or busy — keep trying for the remaining attempts
+          // Client closed or busy - keep trying for the remaining attempts
         }
       }
     })();
@@ -185,7 +185,7 @@ app.whenReady().then(async () => {
 app.on("before-quit", async (event) => {
   isQuitting = true;
 
-  // Skipped entirely during an update — the installer/swap script is
+  // Skipped entirely during an update - the installer/swap script is
   // waiting for this process to exit and a slow LCU would stall it
   if (!didFinalFetch && !isUpdating() && getStatus() === "connected") {
     event.preventDefault();
@@ -209,7 +209,7 @@ app.on("before-quit", async (event) => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    // Don't quit — we have the tray
+    // Don't quit - we have the tray
   }
 });
 

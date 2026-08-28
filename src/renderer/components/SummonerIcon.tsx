@@ -8,7 +8,7 @@ interface SummonerIconProps {
 }
 
 // Profile icons only exist for players we've seen a profileIcon for, and the
-// CDN drops very old ones — fall back to a neutral placeholder either way so
+// CDN drops very old ones - fall back to a neutral placeholder either way so
 // the column keeps its width.
 export default function SummonerIcon({ iconId, size = 28, className = "" }: SummonerIconProps) {
   const [failed, setFailed] = useState(false);

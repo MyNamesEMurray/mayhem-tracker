@@ -3,7 +3,7 @@ import type { ElectronAPI, LcuStatus } from "../shared/api";
 
 // Declared as ElectronAPI rather than inferred, so the compiler checks this
 // object against the contract the renderer calls through. Without it the two
-// were written freehand against each other and could disagree silently — a
+// were written freehand against each other and could disagree silently - a
 // mismatch that surfaces as a call failing at runtime, not as a build error.
 //
 // Every method here returns ipcRenderer.invoke(...), which is Promise<any>, so

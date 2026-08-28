@@ -2,7 +2,7 @@ import { ChampionDetail } from "mayhem-tracker";
 
 // Malzahar's detail page. A 12-champion cohort backs the header tier badge
 // (tiers are relative, so the cohort must exist). Item names resolve via
-// loadItemData() at runtime — in sandboxes without network they fall back to
+// loadItemData() at runtime - in sandboxes without network they fall back to
 // "Item <id>"; the ids below are the real mage core (Liandry's, Rabadon's,
 // Zhonya's...).
 
@@ -32,7 +32,7 @@ const champRow = (
 });
 
 const championRows = [
-  champRow(101, 52, 31, 7.4, 5.2, 15.1, 41800, 2), // Malzahar — the subject
+  champRow(101, 52, 31, 7.4, 5.2, 15.1, 41800, 2), // Malzahar - the subject
   champRow(222, 55, 30, 11.2, 6.1, 9.0, 38600, 3), // Jinx
   champRow(22, 48, 26, 8.6, 6.2, 13.4, 33200), // Ashe
   champRow(99, 45, 24, 9.5, 5.9, 12.1, 36500, 1), // Lux
@@ -46,7 +46,7 @@ const championRows = [
   champRow(17, 28, 11, 6.0, 5.6, 8.8, 28600), // Teemo
 ];
 
-// Malzahar's augment picks across all three rarities — 20+ picks on the
+// Malzahar's augment picks across all three rarities - 20+ picks on the
 // leaders so Best augments looks confident, plus a few low-sample fillers
 const augRow = (
   augment_id: number,
@@ -87,7 +87,7 @@ const augmentRows = [
   augRow(204, 4, 2, 6.6, 6.0, 13.0, 35700), // Blunt Force (low sample)
 ];
 
-// Malzahar's item picks — the real mage core plus two low-sample entries so
+// Malzahar's item picks - the real mage core plus two low-sample entries so
 // the * suffix and 20+ filter both have something to bite on
 const itemRow = (item_id: number, picks: number, wins: number) => ({
   patch: "16.15",
@@ -111,7 +111,7 @@ const itemRows = [
 
 // Live build-order tracking: how many players bought each item and how early
 // on average. The panel sorts by that time, so these read as the order Malzahar
-// actually builds in — boots first, Liandry's second, Deathcap around 20
+// actually builds in - boots first, Liandry's second, Deathcap around 20
 // minutes. Added in v2.11.2; the preview had never shown this panel.
 const purchase = (item_id: number, picks: number, wins: number, avg_first_buy_s: number) => ({
   patch: "16.15",
@@ -223,7 +223,7 @@ const championData = {
   17: { name: "Teemo" },
 };
 
-// MayhemStats components live on the site's dark canvas — previews carry it
+// MayhemStats components live on the site's dark canvas - previews carry it
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",
@@ -247,7 +247,7 @@ const detail = () => (
 
 // The page is ~1500px tall and the capture viewport is 900x700, so the two
 // lower cells shift a fixed 590px window down the SAME page instead of
-// scaling it — every section gets graded at natural size.
+// scaling it - every section gets graded at natural size.
 const windowed = (shift: number, height: number) => (
   <div style={canvas}>
     <div style={{ height, overflow: "hidden" }}>

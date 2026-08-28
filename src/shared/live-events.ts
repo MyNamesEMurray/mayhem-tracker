@@ -2,7 +2,7 @@
 // Fed successive /allgamedata payloads, a session accumulates per-player
 // item add/remove events (buys, sells, components consumed by combines) and
 // augment pickups that reveal themselves by replacing a summoner spell slot
-// (verified against a recorded Mayhem game — the only live augment signal).
+// (verified against a recorded Mayhem game - the only live augment signal).
 
 export interface LiveItemEvent {
   gameTime: number;

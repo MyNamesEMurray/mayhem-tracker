@@ -9,7 +9,7 @@ const canvas: React.CSSProperties = {
   width: "fit-content",
 };
 
-// All four tiers at count 1 — sky double, amber triple, purple quadra, red penta
+// All four tiers at count 1 - sky double, amber triple, purple quadra, red penta
 export function AllTiers() {
   return (
     <div style={canvas}>
@@ -18,7 +18,7 @@ export function AllTiers() {
   );
 }
 
-// Counts above 1 get an xN suffix — a monster Katarina game
+// Counts above 1 get an xN suffix - a monster Katarina game
 export function WithCounts() {
   return (
     <div style={canvas}>
@@ -27,7 +27,7 @@ export function WithCounts() {
   );
 }
 
-// The common case: a couple of doubles and nothing else — lower tiers
+// The common case: a couple of doubles and nothing else - lower tiers
 // simply don't render when their count is zero
 export function TypicalGame() {
   return (

@@ -1,6 +1,6 @@
 import { RarityFilter } from "mayhem-tracker";
 
-// RarityFilter renders a fragment of pill buttons — the canvas supplies the row
+// RarityFilter renders a fragment of pill buttons - the canvas supplies the row
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",
@@ -21,7 +21,7 @@ export function AllSelected() {
   );
 }
 
-// Silver selected — muted gray active pill
+// Silver selected - muted gray active pill
 export function SilverSelected() {
   return (
     <div style={canvas}>
@@ -30,7 +30,7 @@ export function SilverSelected() {
   );
 }
 
-// Gold selected — yellow active pill
+// Gold selected - yellow active pill
 export function GoldSelected() {
   return (
     <div style={canvas}>
@@ -39,7 +39,7 @@ export function GoldSelected() {
   );
 }
 
-// Prismatic selected — fuchsia active pill
+// Prismatic selected - fuchsia active pill
 export function PrismaticSelected() {
   return (
     <div style={canvas}>

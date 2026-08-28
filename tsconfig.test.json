@@ -1,8 +1,8 @@
 {
   // The test project spans both trees on purpose: test/stats.test.mts imports
   // the app's scoring and the website's, and asserts they still agree. Neither
-  // app tsconfig can do that — the renderer's include stops at src/, and the
-  // website builds from its own root — so the tests get a project of their own.
+  // app tsconfig can do that - the renderer's include stops at src/, and the
+  // website builds from its own root - so the tests get a project of their own.
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "bundler",

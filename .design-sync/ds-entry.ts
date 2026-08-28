@@ -13,7 +13,7 @@ export { default as PatchRangeSelect } from "../src/shared/ui/PatchRangeSelect";
 export { parsePatchParam } from "../src/shared/patch";
 export { default as SearchField } from "../src/shared/ui/SearchField";
 
-// Shared by both surfaces (src/shared/ui) — one component, not two copies,
+// Shared by both surfaces (src/shared/ui) - one component, not two copies,
 // so a design review here covers what the app and the site actually render
 export { default as AugmentIcon } from "../src/shared/ui/AugmentIcon";
 export { default as ChampionIcon } from "../src/shared/ui/ChampionIcon";

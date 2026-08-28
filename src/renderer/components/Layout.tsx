@@ -43,7 +43,7 @@ export default function Layout() {
     return () => clearInterval(recheck);
   }, []);
 
-  // Settings' manual "Check for updates" found one — adopt it and open the
+  // Settings' manual "Check for updates" found one - adopt it and open the
   // dialog (the dialog and pill live here, not in Settings)
   useEffect(() => {
     const handler = (e: Event) => {

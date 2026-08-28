@@ -21,7 +21,7 @@ export function isUploadEnabled(): boolean {
 }
 
 // Random id the server rate-limits and deletes by. Generated locally and not
-// derived from any account or player data — it is the only handle a
+// derived from any account or player data - it is the only handle a
 // contributor has on what they've shared, which is why it can be read,
 // carried to another machine, and replaced.
 function getContributorToken(): string {
@@ -64,7 +64,7 @@ export function setContributorId(
 // Replace a leaked id. Order matters: the games have to be withdrawn while the
 // old id can still prove it owns them, because the server only lets a token
 // delete what that token contributed. If the withdrawal fails, nothing is
-// changed — a new id here would strand the old contributions permanently.
+// changed - a new id here would strand the old contributions permanently.
 export async function rotateContributorId(
   win?: BrowserWindow | null,
 ): Promise<{ success: boolean; newId?: string; removedMatches?: number; error?: string }> {
@@ -182,7 +182,7 @@ function gamePayload(g: db.PendingUploadGame) {
   };
 }
 
-// Send every pending game in batches. Safe to call opportunistically — it
+// Send every pending game in batches. Safe to call opportunistically - it
 // no-ops when disabled or already running, and a failed batch just leaves
 // the rest pending for the next sync.
 export async function uploadPendingGames(

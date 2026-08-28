@@ -1,6 +1,6 @@
 import { TierBadge } from "mayhem-tracker";
 
-// MayhemStats components live on the site's dark canvas — previews carry it
+// MayhemStats components live on the site's dark canvas - previews carry it
 const canvas: React.CSSProperties = {
   background: "var(--color-lol-dark)",
   color: "var(--color-lol-text)",
@@ -24,7 +24,7 @@ export function AllTiers() {
   );
 }
 
-// Below 10 games the badge dims — the tier is provisional
+// Below 10 games the badge dims - the tier is provisional
 export function LowSample() {
   return (
     <div style={canvas}>
