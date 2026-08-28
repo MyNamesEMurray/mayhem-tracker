@@ -3,6 +3,7 @@ import {
   fetchAugmentTotals,
   fetchChampionAugments,
   fetchChampionItems,
+  fetchChampionMatchups,
   fetchChampionPurchases,
   fetchChampionStats,
   fetchPatchSpans,
@@ -11,6 +12,7 @@ import {
   type ChampionStatRow,
   type ItemPurchaseRow,
   type ItemStatRow,
+  type MatchupStatRow,
 } from "./lib/api";
 import { GameDataProvider, NO_AUGMENTS } from "../../src/shared/ui/GameData.tsx";
 import { DownloadIcon, InfoIcon, SwordsIcon } from "../../src/shared/ui/icons.tsx";
@@ -66,6 +68,7 @@ interface ChampionRows {
   augmentRows: AugmentStatRow[];
   itemRows: ItemStatRow[];
   purchaseRows: ItemPurchaseRow[];
+  matchupRows: MatchupStatRow[];
 }
 
 // A fresh patch has almost nothing in it for the first day or two, and the
@@ -230,14 +233,19 @@ export default function App() {
       fetchChampionAugments(selectedChampion),
       fetchChampionItems(selectedChampion),
       fetchChampionPurchases(selectedChampion),
+      // Matchups are the one of the four that can fail without taking the
+      // page with it: the rollup is newer than the others, so a deploy where
+      // the view is not there yet loses a panel rather than a champion page.
+      fetchChampionMatchups(selectedChampion).catch(() => [] as MatchupStatRow[]),
     ])
-      .then(([augmentRows, itemRows, purchaseRows]) => {
+      .then(([augmentRows, itemRows, purchaseRows, matchupRows]) => {
         if (active)
           setChampionRows({
             championId: selectedChampion,
             augmentRows,
             itemRows,
             purchaseRows,
+            matchupRows,
           });
       })
       .catch((err) => {
@@ -628,6 +636,8 @@ export default function App() {
                   augmentRows={championRows.augmentRows}
                   itemRows={championRows.itemRows}
                   purchaseRows={championRows.purchaseRows}
+                  matchupRows={championRows.matchupRows}
+                  onSelectChampion={openChampion}
                   filters={filters}
                   championData={data.championData}
                   augmentData={data.augmentData}

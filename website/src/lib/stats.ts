@@ -43,7 +43,10 @@ export interface Filters {
   queue?: number;
 }
 
-function rowMatches(row: { patch: string; queue_id: number }, f: Filters): boolean {
+// The one place a row is tested against the current filters. Exported because
+// the matchup rows are filtered where they are drawn rather than in an
+// aggregate here, and they have to answer to the same patch and queue.
+export function rowMatches(row: { patch: string; queue_id: number }, f: Filters): boolean {
   if (f.patches && !f.patches.has(row.patch)) return false;
   if (f.queue != null && row.queue_id !== f.queue) return false;
   return true;

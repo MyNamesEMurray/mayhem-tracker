@@ -66,6 +66,17 @@ export interface CommunityItemRow {
   wins: number;
 }
 
+// One champion against one opponent. The rollup stores both directions, so
+// the rows for a champion are that champion's side of every pairing and wins
+// is from that side.
+export interface CommunityMatchupRow {
+  patch: string;
+  queue_id: number;
+  opponent_id: number;
+  games: number;
+  wins: number;
+}
+
 // Only the champion grain is cached wholesale - 3.5k rows. The augment and
 // item grains are per (patch, queue, champion, thing) and run to well over
 // half a million rows between them, so those are fetched for one champion at
@@ -91,6 +102,7 @@ interface ChampionDetailCache {
   fetchedAt: number;
   augments: CommunityAugmentRow[];
   items: CommunityItemRow[];
+  matchups: CommunityMatchupRow[];
 }
 
 // Champion pages get revisited constantly while comparing builds; holding the
@@ -142,6 +154,8 @@ const AUGMENT_TOTALS_QUERY =
   "&order=patch,queue_id,augment_id";
 const ITEM_QUERY =
   "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
+const MATCHUP_QUERY =
+  "select=patch,queue_id,opponent_id,games,wins&order=patch,queue_id,opponent_id";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
 // stale data if the network is unavailable - an offline client should still
@@ -357,15 +371,21 @@ async function loadChampionDetail(championId: number): Promise<ChampionDetailCac
   const hit = detailCache.get(championId);
   if (hit && Date.now() - hit.fetchedAt < TTL_MS) return hit;
 
-  const [augments, items] = await Promise.all([
+  const [augments, items, matchups] = await Promise.all([
     fetchAllRows<CommunityAugmentRow>(
       "augment_stats",
       `${AUGMENT_QUERY}&champion_id=eq.${championId}`,
     ),
     fetchAllRows<CommunityItemRow>("item_stats", `${ITEM_QUERY}&champion_id=eq.${championId}`),
+    // The newest of the three rollups, so a client running against a project
+    // that has not had the migration yet loses a panel rather than the page
+    fetchAllRows<CommunityMatchupRow>(
+      "champion_matchups",
+      `${MATCHUP_QUERY}&champion_id=eq.${championId}`,
+    ).catch(() => [] as CommunityMatchupRow[]),
   ]);
 
-  const entry: ChampionDetailCache = { fetchedAt: Date.now(), augments, items };
+  const entry: ChampionDetailCache = { fetchedAt: Date.now(), augments, items, matchups };
   detailCache.set(championId, entry);
   // Oldest insertion first, so deleting the first key evicts the least
   // recently fetched champion
@@ -382,9 +402,10 @@ export async function getCommunityChampionDetail(
 ): Promise<{
   augments: { augment_id: number; picks: number; wins: number }[];
   items: { item_id: number; picks: number; wins: number }[];
+  matchups: { opponent_id: number; games: number; wins: number }[];
 }> {
   const included = patchSet(patches);
-  const { augments, items } = await loadChampionDetail(championId);
+  const { augments, items, matchups } = await loadChampionDetail(championId);
   const augTotals = new Map<number, { augment_id: number; picks: number; wins: number }>();
   for (const r of augments) {
     if (r.champion_id !== championId || !matches(r, included, queue)) continue;
@@ -401,9 +422,18 @@ export async function getCommunityChampionDetail(
     e.wins += r.wins;
     itemTotals.set(r.item_id, e);
   }
+  const matchupTotals = new Map<number, { opponent_id: number; games: number; wins: number }>();
+  for (const r of matchups) {
+    if (!matches(r, included, queue)) continue;
+    const e = matchupTotals.get(r.opponent_id) ?? { opponent_id: r.opponent_id, games: 0, wins: 0 };
+    e.games += r.games;
+    e.wins += r.wins;
+    matchupTotals.set(r.opponent_id, e);
+  }
   return {
     augments: [...augTotals.values()].sort((a, b) => b.picks - a.picks),
     items: [...itemTotals.values()].sort((a, b) => b.picks - a.picks),
+    matchups: [...matchupTotals.values()].sort((a, b) => b.games - a.games),
   };
 }
 

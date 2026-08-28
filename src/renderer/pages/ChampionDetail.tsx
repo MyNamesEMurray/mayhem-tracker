@@ -9,7 +9,7 @@ import {
   getAugmentName,
   getChampionName,
 } from "../hooks/useChampions";
-import type { AugmentStats, ChampionStats, ItemStats } from "../lib/types";
+import type { AugmentStats, ChampionStats, ItemStats, MatchupStats } from "../lib/types";
 import {
   assignTiers,
   rankForBuild,
@@ -31,6 +31,7 @@ import ChampionIcon from "../../shared/ui/ChampionIcon";
 import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
+import MatchupPanel from "../../shared/ui/MatchupPanel";
 import TierBadge from "../../shared/ui/TierBadge";
 import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
 import { usePatchOptions } from "../hooks/usePatchOptions";
@@ -72,6 +73,9 @@ interface Bundle {
   champions: ChampionStats[];
   augments: AugmentStats[];
   items: ItemStats[];
+  // Community only: the local database has no opponents to count, because it
+  // stores your games and the matchup grain is every cross-team pairing
+  matchups: MatchupStats[];
 }
 
 // Averages come back already rounded, without the totals behind them, so they
@@ -126,10 +130,27 @@ function mergeCounts<T extends { picks: number; wins: number }>(
   return [...map.values()].sort((x, y) => y.picks - x.picks);
 }
 
+// Matchups count games rather than picks, so they merge on their own names
+function mergeMatchups(a: MatchupStats[], b: MatchupStats[]): MatchupStats[] {
+  const map = new Map<number, MatchupStats>();
+  for (const list of [a, b]) {
+    for (const row of list) {
+      const e = map.get(row.opponent_id);
+      if (!e) map.set(row.opponent_id, { ...row });
+      else {
+        e.games += row.games;
+        e.wins += row.wins;
+      }
+    }
+  }
+  return [...map.values()].sort((x, y) => y.games - x.games);
+}
+
 const mergeBundles = (a: Bundle, b: Bundle): Bundle => ({
   champions: mergeChampions(a.champions, b.champions),
   augments: mergeCounts(a.augments, b.augments, (x) => x.augment_id),
   items: mergeCounts(a.items, b.items, (x) => x.item_id),
+  matchups: mergeMatchups(a.matchups, b.matchups),
 });
 
 const RARITIES = [
@@ -173,6 +194,7 @@ export default function ChampionDetail() {
   const [champions, setChampions] = useState<ChampionStats[] | null>(null);
   const [augments, setAugments] = useState<AugmentStats[] | null>(null);
   const [items, setItems] = useState<ItemStats[] | null>(null);
+  const [matchups, setMatchups] = useState<MatchupStats[]>([]);
 
   // The ordered list to reach back through when the selection is too thin.
   // usePatchOptions already returns the community's patches or this install's
@@ -193,14 +215,19 @@ export default function ChampionDetail() {
           window.api.getCommunityChampionStats(p, queue),
           window.api.getCommunityChampionDetail(championId, p, queue),
         ]);
-        return { champions: all, augments: detail.augments, items: detail.items };
+        return {
+          champions: all,
+          augments: detail.augments,
+          items: detail.items,
+          matchups: detail.matchups,
+        };
       }
       const [all, augs, its] = await Promise.all([
         window.api.getChampionStats(p, queue),
         window.api.getAugmentStats(championId, p, queue),
         window.api.getChampionItemStats(championId, p, queue),
       ]);
-      return { champions: all, augments: augs, items: its };
+      return { champions: all, augments: augs, items: its, matchups: [] };
     };
 
     const gamesFor = (b: Bundle) =>
@@ -238,6 +265,7 @@ export default function ChampionDetail() {
       setChampions(acc.champions);
       setAugments(acc.augments);
       setItems(acc.items);
+      setMatchups(acc.matchups);
     };
     void load();
     return () => {
@@ -431,6 +459,19 @@ export default function ChampionDetail() {
           </p>
         )}
       </div>
+
+      {/* Who this champion beats, and who beats it. Community only: the local
+          database holds your games, and a matchup is every cross-team pairing
+          in a game - a question a personal history cannot answer. */}
+      {source === "community" && (
+        <MatchupPanel
+          championId={championId}
+          rows={matchups}
+          championName={(id) => getChampionName(champData, id)}
+          // Opening an opponent keeps the filters, the way the tier list does
+          onSelect={(id) => navigate(`/champions/${id}?${searchParams}`)}
+        />
+      )}
 
       {/* Core build + best augments */}
       <div className="grid grid-cols-1 min-[981px]:grid-cols-[1fr_2fr] gap-4">

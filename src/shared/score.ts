@@ -28,6 +28,25 @@ export function score(wins: number, games: number): number {
   return (100 * (centre - margin)) / denominator;
 }
 
+// The other end of the same interval: the win rate this record cannot rule
+// out. Score answers "how good is this at least"; this answers "how good is
+// it at most", and the difference matters wherever a list is ranked worst
+// first.
+//
+// Sorting matchups by Score ascending looks right and is wrong: Score sinks a
+// thin sample toward zero, so the worst matchups would be whichever opponents
+// have been met three times, every time, forever. A matchup is confidently
+// bad when even its optimistic reading is bad, which is this.
+export function scoreCeiling(wins: number, games: number): number {
+  if (games <= 0) return 100;
+  const p = wins / games;
+  const z2 = WILSON_Z * WILSON_Z;
+  const denominator = 1 + z2 / games;
+  const centre = p + z2 / (2 * games);
+  const margin = WILSON_Z * Math.sqrt((p * (1 - p) + z2 / (4 * games)) / games);
+  return (100 * (centre + margin)) / denominator;
+}
+
 // Win rates below this many games render muted; tier badges dim below 10
 export const MIN_SAMPLE = 20;
 export const TIER_MIN_SAMPLE = 10;

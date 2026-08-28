@@ -131,6 +131,17 @@ const purchaseRows = [
   purchase(3135, 24, 14, 1902), // Void Staff
 ];
 
+// A handful of opponents for the matchups panel: two comfortably winning,
+// two comfortably losing, and one under the sample floor so the "too thin to
+// rank" line has something to count.
+const matchupRows = [
+  { patch: "26.16", queue_id: 2400, champion_id: 101, opponent_id: 32, games: 180, wins: 112 },
+  { patch: "26.16", queue_id: 2400, champion_id: 101, opponent_id: 350, games: 140, wins: 84 },
+  { patch: "26.16", queue_id: 2400, champion_id: 101, opponent_id: 39, games: 160, wins: 62 },
+  { patch: "26.16", queue_id: 2400, champion_id: 101, opponent_id: 24, games: 120, wins: 48 },
+  { patch: "26.16", queue_id: 2400, champion_id: 101, opponent_id: 64, games: 12, wins: 2 },
+];
+
 const icon = (n: string) => `/lol-game-data/assets/ASSETS/UX/CherryAugments/Icons/${n}_small.png`;
 
 const augmentData = {
@@ -238,6 +249,7 @@ const detail = () => (
     augmentRows={augmentRows}
     itemRows={itemRows}
     purchaseRows={purchaseRows}
+    matchupRows={matchupRows}
     filters={{}}
     championData={championData}
     augmentData={augmentData}

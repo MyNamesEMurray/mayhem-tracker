@@ -184,6 +184,14 @@ export interface ItemStats {
   wins: number;
 }
 
+// One champion's record against one opponent, summed over the current
+// filters. Wins is from this champion's side.
+export interface MatchupStats {
+  opponent_id: number;
+  games: number;
+  wins: number;
+}
+
 export interface AugmentStatsDetailed {
   augment_id: number;
   picks: number;
@@ -408,7 +416,7 @@ export interface ElectronAPI {
     championId: number,
     patches?: string[],
     queue?: number,
-  ) => Promise<{ augments: AugmentStats[]; items: ItemStats[] }>;
+  ) => Promise<{ augments: AugmentStats[]; items: ItemStats[]; matchups: MatchupStats[] }>;
   getCommunityAugmentStats: (
     patches?: string[],
     queue?: number,

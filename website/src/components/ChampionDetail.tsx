@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { LABEL, PANEL } from "../../../src/shared/ui/primitives.tsx";
-import type { AugmentStatRow, ChampionStatRow, ItemPurchaseRow, ItemStatRow } from "../lib/api";
+import type {
+  AugmentStatRow,
+  ChampionStatRow,
+  ItemPurchaseRow,
+  ItemStatRow,
+  MatchupStatRow,
+} from "../lib/api";
 import {
   getAugmentName,
   getChampionName,
@@ -21,6 +27,7 @@ import {
   kdaRatio,
   formatWhole,
   rankForBuild,
+  rowMatches,
   score,
   type Filters,
   LIST_MIN_PICKS,
@@ -31,6 +38,8 @@ import ItemIcon from "./ItemIcon";
 import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import TierBadge from "../../../src/shared/ui/TierBadge.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
+import MatchupPanel from "../../../src/shared/ui/MatchupPanel.tsx";
+import { championSlug } from "../lib/slug";
 import SortHeader, { useSort } from "../../../src/shared/ui/SortHeader.tsx";
 import SearchField from "../../../src/shared/ui/SearchField.tsx";
 
@@ -58,22 +67,26 @@ export default function ChampionDetail({
   augmentRows,
   itemRows,
   purchaseRows,
+  matchupRows,
   filters,
   minGames = 0,
   championData,
   augmentData,
   onBack,
+  onSelectChampion,
 }: {
   championId: number;
   championRows: ChampionStatRow[];
   augmentRows: AugmentStatRow[];
   itemRows: ItemStatRow[];
   purchaseRows: ItemPurchaseRow[];
+  matchupRows: MatchupStatRow[];
   filters: Filters;
   minGames?: number;
   championData: ChampionData;
   augmentData: AugmentData;
   onBack: () => void;
+  onSelectChampion?: (championId: number) => void;
 }) {
   const [itemData, setItemData] = useState<ItemData>({});
   const [itemSearch, setItemSearch] = useState("");
@@ -97,6 +110,13 @@ export default function ChampionDetail({
       tier: tiers.get(championId) ?? null,
     };
   }, [championRows, filters, championId]);
+
+  // Matchups answer to the same patch and queue filters as everything else on
+  // the page, and the panel sums whatever survives them.
+  const matchups = useMemo(
+    () => matchupRows.filter((r) => rowMatches(r, filters)),
+    [matchupRows, filters],
+  );
 
   const items = useMemo(
     () => championItemBreakdown(itemRows, filters, championId),
@@ -230,6 +250,15 @@ export default function ChampionDetail({
           </div>
         </div>
       </div>
+
+      {/* Who this champion beats, and who beats it */}
+      <MatchupPanel
+        championId={championId}
+        rows={matchups}
+        championName={(id) => getChampionName(championData, id)}
+        href={(id) => `/champion/${championSlug(getChampionName(championData, id))}/`}
+        onSelect={onSelectChampion}
+      />
 
       {/* Core build + best augments */}
       <div className="grid grid-cols-1 min-[981px]:grid-cols-[1fr_2fr] gap-4">

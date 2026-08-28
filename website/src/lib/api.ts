@@ -119,6 +119,28 @@ export function fetchChampionPurchases(championId: number): Promise<ItemPurchase
   );
 }
 
+export interface MatchupStatRow {
+  patch: string;
+  queue_id: number;
+  champion_id: number;
+  opponent_id: number;
+  games: number;
+  wins: number;
+}
+
+// Every opponent this champion has faced, per patch. About 170 opponents per
+// patch per queue, so one champion is a page or two where the whole rollup is
+// half a million rows - the same reason augments are fetched per champion.
+export function fetchChampionMatchups(
+  championId: number,
+  patches?: string[],
+): Promise<MatchupStatRow[]> {
+  return fetchAllRows<MatchupStatRow>(
+    "champion_matchups",
+    `select=*&champion_id=eq.${championId}&order=patch,queue_id,opponent_id${patchFilter(patches)}`,
+  );
+}
+
 // For an expanded augment row: which champions carry it
 export function fetchAugmentChampions(augmentId: number): Promise<AugmentStatRow[]> {
   return fetchAllRows<AugmentStatRow>(
