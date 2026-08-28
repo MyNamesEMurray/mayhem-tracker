@@ -591,9 +591,17 @@ function sortPanel<T extends { picks: number; wins: number }>(
   return out;
 }
 
-const COL_GAMES = "w-[58px] sm:w-[76px]";
-const COL_SCORE = "w-[54px] sm:w-[68px]";
-const COL_RATE = "w-[84px] sm:w-[140px]";
+// Wide enough for the header text AND its sort arrow, which is the part that
+// was missed: a compact header only draws the arrow while its column is the
+// one being sorted on, so these were sized against the label alone and each
+// one cut itself off the moment someone clicked it. Score is the default
+// sort, so it was cut off ("SC...") from the first render.
+//
+// The name column is the flexible one and absorbs the difference; it wraps
+// rather than truncating, so it has the room to give.
+const COL_GAMES = "w-[68px] sm:w-[84px]";
+const COL_SCORE = "w-[66px] sm:w-[82px]";
+const COL_RATE = "w-[92px] sm:w-[140px]";
 
 const SCORE_HINT =
   "The win rate this record supports, out of 100 - the floor of a 95% confidence interval, so a small sample scores well below the win rate it happened to produce";

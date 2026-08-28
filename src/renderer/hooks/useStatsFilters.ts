@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QUEUE_ID_MAYHEM } from "../../shared/queues";
 import { parsePatchParam, patchParam, type PatchSelection } from "../../shared/patch";
@@ -13,44 +13,105 @@ import { parsePatchParam, patchParam, type PatchSelection } from "../../shared/p
 // Mayhem games to default to.
 const CURRENT_PATCH: PatchSelection = { mode: "current", from: "", to: "" };
 
-// Local-state variant (Champions, Augments, Match History)
+// The board filters, held for as long as the app is open.
+//
+// These used to be per-page useState, which meant opening a champion and
+// coming back put the tier list on the current patch again: the page
+// unmounted and its state went with it, so a range chosen by hand had to be
+// chosen again every single time. Switching from Champions to Augments lost
+// it for the same reason. The website has never had this problem, because its
+// filters live in the URL and the page holding them never unmounts.
+//
+// One store, the same shape as the stats-source switch beside it: setting the
+// range anywhere sets it everywhere, and a page that mounts later picks up
+// what is already selected.
+//
+// Deliberately not persisted to disk, unlike the source switch. A source is a
+// preference; a patch range is about the session you are in the middle of,
+// and reopening the app next week onto a range from two patches ago would be
+// a filter nobody set and nobody remembers setting.
+let currentPatch: PatchSelection = CURRENT_PATCH;
+const patchListeners = new Set<(s: PatchSelection) => void>();
+
+// undefined is a real value here - it means every queue - so "has the default
+// been resolved yet" needs its own flag rather than a null check.
+let currentQueue: number | undefined;
+let queueResolved = false;
+let queueRequest: Promise<void> | null = null;
+const queueListeners = new Set<(q: number | undefined) => void>();
+
+function setQueueEverywhere(next: number | undefined) {
+  currentQueue = next;
+  queueResolved = true;
+  for (const listener of queueListeners) listener(next);
+}
+
+// Read once for the whole app rather than once per page. The default degrades
+// to All when the database holds no ARAM Mayhem games, and a choice already
+// made while this was in flight wins over it.
+function resolveDefaultQueue(): Promise<void> {
+  queueRequest ??= window.api
+    .getMatchFilterOptions()
+    .then((o) => {
+      if (queueResolved) return;
+      setQueueEverywhere(o.queues.includes(QUEUE_ID_MAYHEM) ? QUEUE_ID_MAYHEM : undefined);
+    })
+    .catch(() => {
+      // Options unavailable: All queues is the honest fallback, and the next
+      // page to mount asks again
+      queueRequest = null;
+    });
+  return queueRequest;
+}
+
+// Shared-store variant (Champions, Augments, Match History, the in-game panel)
 export function useStatsFilters() {
-  const [patchSelection, setPatchSelection] = useState<PatchSelection>(CURRENT_PATCH);
-  const [queue, setQueue] = useState<number | undefined>(undefined);
+  const [patchSelection, setPatchState] = useState<PatchSelection>(currentPatch);
+  const [queue, setQueueState] = useState<number | undefined>(currentQueue);
 
   useEffect(() => {
-    let cancelled = false;
-    window.api.getMatchFilterOptions().then((o) => {
-      if (cancelled) return;
-      // Keep anything the user already picked while options were loading
-      setQueue((cur) => cur ?? (o.queues.includes(QUEUE_ID_MAYHEM) ? QUEUE_ID_MAYHEM : undefined));
-    });
+    patchListeners.add(setPatchState);
+    queueListeners.add(setQueueState);
+    // A page that mounted after a change catches up here
+    setPatchState(currentPatch);
+    setQueueState(currentQueue);
+    if (!queueResolved) void resolveDefaultQueue();
     return () => {
-      cancelled = true;
+      patchListeners.delete(setPatchState);
+      queueListeners.delete(setQueueState);
     };
   }, []);
+
+  const setPatchSelection = useCallback((next: PatchSelection) => {
+    currentPatch = next;
+    for (const listener of patchListeners) listener(next);
+  }, []);
+
+  const setQueue = useCallback((next: number | undefined) => setQueueEverywhere(next), []);
 
   return { patchSelection, setPatchSelection, queue, setQueue };
 }
 
-// URL-param variant (the champion page): filters live in the URL so back links
-// restore the same view, and a range can be linked to. The patch parameter
-// uses the same grammar as the website's - absent for the current patch,
-// "all", a single patch, or "A-B" - so the two surfaces read each other's
-// links.
+// URL-param variant (the champion page): filters live in the URL so a link
+// carries the view and the page can widen its own range without touching the
+// board's. The patch parameter uses the same grammar as the website's -
+// absent for the current patch, "all", a single patch, or "A-B" - so the two
+// surfaces read each other's links.
+//
+// This one does not write back to the store above, and that is the point. A
+// champion page reaches back a patch at a time when its sample is thin; if
+// that reached its way into the board's selection, coming back from a rarely
+// played champion would silently widen a tier list nobody asked to widen.
 export function useUrlStatsFilters(patches: string[]) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [defaultQueue, setDefaultQueue] = useState<number | undefined>(undefined);
+  const [defaultQueue, setDefaultQueue] = useState<number | undefined>(currentQueue);
 
   useEffect(() => {
-    let cancelled = false;
-    window.api.getMatchFilterOptions().then((o) => {
-      if (!cancelled) {
-        setDefaultQueue(o.queues.includes(QUEUE_ID_MAYHEM) ? QUEUE_ID_MAYHEM : undefined);
-      }
-    });
+    queueListeners.add(setDefaultQueue);
+    setDefaultQueue(currentQueue);
+    if (!queueResolved) void resolveDefaultQueue();
     return () => {
-      cancelled = true;
+      queueListeners.delete(setDefaultQueue);
     };
   }, []);
 

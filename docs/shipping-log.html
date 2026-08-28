@@ -1,7 +1,10 @@
 <title>MayhemStats Build Log</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+/>
 
 <style>
   /* MayhemStats' own tokens, so this page reads as part of the product it
@@ -54,7 +57,9 @@
     --glow: #151c2c;
   }
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 
   body {
     margin: 0;
@@ -62,7 +67,13 @@
     background-image: radial-gradient(1100px 700px at 15% -10%, var(--glow) 0%, transparent 60%);
     background-attachment: fixed;
     color: var(--ink-dim);
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family:
+      "Inter",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
     font-size: 15px;
     line-height: 1.62;
     -webkit-font-smoothing: antialiased;
@@ -76,13 +87,16 @@
 
   /* ── Masthead ─────────────────────────────────────────────────────── */
 
-  .mast { border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+  .mast {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+  }
 
   .eyebrow {
     font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 11px;
     font-weight: 500;
-    letter-spacing: .14em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--gold);
     margin: 0 0 14px;
@@ -93,7 +107,7 @@
     font-weight: 700;
     font-size: clamp(2.1rem, 5.5vw, 3.1rem);
     line-height: 1.02;
-    letter-spacing: -.028em;
+    letter-spacing: -0.028em;
     color: var(--ink);
     margin: 0 0 16px;
     text-wrap: balance;
@@ -105,7 +119,10 @@
     margin: 0;
   }
 
-  .standfirst strong { color: var(--ink); font-weight: 600; }
+  .standfirst strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
 
   /* ── The headline figures ─────────────────────────────────────────── */
 
@@ -120,12 +137,15 @@
     margin: 32px 0 0;
   }
 
-  .fig { background: var(--panel); padding: 16px 18px; }
+  .fig {
+    background: var(--panel);
+    padding: 16px 18px;
+  }
 
   .fig dt {
     font-family: "IBM Plex Mono", monospace;
     font-size: 10px;
-    letter-spacing: .12em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-dim);
     margin: 0 0 6px;
@@ -137,16 +157,22 @@
     font-weight: 600;
     font-size: 1.5rem;
     line-height: 1.1;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
     color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
 
-  .fig dd span { font-size: .8125rem; font-weight: 500; color: var(--ink-dim); }
+  .fig dd span {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ink-dim);
+  }
 
   /* ── Sections ─────────────────────────────────────────────────────── */
 
-  section { margin-top: 64px; }
+  section {
+    margin-top: 64px;
+  }
 
   .sec-head {
     display: flex;
@@ -161,7 +187,7 @@
     font-family: "Archivo", sans-serif;
     font-weight: 600;
     font-size: 1.375rem;
-    letter-spacing: -.018em;
+    letter-spacing: -0.018em;
     color: var(--ink);
     margin: 0;
   }
@@ -169,7 +195,7 @@
   .sec-note {
     font-family: "IBM Plex Mono", monospace;
     font-size: 11px;
-    letter-spacing: .08em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-dim);
     margin-left: auto;
@@ -183,28 +209,38 @@
     margin-top: 12px;
   }
 
-  .entry:hover { border-left-color: var(--gold); }
+  .entry:hover {
+    border-left-color: var(--gold);
+  }
 
   @media (prefers-reduced-motion: no-preference) {
-    .entry { transition: border-left-color 180ms ease; }
+    .entry {
+      transition: border-left-color 180ms ease;
+    }
   }
 
   h3 {
     font-family: "Archivo", sans-serif;
     font-weight: 600;
     font-size: 1.0625rem;
-    letter-spacing: -.01em;
+    letter-spacing: -0.01em;
     color: var(--ink);
     margin: 0 0 8px;
     text-wrap: balance;
   }
 
-  .entry p { margin: 0 0 12px; max-width: 66ch; }
-  .entry p:last-child { margin-bottom: 0; }
+  .entry p {
+    margin: 0 0 12px;
+    max-width: 66ch;
+  }
+  .entry p:last-child {
+    margin-bottom: 0;
+  }
 
-  code, .mono {
+  code,
+  .mono {
     font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .875em;
+    font-size: 0.875em;
   }
 
   code {
@@ -235,12 +271,14 @@
     border-right: 1px solid var(--line-soft);
   }
 
-  .measure > div:last-child { border-right: 0; }
+  .measure > div:last-child {
+    border-right: 0;
+  }
 
   .m-label {
     font-family: "IBM Plex Mono", monospace;
     font-size: 10px;
-    letter-spacing: .11em;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
     color: var(--ink-dim);
     display: block;
@@ -249,7 +287,7 @@
 
   .m-pair {
     font-family: "IBM Plex Mono", monospace;
-    font-size: .875rem;
+    font-size: 0.875rem;
     font-variant-numeric: tabular-nums;
     color: var(--ink);
     display: flex;
@@ -258,10 +296,21 @@
     flex-wrap: wrap;
   }
 
-  .m-was { color: var(--ink-dim); text-decoration: line-through; text-decoration-thickness: 1px; }
-  .m-arrow { color: var(--gold); }
-  .m-now { color: var(--win); font-weight: 500; }
-  .m-flat { color: var(--ink); }
+  .m-was {
+    color: var(--ink-dim);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+  .m-arrow {
+    color: var(--gold);
+  }
+  .m-now {
+    color: var(--win);
+    font-weight: 500;
+  }
+  .m-flat {
+    color: var(--ink);
+  }
 
   /* ── Verified note ────────────────────────────────────────────────── */
 
@@ -269,7 +318,7 @@
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    font-size: .8125rem;
+    font-size: 0.8125rem;
     line-height: 1.55;
     color: var(--ink-dim);
     border-top: 1px dashed var(--line);
@@ -281,7 +330,7 @@
   .verified b {
     font-family: "IBM Plex Mono", monospace;
     font-size: 10px;
-    letter-spacing: .1em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--gold);
     flex-shrink: 0;
@@ -298,10 +347,20 @@
     margin-top: 12px;
   }
 
-  .correction h3 { font-size: .9375rem; margin-bottom: 6px; }
-  .correction p { font-size: .875rem; margin-bottom: 0; }
-  .correction .claim { color: var(--loss); }
-  .correction .fact { color: var(--ink); }
+  .correction h3 {
+    font-size: 0.9375rem;
+    margin-bottom: 6px;
+  }
+  .correction p {
+    font-size: 0.875rem;
+    margin-bottom: 0;
+  }
+  .correction .claim {
+    color: var(--loss);
+  }
+  .correction .fact {
+    color: var(--ink);
+  }
 
   /* ── Attention block ──────────────────────────────────────────────── */
 
@@ -313,7 +372,10 @@
     margin-top: 16px;
   }
 
-  .attention h3 { color: var(--gold-bright); margin-bottom: 10px; }
+  .attention h3 {
+    color: var(--gold-bright);
+    margin-bottom: 10px;
+  }
 
   /* ── Commit list ──────────────────────────────────────────────────── */
 
@@ -333,38 +395,52 @@
     padding: 9px 16px;
     background: var(--panel);
     border-bottom: 1px solid var(--line-soft);
-    font-size: .875rem;
+    font-size: 0.875rem;
   }
 
-  .commits li:last-child { border-bottom: 0; }
+  .commits li:last-child {
+    border-bottom: 0;
+  }
 
   .commits .sha {
     font-family: "IBM Plex Mono", monospace;
-    font-size: .8125rem;
+    font-size: 0.8125rem;
     color: var(--gold);
     flex-shrink: 0;
   }
 
-  .commits .msg { color: var(--ink); }
+  .commits .msg {
+    color: var(--ink);
+  }
 
   footer {
     margin-top: 72px;
     padding-top: 22px;
     border-top: 1px solid var(--line);
-    font-size: .8125rem;
+    font-size: 0.8125rem;
   }
 
-  a { color: var(--gold); text-decoration-color: color-mix(in srgb, var(--gold) 40%, transparent); }
-  a:focus-visible, .entry:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  a {
+    color: var(--gold);
+    text-decoration-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  }
+  a:focus-visible,
+  .entry:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }
 
   @media (max-width: 620px) {
-    .wrap { padding: 40px 18px 72px; }
-    .entry { padding-left: 16px; }
+    .wrap {
+      padding: 40px 18px 72px;
+    }
+    .entry {
+      padding-left: 16px;
+    }
   }
 </style>
 
 <div class="wrap">
-
   <header class="mast">
     <p class="eyebrow">MayhemStats · branch claude/ideation · 28 August 2026</p>
     <h1>Twenty findings, eight commits, one bug nobody had noticed</h1>
@@ -377,11 +453,26 @@
   </header>
 
   <dl class="figures">
-    <div class="fig"><dt>First paint</dt><dd>46&times; <span>less data</span></dd></div>
-    <div class="fig"><dt>Coverage query</dt><dd>20&times; <span>faster</span></dd></div>
-    <div class="fig"><dt>New rollups</dt><dd>590k <span>rows</span></dd></div>
-    <div class="fig"><dt>Tier list</dt><dd>4 &rarr; 1 <span>boards</span></dd></div>
-    <div class="fig"><dt>New tests</dt><dd>39 <span>all passing</span></dd></div>
+    <div class="fig">
+      <dt>First paint</dt>
+      <dd>46&times; <span>less data</span></dd>
+    </div>
+    <div class="fig">
+      <dt>Coverage query</dt>
+      <dd>20&times; <span>faster</span></dd>
+    </div>
+    <div class="fig">
+      <dt>New rollups</dt>
+      <dd>590k <span>rows</span></dd>
+    </div>
+    <div class="fig">
+      <dt>Tier list</dt>
+      <dd>4 &rarr; 1 <span>boards</span></dd>
+    </div>
+    <div class="fig">
+      <dt>New tests</dt>
+      <dd>39 <span>all passing</span></dd>
+    </div>
   </dl>
 
   <!-- ══ Performance ══════════════════════════════════════════════════ -->
@@ -402,11 +493,17 @@
       <div class="measure">
         <div>
           <span class="m-label">First paint, rows</span>
-          <span class="m-pair"><span class="m-was">7,887</span><span class="m-arrow">&rarr;</span><span class="m-now">261</span></span>
+          <span class="m-pair"
+            ><span class="m-was">7,887</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">261</span></span
+          >
         </div>
         <div>
           <span class="m-label">First paint, requests</span>
-          <span class="m-pair"><span class="m-was">9</span><span class="m-arrow">&rarr;</span><span class="m-now">2</span></span>
+          <span class="m-pair"
+            ><span class="m-was">9</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">2</span></span
+          >
         </div>
         <div>
           <span class="m-label">Typical session</span>
@@ -436,22 +533,28 @@
       <div class="measure">
         <div>
           <span class="m-label">Rate-limit check</span>
-          <span class="m-pair"><span class="m-was">3 counts, unbounded</span><span class="m-arrow">&rarr;</span><span class="m-now">1 key read</span></span>
+          <span class="m-pair"
+            ><span class="m-was">3 counts, unbounded</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">1 key read</span></span
+          >
         </div>
         <div>
           <span class="m-label">Partial writes possible</span>
-          <span class="m-pair"><span class="m-was">yes</span><span class="m-arrow">&rarr;</span><span class="m-now">no</span></span>
+          <span class="m-pair"
+            ><span class="m-was">yes</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">no</span></span
+          >
         </div>
       </div>
       <div class="verified">
         <b>Verified</b>
         <span>
           Forcing a constraint violation on the fourth of five inserts left zero orphan matches,
-          zero orphan participants and zero orphan contributions. A duplicate upload counts once.
-          A batch over the daily limit is refused without writing anything. An end-to-end POST
-          through the deployed function wrote 1 match, 10 participants, 20 augments, 20 item
-          events and 1 contribution; a second identical POST moved no counter. All test rows
-          removed and the totals confirmed back at 161,230 and 2,144.
+          zero orphan participants and zero orphan contributions. A duplicate upload counts once. A
+          batch over the daily limit is refused without writing anything. An end-to-end POST through
+          the deployed function wrote 1 match, 10 participants, 20 augments, 20 item events and 1
+          contribution; a second identical POST moved no counter. All test rows removed and the
+          totals confirmed back at 161,230 and 2,144.
         </span>
       </div>
     </article>
@@ -500,7 +603,10 @@
       <div class="measure">
         <div>
           <span class="m-label">Time a pass was given</span>
-          <span class="m-pair"><span class="m-was">120s, then killed</span><span class="m-arrow">&rarr;</span><span class="m-now">as long as it needs</span></span>
+          <span class="m-pair"
+            ><span class="m-was">120s, then killed</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">as long as it needs</span></span
+          >
         </div>
         <div>
           <span class="m-label">Next scheduled pass</span>
@@ -508,7 +614,10 @@
         </div>
         <div>
           <span class="m-label">One failure costs</span>
-          <span class="m-pair"><span class="m-was">every later view</span><span class="m-arrow">&rarr;</span><span class="m-now">itself</span></span>
+          <span class="m-pair"
+            ><span class="m-was">every later view</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">itself</span></span
+          >
         </div>
       </div>
       <div class="verified">
@@ -541,26 +650,32 @@
     <article class="entry">
       <h3>Four boards became one, columns included</h3>
       <p>
-        The app and the site each had their own champions board and their own augments board:
-        about 1,450 lines drawing the same two tables from the same numbers with the same scoring,
-        drifted in ways nobody chose. A board is a list of columns now; each column says how to
-        draw its cell, what to sort it by, and where it lands when the table becomes cards.
+        The app and the site each had their own champions board and their own augments board: about
+        1,450 lines drawing the same two tables from the same numbers with the same scoring, drifted
+        in ways nobody chose. A board is a list of columns now; each column says how to draw its
+        cell, what to sort it by, and where it lands when the table becomes cards.
       </p>
       <p>
-        The columns are the union. The site gains Kills, Deaths, Assists and Gold; the app gains
-        the card layout it never had. Thirteen columns do not fit a 1280px window, so Kills, Deaths
-        and Assists get columns of their own only from 1400px &mdash; the only three that can be
-        held back without losing anything, because the KDA cell beside them prints the same numbers
-        at every width.
+        The columns are the union. The site gains Kills, Deaths, Assists and Gold; the app gains the
+        card layout it never had. Thirteen columns do not fit a 1280px window, so Kills, Deaths and
+        Assists get columns of their own only from 1400px &mdash; the only three that can be held
+        back without losing anything, because the KDA cell beside them prints the same numbers at
+        every width.
       </p>
       <div class="measure">
         <div>
           <span class="m-label">Window minimum</span>
-          <span class="m-pair"><span class="m-was">900px</span><span class="m-arrow">&rarr;</span><span class="m-now">720px</span></span>
+          <span class="m-pair"
+            ><span class="m-was">900px</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">720px</span></span
+          >
         </div>
         <div>
           <span class="m-label">Card-layout CSS</span>
-          <span class="m-pair"><span class="m-was">177 lines, by index</span><span class="m-arrow">&rarr;</span><span class="m-now">one shared block</span></span>
+          <span class="m-pair"
+            ><span class="m-was">177 lines, by index</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">one shared block</span></span
+          >
         </div>
         <div>
           <span class="m-label">Net lines</span>
@@ -592,8 +707,8 @@
         The app polls the game's live data every five seconds and already knew the champion being
         played. It separately held community augment win rates per champion. Nothing connected the
         two. An <strong>In game</strong> tab now appears while a game is running and shows the best
-        augments for your champion, split by rarity, with the ones you have already taken struck
-        off &mdash; the app can see those, because an augment reveals itself by replacing a summoner
+        augments for your champion, split by rarity, with the ones you have already taken struck off
+        &mdash; the app can see those, because an augment reveals itself by replacing a summoner
         spell's name.
       </p>
       <p>
@@ -624,7 +739,10 @@
       <div class="measure">
         <div>
           <span class="m-label">Coverage tile</span>
-          <span class="m-pair"><span class="m-was">6.1s</span><span class="m-arrow">&rarr;</span><span class="m-now">0.3s</span></span>
+          <span class="m-pair"
+            ><span class="m-was">6.1s</span><span class="m-arrow">&rarr;</span
+            ><span class="m-now">0.3s</span></span
+          >
         </div>
         <div>
           <span class="m-label">Rollup</span>
@@ -639,8 +757,9 @@
         The ranking needed a second statistic. Score is the floor of the confidence interval, right
         for best-first and quietly wrong for worst-first: it sinks a thin sample toward zero, so
         &ldquo;struggles against&rdquo; would fill with whichever opponents had been met eight times
-        and lost to. The bad side ranks by the <em>ceiling</em> instead &mdash; the win rate a record
-        cannot rule out &mdash; so a matchup has to be losing on its best reading to appear there.
+        and lost to. The bad side ranks by the <em>ceiling</em> instead &mdash; the win rate a
+        record cannot rule out &mdash; so a matchup has to be losing on its best reading to appear
+        there.
       </p>
       <div class="verified">
         <b>Measured</b>
@@ -710,8 +829,8 @@
       <div class="verified">
         <b>Rendered</b>
         <span>
-          &ldquo;33 of your Ziggs games are in the 5,612 behind these numbers. You: 41 games,
-          43.9%. Community: 5,612 games, 53.0%. 9.1 points below the community on Ziggs, over 41
+          &ldquo;33 of your Ziggs games are in the 5,612 behind these numbers. You: 41 games, 43.9%.
+          Community: 5,612 games, 53.0%. 9.1 points below the community on Ziggs, over 41
           games.&rdquo;
         </span>
       </div>
@@ -728,9 +847,13 @@
     <div class="correction">
       <h3>D1 &mdash; the columns that had drifted</h3>
       <p>
-        <span class="claim">The review said the app showed Win Rate and Pick Rate columns and the
-        site did not.</span> <span class="fact">The site had both. The real drift was Kills, Deaths,
-        Assists and Gold, which only the app had, and the card layout, which only the site had.</span>
+        <span class="claim"
+          >The review said the app showed Win Rate and Pick Rate columns and the site did not.</span
+        >
+        <span class="fact"
+          >The site had both. The real drift was Kills, Deaths, Assists and Gold, which only the app
+          had, and the card layout, which only the site had.</span
+        >
       </p>
     </div>
 
@@ -738,21 +861,27 @@
       <h3>D1 &mdash; the line count</h3>
       <p>
         <span class="claim">The review estimated roughly 800 fewer lines.</span>
-        <span class="fact">The change is about 80 lines more. The duplication is genuinely gone
-        &mdash; one board, one comparator, one card layout &mdash; but each column now declares its
-        sorting and its card placement rather than implying them, and the shared code carries the
-        reasoning. The point was never the line count.</span>
+        <span class="fact"
+          >The change is about 80 lines more. The duplication is genuinely gone &mdash; one board,
+          one comparator, one card layout &mdash; but each column now declares its sorting and its
+          card placement rather than implying them, and the shared code carries the reasoning. The
+          point was never the line count.</span
+        >
       </p>
     </div>
 
     <div class="correction">
       <h3>D3 &mdash; the dead ItemIcon</h3>
       <p>
-        <span class="claim">The review said <code>website/src/components/ItemIcon.tsx</code> had
-        zero importers and could be deleted.</span>
-        <span class="fact">It is live. <code>ChampionDetail.tsx</code> imports it as
-        <code>"./ItemIcon"</code>, which the search that produced the finding missed. Both local
-        ItemIcons are correct minimal adapters over the shared component. No change made.</span>
+        <span class="claim"
+          >The review said <code>website/src/components/ItemIcon.tsx</code> had zero importers and
+          could be deleted.</span
+        >
+        <span class="fact"
+          >It is live. <code>ChampionDetail.tsx</code> imports it as <code>"./ItemIcon"</code>,
+          which the search that produced the finding missed. Both local ItemIcons are correct
+          minimal adapters over the shared component. No change made.</span
+        >
       </p>
     </div>
 
@@ -760,8 +889,10 @@
       <h3>P4 &mdash; how the schema got there</h3>
       <p>
         <span class="claim">The review said tables had been created by hand in the dashboard.</span>
-        <span class="fact">Thirteen migrations were on record in the database against six in the
-        repository. The schema was migrated properly; seven files were simply never committed.</span>
+        <span class="fact"
+          >Thirteen migrations were on record in the database against six in the repository. The
+          schema was migrated properly; seven files were simply never committed.</span
+        >
       </p>
     </div>
   </section>
@@ -778,10 +909,10 @@
       <p>
         The <code>quarantine_review_pipeline</code> migration seeded <code>admin_config</code> with
         real values inline: the secret that authorises approve and deny links, the cron secret, an
-        API key and a personal email address. They have never been in git and the copy committed
-        now has them removed &mdash; but they are still in the project's migration history, which
-        means <code>supabase db pull</code> writes them straight into a working tree. Worth
-        rotating, and worth knowing before anyone pulls.
+        API key and a personal email address. They have never been in git and the copy committed now
+        has them removed &mdash; but they are still in the project's migration history, which means
+        <code>supabase db pull</code> writes them straight into a working tree. Worth rotating, and
+        worth knowing before anyone pulls.
       </p>
     </div>
   </section>
@@ -793,14 +924,37 @@
       <span class="sec-note">branch claude/ideation</span>
     </div>
     <ul class="commits">
-      <li><span class="sha">bdc921b</span><span class="msg">Augment synergies, your record against everyone's, and what you contributed</span></li>
+      <li>
+        <span class="sha">bdc921b</span
+        ><span class="msg"
+          >Augment synergies, your record against everyone's, and what you contributed</span
+        >
+      </li>
       <li><span class="sha">87498b0</span><span class="msg">Who beats whom</span></li>
-      <li><span class="sha">d27652b</span><span class="msg">Tell players which augment to take, while they are choosing</span></li>
-      <li><span class="sha">e59dc0b</span><span class="msg">One tier list, drawn by both surfaces</span></li>
-      <li><span class="sha">25af753</span><span class="msg">Fetch the patches being shown, not all of them</span></li>
-      <li><span class="sha">5fab439</span><span class="msg">Commit a batch of games in one transaction</span></li>
-      <li><span class="sha">3170b97</span><span class="msg">Index the two columns every local query filters on</span></li>
-      <li><span class="sha">dc53a2d</span><span class="msg">Recover the seven migrations that were never committed</span></li>
+      <li>
+        <span class="sha">d27652b</span
+        ><span class="msg">Tell players which augment to take, while they are choosing</span>
+      </li>
+      <li>
+        <span class="sha">e59dc0b</span
+        ><span class="msg">One tier list, drawn by both surfaces</span>
+      </li>
+      <li>
+        <span class="sha">25af753</span
+        ><span class="msg">Fetch the patches being shown, not all of them</span>
+      </li>
+      <li>
+        <span class="sha">5fab439</span
+        ><span class="msg">Commit a batch of games in one transaction</span>
+      </li>
+      <li>
+        <span class="sha">3170b97</span
+        ><span class="msg">Index the two columns every local query filters on</span>
+      </li>
+      <li>
+        <span class="sha">dc53a2d</span
+        ><span class="msg">Recover the seven migrations that were never committed</span>
+      </li>
     </ul>
   </section>
 
@@ -811,5 +965,4 @@
       changed.
     </p>
   </footer>
-
 </div>

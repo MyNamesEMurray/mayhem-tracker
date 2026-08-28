@@ -390,6 +390,10 @@ export default function ChampionDetail() {
   }, [augments, augSearch, augRarity, augData, augSort]);
 
   const name = getChampionName(champData, championId);
+  // The board keeps its own filters now, so back only has to name the tab.
+  // It still carries the source, because that is a property of the link
+  // rather than of the board: a champion page opened from a community link
+  // should go back to the community board.
   const backTo = `/champions${source === "community" ? "?source=community" : ""}`;
 
   const header = (
