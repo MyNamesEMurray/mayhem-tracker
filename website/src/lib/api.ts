@@ -119,6 +119,35 @@ export function fetchChampionPurchases(championId: number): Promise<ItemPurchase
   );
 }
 
+export interface AugmentPairRow {
+  patch: string;
+  queue_id: number;
+  augment_a: number;
+  augment_b: number;
+  picks: number;
+  wins: number;
+}
+
+// Every pairing one augment appears in. The rollup stores each pair once with
+// the lower id first, so an augment can be on either side and both have to be
+// asked for.
+export async function fetchAugmentPairs(
+  augmentId: number,
+  patches?: string[],
+): Promise<AugmentPairRow[]> {
+  try {
+    return await fetchAllRows<AugmentPairRow>(
+      "augment_pairs",
+      `select=*&or=(augment_a.eq.${augmentId},augment_b.eq.${augmentId})` +
+        `&order=patch,queue_id,augment_a,augment_b${patchFilter(patches)}`,
+    );
+  } catch {
+    // The newest rollup of the lot. A deploy that lands before the view does
+    // loses a section rather than the row that holds it.
+    return [];
+  }
+}
+
 export interface MatchupStatRow {
   patch: string;
   queue_id: number;

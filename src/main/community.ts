@@ -66,6 +66,17 @@ export interface CommunityItemRow {
   wins: number;
 }
 
+// Two augments run together by the same player. Stored once per unordered
+// pair, lower id first.
+export interface CommunityAugmentPairRow {
+  patch: string;
+  queue_id: number;
+  augment_a: number;
+  augment_b: number;
+  picks: number;
+  wins: number;
+}
+
 // One champion against one opponent. The rollup stores both directions, so
 // the rows for a champion are that champion's side of every pairing and wins
 // is from that side.
@@ -156,6 +167,8 @@ const ITEM_QUERY =
   "select=patch,queue_id,champion_id,item_id,picks,wins&order=patch,queue_id,item_id";
 const MATCHUP_QUERY =
   "select=patch,queue_id,opponent_id,games,wins&order=patch,queue_id,opponent_id";
+const PAIR_QUERY =
+  "select=patch,queue_id,augment_a,augment_b,picks,wins&order=patch,queue_id,augment_a,augment_b";
 
 // Serves the cache when it's fresh, refetches when it isn't, and falls back to
 // stale data if the network is unavailable - an offline client should still
@@ -393,6 +406,46 @@ async function loadChampionDetail(championId: number): Promise<ChampionDetailCac
     detailCache.delete(detailCache.keys().next().value as number);
   }
   return entry;
+}
+
+// Every pairing one augment appears in, fetched when a row is expanded. The
+// rollup stores each pair once with the lower id first, so both sides have to
+// be asked for.
+export async function getCommunityAugmentPairs(
+  augmentId: number,
+  patches?: string[],
+  queue?: number,
+): Promise<{ augment_a: number; augment_b: number; picks: number; wins: number }[]> {
+  const included = patchSet(patches);
+  let rows: CommunityAugmentPairRow[];
+  try {
+    rows = await fetchAllRows<CommunityAugmentPairRow>(
+      "augment_pairs",
+      `${PAIR_QUERY}&or=(augment_a.eq.${augmentId},augment_b.eq.${augmentId})`,
+    );
+  } catch {
+    // The newest rollup of the lot. A client running against a project that
+    // has not had the migration yet loses a section, not the row above it.
+    return [];
+  }
+  const totals = new Map<
+    number,
+    { augment_a: number; augment_b: number; picks: number; wins: number }
+  >();
+  for (const r of rows) {
+    if (!matches(r, included, queue)) continue;
+    const partner = r.augment_a === augmentId ? r.augment_b : r.augment_a;
+    const e = totals.get(partner) ?? {
+      augment_a: Math.min(augmentId, partner),
+      augment_b: Math.max(augmentId, partner),
+      picks: 0,
+      wins: 0,
+    };
+    e.picks += r.picks;
+    e.wins += r.wins;
+    totals.set(partner, e);
+  }
+  return [...totals.values()].sort((a, b) => b.picks - a.picks);
 }
 
 export async function getCommunityChampionDetail(

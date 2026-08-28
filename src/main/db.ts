@@ -1201,6 +1201,36 @@ export function getChampionStatsAll(patches?: string[], queue?: number): any[] {
     .all(...params);
 }
 
+// How many of your games on each champion are in the community pool.
+//
+// The app has always been able to tell a contributor their id and let them
+// withdraw, which is the right baseline, but it never told them what their
+// sharing produced. This is the number that closes that loop: your games are
+// part of the count the community board is drawn from, and here is how many.
+//
+// Only games the server actually accepted are counted. A rejected or
+// still-pending upload is not in anyone's stats, and saying otherwise would
+// be the one kind of wrong this number cannot afford to be.
+export function getContributedChampionCounts(
+  patches?: string[],
+  queue?: number,
+): { champion_id: number; contributed: number }[] {
+  const where = ["g.is_remake = 0", "u.status = 'done'"];
+  const params: any[] = [];
+  applyPatchFilter(where, params, patches);
+  applyQueueFilter(where, params, queue);
+  return db
+    .prepare(`
+    SELECT ps.champion_id, COUNT(*) as contributed
+    FROM player_stats ps
+    JOIN games g ON ps.game_id = g.game_id
+    JOIN uploaded_games u ON u.game_id = g.game_id
+    WHERE ${where.join(" AND ")}
+    GROUP BY ps.champion_id
+  `)
+    .all(...params) as { champion_id: number; contributed: number }[];
+}
+
 export function getAugmentStatsAll(championId?: number, patches?: string[], queue?: number): any[] {
   const where = ["g.is_remake = 0"];
   const params: any[] = [];

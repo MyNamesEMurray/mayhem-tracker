@@ -16,6 +16,7 @@ import RarityFilter, { type Rarity } from "../../shared/ui/RarityFilter";
 import { useSort } from "../../shared/ui/SortHeader";
 import SearchField from "../../shared/ui/SearchField";
 import StatBoard, { SortControl, sortOptions, sortRows } from "../../shared/ui/StatBoard";
+import AugmentPairs, { type AugmentPairRow } from "../../shared/ui/AugmentPairs";
 import { augmentColumns, type AugmentSortKey } from "../../shared/ui/boardColumns";
 import { assignTiers, score, type Tier } from "../../shared/score";
 import { formatWhole } from "../lib/format";
@@ -106,11 +107,25 @@ export default function Augments() {
   const [communityChampions, setCommunityChampions] = useState<
     Record<number, { champion_id: number; picks: number; wins: number }[]>
   >({});
+  // Which augments pair well with this one. Community only: a pairing needs
+  // hundreds of games to mean anything and a personal history has tens.
+  const [pairs, setPairs] = useState<Record<number, AugmentPairRow[]>>({});
 
   // A change of patch, queue or source invalidates anything already fetched
   useEffect(() => {
     setCommunityChampions({});
+    setPairs({});
   }, [patches, queue, source]);
+
+  // Every augment's own win rate under these filters, which is the bar a
+  // pairing has to clear to be worth calling a synergy
+  const soloRate = useMemo(() => {
+    const byId = new Map((data ?? []).map((a) => [a.augment_id, a]));
+    return (augmentId: number) => {
+      const a = byId.get(augmentId);
+      return a && a.picks > 0 ? (a.wins / a.picks) * 100 : null;
+    };
+  }, [data]);
 
   const toggleExpand = (augmentId: number) => {
     setExpanded((prev) => {
@@ -124,6 +139,12 @@ export default function Augments() {
         .getCommunityAugmentChampions(augmentId, patches, queue)
         .then((rows) => setCommunityChampions((prev) => ({ ...prev, [augmentId]: rows })))
         .catch(() => setCommunityChampions((prev) => ({ ...prev, [augmentId]: [] })));
+    }
+    if (source === "community" && pairs[augmentId] === undefined) {
+      window.api
+        .getCommunityAugmentPairs(augmentId, patches, queue)
+        .then((rows) => setPairs((prev) => ({ ...prev, [augmentId]: rows })))
+        .catch(() => setPairs((prev) => ({ ...prev, [augmentId]: [] })));
     }
   };
 
@@ -226,30 +247,47 @@ export default function Augments() {
         renderAfterRow={(a) =>
           expanded.has(a.augment_id) ? (
             <tr className="board-expansion border-t border-lol-border/30 bg-lol-dark/40">
-              <td colSpan={columns.length} className="px-4 py-3">
-                <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">
-                  Best with
-                </p>
-                <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
-                  {(source === "community" ? (communityChampions[a.augment_id] ?? []) : a.champions)
-                    .slice(0, 9)
-                    .map((c) => (
-                      <div
-                        key={c.champion_id}
-                        className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
-                      >
-                        <ChampionIcon championId={c.champion_id} size={22} />
-                        <span className="text-xs text-lol-text-bright w-[100px] truncate">
-                          {getChampionName(champData, c.champion_id)}
-                        </span>
-                        <span className="text-xs text-lol-text w-14 shrink-0">
-                          {formatWhole(c.picks)} picks
-                        </span>
-                        <div className="flex-1 min-w-16">
-                          <WinRateBar wins={c.wins} total={c.picks} />
+              <td colSpan={columns.length} className="px-4 py-3 space-y-4">
+                {source === "community" && (
+                  <div>
+                    <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">
+                      Pairs well with
+                    </p>
+                    <AugmentPairs
+                      augmentId={a.augment_id}
+                      rows={pairs[a.augment_id] ?? []}
+                      soloRate={soloRate}
+                    />
+                  </div>
+                )}
+                <div>
+                  <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">
+                    Best with
+                  </p>
+                  <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
+                    {(source === "community"
+                      ? (communityChampions[a.augment_id] ?? [])
+                      : a.champions
+                    )
+                      .slice(0, 9)
+                      .map((c) => (
+                        <div
+                          key={c.champion_id}
+                          className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
+                        >
+                          <ChampionIcon championId={c.champion_id} size={22} />
+                          <span className="text-xs text-lol-text-bright w-[100px] truncate">
+                            {getChampionName(champData, c.champion_id)}
+                          </span>
+                          <span className="text-xs text-lol-text w-14 shrink-0">
+                            {formatWhole(c.picks)} picks
+                          </span>
+                          <div className="flex-1 min-w-16">
+                            <WinRateBar wins={c.wins} total={c.picks} />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                  </div>
                 </div>
               </td>
             </tr>

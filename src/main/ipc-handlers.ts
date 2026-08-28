@@ -177,6 +177,12 @@ export function registerIpcHandlers() {
       community.getCommunityAugmentChampions(augmentId, patches, queue),
   );
 
+  ipcMain.handle(
+    "community:augment-pairs",
+    (_e, augmentId: number, patches?: string[], queue?: number) =>
+      community.getCommunityAugmentPairs(augmentId, patches, queue),
+  );
+
   ipcMain.handle("contributor:get", () => upload.getContributorId());
 
   ipcMain.handle("contributor:set", (event, token: string) =>
@@ -224,6 +230,10 @@ export function registerIpcHandlers() {
   // watcher's current session; changes arrive on "live:changed" rather than
   // by polling this.
   ipcMain.handle("live:get", () => liveWatcher.getLiveGame());
+
+  ipcMain.handle("stats:contributed-champions", (_event, patches?: string[], queue?: number) =>
+    db.getContributedChampionCounts(patches, queue),
+  );
 
   // Window controls (custom title bar)
   ipcMain.handle("window:minimize", (event) => {

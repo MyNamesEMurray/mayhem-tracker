@@ -409,6 +409,12 @@ export interface ElectronAPI {
     patches?: string[],
     queue?: number,
   ) => Promise<ItemStats[]>;
+  // How many of your games on each champion the community pool actually
+  // holds. Accepted uploads only.
+  getContributedChampionCounts: (
+    patches?: string[],
+    queue?: number,
+  ) => Promise<{ champion_id: number; contributed: number }[]>;
   getTeammateStats: () => Promise<TeammateStats[]>;
   getTeammateDetail: (key: string) => Promise<TeammateDetail | null>;
   getCommunityChampionStats: (patches?: string[], queue?: number) => Promise<ChampionStats[]>;
@@ -421,6 +427,11 @@ export interface ElectronAPI {
     patches?: string[],
     queue?: number,
   ) => Promise<Omit<AugmentStatsDetailed, "champions">[]>;
+  getCommunityAugmentPairs: (
+    augmentId: number,
+    patches?: string[],
+    queue?: number,
+  ) => Promise<{ augment_a: number; augment_b: number; picks: number; wins: number }[]>;
   getCommunityAugmentChampions: (
     augmentId: number,
     patches?: string[],

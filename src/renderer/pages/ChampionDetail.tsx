@@ -32,6 +32,7 @@ import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ItemIcon from "../components/ItemIcon";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import MatchupPanel from "../../shared/ui/MatchupPanel";
+import YouVsCommunity from "../components/YouVsCommunity";
 import TierBadge from "../../shared/ui/TierBadge";
 import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
 import { usePatchOptions } from "../hooks/usePatchOptions";
@@ -195,6 +196,11 @@ export default function ChampionDetail() {
   const [augments, setAugments] = useState<AugmentStats[] | null>(null);
   const [items, setItems] = useState<ItemStats[] | null>(null);
   const [matchups, setMatchups] = useState<MatchupStats[]>([]);
+  // Your own line on this champion, and how much of it the pool holds. Only
+  // fetched while the community source is showing, because that is the only
+  // view with something to compare against.
+  const [yours, setYours] = useState<ChampionStats | null>(null);
+  const [contributed, setContributed] = useState(0);
 
   // The ordered list to reach back through when the selection is too thin.
   // usePatchOptions already returns the community's patches or this install's
@@ -272,6 +278,36 @@ export default function ChampionDetail() {
       alive = false;
     };
   }, [championId, patches, queue, source, patchList, pinned]);
+
+  // Your side of the comparison. Deliberately its own fetch rather than part
+  // of the bundle: it must not widen with the community view, or "your games"
+  // would quietly mean a different set of patches from the ones named above.
+  useEffect(() => {
+    if (source !== "community") {
+      setYours(null);
+      setContributed(0);
+      return;
+    }
+    let alive = true;
+    Promise.all([
+      window.api.getChampionStats(patches, queue),
+      window.api.getContributedChampionCounts(patches, queue),
+    ])
+      .then(([mine, counts]) => {
+        if (!alive) return;
+        setYours(mine.find((c) => c.champion_id === championId) ?? null);
+        setContributed(counts.find((c) => c.champion_id === championId)?.contributed ?? 0);
+      })
+      .catch(() => {
+        if (alive) {
+          setYours(null);
+          setContributed(0);
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [championId, patches, queue, source]);
 
   const champ = champions?.find((c) => c.champion_id === championId) ?? null;
 
@@ -459,6 +495,16 @@ export default function ChampionDetail() {
           </p>
         )}
       </div>
+
+      {/* Your record against everyone's, and how much of everyone's is yours */}
+      {source === "community" && (
+        <YouVsCommunity
+          yours={yours}
+          community={champ}
+          contributed={contributed}
+          championName={name}
+        />
+      )}
 
       {/* Who this champion beats, and who beats it. Community only: the local
           database holds your games, and a matchup is every cross-team pairing

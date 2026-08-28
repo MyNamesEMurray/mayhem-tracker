@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchAugmentChampions, type AugmentStatRow, type AugmentTotalRow } from "../lib/api";
+import {
+  fetchAugmentChampions,
+  fetchAugmentPairs,
+  type AugmentPairRow,
+  type AugmentStatRow,
+  type AugmentTotalRow,
+} from "../lib/api";
 import type { AugmentData, ChampionData } from "../lib/dragon";
 import { getAugmentName, getChampionName } from "../lib/dragon";
 import {
@@ -7,6 +13,7 @@ import {
   assignTiers,
   augmentChampionBreakdown,
   formatWhole,
+  rowMatches,
   score,
   type Filters,
   type Tier,
@@ -15,6 +22,7 @@ import ChampionIcon from "../../../src/shared/ui/ChampionIcon.tsx";
 import RarityFilter, { type Rarity } from "../../../src/shared/ui/RarityFilter.tsx";
 import SearchField from "../../../src/shared/ui/SearchField.tsx";
 import WinRateBar from "../../../src/shared/ui/WinRateBar.tsx";
+import AugmentPairs from "../../../src/shared/ui/AugmentPairs.tsx";
 import { championSlug } from "../lib/slug";
 import { useSort } from "../../../src/shared/ui/SortHeader.tsx";
 import StatBoard, {
@@ -79,6 +87,17 @@ export default function AugmentsTable({
     [tiers, totalSlots, augmentData],
   );
 
+  // Every augment's own win rate under the current filters, which is what a
+  // pairing has to beat to be worth calling a synergy. Already aggregated for
+  // the table above.
+  const soloRate = useMemo(() => {
+    const byId = new Map(list.map((a) => [a.augment_id, a]));
+    return (augmentId: number) => {
+      const a = byId.get(augmentId);
+      return a && a.picks > 0 ? (a.wins / a.picks) * 100 : null;
+    };
+  }, [list]);
+
   const sorted = useMemo(() => {
     // Tier assignment above still sees the full cohort - hiding low-sample
     // rows must not promote what remains
@@ -124,12 +143,13 @@ export default function AugmentsTable({
         empty="No augments found"
         renderAfterRow={(a) =>
           expandedId === a.augment_id ? (
-            <AugmentChampions
+            <AugmentExpansion
               augmentId={a.augment_id}
               colSpan={columns.length}
               filters={filters}
               championData={championData}
               onSelectChampion={onSelectChampion}
+              soloRate={soloRate}
             />
           ) : null
         }
@@ -145,22 +165,25 @@ export default function AugmentsTable({
   );
 }
 
-function AugmentChampions({
+function AugmentExpansion({
   augmentId,
   colSpan,
   filters,
   championData,
   onSelectChampion,
+  soloRate,
 }: {
   augmentId: number;
   colSpan: number;
   filters: Filters;
   championData: ChampionData;
   onSelectChampion: (championId: number) => void;
+  soloRate: (augmentId: number) => number | null;
 }) {
   // The per-champion grain is fetched for this one augment when the row opens.
   // Holding all of it for every augment is 341k rows; one augment is ~2k.
   const [rows, setRows] = useState<AugmentStatRow[] | null>(null);
+  const [pairs, setPairs] = useState<AugmentPairRow[]>([]);
   useEffect(() => {
     let active = true;
     fetchAugmentChampions(augmentId)
@@ -170,6 +193,9 @@ function AugmentChampions({
       .catch(() => {
         if (active) setRows([]);
       });
+    fetchAugmentPairs(augmentId).then((r) => {
+      if (active) setPairs(r);
+    });
     return () => {
       active = false;
     };
@@ -180,38 +206,50 @@ function AugmentChampions({
     [rows, filters, augmentId],
   );
 
+  // Pairs come back per patch and queue, and answer to the same filters the
+  // rest of the page does
+  const visiblePairs = useMemo(() => pairs.filter((r) => rowMatches(r, filters)), [pairs, filters]);
+
   return (
     <tr className="board-expansion border-t border-lol-border/30 bg-lol-dark/40">
-      <td colSpan={colSpan} className="px-4 py-3">
-        <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">Best with</p>
-        <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
-          {breakdown.map((c) => (
-            <div
-              key={c.champion_id}
-              className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
-            >
-              <a
-                href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onSelectChampion(c.champion_id);
-                }}
-                className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
+      <td colSpan={colSpan} className="px-4 py-3 space-y-4">
+        <div>
+          <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">
+            Pairs well with
+          </p>
+          <AugmentPairs augmentId={augmentId} rows={visiblePairs} soloRate={soloRate} />
+        </div>
+        <div>
+          <p className="text-[11px] text-lol-text uppercase tracking-[.08em] mb-2">Best with</p>
+          <div className="grid grid-cols-1 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-3 gap-2">
+            {breakdown.map((c) => (
+              <div
+                key={c.champion_id}
+                className="flex items-center gap-2 bg-lol-dark/50 border border-lol-border/50 rounded-lg px-2.5 py-1.5"
               >
-                <ChampionIcon championId={c.champion_id} size={22} />
-                <span className="text-xs text-lol-text-bright w-[100px] truncate text-left hover:text-lol-gold">
-                  {getChampionName(championData, c.champion_id)}
+                <a
+                  href={`/champion/${championSlug(getChampionName(championData, c.champion_id))}/`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSelectChampion(c.champion_id);
+                  }}
+                  className="flex items-center gap-2 min-w-0 hover:text-lol-gold"
+                >
+                  <ChampionIcon championId={c.champion_id} size={22} />
+                  <span className="text-xs text-lol-text-bright w-[100px] truncate text-left hover:text-lol-gold">
+                    {getChampionName(championData, c.champion_id)}
+                  </span>
+                </a>
+                <span className="text-xs text-lol-text w-14 shrink-0">
+                  {formatWhole(c.picks)} picks
                 </span>
-              </a>
-              <span className="text-xs text-lol-text w-14 shrink-0">
-                {formatWhole(c.picks)} picks
-              </span>
-              <div className="flex-1 min-w-16">
-                <WinRateBar wins={c.wins} total={c.picks} />
+                <div className="flex-1 min-w-16">
+                  <WinRateBar wins={c.wins} total={c.picks} />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </td>
     </tr>

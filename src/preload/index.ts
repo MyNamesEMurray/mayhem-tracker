@@ -83,6 +83,9 @@ const api: ElectronAPI = {
   getChampionItemStats: (championId: number, patches?: string[], queue?: number) =>
     ipcRenderer.invoke("db:champion-item-stats", championId, patches, queue),
 
+  getContributedChampionCounts: (patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("stats:contributed-champions", patches, queue),
+
   getTeammateStats: () => ipcRenderer.invoke("db:teammate-stats"),
 
   getTeammateDetail: (key: string) => ipcRenderer.invoke("db:teammate-detail", key),
@@ -95,6 +98,9 @@ const api: ElectronAPI = {
 
   getCommunityAugmentStats: (patches?: string[], queue?: number) =>
     ipcRenderer.invoke("community:augment-stats", patches, queue),
+  getCommunityAugmentPairs: (augmentId: number, patches?: string[], queue?: number) =>
+    ipcRenderer.invoke("community:augment-pairs", augmentId, patches, queue),
+
   getCommunityAugmentChampions: (augmentId: number, patches?: string[], queue?: number) =>
     ipcRenderer.invoke("community:augment-champions", augmentId, patches, queue),
   getContributorId: () => ipcRenderer.invoke("contributor:get"),

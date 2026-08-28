@@ -1,6 +1,6 @@
 # Migrations
 
-Sixteen migrations have been applied to the community stats project. Until
+Eighteen migrations have been applied to the community stats project. Until
 2026-08-28 only six of them were in this repository, and the seven missing ones
 included the base schema: every table, every foreign key, the row level
 security posture, and the withdrawal function. They existed only inside the
@@ -62,3 +62,14 @@ function.
 
 The function body in `fix_ingest_counter_update` is byte-identical to
 `pg_proc.prosrc` in production, checked by SHA-256.
+
+## The rollups added on 2026-08-28
+
+`champion_matchups_rollup` and `augment_pairs_rollup` each turn a join that
+was only ever counted into a table that can be read.
+
+`augment_pairs` is created WITH NO DATA on purpose: its build is a self-join
+over five million augment rows and does not finish inside a client timeout.
+`stats.refresh_all()` finds it by catalog lookup and populates it on its next
+pass - a plain refresh while it is unpopulated, concurrent ones after that -
+so a rebuilt environment fills it in without anyone doing anything.
