@@ -73,6 +73,16 @@ export class LiveGameSession {
     return out;
   }
 
+  // What this player is carrying right now, for the panel that says what is
+  // left to buy. Read out of the inventory the diff runs against rather than
+  // replayed from the events, because a player first seen mid-game has their
+  // inventory taken as a baseline rather than as a run of adds - replaying
+  // would report them as holding nothing.
+  heldItems(riotId: string | null = this.activeRiotId): number[] {
+    if (!riotId) return [];
+    return [...(this.players.get(riotId)?.items.keys() ?? [])];
+  }
+
   ingest(data: any): void {
     const gameTime: number = data?.gameData?.gameTime ?? 0;
     this.gameMode = data?.gameData?.gameMode ?? this.gameMode;

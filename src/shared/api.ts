@@ -162,6 +162,10 @@ export interface LiveGameState {
   // by replacing a summoner spell's name - so this is what to strike off the
   // board, not what to choose between.
   takenAugments?: string[];
+  // Item ids in the player's inventory right now, so the build panel can say
+  // what is left to buy rather than recommending what is already in the bag.
+  // Unordered: it is the contents of six slots, not a purchase history.
+  heldItems?: number[];
 }
 
 // What the local cache of the shared database currently holds

@@ -1,24 +1,31 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { PANEL } from "../../shared/ui/primitives";
+import { LABEL, PANEL } from "../../shared/ui/primitives";
 import { useIpc } from "../hooks/useIpc";
 import { useLiveGame } from "../hooks/useLiveGame";
-import { useChampionData, useAugmentData, getChampionName } from "../hooks/useChampions";
+import {
+  useChampionData,
+  useAugmentData,
+  useItemData,
+  getChampionName,
+} from "../hooks/useChampions";
 import { usePatchOptions } from "../hooks/usePatchOptions";
 import { useStatsFilters } from "../hooks/useStatsFilters";
-import type { AugmentStats } from "../lib/types";
+import type { AugmentStats, ItemData, ItemStats } from "../lib/types";
 import AugmentIcon from "../../shared/ui/AugmentIcon";
 import ChampionIcon from "../../shared/ui/ChampionIcon";
+import ItemIcon from "../components/ItemIcon";
 import PatchRangeSelect from "../../shared/ui/PatchRangeSelect";
 import WinRateBar from "../../shared/ui/WinRateBar";
 import { RARITY_LABEL, RARITY_TEXT } from "../../shared/ui/rarity";
-import { assignTiers, MIN_SAMPLE, score } from "../../shared/score";
+import { assignTiers, MIN_SAMPLE, rankForBuild, score, winRate } from "../../shared/score";
 import TierBadge from "../../shared/ui/TierBadge";
 import { formatPatch, patchesIn, patchLabel } from "../../shared/patch";
 import { formatWhole } from "../lib/format";
 import { championIdFromLiveName, augmentIdsFromNames } from "../../shared/live-lookup";
+import { buildCandidates, splitByHeld, type LiveBuild } from "../../shared/live-build";
 
-// What to take, while there is still time to take it.
+// What to take and what to buy, while there is still time to act on either.
 //
 // Augments are the highest-leverage decision in Mayhem, they are offered
 // under time pressure three times a game, and this app is already open on the
@@ -34,8 +41,12 @@ import { championIdFromLiveName, augmentIdsFromNames } from "../../shared/live-l
 // mean image recognition or memory reading, which is a different product with
 // a different risk profile, and this one stays inside published APIs.
 //
-// What it does know is which augments you have already taken, because one
-// reveals itself by replacing a summoner spell's name. Those are struck off.
+// What it does know is what you already have, and that is what makes both
+// halves worth reading mid-game rather than beforehand. An augment reveals
+// itself by replacing a summoner spell name, so taken ones are struck off the
+// board. The inventory is read outright, so the core build shows what is
+// bought and what is left rather than recommending a Rabadon's you are
+// already holding.
 
 // The patches the widened board is actually reading, named the way
 // patchLabel names a range. Not patchLabel itself, because that takes a
@@ -55,6 +66,18 @@ const PER_RARITY = 8;
 // of patches rather than ranking noise. Same rule and the same number the
 // website's tier list widens on.
 const AUTO_WIDEN_PATCHES = 3;
+// A Mayhem inventory is six slots, so a core of six is a whole build: once
+// every one of them is bought there is genuinely nothing left to recommend,
+// and the panel says so rather than padding the list out with a seventh item
+// that could never be equipped.
+const CORE_SIZE = 6;
+// The same floor the champion page puts under its core build, so the two do
+// not recommend different items for the same champion on the same patch.
+const ITEM_MIN_PICKS = 3;
+
+// Both halves of the panel come out of one call, so widening for a thin patch
+// widens them together.
+type Detail = { augments: AugmentStats[]; items: ItemStats[] };
 
 export default function Live() {
   const live = useLiveGame();
@@ -74,10 +97,10 @@ export default function Live() {
     [patchSelection, patchOptions],
   );
 
-  const { data, error } = useIpc<{ augments: AugmentStats[] }>(
+  const { data, error } = useIpc<Detail>(
     () =>
       championId == null
-        ? Promise.resolve({ augments: [] })
+        ? Promise.resolve({ augments: [], items: [] })
         : window.api.getCommunityChampionDetail(championId, selected, queue),
     [championId, selected, queue],
   );
@@ -89,20 +112,52 @@ export default function Live() {
     () => (thin ? patchOptions.slice(0, AUTO_WIDEN_PATCHES) : undefined),
     [thin, patchOptions],
   );
-  const { data: wide } = useIpc<{ augments: AugmentStats[] }>(
+  const { data: wide } = useIpc<Detail>(
     () =>
       championId == null || !widened?.length
-        ? Promise.resolve({ augments: [] })
+        ? Promise.resolve({ augments: [], items: [] })
         : window.api.getCommunityChampionDetail(championId, widened, queue),
     [championId, widened, queue],
   );
 
-  const augments = thin && wide?.augments.length ? wide.augments : (data?.augments ?? []);
+  // One decision for both halves. The widened read is the same call, so items
+  // reach back exactly when augments do and the patch line above says so once
+  // rather than being true of one panel and not the other.
   const showingWider = thin && (wide?.augments.length ?? 0) > 0;
+  const detail = showingWider ? wide! : data;
+  const augments = detail?.augments ?? [];
+  const items = detail?.items ?? [];
 
   const taken = useMemo(
     () => augmentIdsFromNames(augmentData, live?.takenAugments),
     [augmentData, live?.takenAugments],
+  );
+
+  // The bag, as ids. Trinkets and consumables come through here too; they
+  // simply never match anything in the core, so there is nothing to filter.
+  const held = useMemo(() => new Set(live?.heldItems ?? []), [live?.heldItems]);
+
+  // Icons and the component flag come from the newest patch, which is the one
+  // being played. The champion page keys this by the patch a game was played
+  // on; a game in progress has only one answer.
+  const itemData = useItemData(null);
+  // Components out, then ranked by the same call the champion page makes, then
+  // split by what is already bought. Only the first and last steps are this
+  // panel's: the ranking in the middle is the shared one, so the two screens
+  // cannot recommend different items for the same champion on the same patch.
+  const build = useMemo(
+    () =>
+      splitByHeld(
+        rankForBuild(
+          buildCandidates(items, itemData),
+          (i) => i.picks,
+          (i) => i.wins,
+          ITEM_MIN_PICKS,
+          CORE_SIZE,
+        ),
+        held,
+      ),
+    [items, itemData, held],
   );
 
   // Tiers rank an augment against others of its own rarity, exactly as the
@@ -140,8 +195,8 @@ export default function Live() {
           <div>
             <h1 className="text-xl font-bold text-lol-text-bright">
               {championId != null
-                ? `Best augments for ${getChampionName(champData, championId)}`
-                : "Best augments"}
+                ? `Best build for ${getChampionName(champData, championId)}`
+                : "Best build"}
             </h1>
             <p className="text-xs text-lol-text mt-0.5">
               {showingWider
@@ -185,13 +240,119 @@ export default function Live() {
         </div>
       )}
 
+      {/* Items sit under the augments because only one of the two is on a
+          timer. An augment offer gives you seconds; the shop waits. */}
+      {championId != null && !error && (
+        <CoreBuild build={build} itemData={itemData} loading={detail == null} />
+      )}
+
       <p className="text-xs text-lol-text/70">
         Ranked by Score, which is the win rate the record supports out of 100, so a thin sample sits
         below the rate it happened to produce. Tiers rank each augment against others of its rarity.
-        * fewer than {MIN_SAMPLE} games - treat with caution. The game does not tell this app which
+        * fewer than {MIN_SAMPLE} games - treat with caution. Augments already taken and items
+        already bought are read from the game and struck off. The game does not tell this app which
         three augments it is offering you, so match your offer against the list rather than
         expecting it to pick.
       </p>
+    </div>
+  );
+}
+
+// The core build, with the part of it already in the bag marked off.
+//
+// Icons rather than a list of names, because the thing being matched against
+// is the shop grid, which is icons. Names are on the tooltip for anything
+// unfamiliar - there is more time here than there is on an augment offer.
+function CoreBuild({
+  build,
+  itemData,
+  loading,
+}: {
+  build: LiveBuild;
+  itemData: ItemData;
+  loading: boolean;
+}) {
+  const { next, held } = build;
+  const total = next.length + held.length;
+
+  return (
+    <div className={`${PANEL} p-4`}>
+      <div className="flex items-baseline justify-between gap-3 mb-3">
+        <h2 className={LABEL}>Core build</h2>
+        {total > 0 && (
+          <span className="text-[11px] text-lol-text">
+            {held.length} of {total} bought
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        // Not "no item has a winning record": that is a claim about the data,
+        // and the first read has not come back yet
+        <p className="text-sm text-lol-text">Loading...</p>
+      ) : total === 0 ? (
+        <p className="text-sm text-lol-text">
+          No item has a winning record over {ITEM_MIN_PICKS}+ games for this champion yet.
+        </p>
+      ) : (
+        // One strip, reading left to right as "buy these, you have these".
+        // The two halves were stacked at first, which put the bought items on
+        // a line of their own in a panel with most of its width unused.
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          {next.length === 0 ? (
+            <p className="text-sm text-lol-text-bright">Build complete - that is the whole core.</p>
+          ) : (
+            next.map((i) => <ItemTile key={i.item_id} row={i} itemData={itemData} />)
+          )}
+          {held.length > 0 && (
+            <>
+              <span className="w-px self-stretch bg-lol-border/60" />
+              <span className="text-[11px] text-lol-text">Bought</span>
+              {held.map((i) => (
+                <ItemTile key={i.item_id} row={i} itemData={itemData} bought />
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ItemTile({
+  row,
+  itemData,
+  bought = false,
+}: {
+  row: ItemStats;
+  itemData: ItemData;
+  bought?: boolean;
+}) {
+  const name = itemData[row.item_id]?.name ?? `Item ${row.item_id}`;
+  const low = row.picks < MIN_SAMPLE;
+  const size = bought ? 30 : 44;
+
+  return (
+    <div
+      // A minimum rather than a fixed width: a champion with six figures of
+      // games behind an item widens its own tile instead of spilling the
+      // count out of it.
+      className={`flex flex-col items-center whitespace-nowrap ${
+        bought ? "min-w-[38px] opacity-45" : "min-w-[54px]"
+      }`}
+      title={`${name} - ${score(row.wins, row.picks).toFixed(1)} score over ${formatWhole(row.picks)} games`}
+    >
+      <span className="rounded-md overflow-hidden leading-none">
+        <ItemIcon itemId={row.item_id} size={size} />
+      </span>
+      {!bought && (
+        <>
+          <span className={`text-xs mt-1 ${low ? "text-lol-text" : "text-lol-text-bright"}`}>
+            {winRate(row.wins, row.picks).toFixed(0)}%{low ? "*" : ""}
+          </span>
+          <span className="text-[10px] text-lol-text">{formatWhole(row.picks)} g</span>
+        </>
+      )}
     </div>
   );
 }

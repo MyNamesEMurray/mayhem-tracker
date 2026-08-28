@@ -33,10 +33,10 @@ export function setGameEndedHandler(fn: () => void) {
   gameEndedHandler = fn;
 }
 
-// What the renderer needs to draw the in-game augment panel. Derived from the
-// same session the build-order tracking already keeps, so a running game
-// costs nothing extra: this is the snapshot it was taking anyway, read a
-// second way.
+// What the renderer needs to draw the in-game panel: who is being played,
+// which augments are already taken, and what is in the bag. Derived from the
+// same session the build-order tracking already keeps, so a running game costs
+// nothing extra - this is the snapshot it was taking anyway, read a second way.
 export function getLiveGame(): LiveGameState {
   if (!session || !enabled()) return { inGame: false };
   return {
@@ -45,6 +45,7 @@ export function getLiveGame(): LiveGameState {
     gameMode: session.gameMode,
     gameTime: session.lastGameTime,
     takenAugments: session.takenAugments(),
+    heldItems: session.heldItems(),
   };
 }
 
@@ -54,7 +55,16 @@ export function getLiveGame(): LiveGameState {
 let lastPushed = "";
 function pushLiveGame() {
   const state = getLiveGame();
-  const key = JSON.stringify([state.inGame, state.championName, state.takenAugments?.length ?? 0]);
+  // The held items go in by id, not by count: a combine takes two components
+  // and a recipe and hands back one item, and a sell-then-buy in the same
+  // five seconds leaves the count where it started - either way the bag is
+  // different and the build panel has to be told.
+  const key = JSON.stringify([
+    state.inGame,
+    state.championName,
+    state.takenAugments?.length ?? 0,
+    [...(state.heldItems ?? [])].sort((a, b) => a - b),
+  ]);
   if (key === lastPushed) return;
   lastPushed = key;
   getMainWindow()?.webContents.send("live:changed", state);

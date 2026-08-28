@@ -27,6 +27,10 @@ v2.10.0 will. GitHub hides the comment when rendering, and only fixes for
 bugs of our own making need it - a fix for a long-standing bug or something
 on Riot's end is news to everyone, so leave those unmarked.
 
+## v2.14.6 - 2026-08-28
+
+- **The In game tab now says what to buy, too.** Under the augment board there's a core build for the champion you're playing: the six items the community wins most with, ranked the same way the champion page ranks them. What makes it worth reading mid-game rather than beforehand is that it reads your inventory - items you've already bought move out of the recommendation and sit to one side as bought, so what's left on the list is what you can still buy. Sell something and it comes back. Components you're holding mid-combine don't count as the item they build into.
+
 ## v2.14.5 - 2026-08-28
 
 - **See what to take while you're picking augments.** An **In game** tab appears while a game is running and ranks the augments the community wins with on the champion you're playing, split by rarity. Ones you've already taken drop off the list, so what's left is what you can still be offered. It opens itself when a game starts, unless you'd deliberately gone somewhere else in the app. What it can't do: the game doesn't tell the app which three augments it's offering you - nothing Riot publishes exposes that - so this is a board to glance at and match your offer against, not something that picks for you.

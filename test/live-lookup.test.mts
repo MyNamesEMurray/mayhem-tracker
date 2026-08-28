@@ -187,3 +187,81 @@ describe("LiveGameSession augment tracking", () => {
     assert.deepEqual(s.takenAugments("Them#EUW"), ["Ultra Hydra"]);
   });
 });
+
+describe("LiveGameSession item tracking", () => {
+  // The panel that says what is left to buy needs the bag as it is now, not a
+  // replay of purchases: a window opened mid-game has never seen the buys.
+  const snapshot = (gameTime: number, mine: number[], theirs: number[] = []) => ({
+    gameData: { gameTime, gameMode: "CHERRY" },
+    activePlayer: { riotId: "Me#EUW" },
+    allPlayers: [
+      {
+        riotId: "Me#EUW",
+        championName: "Ziggs",
+        items: mine.map((itemID) => ({ itemID, count: 1 })),
+        summonerSpells: {
+          summonerSpellOne: { displayName: "Flash" },
+          summonerSpellTwo: { displayName: "Ghost" },
+        },
+      },
+      {
+        riotId: "Them#EUW",
+        championName: "Sona",
+        items: theirs.map((itemID) => ({ itemID, count: 1 })),
+        summonerSpells: {
+          summonerSpellOne: { displayName: "Flash" },
+          summonerSpellTwo: { displayName: "Ghost" },
+        },
+      },
+    ],
+  });
+
+  const held = (s: LiveGameSession, riotId?: string) =>
+    [...s.heldItems(riotId)].sort((a, b) => a - b);
+
+  test("reports what is in the bag on the very first snapshot", () => {
+    // The case that rules out replaying events: everything here is a
+    // baseline, so an events-based answer would say the bag is empty
+    const s = new LiveGameSession();
+    s.ingest(snapshot(900, [3089, 3157, 3020]));
+    assert.deepEqual(held(s), [3020, 3089, 3157]);
+  });
+
+  test("follows a purchase", () => {
+    const s = new LiveGameSession();
+    s.ingest(snapshot(10, []));
+    s.ingest(snapshot(300, [3089]));
+    assert.deepEqual(held(s), [3089]);
+  });
+
+  test("drops what a combine consumed", () => {
+    // Buying the finished item takes its components out of the bag, and a
+    // component left behind would be struck off the core build wrongly
+    const s = new LiveGameSession();
+    s.ingest(snapshot(10, [1026, 1058]));
+    s.ingest(snapshot(300, [3089]));
+    assert.deepEqual(held(s), [3089]);
+  });
+
+  test("drops what was sold", () => {
+    const s = new LiveGameSession();
+    s.ingest(snapshot(10, [3089, 3157]));
+    s.ingest(snapshot(300, [3089]));
+    assert.deepEqual(held(s), [3089]);
+  });
+
+  test("another player's bag is not yours", () => {
+    const s = new LiveGameSession();
+    s.ingest(snapshot(10, [3089], [3153]));
+    assert.deepEqual(held(s), [3089]);
+    assert.deepEqual(held(s, "Them#EUW"), [3153]);
+  });
+
+  test("is empty when nobody has been named yet", () => {
+    // A session that has not seen a snapshot yet has no active player to
+    // read a bag from. Empty is the right answer: it is what a game that has
+    // just started looks like, and the panel draws the whole core as unbought
+    // rather than throwing.
+    assert.deepEqual(new LiveGameSession().heldItems(), []);
+  });
+});
