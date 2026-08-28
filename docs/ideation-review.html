@@ -1,0 +1,1449 @@
+<title>Mayhem Tracker Ideation Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+  /* ─────────────────────────────────────────────────────────────────────
+     Committed to a single dark world on purpose. The product is dark-only
+     on both surfaces, and every mockup below quotes its real token values;
+     rendering them on a light ground would misreport what they look like.
+     So: no theme switching, and every colour painted explicitly.
+     ───────────────────────────────────────────────────────────────────── */
+  :root {
+    /* The product's own eleven tokens, lifted from src/shared/theme.css */
+    --lol-dark: #0b0e14;
+    --lol-card: #141924;
+    --lol-card-hover: #1b2130;
+    --lol-border: #242c3d;
+    --lol-gold: #c89b3c;
+    --lol-gold-light: #f0e6d2;
+    --lol-win: #3ecf8e;
+    --lol-loss: #e5636e;
+    --lol-text: #94a0b8;
+    --lol-text-bright: #e8ecf4;
+
+    /* Report chrome: a ground shifted a half-step warmer and darker than the
+       product's, so a quoted mockup sits visibly on top of the page rather
+       than dissolving into it */
+    --ground: #08090d;
+    --ground-raised: #10131b;
+    --rule: #1e2330;
+    --rule-strong: #2c3345;
+    --ink: #dfe4ee;
+    --ink-dim: #8d97ab;
+    --ink-faint: #626b7d;
+    --accent: #c89b3c;
+    --accent-soft: rgba(200, 155, 60, 0.13);
+
+    --sev-high: #e5636e;
+    --sev-med: #d9a441;
+    --sev-low: #6f9bd1;
+    --good: #3ecf8e;
+
+    --measure: 68ch;
+    --shell: 1180px;
+
+    --f-display: "Newsreader", Georgia, "Times New Roman", serif;
+    --f-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    /* Mockups quote the product, which ships Inter */
+    --f-product: Inter, "Segoe UI", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16.5px;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { max-width: var(--shell); margin: 0 auto; padding: 0 28px; }
+  .col { max-width: var(--measure); }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+  .masthead { border-bottom: 1px solid var(--rule-strong); padding: 72px 0 40px; }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 22px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 600; font-size: clamp(40px, 6.2vw, 68px);
+    line-height: 1.02; letter-spacing: -0.02em;
+    margin: 0 0 20px; color: var(--lol-gold-light);
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-family: var(--f-display);
+    font-size: 21px; line-height: 1.5; color: var(--ink-dim);
+    max-width: 60ch; margin: 0 0 34px;
+  }
+  .standfirst em { color: var(--ink); font-style: italic; }
+
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 10px 30px;
+    font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-faint);
+  }
+  .meta b { color: var(--ink-dim); font-weight: 400; }
+
+  /* ── Sections ─────────────────────────────────────────────────────── */
+  section { padding: 64px 0; border-bottom: 1px solid var(--rule); }
+  section:last-of-type { border-bottom: 0; }
+
+  .sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 10px; }
+  .sec-num {
+    font-family: var(--f-mono); font-size: 12px; color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+  h2 {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: clamp(28px, 3.6vw, 38px); line-height: 1.15;
+    letter-spacing: -0.015em; margin: 0; color: var(--lol-gold-light);
+    text-wrap: balance;
+  }
+  .sec-intro { color: var(--ink-dim); margin: 0 0 44px; max-width: 62ch; }
+
+  h3 {
+    font-family: var(--f-display); font-weight: 600; font-size: 24px;
+    line-height: 1.25; margin: 0 0 6px; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-family: var(--f-body); font-weight: 700; font-size: 13px;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 34px 0 12px;
+  }
+  p { margin: 0 0 17px; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  strong { color: var(--lol-gold-light); font-weight: 700; }
+  code {
+    font-family: var(--f-mono); font-size: 0.855em;
+    background: var(--ground-raised); border: 1px solid var(--rule);
+    padding: 1px 5px; border-radius: 4px; color: var(--lol-gold-light);
+  }
+
+  /* ── Finding blocks ───────────────────────────────────────────────── */
+  .finding { margin: 0 0 58px; }
+  .finding:last-child { margin-bottom: 0; }
+  .f-head { display: flex; align-items: baseline; gap: 13px; flex-wrap: wrap; margin-bottom: 12px; }
+  .f-id {
+    font-family: var(--f-mono); font-size: 12px; font-weight: 700;
+    color: var(--ground); background: var(--accent);
+    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em;
+  }
+  .chip {
+    font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+  .chip.high { color: var(--sev-high); }
+  .chip.med { color: var(--sev-med); }
+  .chip.low { color: var(--sev-low); }
+  .chip.good { color: var(--good); }
+
+  /* ── Evidence: breaks the measure ─────────────────────────────────── */
+  .evidence {
+    background: var(--ground-raised);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--accent);
+    border-radius: 3px;
+    padding: 22px 26px; margin: 26px 0;
+    overflow-x: auto;
+  }
+  .evidence-label {
+    font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--ink-faint); margin: 0 0 14px;
+  }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th {
+    font-family: var(--f-body); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint);
+    text-align: left; padding: 0 18px 9px 0; border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+  td {
+    font-family: var(--f-mono); font-size: 13px; color: var(--ink-dim);
+    padding: 9px 18px 9px 0; border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+  td:first-child { color: var(--ink); }
+  tr:last-child td { border-bottom: 0; }
+  td.num { text-align: right; }
+  th.num { text-align: right; padding-right: 18px; }
+  .win { color: var(--good); }
+  .bad { color: var(--sev-high); }
+
+  pre {
+    font-family: var(--f-mono); font-size: 12.5px; line-height: 1.62;
+    color: var(--ink-dim); margin: 0; white-space: pre;
+  }
+  pre .c { color: var(--ink-faint); }
+  pre .k { color: var(--accent); }
+
+  /* ── Concern callout ──────────────────────────────────────────────── */
+  .concern {
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px; padding: 18px 22px; margin: 22px 0;
+    background: rgba(229, 99, 110, 0.045);
+  }
+  .concern p:last-child { margin-bottom: 0; }
+  .concern-label {
+    font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--sev-high); margin: 0 0 9px;
+  }
+
+  .impact {
+    display: flex; gap: 12px; align-items: baseline;
+    font-family: var(--f-mono); font-size: 12.5px;
+    color: var(--ink-dim); margin: 20px 0 0;
+    padding-top: 15px; border-top: 1px solid var(--rule);
+  }
+  .impact b {
+    color: var(--accent); font-weight: 400; letter-spacing: 0.1em;
+    text-transform: uppercase; font-size: 10.5px; white-space: nowrap;
+    padding-top: 2px;
+  }
+
+  /* ── Mockups: quoted product UI ───────────────────────────────────── */
+  .mock {
+    background: var(--lol-dark);
+    border: 1px solid var(--lol-border);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 20px 0 8px;
+    font-family: var(--f-product);
+    overflow-x: auto;
+  }
+  .mock-cap {
+    font-family: var(--f-mono); font-size: 11px; color: var(--ink-faint);
+    margin: 0 0 24px; line-height: 1.55;
+  }
+  .mock-chrome {
+    display: flex; align-items: center; gap: 8px;
+    padding-bottom: 13px; margin-bottom: 15px;
+    border-bottom: 1px solid var(--lol-border);
+    font-size: 11px; color: var(--lol-text);
+    font-family: var(--f-mono);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lol-border); }
+
+  /* product-accurate table inside mockups */
+  .ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ptable th {
+    font-family: var(--f-product); font-size: 11px; font-weight: 600;
+    color: var(--lol-text); text-transform: none; letter-spacing: 0;
+    border-bottom: 1px solid var(--lol-border); padding: 0 10px 8px 0;
+  }
+  .ptable td {
+    font-family: var(--f-product); font-size: 13px; color: var(--lol-text-bright);
+    border-bottom: 1px solid rgba(36, 44, 61, 0.55); padding: 9px 10px 9px 0;
+    white-space: nowrap;
+  }
+  .ptable td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .ptable th.n { text-align: right; }
+  .champ { display: flex; align-items: center; gap: 9px; }
+  .portrait {
+    width: 26px; height: 26px; border-radius: 5px; flex: none;
+    background: linear-gradient(140deg, #2a3446, #171d2a);
+    border: 1px solid var(--lol-border);
+  }
+  .tier {
+    display: inline-block; min-width: 26px; text-align: center;
+    font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .t-s { background: rgba(200,155,60,.16); color: var(--lol-gold); border: 1px solid rgba(200,155,60,.45); }
+  .t-a { background: rgba(62,207,142,.13); color: var(--lol-win); border: 1px solid rgba(62,207,142,.38); }
+  .t-b { background: rgba(111,155,209,.13); color: #8fb4de; border: 1px solid rgba(111,155,209,.34); }
+  .t-c { background: rgba(148,160,184,.11); color: var(--lol-text); border: 1px solid rgba(148,160,184,.3); }
+
+  .meter { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+  .track { flex: 1; height: 6px; border-radius: 3px; background: rgba(229,99,110,.25); overflow: hidden; min-width: 46px; }
+  .fill { height: 100%; border-radius: 3px; }
+  .fill.w { background: var(--lol-win); }
+  .fill.l { background: var(--lol-loss); }
+  .pct { font-variant-numeric: tabular-nums; font-size: 12.5px; min-width: 44px; text-align: right; }
+  .pct.w { color: var(--lol-win); }
+  .pct.l { color: var(--lol-loss); }
+
+  .psel {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--lol-card); border: 1px solid var(--lol-border);
+    border-radius: 8px; padding: 6px 11px; font-size: 13px;
+    color: var(--lol-text-bright);
+  }
+  .psel svg { opacity: .6; }
+
+  /* Option comparison */
+  .options { display: grid; gap: 26px; margin: 30px 0; }
+  @media (min-width: 900px) { .options.two { grid-template-columns: 1fr 1fr; } }
+  .option {
+    border: 1px solid var(--rule); border-radius: 4px;
+    padding: 22px 24px; background: var(--ground-raised);
+  }
+  .option h5 {
+    font-family: var(--f-display); font-size: 19px; font-weight: 600;
+    margin: 0 0 4px; color: var(--ink);
+  }
+  .option .tagline {
+    font-family: var(--f-mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.06em; margin: 0 0 15px;
+  }
+  .option p { font-size: 15px; margin-bottom: 13px; }
+  .option p:last-child { margin-bottom: 0; }
+  .verdict {
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule);
+    font-size: 14.5px; color: var(--ink-dim);
+  }
+  .verdict b { color: var(--good); }
+
+  ul, ol { margin: 0 0 17px; padding-left: 1.35em; }
+  li { margin-bottom: 9px; }
+  li::marker { color: var(--ink-faint); }
+
+  .seq { counter-reset: step; }
+  .step {
+    display: grid; grid-template-columns: auto 1fr; gap: 20px;
+    padding: 22px 0; border-bottom: 1px solid var(--rule);
+  }
+  .step:last-child { border-bottom: 0; }
+  .step-n {
+    counter-increment: step;
+    font-family: var(--f-mono); font-size: 12px; color: var(--accent);
+    padding-top: 4px; white-space: nowrap;
+  }
+  .step-n::before { content: counter(step, decimal-leading-zero); }
+  .step h3 { font-size: 20px; margin-bottom: 5px; }
+  .step .refs { font-family: var(--f-mono); font-size: 11px; color: var(--ink-faint); margin-bottom: 9px; }
+  .step p { font-size: 15.5px; margin-bottom: 0; }
+
+  .closer { padding: 64px 0 90px; }
+  .closer p { font-family: var(--f-display); font-size: 19px; color: var(--ink-dim); }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<header class="masthead">
+  <div class="shell">
+    <p class="kicker">Codebase &amp; design review / branch claude/ideation</p>
+    <h1>Where Mayhem Tracker Breaks at Ten Times the Size</h1>
+    <p class="standfirst">
+      Twenty findings across performance, design and features, measured against the
+      live database rather than estimated. The headline: <em>every visitor to the site
+      downloads twenty-one patches of data to look at one.</em>
+    </p>
+    <div class="meta">
+      <span><b>Reviewed</b> main @ ed991e7 (v2.14.4)</span>
+      <span><b>Live dataset</b> 137,317 games / 2,144 contributors / 21 patches</span>
+      <span><b>Measured</b> 28 Aug 2026</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="shell">
+    <div class="col">
+      <div class="sec-head"><span class="sec-num">00</span><h2>What I actually did</h2></div>
+      <p>
+        I read the ingest function, the migrations, the local database layer, both
+        client data layers and both component trees, then measured the live Supabase
+        project directly rather than reasoning about it. Every number below came back
+        from the real API today.
+      </p>
+      <p>
+        That matters because the brief asked about "hundreds of concurrent users."
+        You already have <strong>2,144 contributors and 137,317 games</strong>. So this
+        is not a hypothetical: it is a roughly ten-times-growth question against a
+        real, working base. Several things that are comfortable today get
+        uncomfortable at that size, and two of them get worse every single patch
+        whether or not you grow at all.
+      </p>
+      <p>
+        Findings carry IDs because the sequencing section at the end refers back to
+        them. Severity is my read of what happens if you never do it.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PART 1: PERFORMANCE ══════════════════ -->
+<section>
+  <div class="shell">
+    <div class="col">
+      <div class="sec-head"><span class="sec-num">01</span><h2>Performance and scale</h2></div>
+      <p class="sec-intro">
+        Seven findings. The first is the biggest single win available anywhere in the
+        codebase, and the fourth is the one that would keep me up at night.
+      </p>
+    </div>
+
+    <!-- P1 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P1</span>
+          <span class="chip high">High</span>
+          <span class="chip good">Biggest measured win</span>
+        </div>
+        <h3>Every visitor downloads all 21 patches to render one</h3>
+        <p>
+          The site's default view is the current patch. To draw it, <code>fetchChampionStats()</code>
+          and <code>fetchAugmentTotals()</code> pull those views in their entirety, paged 1,000
+          rows at a time in parallel, across every patch ever recorded. The filtering
+          then happens in the browser.
+        </p>
+      </div>
+
+      <div class="evidence">
+        <p class="evidence-label">Measured against the live API, 28 Aug 2026</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Per page load</th>
+              <th class="num">Requests</th>
+              <th class="num">Rows</th>
+              <th class="num">Raw</th>
+              <th class="num">Gzipped</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Today, all patches</td>
+              <td class="num">9</td><td class="num">7,831</td>
+              <td class="num">1,293,094 B</td><td class="num bad">242,990 B</td>
+            </tr>
+            <tr>
+              <td>Current patch only</td>
+              <td class="num">2</td><td class="num">370</td>
+              <td class="num">60,816 B</td><td class="num win">11,980 B</td>
+            </tr>
+            <tr>
+              <td><strong>Difference</strong></td>
+              <td class="num">4.5&times; fewer</td><td class="num">21&times; fewer</td>
+              <td class="num"></td><td class="num win"><strong>20.3&times; smaller</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col">
+        <p>
+          Two things make this worse than a one-off inefficiency. It grows: each new
+          patch adds roughly 372 rows and about 11 KB gzipped to what every visitor
+          downloads, forever, and none of it is ever looked at by default. And the
+          desktop app has the identical pattern in <code>src/main/community.ts</code>, softened only
+          by a six-hour disk cache.
+        </p>
+        <p>
+          The fix is a query parameter. PostgREST already supports <code>?patch=eq.26.9</code>,
+          the patch list is available separately from <code>community_patch_spans</code> (21 rows),
+          and the range picker already knows exactly which patches it wants. Older
+          patches load when someone actually selects them.
+        </p>
+
+        <div class="concern">
+          <p class="concern-label">Concern</p>
+          <p>
+            The site's auto-widen feature reaches back through older patches when the
+            current one is thin, so it needs more than the current patch sometimes. That
+            makes this a lazy-loading change, not a one-line filter: fetch the current
+            patch first, paint, then fetch older patches on demand. Worth doing properly
+            rather than quickly, because a half-done version means a spinner appearing
+            on a view that used to be instant.
+          </p>
+        </div>
+
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            20&times; less data over the wire per visit and 4.5&times; fewer round trips, so
+            first paint stops waiting on 237 KB of JSON. At hundreds of concurrent
+            visitors it is also a 20&times; cut in Supabase egress and PostgREST connection
+            pressure. Stops the site getting measurably slower every patch.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P2</span>
+          <span class="chip high">High</span>
+          <span class="chip good">Correctness, not speed</span>
+        </div>
+        <h3>A game can be half-ingested, and nothing will ever fix it</h3>
+        <p>
+          The ingest function writes five tables in sequence, each its own HTTP round
+          trip through PostgREST, with no transaction around them:
+        </p>
+      </div>
+
+      <div class="evidence">
+        <p class="evidence-label">supabase/functions/ingest/index.ts, the write sequence</p>
+<pre><span class="k">await</span> supabase.from(<span class="c">"matches"</span>).upsert(matchRows)              <span class="c">// succeeds</span>
+<span class="k">await</span> supabase.from(<span class="c">"match_participants"</span>).upsert(partRows)    <span class="c">// ← fails here</span>
+<span class="k">await</span> supabase.from(<span class="c">"match_participant_augments"</span>).upsert(...)  <span class="c">// never runs</span>
+<span class="k">await</span> supabase.from(<span class="c">"match_item_events"</span>).upsert(...)          <span class="c">// never runs</span>
+<span class="k">await</span> supabase.from(<span class="c">"contributions"</span>).upsert(contribRows)     <span class="c">// never runs</span>
+
+<span class="c">// The client got a 500 and stops, but the match row is already committed.
+// It has no participants. It counts toward totals. Nothing retries it,
+// because a later upsert of the same game hits ON CONFLICT DO NOTHING.</span></pre>
+      </div>
+
+      <div class="col">
+        <p>
+          Today, with modest traffic, partial failures are rare. Concurrency is exactly
+          what makes them common: connection exhaustion, statement timeouts and lock
+          contention all rise together, and all of them can land between two of those
+          statements. The result is silent, permanent, and invisible in any dashboard,
+          because a match with no participants looks like a match.
+        </p>
+        <p>
+          The fix is one Postgres function, <code>ingest_games(token, payload jsonb)</code>, doing all
+          five inserts in a single transaction. The edge function keeps the validation
+          it already does well and makes one RPC call instead of five upserts. All or
+          nothing, which is what this data deserves.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Eliminates a class of silent data corruption that gets more likely as you
+            grow. Also cuts five network round trips per batch to one, which is a real
+            latency win on the upload path as a side effect.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P3</span>
+          <span class="chip high">High</span>
+        </div>
+        <h3>Rate limiting counts an unbounded table on every upload</h3>
+        <p>
+          Every ingest request runs a <code>count=exact</code> over <code>contributions</code> filtered by
+          token, plus a second windowed count if the first crosses the burst
+          allowance, plus a third over <code>quarantine</code>. In Postgres, an exact count is
+          not a lookup: it visits every matching row.
+        </p>
+        <p>
+          A contributor who has uploaded 800 games has 800 rows visited before their
+          upload is even considered. That is fine. The problem is the shape: this is
+          the hottest query in the system, it runs before any useful work, and it gets
+          slower for every user as each user contributes more. At ten times the
+          contributors, with more history each, it is the first thing to fall over.
+        </p>
+        <p>
+          The fix is a counter rather than a count. One <code>contributor_stats</code> row per
+          token holding lifetime total, a rolling daily count with its window start,
+          and pending-quarantine count, updated inside the same transaction as P2. The
+          rate check becomes a single primary-key read.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Turns three growing scans into one indexed read, on the request path that
+            every uploaded game passes through. This is the difference between the
+            upload endpoint degrading gracefully and degrading suddenly.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P4</span>
+          <span class="chip high">High</span>
+          <span class="chip good">Do this first</span>
+        </div>
+        <h3>The database cannot be rebuilt from this repository</h3>
+        <p>
+          There are six migration files. Across all of them there are
+          <strong>zero <code>create table</code> statements</strong>. They create materialized views and
+          indexes on top of tables that are only referenced, never defined.
+        </p>
+      </div>
+
+      <div class="evidence">
+        <p class="evidence-label">Referenced by migrations, defined nowhere in the repository</p>
+<pre>public.matches                      public.contributions
+public.match_participants           public.quarantine
+public.match_participant_augments   stats.refresh_all()
+public.match_item_events            the 30-minute refresh schedule
+                                    every row level security policy</pre>
+      </div>
+
+      <div class="col">
+        <p>
+          All of that exists only inside the live Supabase project. There is no way to
+          stand up a staging copy, no way to test a schema change before it touches
+          production data, no review trail for the policies protecting 137,317 games,
+          and no recovery path that does not involve reconstructing the schema from
+          memory.
+        </p>
+        <p>
+          This is not a performance finding, but it is first in the running order,
+          because P2 and P3 both add database functions and I would not want to write
+          either against a schema I cannot see, diff, or test.
+        </p>
+        <p>
+          <code>supabase db pull</code> writes the current state out as a migration. That is
+          most of an afternoon, and it is the cheapest risk reduction on this page.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            No user-visible change. Makes every subsequent backend change reviewable
+            and reversible, and makes a catastrophic loss recoverable rather than
+            terminal.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P5 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P5</span>
+          <span class="chip med">Medium</span>
+        </div>
+        <h3>One materialized view is quadratic-ish and refreshes every 30 minutes</h3>
+        <p>
+          <code>stats.matchup_coverage</code> self-joins <code>match_participants</code> against itself across
+          teams to count distinct champion pairs. Its own migration says to "expect
+          this one to take a minute or two to build." Every game adds 25 cross-team
+          pairs to distinct over, and it rebuilds on the same 30-minute schedule as
+          everything else, behind the same advisory lock.
+        </p>
+        <p>
+          It produces <strong>one row, for one tile, on the community page.</strong> At ten times
+          the games it plausibly runs long enough to start colliding with its own
+          schedule and delaying every other aggregate behind the lock.
+        </p>
+        <p>
+          Two ways out, and I would pick the second: move it to a slower schedule of
+          its own, or make it incremental by maintaining a <code>champion_pairs</code> table
+          written during ingest. The second costs more but turns a growing full scan
+          into a constant-time upsert, and it is the same table F2 below needs anyway.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Protects the freshness of every other statistic on both surfaces from one
+            expensive tile. Low user-visible value on its own; high value bundled with
+            the matchups feature.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P6 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P6</span>
+          <span class="chip low">Low</span>
+          <span class="chip good">Twenty minutes</span>
+        </div>
+        <h3>The local database is missing the two indexes it filters on most</h3>
+        <p>
+          <code>src/main/db.ts</code> creates nine indexes. Neither <code>games.game_version</code> nor
+          <code>games.queue_id</code> is among them, and both are filtered on constantly:
+          <code>applyPatchFilter</code> emits <code>game_version IN (...)</code>, <code>applyQueueFilter</code> emits
+          <code>queue_id = ?</code>, and <code>getMatchFilterOptions</code> runs a <code>SELECT DISTINCT</code> over
+          <code>game_version</code> every time the filter bar loads.
+        </p>
+        <p>
+          The patch range picker shipped in v2.14.2 made this hotter. A player with
+          thousands of games scans all of them to populate a dropdown.
+          <code>synchronous</code> is also left at <code>FULL</code>, where <code>NORMAL</code> is the standard
+          pairing with WAL and is safe for this workload.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Snappier filtering for players with long histories, which is precisely the
+            engaged users you least want to annoy. Three lines, no risk, ships with any
+            release.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P7 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">P7</span>
+          <span class="chip low">Low</span>
+        </div>
+        <h3>The Supabase paging loop is written twice, again</h3>
+        <p>
+          <code>fetchAll</code> in <code>website/src/lib/api.ts</code> and <code>fetchView</code> in <code>src/main/community.ts</code>
+          are the same forty lines: fetch page zero with a count header, fan the rest
+          out with <code>Promise.all</code>, fall back to walking pages if the header is missing.
+          Same fix as the patch picker and the scoring maths before it.
+        </p>
+        <p>
+          Worth folding into P1 rather than doing separately, since P1 rewrites both
+          call sites anyway.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            One fewer place for the two surfaces to disagree about how they talk to the
+            same database. Roughly 40 duplicated lines removed.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PART 2: DESIGN ══════════════════ -->
+<section>
+  <div class="shell">
+    <div class="col">
+      <div class="sec-head"><span class="sec-num">02</span><h2>Design language</h2></div>
+      <p class="sec-intro">
+        The token and component unification is largely done. What remains is one big
+        thing, two small ones, and a genuine decision for you to make.
+      </p>
+    </div>
+
+    <!-- D1 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">D1</span>
+          <span class="chip med">Medium</span>
+          <span class="chip good">The remaining big one</span>
+        </div>
+        <h3>The tier list is still two implementations of one table</h3>
+        <p>
+          Roughly 1,200 lines across four files draw the same two boards from the same
+          data with the same scoring:
+        </p>
+      </div>
+
+      <div class="evidence">
+        <table>
+          <thead><tr><th>File</th><th class="num">Lines</th><th>Surface</th></tr></thead>
+          <tbody>
+            <tr><td>website/src/components/ChampionsTable.tsx</td><td class="num">234</td><td>Site</td></tr>
+            <tr><td>website/src/components/AugmentsTable.tsx</td><td class="num">329</td><td>Site</td></tr>
+            <tr><td>src/renderer/pages/Champions.tsx</td><td class="num">289</td><td>App</td></tr>
+            <tr><td>src/renderer/pages/Augments.tsx</td><td class="num">361</td><td>App</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col">
+        <p>
+          They have already drifted. The app shows explicit <em>Win Rate</em> and <em>Pick Rate</em>
+          columns; the site does not. The site has a mobile card layout below 700px and
+          a <code>SortControl</code> for it; the app has neither, so a narrow window gets a
+          horizontally cramped table. Neither difference was designed. They are just
+          where two people stopped.
+        </p>
+        <p>There are two honest ways to fix it.</p>
+      </div>
+
+      <div class="options two">
+        <div class="option">
+          <h5>Option A</h5>
+          <p class="tagline">Share the mechanism, keep the chrome</p>
+          <p>
+            Extract a headless <code>&lt;StatTable&gt;</code> that owns sorting, tier assignment, the
+            responsive card breakpoint and keyboard behaviour. Each surface passes its
+            own column definitions and renders its own cells.
+          </p>
+          <p>
+            Nothing visible changes on either side. The app gains the mobile card
+            layout for free because the shared component owns the breakpoint.
+          </p>
+          <div class="verdict">
+            <b>Lower risk.</b> Removes maybe 500 of the 1,200 lines. The columns can
+            still drift, because columns stay local.
+          </div>
+        </div>
+
+        <div class="option">
+          <h5>Option B</h5>
+          <p class="tagline">One board, columns included</p>
+          <p>
+            Share the whole thing, columns and all, taking the union rather than the
+            intersection. The site gains the app's Win Rate and Pick Rate columns; the
+            app gains the site's responsive cards and mobile sort control.
+          </p>
+          <p>
+            This is the rule that worked for <code>SearchField</code> and <code>WinRateBar</code>: when two
+            versions disagree, ship the superset and let each call site opt out.
+          </p>
+          <div class="verdict">
+            <b>My recommendation.</b> Removes closer to 800 lines, and makes the two
+            boards genuinely the same board. Costs a real design decision on each
+            column.
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <p class="mock-cap" style="margin-top:26px">
+          Option B, drawn in the product's real tokens. The site picks up the two
+          right-hand columns; the app picks up everything below 700px collapsing to
+          cards.
+        </p>
+      </div>
+
+      <div class="mock">
+        <div class="mock-chrome">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span style="margin-left:6px">ARAM Mayhem Champions &middot; Patches 26.7&ndash;26.9 &middot; 137,317 games</span>
+        </div>
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th style="width:34px">#</th>
+              <th>Champion</th>
+              <th>Tier</th>
+              <th class="n">Score</th>
+              <th style="min-width:140px">Win Rate</th>
+              <th class="n" style="color:var(--lol-gold)">Pick Rate</th>
+              <th class="n" style="color:var(--lol-gold)">Games</th>
+              <th class="n">KDA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--lol-text)">1</td>
+              <td><div class="champ"><div class="portrait"></div>Ziggs</div></td>
+              <td><span class="tier t-s">S+</span></td>
+              <td class="n">61.4</td>
+              <td><div class="meter"><div class="track"><div class="fill w" style="width:58%"></div></div><span class="pct w">58.0%</span></div></td>
+              <td class="n">4.1%</td><td class="n">5,612</td><td class="n">3.42</td>
+            </tr>
+            <tr>
+              <td style="color:var(--lol-text)">2</td>
+              <td><div class="champ"><div class="portrait"></div>Sona</div></td>
+              <td><span class="tier t-s">S</span></td>
+              <td class="n">59.8</td>
+              <td><div class="meter"><div class="track"><div class="fill w" style="width:56%"></div></div><span class="pct w">56.3%</span></div></td>
+              <td class="n">3.8%</td><td class="n">5,204</td><td class="n">4.06</td>
+            </tr>
+            <tr>
+              <td style="color:var(--lol-text)">3</td>
+              <td><div class="champ"><div class="portrait"></div>Brand</div></td>
+              <td><span class="tier t-a">A</span></td>
+              <td class="n">55.1</td>
+              <td><div class="meter"><div class="track"><div class="fill w" style="width:53%"></div></div><span class="pct w">53.1%</span></div></td>
+              <td class="n">2.9%</td><td class="n">3,980</td><td class="n">3.11</td>
+            </tr>
+            <tr>
+              <td style="color:var(--lol-text)">4</td>
+              <td><div class="champ"><div class="portrait"></div>Maokai</div></td>
+              <td><span class="tier t-b">B</span></td>
+              <td class="n">49.7</td>
+              <td><div class="meter"><div class="track"><div class="fill l" style="width:47%"></div></div><span class="pct l">47.4%</span></div></td>
+              <td class="n">1.6%</td><td class="n">2,197</td><td class="n">2.28</td>
+            </tr>
+            <tr>
+              <td style="color:var(--lol-text)">5</td>
+              <td><div class="champ"><div class="portrait"></div>Yuumi</div></td>
+              <td><span class="tier t-c">C</span></td>
+              <td class="n">43.2</td>
+              <td><div class="meter"><div class="track"><div class="fill l" style="width:41%"></div></div><span class="pct l">41.0%</span></div></td>
+              <td class="n">0.7%</td><td class="n">961</td><td class="n">1.84</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col">
+        <p class="mock-cap">
+          Gold column headers mark what the site gains under Option B. Everything else
+          is what both surfaces already draw.
+        </p>
+
+        <div class="concern">
+          <p class="concern-label">Concern</p>
+          <p>
+            The two boards are not in identical situations. The site is a public tier
+            list read by people who arrived from a search engine; the app is a tool
+            open beside a game. Density that suits one may not suit the other, and
+            sharing columns wholesale removes the freedom to tune that separately. I
+            still recommend Option B, but the honest version of the recommendation is
+            that you should look at the app at 1280px wide with all six columns before
+            committing.
+          </p>
+        </div>
+
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Roughly 800 fewer lines and one board instead of two. Players get the same
+            columns wherever they look, and the app stops breaking at narrow window
+            widths.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- D2 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">D2</span>
+          <span class="chip low">Low</span>
+        </div>
+        <h3>The queue picker is the patch picker all over again</h3>
+        <p>
+          The app has <code>QueueSelect.tsx</code>, 48 lines. The site has an inline <code>&lt;select&gt;</code>
+          in <code>App.tsx</code> with its own "All queues" option. Same control, same data, two
+          spellings. This is the exact shape of the patch picker before v2.14.2, and
+          the fix is the same: one shared component, each surface keeps its own state.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>An afternoon. Removes the last duplicated filter control.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- D3 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">D3</span>
+          <span class="chip low">Low</span>
+          <span class="chip good">Ten minutes</span>
+        </div>
+        <h3>There are three ItemIcons, and one is dead</h3>
+      </div>
+      <div class="evidence">
+        <table>
+          <thead><tr><th>File</th><th class="num">Lines</th><th class="num">Imported by</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>src/shared/ui/ItemIcon.tsx</td><td class="num">82</td><td class="num">4 files</td><td class="win">Live, shared</td></tr>
+            <tr><td>src/renderer/components/ItemIcon.tsx</td><td class="num">38</td><td class="num">3 files</td><td>Live, app-only</td></tr>
+            <tr><td>website/src/components/ItemIcon.tsx</td><td class="num">29</td><td class="num">0 files</td><td class="bad">Dead</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col">
+        <p>
+          I left these behind during the earlier unification, which is worth saying
+          plainly. The site's copy is unreferenced and can be deleted outright. The
+          app's copy is still imported by three files that should be pointed at the
+          shared one.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>67 lines gone, and item icons stop being able to drift between surfaces.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- D4 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">D4</span>
+          <span class="chip low">Low</span>
+        </div>
+        <h3>The app has no narrow-window behaviour</h3>
+        <p>
+          The site collapses its tables into labelled cards below 700px and swaps the
+          sortable header row for a <code>SortControl</code> dropdown. The app does neither, so
+          resizing the window narrow, which people do constantly when running a tracker
+          beside a game, produces a cramped table rather than a designed layout.
+        </p>
+        <p>
+          This resolves itself under D1 Option B and does not otherwise need its own
+          work. Listed separately because it is the most visible symptom of the
+          duplication, and because it argues for Option B over Option A.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            The app becomes usable in a half-width window, which is how a second-screen
+            tool actually gets used.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PART 3: FEATURES ══════════════════ -->
+<section>
+  <div class="shell">
+    <div class="col">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Features</h2></div>
+      <p class="sec-intro">
+        Five ideas, ordered by how much they use data you are already collecting and
+        currently throwing away. The first two need no new collection at all.
+      </p>
+    </div>
+
+    <!-- F1 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">F1</span>
+          <span class="chip good">Highest value</span>
+        </div>
+        <h3>Tell players which augment to take, while they are choosing</h3>
+        <p>
+          This is the feature the product is one step away from and does not have.
+        </p>
+        <p>
+          The app already polls the Live Client Data API every five seconds during a
+          game, tracking all ten players' items and augment pickups. It knows the
+          gameflow phase, your champion, and the patch. Separately, it holds community
+          augment win rates broken down per champion. Nothing connects the two.
+        </p>
+        <p>
+          Augments are the single highest-leverage decision in Mayhem, they are offered
+          under time pressure three times a game, and the app is already open on the
+          second monitor. A panel that says "on Ziggs this patch, these are the picks"
+          is the answer to the question players actually have at the moment they have
+          it.
+        </p>
+      </div>
+
+      <div class="mock">
+        <div class="mock-chrome">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span style="margin-left:6px">In game &middot; Ziggs &middot; augment round 2</span>
+        </div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="font-size:15px;font-weight:700;color:var(--lol-text-bright)">Best augments for Ziggs</div>
+          <div style="font-size:11.5px;color:var(--lol-text)">Patch 26.9 &middot; 5,612 games &middot; community</div>
+        </div>
+        <table class="ptable">
+          <thead>
+            <tr><th>Augment</th><th>Rarity</th><th class="n">Score</th><th style="min-width:140px">Win Rate</th><th class="n">Picks</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="champ"><div class="portrait" style="border-radius:50%;border-color:rgba(232,121,249,.8)"></div>Ultra Hydra</div></td>
+              <td style="color:#e879f9">Prismatic</td>
+              <td class="n">64.2</td>
+              <td><div class="meter"><div class="track"><div class="fill w" style="width:62%"></div></div><span class="pct w">62.4%</span></div></td>
+              <td class="n">418</td>
+            </tr>
+            <tr>
+              <td><div class="champ"><div class="portrait" style="border-radius:50%;border-color:rgba(234,179,8,.75)"></div>Accelerating Sorcery</div></td>
+              <td style="color:#facc15">Gold</td>
+              <td class="n">58.9</td>
+              <td><div class="meter"><div class="track"><div class="fill w" style="width:57%"></div></div><span class="pct w">57.1%</span></div></td>
+              <td class="n">1,204</td>
+            </tr>
+            <tr>
+              <td><div class="champ"><div class="portrait" style="border-radius:50%;border-color:rgba(209,213,219,.65)"></div>Apex Inventor</div></td>
+              <td style="color:#d1d5db">Silver</td>
+              <td class="n">53.4</td>
+              <td><div class="meter"><div class="track"><div class="fill w" style="width:52%"></div></div><span class="pct w">52.2%</span></div></td>
+              <td class="n">2,860</td>
+            </tr>
+            <tr style="opacity:.55">
+              <td><div class="champ"><div class="portrait" style="border-radius:50%;border-color:rgba(148,160,184,.4)"></div>Goldrend</div></td>
+              <td style="color:#facc15">Gold</td>
+              <td class="n">&mdash;</td>
+              <td><div class="meter"><div class="track"><div class="fill l" style="width:44%;opacity:.5"></div></div><span class="pct" style="color:var(--lol-text)">44%*</span></div></td>
+              <td class="n">11</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;font-size:11.5px;color:var(--lol-text)">
+          * Fewer than 20 games. Shown muted rather than ranked, the same rule the tier list uses.
+        </div>
+      </div>
+      <div class="col">
+        <p class="mock-cap">
+          Every element here already exists: the rarity palette, the rate meter, the
+          small-sample rule, the score. This is assembly, not invention.
+        </p>
+
+        <div class="concern">
+          <p class="concern-label">Concern, and it is a real one</p>
+          <p>
+            I checked, and the public Live Client Data API does <strong>not</strong> expose which
+            three augments you are being offered. So this cannot be "take the middle
+            one." It has to be a ranked board for your champion that you glance at and
+            match against your offer yourself.
+          </p>
+          <p>
+            That is still useful, but it is a weaker promise than it first sounds, and
+            I would not build it believing otherwise. Reading the offered choices off
+            the screen would mean image recognition or memory reading. Both are a
+            different product with a different risk profile, and neither is something I
+            would recommend for a tool that currently stays safely inside published
+            APIs.
+          </p>
+        </div>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Turns the app from a thing you review after a game into a thing you keep
+            open during one. That is a different retention profile entirely, and it is
+            the strongest argument for installing the app over bookmarking the site.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- F2 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">F2</span>
+          <span class="chip good">Data already collected</span>
+        </div>
+        <h3>Champion matchups, which you count but never analyse</h3>
+        <p>
+          <code>stats.matchup_coverage</code> exists solely to count how many champion pairs have
+          faced each other, for a single tile. The underlying data, every cross-team
+          pairing in 137,317 games with a known winner, supports the actual question:
+          <em>who beats whom.</em>
+        </p>
+        <p>
+          No view exposes it. I checked for <code>matchup_stats</code>, <code>champion_matchups</code> and
+          similar; all 404. This is a complete feature sitting in a table, one
+          materialized view away.
+        </p>
+        <p>
+          It also solves P5: if you maintain a <code>champion_pairs</code> rollup incrementally
+          during ingest, the expensive coverage count becomes a cheap sum over it, and
+          the matchup feature is the same table read a different way.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            A genuinely new page on the site with real search traffic potential
+            ("Ziggs vs Brand ARAM"), and a champion-page section answering the question
+            players ask most. Pays for P5 rather than costing extra.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- F3 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">F3</span>
+          <span class="chip good">Data already collected</span>
+        </div>
+        <h3>Augment synergies</h3>
+        <p>
+          <code>match_participant_augments</code> stores every augment with its slot and
+          participant. Which means every pair and triple a player actually ran together
+          is recorded, with the win attached. Nothing computes it.
+        </p>
+        <p>
+          "Accelerating Sorcery plus Ultra Hydra wins 8 points above either alone" is
+          the kind of finding that makes a stats site worth returning to, and it cannot
+          be got anywhere else because nobody else is collecting Mayhem augment data at
+          this grain.
+        </p>
+        <div class="concern">
+          <p class="concern-label">Concern</p>
+          <p>
+            Pair counts explode. With roughly 640 augments the pair space is around
+            200,000 combinations before champion breakdown, and most will be
+            under-sampled. This needs a minimum-sample floor at least as strict as the
+            existing one and probably strictest of all, or it will confidently report
+            noise. Start with pairs only, never triples.
+          </p>
+        </div>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Differentiating content nobody else has. Medium build cost, entirely on the
+            aggregate side.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- F4 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">F4</span>
+        </div>
+        <h3>Show players where they differ from the community</h3>
+        <p>
+          The app holds both your games and the community's, and the Champions page
+          already has a toggle between them. What it does not do is put them side by
+          side. "You win 44% on Lux; the community wins 53%" is more actionable than
+          either number alone, and it needs no new data, no new aggregate and no
+          backend work: both datasets are already in memory on the same page.
+        </p>
+        <p>
+          The natural home is the champion page, as a delta column or a second muted
+          bar behind the community one.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Makes the app's own data useful rather than merely present, and gives
+            players a reason to care about their history beyond nostalgia. Small build.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- F5 -->
+    <div class="finding">
+      <div class="col">
+        <div class="f-head">
+          <span class="f-id">F5</span>
+        </div>
+        <h3>Tell contributors what they contributed</h3>
+        <p>
+          2,144 people have opted in to sharing games. The app can tell them their
+          contributor ID and let them withdraw, which is the right ethical baseline,
+          but it never tells them what their sharing produced.
+        </p>
+        <p>
+          "Your 340 games are part of the 5,612 behind this Ziggs number" closes the
+          loop on an opt-in that currently feels like a one-way donation. It is a
+          retention feature disguised as a courtesy, and it costs one count.
+        </p>
+        <div class="impact">
+          <b>Impact</b>
+          <span>
+            Makes opting in feel like joining something. Cheapest feature here by a
+            distance.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ORDER ══════════════════ -->
+<section>
+  <div class="shell">
+    <div class="col">
+      <div class="sec-head"><span class="sec-num">04</span><h2>The order I would do this in</h2></div>
+      <p class="sec-intro">
+        Sequenced by dependency first, then by value per unit of risk. The first three
+        are all low-risk and two are nearly free.
+      </p>
+    </div>
+
+    <div class="seq">
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Pull the schema into the repository</h3>
+          <p class="refs">P4 &middot; no user impact &middot; half a day</p>
+          <p>
+            Everything in the backend is safer afterwards and nothing is safe before
+            it. <code>supabase db pull</code>, review what comes out, commit it. This is the
+            prerequisite for steps 4 and 5, and it is the one item here whose absence
+            could turn an incident into a catastrophe.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Add the two local indexes</h3>
+          <p class="refs">P6 &middot; app only &middot; twenty minutes</p>
+          <p>
+            Do it now because it is free, it ships with whatever release comes next,
+            and it makes the patch range picker you just shipped feel the way it
+            should for players with long histories.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Filter by patch at the source, and share the paging code</h3>
+          <p class="refs">P1 + P7 &middot; both surfaces &middot; the biggest measured win</p>
+          <p>
+            20&times; less data per visit, 4.5&times; fewer requests, and the site stops getting
+            slower every patch. Do the lazy-load properly so auto-widen keeps working.
+            Fold the duplicated paging loop into the same change, since it rewrites
+            both call sites anyway.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Make ingest atomic, and count with counters</h3>
+          <p class="refs">P2 + P3 &middot; backend &middot; needs step 1</p>
+          <p>
+            One <code>ingest_games()</code> function, one transaction, one RPC call. Maintain the
+            contributor counters inside it so the rate check becomes a primary-key
+            read. These are one piece of work, not two, and together they are what
+            makes the write path safe at ten times the volume.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Clear the small design debt</h3>
+          <p class="refs">D2 + D3 &middot; an afternoon</p>
+          <p>
+            Delete the dead ItemIcon, point the app's three importers at the shared
+            one, share the queue picker. Cheap, and it keeps the shared system from
+            quietly re-accumulating the duplication you just spent weeks removing.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Unify the tier list</h3>
+          <p class="refs">D1 + D4 &middot; pick Option A or B first</p>
+          <p>
+            The largest remaining design work. Look at the app at 1280px with all six
+            columns before committing to Option B. Whichever you pick, the app gets
+            narrow-window behaviour out of it.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Build the live augment panel</h3>
+          <p class="refs">F1 &middot; app only &middot; no backend work</p>
+          <p>
+            First feature, because it needs nothing new: the live session, the
+            community augment rates and every UI component already exist. Ship it
+            knowing it is a ranked board rather than a read of your actual offer.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>Champion pairs: the rollup, then the feature</h3>
+          <p class="refs">F2 + P5 &middot; backend then both surfaces</p>
+          <p>
+            Build the incremental <code>champion_pairs</code> table during ingest, which retires
+            the expensive coverage view, then expose matchups on top of it. One piece
+            of work that pays a performance debt and adds a page.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n"></div>
+        <div>
+          <h3>The rest, by appetite</h3>
+          <p class="refs">F3, F4, F5</p>
+          <p>
+            F5 is an hour and makes 2,144 people feel seen. F4 is small and makes the
+            app's own data earn its place. F3 is the most interesting and the most
+            likely to report noise if rushed, so it goes last.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CONCERNS ══════════════════ -->
+<section>
+  <div class="shell">
+    <div class="col">
+      <div class="sec-head"><span class="sec-num">05</span><h2>What worries me</h2></div>
+      <p class="sec-intro">Consolidated, including the things that argue against my own recommendations.</p>
+
+      <h4>The backend has no rehearsal space</h4>
+      <p>
+        This is the thread running through P2, P3, P4 and F2. Every one of them is a
+        database change, and right now there is nowhere to make a database change
+        except production, against a schema that exists nowhere but production. Until
+        step 1 is done, I would treat every backend item on this page as blocked, not
+        merely unstarted.
+      </p>
+
+      <h4>P1 can regress the experience if done carelessly</h4>
+      <p>
+        Downloading everything up front is slow, but it makes every subsequent
+        interaction instant, because it is all in memory. Filtering at the source
+        trades that for a request whenever someone widens the patch range. Done well,
+        with the current patch loading first and the rest arriving in the background,
+        it is strictly better. Done as a naive filter, it turns an instant control
+        into a spinner.
+      </p>
+
+      <h4>Sharing components has a failure mode you have already hit once</h4>
+      <p>
+        When the site grew a second local search box because the shared one carried a
+        clear button it did not want, that was the shared component being
+        under-specified. D1 Option B is the same risk at four times the size: if the
+        shared table cannot express what one surface needs, that surface forks and you
+        end up with three implementations instead of two. Take the union deliberately.
+      </p>
+
+      <h4>F1 promises less than it appears to</h4>
+      <p>
+        Worth repeating because it is the feature most likely to be greenlit on the
+        strength of the mockup. The app cannot see which three augments you were
+        offered. It can only rank all of them. That is genuinely useful and it is not
+        what "augment recommendations" sounds like.
+      </p>
+
+      <h4>F3 will confidently tell you things that are not true</h4>
+      <p>
+        Augment pair statistics over a 200,000-cell space built from 137,317 games
+        will produce spectacular-looking results that are sampling noise. The existing
+        Wilson score floor is the right tool and it needs to be applied harder here
+        than anywhere else on the site, because the surface area for false discovery
+        is an order of magnitude larger.
+      </p>
+
+      <h4>Two of these findings are mine</h4>
+      <p>
+        The dead ItemIcon in D3 and the duplicated paging loop in P7 are both things I
+        left behind during the earlier unification work. Worth noting because it is
+        the same failure that produced the duplication in the first place: a component
+        gets shared, and the copy it replaced does not get deleted.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="closer">
+  <div class="shell">
+    <div class="col">
+      <p>
+        The short version: the write path has a correctness bug that concurrency will
+        find, the read path moves twenty times more data than it needs, the database
+        that holds all of it cannot be rebuilt from this repository, and there are two
+        finished features sitting unqueried in tables you are already filling.
+      </p>
+      <p style="color:var(--ink-faint);font-size:16px;font-family:var(--f-body)">
+        Nothing in this document has been implemented. The branch
+        <code>claude/ideation</code> holds this write-up only.
+      </p>
+    </div>
+  </div>
+</section>
