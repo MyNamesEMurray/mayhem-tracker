@@ -25,7 +25,8 @@ name: Release
 # with no section gets an empty body on purpose: the app's update window skips
 # releases with nothing in them, so a build that changed nothing players can see
 # doesn't put a list of commit subjects in front of them. Write a section when
-# there is something to say.
+# there is something to say - the gate warns, loudly and by version number,
+# when it is about to cut one that has none.
 
 on:
   push:
@@ -175,6 +176,41 @@ jobs:
             echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
 
+          # Does this version have anything to tell players?
+          #
+          # An empty body is a legitimate outcome and this never blocks one -
+          # most auto-cut patch releases are a refactor or a build fix and
+          # should not put commit subjects in front of anyone. But v2.14.5
+          # shipped the largest set of player-visible changes in months with no
+          # section, so it published empty and the app's update window skipped
+          # it: nobody on the previous version was told any of it existed. That
+          # was discovered days later, by someone opening the release page.
+          #
+          # Saying so here puts it in front of whoever merged, at the moment
+          # they merged, while the notes can still be written before anyone
+          # looks for them.
+          if [ "$(node .github/scripts/changelog-section.mts "v$VERSION" --check)" = "missing" ]; then
+            echo "::warning title=No release notes for v$VERSION::CHANGELOG.md has no v$VERSION section, so this publishes with an empty body and the app's update window skips it."
+            {
+              echo
+              echo "> [!WARNING]"
+              echo "> **No \`CHANGELOG.md\` section for v$VERSION.**"
+              echo ">"
+              echo "> This will publish with an empty body, and the app's update window skips a"
+              echo "> release with nothing in it - so nobody running an older version will be"
+              echo "> told this one exists."
+              echo ">"
+              echo "> That is the right outcome for a refactor or a build fix. If any of the"
+              echo "> changes above are worth telling a player about, add a \`## v$VERSION\`"
+              echo "> section to \`CHANGELOG.md\` and paste it into the release."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo
+              echo "Release notes: the \`## v$VERSION\` section of \`CHANGELOG.md\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   release:
     name: Build and publish
     needs: gate
@@ -282,11 +318,13 @@ jobs:
         id: notes
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          awk -v ver="$TAG" '$0 ~ "^## "ver"([^0-9.]|$)" {flag=1; next} /^## /{flag=0} flag' CHANGELOG.md > notes.md
-          if [ -s notes.md ]; then
+          # The same reader the gate used to decide whether to warn, so the
+          # thing that checked and the thing that publishes cannot disagree
+          # about what counts as a section.
+          if node .github/scripts/changelog-section.mts "$TAG" > notes.md; then
             echo "args=--notes-file notes.md" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::No CHANGELOG.md section for $TAG - publishing with an empty body, which the app's update window skips."
+            echo "::warning title=No release notes for $TAG::Publishing with an empty body, which the app's update window skips."
             echo 'args=--notes ""' >> "$GITHUB_OUTPUT"
           fi
 
